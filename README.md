@@ -34,8 +34,8 @@ This repo contains the latest implementation for the [Stable Horde](https://stab
 
 To run the bridge, simply run:
 
-Windows: `horde-bridge.cmd`
-Linux: `horde-bridge.sh`
+* Windows: `horde-bridge.cmd`
+* Linux: `horde-bridge.sh`
 
 This will take care of the setup for this environment and then automatically start the bridge.
 
