@@ -25,7 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-conda/
+/conda/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -154,17 +154,17 @@ cython_debug/
 
 
 # repo specific
-models/
-./outputs/
-./temp/
-./gfpgan/
+/models/
+/outputs/
+/temp/
+/gfpgan/
 
-./installer_files/*
+/installer_files/*
 .tmp*
 creds.py
 
-./test_output/*
-./bridge_generations/*
+/test_output/*
+/bridge_generations/*
 z_version_env.tmp
 custom-conda-path.txt
 bridgeData.py
