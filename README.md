@@ -1,6 +1,32 @@
 This repository provides python libraries for running Stable Diffusion
 
-You can find some test scripts using this architecture in the `test.py`
+Sample use: 
+
+```python
+from nataili.model_manager import ModelManager
+from nataili.inference.compvis.txt2img import txt2img
+from nataili.util.cache import torch_gc
+
+# The model manager loads and unloads the SD models and has features to download them or find their location
+model_manager = ModelManager()
+model_manager.init()
+# The model to use for the generation. 
+model = "stable_diffusion"
+success = model_manager.load_model(model)
+if success:
+    print(f'{model} loaded')
+else:
+    print(f'{model} load error')
+# Other classes exist like img2img
+generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'output_dir')
+generator.generate('a donkey with a hat')
+torch_gc()
+# The image key in the generator contains a PIL image of the generation
+image = generator.images[0]["image"]
+image.save('a_donkey_with_a_hat.png', format="Png")
+```
+
+You can find more complete scripts in `test.py`
 
 # Stable Horde Bridge
 
