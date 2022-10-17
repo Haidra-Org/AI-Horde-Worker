@@ -154,7 +154,7 @@ cython_debug/
 
 
 # repo specific
-./models/
+models/
 ./outputs/
 ./temp/
 ./gfpgan/

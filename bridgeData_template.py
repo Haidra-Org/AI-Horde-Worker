@@ -15,8 +15,15 @@ priority_usernames = []
 max_power = 8
 # Set this to false, if you do not want your worker to receive requests for NSFW generations
 nsfw = True
+# Set this to True if you want your worker to censor NSFW generations. This will only be active is horde_nsfw == False
+censor_nsfw = False
 # A list of words which you do not want to your worker to accept
 blacklist = []
 # A list of words for which you always want to allow the NSFW censor filter, even when this worker is in NSFW mode
 censorlist = []
-models_to_load = ["stable_diffusion"]
+# The models to use. You can select a different main model, or select more than one if you have enough VRAM
+# The last model in this list takes priority when the client accepts more than 1
+models_to_load = [
+    "stable_diffusion"
+    # "waifu_diffusion"
+]
