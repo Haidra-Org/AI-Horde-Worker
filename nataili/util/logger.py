@@ -97,8 +97,3 @@ config = {
     ],
 }
 logger.configure(**config)
-logger.disable("__main__")
-logger.warning("disabled")
-logger.enable("")
-logger.enable(None)
-

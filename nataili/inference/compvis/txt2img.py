@@ -137,8 +137,6 @@ class txt2img:
                 prompts = all_prompts[n * batch_size:(n + 1) * batch_size]
                 seeds = all_seeds[n * batch_size:(n + 1) * batch_size]
 
-                print(prompt)
-
                 uc = self.model.get_learned_conditioning(len(prompts) * [''])
 
                 if isinstance(prompts, tuple):

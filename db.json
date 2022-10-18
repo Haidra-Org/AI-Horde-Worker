@@ -57,6 +57,32 @@
     },
     "available": false
   },
+  "furry_diffusion": {
+    "name": "furry_diffusion",
+    "type": "ckpt",
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/custom/furry-diffusion.ckpt"
+        },
+        {
+          "path": "configs/stable-diffusion/v1-inference.yaml"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "furry-diffusion.ckpt",
+          "file_path": "models/custom",
+          "file_url": "https://pixeldrain.com/u/dtYiYN7g",
+          "manual": true
+        }
+      ]
+    },
+    "available": false
+  },
   "trinart": {
     "name": "trinart",
     "type": "ckpt",

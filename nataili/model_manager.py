@@ -17,6 +17,7 @@ import open_clip
 import clip
 
 from nataili.util.cache import torch_gc
+from nataili.util import logger
 
 logging.set_verbosity_error()
 
@@ -101,7 +102,7 @@ class ModelManager():
         config = OmegaConf.load(config_path)
         pl_sd = torch.load(model_path, map_location=map_location)
         if "global_step" in pl_sd:
-            print(f"Global Step: {pl_sd['global_step']}")
+            logger.info(f"Global Step: {pl_sd['global_step']}")
         sd = pl_sd["state_dict"]
         model = instantiate_from_config(config.model)
         m, u = model.load_state_dict(sd, strict=False)
@@ -210,7 +211,7 @@ class ModelManager():
 
     def download_model(self, model_name):
         if model_name in self.available_models:
-            print(f"{model_name} is already available.")
+            logger.info(f"{model_name} is already available.")
             return True
         download = self.get_model_download(model_name)
         files = self.get_model_files(model_name)
@@ -224,18 +225,22 @@ class ModelManager():
             if 'file_path' in download[i]:
                 download_path = download[i]['file_path']
 
-            print(f'Downloading {download_name}...')
+            if 'manual' in download[i]:
+                logger.warning(f"The model {model_name} requires manual download from {download_url}. Please place it in {download_path}/{download_name} then press ENTER to continue...")
+                input('')
+                continue
+            logger.init(f'{download_name}', status="Downloading")
             # TODO: simplify
             if "file_content" in download[i]:
                 file_content = download[i]['file_content']
-                print(f"writing {file_content} to {file_path}")
+                logger.info(f"writing {file_content} to {file_path}")
                 # make directory download_path
                 os.makedirs(download_path, exist_ok=True)
                 # write file_content to download_path/download_name
                 with open(os.path.join(download_path, download_name), 'w') as f:
                     f.write(file_content)
             elif 'symlink' in download[i]:
-                print(f"symlink {file_path} to {download[i]['symlink']}")
+                logger.info(f"symlink {file_path} to {download[i]['symlink']}")
                 symlink = download[i]['symlink']
                 # make directory symlink
                 os.makedirs(download_path, exist_ok=True)
@@ -245,7 +250,7 @@ class ModelManager():
                 if 'hf_auth' in download[i]:
                     username = self.hf_auth['username']
                     password = self.hf_auth['password']
-                    print(f"git clone {download_url.replace('https://{username}:{password}@', '')} to {file_path} with auth")
+                    logger.info(f"git clone {download_url.replace('https://{username}:{password}@', '')} to {file_path} with auth")
                     # make directory download_path
                     os.makedirs(file_path, exist_ok=True)
                     download_url = download_url.format(username=username, password=password)
@@ -254,14 +259,14 @@ class ModelManager():
                         for post_process in download[i]['post_process']:
                             if 'delete' in post_process:
                                 # delete folder post_process['delete']
-                                print(f"delete {post_process['delete']}")
+                                logger.info(f"delete {post_process['delete']}")
                                 try:
                                     shutil.rmtree(post_process['delete'])
                                 except PermissionError as e:
-                                    print(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
-                                    print("PermissionError: ", e)
+                                    logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
+                                    logger.error("PermissionError: ", e)
                 else:
-                    print(f"git clone {download_url} to {file_path}")
+                    logger.info(f"git clone {download_url} to {file_path}")
                     # make directory download_path
                     os.makedirs(file_path, exist_ok=True)
                     git.Git(file_path).clone(download_url)
@@ -269,28 +274,28 @@ class ModelManager():
                         for post_process in download[i]['post_process']:
                             if 'delete' in post_process:
                                 # delete folder post_process['delete']
-                                print(f"delete {post_process['delete']}")
+                                logger.info(f"delete {post_process['delete']}")
                                 try:
                                     shutil.rmtree(post_process['delete'])
                                 except PermissionError as e:
-                                    print(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
-                                    print("PermissionError: ", e)
+                                    logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
+                                    logger.error("PermissionError: ", e)
             else:
                 if not self.check_file_available(file_path):
-                    print(f'Downloading {file_path}...')
+                    logger.init(f'{file_path}', status="Downloading")
                     self.download_file(download_url, file_path)
         self.init()
         return True
     
     def download_dependency(self, dependency_name):
         if dependency_name in self.available_dependencies:
-            print(f"{dependency_name} is already installed.")
+            logger.info(f"{dependency_name} is already installed.")
             return True
         download = self.get_dependency_download(dependency_name)
         files = self.get_dependency_files(dependency_name)
         for i in range(len(download)):
             if "git" in download[i]:
-                print("git download not implemented yet")
+                logger.warning("git download not implemented yet")
                 break
             
             file_path = files[i]['path']
@@ -300,7 +305,7 @@ class ModelManager():
                 download_name = download[i]['file_name']
             if 'file_path' in download[i]:
                 download_path = download[i]['file_path']
-            print(download_name)
+            logger.debug(download_name)
             if "unzip" in download[i]:
                 zip_path = f'temp/{download_name}.zip'
                 # os dirname zip_path
@@ -308,19 +313,19 @@ class ModelManager():
                 os.makedirs("temp", exist_ok=True)
 
                 self.download_file(download_url, zip_path)
-                print(f"unzip {zip_path}")
+                logger.info(f"unzip {zip_path}")
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall('temp/')
                 # move temp/sd-concepts-library-main/sd-concepts-library to download_path
-                print(f"move temp/{download_name}-main/{download_name} to {download_path}")
+                logger.info(f"move temp/{download_name}-main/{download_name} to {download_path}")
                 shutil.move(f"temp/{download_name}-main/{download_name}", download_path)
-                print(f"delete {zip_path}")
+                logger.info(f"delete {zip_path}")
                 os.remove(zip_path)
-                print(f"delete temp/{download_name}-main/")
+                logger.info(f"delete temp/{download_name}-main/")
                 shutil.rmtree(f"temp/{download_name}-main")
             else:
                 if not self.check_file_available(file_path):
-                    print(f'Downloading {file_path}...')
+                    logger.init(f'{file_path}', status="Downloading")
                     self.download_file(download_url, file_path)
         self.init()
         return True
@@ -328,19 +333,19 @@ class ModelManager():
     def download_all_models(self):
         for model in self.models:
             if not self.check_model_available(model):
-                print(f"Downloading {model}...")
+                logger.init(f"{model}", status="Downloading")
                 self.download_model(model)
             else:
-                print(f"{model} is already downloaded.")
+                logger.info(f"{model} is already downloaded.")
         return True
     
     def download_all_dependencies(self):
         for dependency in self.dependencies:
             if not self.check_dependency_available(dependency):
-                print(f"Downloading {dependency}...")
+                logger.init(f"{dependency}",status="Downloading")
                 self.download_dependency(dependency)
             else:
-                print(f"{dependency} is already installed.")
+                logger.info(f"{dependency} is already installed.")
         return True
     
     def download_all(self):

@@ -22,7 +22,7 @@ from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
 from nataili.inference.compvis.txt2img import txt2img
 from nataili.util.cache import torch_gc
-from nataili.util.logger import logger,set_logger_verbosity, quiesce_logger, test_logger
+from nataili.util import logger,set_logger_verbosity, quiesce_logger, test_logger
 from PIL import Image, ImageFont, ImageDraw, ImageFilter, ImageOps, ImageChops, UnidentifiedImageError
 from io import BytesIO
 from base64 import binascii
@@ -57,8 +57,7 @@ max_length = 80
 current_softprompt = None
 softprompts = {}
 
-
-@logger.catch
+@logger.catch(reraise=True)
 def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_usernames, max_pixels, nsfw, censor_nsfw, blacklist, censorlist):
     current_id = None
     current_payload = None
@@ -228,7 +227,7 @@ def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_us
                 continue
         time.sleep(interval)
 
-@logger.catch
+@logger.catch(reraise=True)
 def check_models(models):
     logger.init("Models", status="Checking")
     from os.path import exists
@@ -250,13 +249,20 @@ def check_models(models):
         Please select an option: ")
         if choice not in ['y', 'Y', '', 'yes', 'all', 'a']:
             sys.exit(1)
-        try:
-            from creds import hf_username,hf_password
-        except:
-            hf_username = input("Please type your huggingface.co username: ")
-            hf_password = input("Please type your huggingface.co password: ")
-        hf_auth = {"username": hf_username, "password": hf_password}
-        mm = ModelManager(hf_auth=hf_auth)
+        needs_hf = False
+        for model in not_found_models:
+            dl = mm.get_model_download(model)
+            for m in dl:
+                if 'huggingface.co' in m['file_url']:
+                    needs_hf = True
+        if needs_hf:
+            try:
+                from creds import hf_username,hf_password
+            except:
+                hf_username = input("Please type your huggingface.co username: ")
+                hf_password = input("Please type your huggingface.co password: ")
+            hf_auth = {"username": hf_username, "password": hf_password}
+            mm = ModelManager(hf_auth=hf_auth)
         mm.init()
         if choice in ['all', 'a']:
             mm.download_all()    
