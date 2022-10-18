@@ -255,7 +255,7 @@ def check_models(models):
             for m in dl:
                 if 'huggingface.co' in m['file_url']:
                     needs_hf = True
-        if needs_hf:
+        if needs_hf or choice in ['all', 'a']:
             try:
                 from creds import hf_username,hf_password
             except:
