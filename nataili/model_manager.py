@@ -80,6 +80,24 @@ class ModelManager():
     def get_model(self, model_name):
         return self.models.get(model_name)
     
+    def get_filtered_models(self, **kwargs):
+        '''Get all model names.
+        Can filter based on metadata of the model reference db
+        '''
+        filtered_models = self.models
+        for keyword in kwargs:
+            iterating_models = filtered_models.copy()
+            filtered_models = {}
+            for model in iterating_models:
+                # logger.debug([keyword,iterating_models[model].get(keyword),kwargs[keyword]])
+                if iterating_models[model].get(keyword) == kwargs[keyword]:
+                    filtered_models[model] = iterating_models[model]
+        return filtered_models
+
+    def get_filtered_model_names(self, **kwargs):
+        filtered_models = self.get_filtered_models(**kwargs)
+        return list(filtered_models.keys())
+    
     def get_dependency(self, dependency_name):
         return self.dependencies[dependency_name]
 
@@ -387,7 +405,7 @@ class ModelManager():
         return True
     
     def download_all_models(self):
-        for model in self.models:
+        for model in self.get_filtered_model_names(download_all = True):
             if not self.check_model_available(model):
                 logger.init(f"{model}", status="Downloading")
                 self.download_model(model)
