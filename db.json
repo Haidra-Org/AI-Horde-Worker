@@ -8,7 +8,8 @@
     "config": {
       "files": [
         {
-          "path": "models/ldm/stable-diffusion-v1/model.ckpt"
+          "path": "models/ldm/stable-diffusion-v1/model.ckpt",
+          "md5sum": "c01059060130b8242849d86e97212c84"
         },
         {
           "path": "configs/stable-diffusion/v1-inference.yaml"

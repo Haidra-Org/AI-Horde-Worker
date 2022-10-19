@@ -5,6 +5,8 @@ import zipfile
 import requests
 import git
 import torch
+import hashlib
+import requests
 from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 from transformers import logging
@@ -23,15 +25,30 @@ logging.set_verbosity_error()
 
 models = json.load(open('./db.json'))
 dependencies = json.load(open('./db_dep.json'))
+remote_models = "https://raw.githubusercontent.com/db0/nataili-model-reference/main/db.json"
+remote_dependencies = "https://raw.githubusercontent.com/db0/nataili-model-reference/main/db_dep.json"
 
 class ModelManager():
-    def __init__(self, hf_auth=None):
-        self.models = json.load(open('./db.json'))
-        self.dependencies = json.load(open('./db_dep.json'))
+    def __init__(self, hf_auth=None, download=True):
+        if download:
+            try:
+                logger.init("Model Reference", status="Downloading")
+                r = requests.get(remote_models)
+                self.models = r.json()
+                r = requests.get(remote_dependencies)
+                self.dependencies = json.load(open('./db_dep.json'))
+                logger.init_ok("Model Reference", status="OK")
+            except:
+                logger.init_err("Model Reference", status="Download Error")
+                self.models = json.load(open('./db.json'))
+                self.dependencies = json.load(open('./db_dep.json'))
+                logger.init_warn("Model Reference", status="Local")
         self.available_models = []
+        self.tainted_models = []
         self.available_dependencies = []
         self.loaded_models = {}
-        self.hf_auth = hf_auth
+        self.hf_auth = None
+        self.set_authentication(hf_auth)
 
     def init(self):
         dependencies_available = []
@@ -53,9 +70,15 @@ class ModelManager():
                 if self.hf_auth['username'] == '' or self.hf_auth['password'] == '':
                     raise ValueError('hf_auth must contain username and password')
         return True
-    
+
+    def set_authentication(self, hf_auth=None):
+        # We do not let No authentication override previously set auth
+        if not hf_auth and self.hf_auth:
+            return
+        self.hf_auth = hf_auth
+
     def get_model(self, model_name):
-        return self.models[model_name]
+        return self.models.get(model_name)
     
     def get_dependency(self, dependency_name):
         return self.dependencies[dependency_name]
@@ -98,6 +121,16 @@ class ModelManager():
             del self.loaded_models[model]
         return True
     
+    def taint_model(self,model_name):
+        '''Marks a model as not valid by remiving it from available_models'''
+        if model_name in self.available_models:
+            self.available_models.remove(model_name)
+            self.tainted_models.append(model_name)
+
+    def taint_models(self, models):
+        for model in models:
+            self.taint_model(model)
+
     def load_model_from_config(self, model_path='', config_path='', map_location="cpu"):
         config = OmegaConf.load(config_path)
         pl_sd = torch.load(model_path, map_location=map_location)
@@ -169,29 +202,51 @@ class ModelManager():
     def load_model(self, model_name='', precision='half', gpu_id=0):
         if model_name not in self.available_models:
             return False
-        if models[model_name]['type'] == 'ckpt':
+        if self.models[model_name]['type'] == 'ckpt':
             self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id)
             return True
-        elif models[model_name]['type'] == 'realesrgan':
+        elif self.models[model_name]['type'] == 'realesrgan':
             self.loaded_models[model_name] = self.load_realesrgan(model_name, precision, gpu_id)
             return True
-        elif models[model_name]['type'] == 'gfpgan':
+        elif self.models[model_name]['type'] == 'gfpgan':
             self.loaded_models[model_name] = self.load_gfpgan(model_name, gpu_id)
             return True
-        elif models[model_name]['type'] == 'blip':
+        elif self.models[model_name]['type'] == 'blip':
             self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512, 'base')
             return True
-        elif models[model_name]['type'] == 'open_clip':
+        elif self.models[model_name]['type'] == 'open_clip':
             self.loaded_models[model_name] = self.load_open_clip(model_name, precision, gpu_id)
             return True
-        elif models[model_name]['type'] == 'clip':
+        elif self.models[model_name]['type'] == 'clip':
             self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id)
             return True
         else:
             return False
 
-    def check_file_available(self, file):
-        return os.path.exists(file)
+    def validate_model(self, model_name):
+        files = self.get_model_files(model_name)
+        all_ok = True
+        for file_details in files:
+            if not self.check_file_available(file_details['path']):
+                return False
+            if not self.validate_file(file_details):
+                return False
+        return True
+
+    def validate_file(self, file_details):
+        if 'md5sum' in file_details:
+            file_name = file_details['path']
+            logger.debug(f"Getting md5sum of {file_name}")
+            with open(file_name, 'rb') as file_to_check:
+                file_hash = hashlib.md5()
+                while chunk := file_to_check.read(8192):
+                    file_hash.update(chunk)
+            if file_details['md5sum'] != file_hash.hexdigest():
+                return False
+        return True
+
+    def check_file_available(self, file_path):
+        return os.path.exists(file_path)
 
     def check_available(self, files):
         available = True
@@ -229,7 +284,6 @@ class ModelManager():
                 logger.warning(f"The model {model_name} requires manual download from {download_url}. Please place it in {download_path}/{download_name} then press ENTER to continue...")
                 input('')
                 continue
-            logger.init(f'{download_name}', status="Downloading")
             # TODO: simplify
             if "file_content" in download[i]:
                 file_content = download[i]['file_content']
@@ -281,9 +335,11 @@ class ModelManager():
                                     logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
                                     logger.error("PermissionError: ", e)
             else:
-                if not self.check_file_available(file_path):
-                    logger.init(f'{file_path}', status="Downloading")
+                if not self.check_file_available(file_path) or model_name in self.tainted_models:
+                    logger.debug(f'Downloading {download_url} to {file_path}')
                     self.download_file(download_url, file_path)
+        if model_name in self.tainted_models:
+            self.tainted_models.remove(model_name)
         self.init()
         return True
     

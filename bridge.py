@@ -236,11 +236,12 @@ def check_models(models):
     models_exist = True
     not_found_models = []
     for model in models:
-        for entry in mm.get_model_files(model):
-            if not exists(entry['path']):
-                models_exist = False
-                if model not in not_found_models:
-                    not_found_models.append(model)
+        if not mm.get_model(model):
+            logger.err(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
+            sys.exit(1)
+        if not mm.validate_model(model):
+            models_exist = False
+            not_found_models.append(model)
     if not models_exist:
         choice = input(f"You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. Would you like to download your prespecified models?\n\
         y: Download {not_found_models} (default).\n\
@@ -262,13 +263,14 @@ def check_models(models):
                 hf_username = input("Please type your huggingface.co username: ")
                 hf_password = input("Please type your huggingface.co password: ")
             hf_auth = {"username": hf_username, "password": hf_password}
-            mm = ModelManager(hf_auth=hf_auth)
+            mm.set_authentication(hf_auth=hf_auth)
         mm.init()
+        mm.taint_models(not_found_models)
         if choice in ['all', 'a']:
             mm.download_all()    
         elif choice in ['y', 'Y', '', 'yes']:
             for model in not_found_models:
-                logger.init_ok(f"Model: {model}", status="Downloading")
+                logger.init(f"Model: {model}", status="Downloading")
                 mm.download_model(model)
     logger.init_ok("Models", status="OK")
     if exists('./bridgeData.py'):
