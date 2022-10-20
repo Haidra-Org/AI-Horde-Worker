@@ -28,29 +28,6 @@ from io import BytesIO
 from base64 import binascii
 
 import random
-try:
-    import bridgeData as bd
-except:
-    class temp(object):
-        def __init__(self):
-            random.seed()
-            self.horde_url = "https://stablehorde.net"
-            # Give a cool name to your instance
-            self.worker_name = f"Automated Instance #{random.randint(-100000000, 100000000)}"
-            # The api_key identifies a unique user in the horde
-            self.api_key = "0000000000"
-            # Put other users whose prompts you want to prioritize.
-            # The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
-            self.priority_usernames = []
-            self.max_power = 8
-            self.nsfw = True
-            self.censor_nsfw = False
-            self.blacklist = []
-            self.censorlist = []
-            self.models_to_load = ["stable_diffusion"]
-    bd = temp()
-    pass
-
 model = ''
 max_content_length = 1024
 max_length = 80
@@ -282,10 +259,30 @@ def check_models(models):
         logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
         sys.exit(0)
     
-            
-
-
-
+def load_bridge_data():
+    try:
+        import bridgeData as bd
+    except:
+        class temp(object):
+            def __init__(self):
+                random.seed()
+                self.horde_url = "https://stablehorde.net"
+                # Give a cool name to your instance
+                self.worker_name = f"Automated Instance #{random.randint(-100000000, 100000000)}"
+                # The api_key identifies a unique user in the horde
+                self.api_key = "0000000000"
+                # Put other users whose prompts you want to prioritize.
+                # The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
+                self.priority_usernames = []
+                self.max_power = 8
+                self.nsfw = True
+                self.censor_nsfw = False
+                self.blacklist = []
+                self.censorlist = []
+                self.models_to_load = ["stable_diffusion"]
+        logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account")
+        bd = temp()
+    return(bd)
 
 if __name__ == "__main__":
     
@@ -293,6 +290,7 @@ if __name__ == "__main__":
     if args.log_file:
         logger.add("koboldai_bridge_log.log", retention="7 days", level="warning")    # Automatically rotate too big file
     quiesce_logger(args.quiet)
+    bd = load_bridge_data()
     # test_logger()
     api_key = args.api_key if args.api_key else bd.api_key
     worker_name = args.worker_name if args.worker_name else bd.worker_name
