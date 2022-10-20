@@ -238,7 +238,7 @@ def check_models(models):
                 from creds import hf_username,hf_password
             except:
                 hf_username = input("Please type your huggingface.co username: ")
-                hf_password = input("Please type your huggingface.co password: ")
+                hf_password = input("Please type your huggingface.co Access Token or password: ")
             hf_auth = {"username": hf_username, "password": hf_password}
             mm.set_authentication(hf_auth=hf_auth)
         mm.init()

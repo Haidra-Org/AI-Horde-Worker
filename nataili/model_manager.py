@@ -6,7 +6,6 @@ import requests
 import git
 import torch
 import hashlib
-import requests
 from ldm.util import instantiate_from_config
 from omegaconf import OmegaConf
 from transformers import logging
@@ -293,6 +292,10 @@ class ModelManager():
 
             if 'file_url' in download[i]:
                 download_url = download[i]['file_url']
+                if 'hf_auth' in download[i]:
+                    username = self.hf_auth['username']
+                    password = self.hf_auth['password']
+                    download_url = download_url.format(username=username, password=password)
             if 'file_name' in download[i]:
                 download_name = download[i]['file_name']
             if 'file_path' in download[i]:
@@ -319,39 +322,20 @@ class ModelManager():
                 # make symlink from download_path/download_name to symlink
                 os.symlink(symlink, os.path.join(download_path, download_name))
             elif 'git' in download[i]:
-                if 'hf_auth' in download[i]:
-                    username = self.hf_auth['username']
-                    password = self.hf_auth['password']
-                    logger.info(f"git clone {download_url.replace('https://{username}:{password}@', '')} to {file_path} with auth")
-                    # make directory download_path
-                    os.makedirs(file_path, exist_ok=True)
-                    download_url = download_url.format(username=username, password=password)
-                    git.Git(file_path).clone(download_url)
-                    if 'post_process' in download[i]:
-                        for post_process in download[i]['post_process']:
-                            if 'delete' in post_process:
-                                # delete folder post_process['delete']
-                                logger.info(f"delete {post_process['delete']}")
-                                try:
-                                    shutil.rmtree(post_process['delete'])
-                                except PermissionError as e:
-                                    logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
-                                    logger.error("PermissionError: ", e)
-                else:
-                    logger.info(f"git clone {download_url} to {file_path}")
-                    # make directory download_path
-                    os.makedirs(file_path, exist_ok=True)
-                    git.Git(file_path).clone(download_url)
-                    if 'post_process' in download[i]:
-                        for post_process in download[i]['post_process']:
-                            if 'delete' in post_process:
-                                # delete folder post_process['delete']
-                                logger.info(f"delete {post_process['delete']}")
-                                try:
-                                    shutil.rmtree(post_process['delete'])
-                                except PermissionError as e:
-                                    logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
-                                    logger.error("PermissionError: ", e)
+                logger.info(f"git clone {download_url} to {file_path}")
+                # make directory download_path
+                os.makedirs(file_path, exist_ok=True)
+                git.Git(file_path).clone(download_url)
+                if 'post_process' in download[i]:
+                    for post_process in download[i]['post_process']:
+                        if 'delete' in post_process:
+                            # delete folder post_process['delete']
+                            logger.info(f"delete {post_process['delete']}")
+                            try:
+                                shutil.rmtree(post_process['delete'])
+                            except PermissionError as e:
+                                logger.error(f"[!] Something went wrong while deleting the `{post_process['delete']}`. Please delete it manually.")
+                                logger.error("PermissionError: ", e)
             else:
                 if not self.check_file_available(file_path) or model_name in self.tainted_models:
                     logger.debug(f'Downloading {download_url} to {file_path}')
