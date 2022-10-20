@@ -11,6 +11,8 @@ arg_parser.add_argument('--sfw', action='store_true', required=False, help="Set 
 arg_parser.add_argument('--blacklist', nargs='+', required=False, help="List the words that you want to blacklist.")
 arg_parser.add_argument('--censorlist', nargs='+', required=False, help="List the words that you want to censor.")
 arg_parser.add_argument('--censor_nsfw', action='store_true', required=False, help="Set to true if you want this bridge worker to censor NSFW images.")
+arg_parser.add_argument('--allow_img2img', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img request.")
+arg_parser.add_argument('--allow_unsafe_ip', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img requests from unsafe IPs.")
 arg_parser.add_argument('-m', '--model', action='store', required=False, help="Which model to run on this horde.")
 arg_parser.add_argument('--debug', action="store_true", default=False, help="Show debugging messages.")
 arg_parser.add_argument('-v', '--verbosity', action='count', default=0, help="The default logging level is ERROR or higher. This value increases the amount of logging seen in your screen")
@@ -34,8 +36,33 @@ max_length = 80
 current_softprompt = None
 softprompts = {}
 
+
+class BridgeData(object):
+    def __init__(self):
+        random.seed()
+        self.horde_url = "https://stablehorde.net"
+        # Give a cool name to your instance
+        self.worker_name = f"Automated Instance #{random.randint(-100000000, 100000000)}"
+        # The api_key identifies a unique user in the horde
+        self.api_key = "0000000000"
+        # Put other users whose prompts you want to prioritize.
+        # The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
+        self.priority_usernames = []
+        self.max_power = 8
+        self.nsfw = True
+        self.censor_nsfw = False
+        self.blacklist = []
+        self.censorlist = []
+        self.allow_img2img = True
+        self.allow_unsafe_ip = True
+        self.model_names = ["stable_diffusion"]
+        self.max_pixels = 64*64*8*self.max_power
+
+
+
 @logger.catch(reraise=True)
-def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_usernames, max_pixels, nsfw, censor_nsfw, blacklist, censorlist):
+def bridge(interval, model_manager, bd):
+    horde_url = bd.horde_url # Will replace later
     current_id = None
     current_payload = None
     loop_retry = 0
@@ -50,15 +77,18 @@ def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_us
             logger.debug(f"Retrying ({loop_retry}/10) for generation id {current_id}...")
         available_models = model_manager.get_loaded_models_names()
         gen_dict = {
-            "name": worker_name,
-            "max_pixels": max_pixels,
-            "priority_usernames": priority_usernames,
-            "nsfw": nsfw,
-            "blacklist": blacklist,
+            "name": bd.worker_name,
+            "max_pixels": bd.max_pixels,
+            "priority_usernames": bd.priority_usernames,
+            "nsfw": bd.nsfw,
+            "blacklist": bd.blacklist,
             "models": available_models,
+            "allow_img2img": bd.allow_img2img,
+            "allow_unsafe_ip": bd.allow_unsafe_ip,
             "bridge_version": 3,
         }
-        headers = {"apikey": api_key}
+        # logger.debug(gen_dict)
+        headers = {"apikey": bd.api_key}
         if current_id:
             loop_retry += 1
         else:
@@ -103,9 +133,9 @@ def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_us
         model = pop.get("model", available_models[0])
         # logger.info([current_id,current_payload])
         use_nsfw_censor = current_payload.get("use_nsfw_censor", False)
-        if censor_nsfw and not nsfw:
+        if bd.censor_nsfw and not bd.nsfw:
             use_nsfw_censor = True
-        elif any(word in current_payload['prompt'] for word in censorlist):
+        elif any(word in current_payload['prompt'] for word in bd.censorlist):
             use_nsfw_censor = True
         use_gfpgan = current_payload.get("use_gfpgan", True)
         use_real_esrgan = current_payload.get("use_real_esrgan", False)
@@ -170,9 +200,9 @@ def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_us
         submit_dict = {
             "id": current_id,
             "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
-            "api_key": api_key,
+            "api_key": bd.api_key,
             "seed": seed,
-            "max_pixels": max_pixels,
+            "max_pixels": bd.max_pixels,
         }
         current_generation = seed
         while current_id and current_generation != None:
@@ -262,29 +292,57 @@ def check_models(models):
         sys.exit(0)
     
 def load_bridge_data():
+    bridge_data = BridgeData()
     try:
         import bridgeData as bd
+        bridge_data.api_key = bd.api_key
+        bridge_data.worker_name = bd.worker_name
+        bridge_data.horde_url = bd.horde_url
+        bridge_data.priority_usernames = bd.priority_usernames
+        bridge_data.max_power = bd.max_power
+        bridge_data.model_names = bd.models_to_load
+        try:
+            bridge_data.nsfw = bd.nsfw 
+        except AttributeError:
+            pass
+        try:
+            bridge_data.censor_nsfw = bd.censor_nsfw
+        except AttributeError:
+            pass
+        try:
+            bridge_data.blacklist = bd.blacklist
+        except AttributeError:
+            pass
+        try:
+            bridge_data.censorlist = bd.censorlist
+        except AttributeError:
+            pass
+        try:
+            bridge_data.allow_img2img = bd.allow_img2img
+        except AttributeError:
+            pass
+        try:
+            bridge_data.allow_unsafe_ip = bd.allow_unsafe_ip
+        except AttributeError:
+            pass
     except:
-        class temp(object):
-            def __init__(self):
-                random.seed()
-                self.horde_url = "https://stablehorde.net"
-                # Give a cool name to your instance
-                self.worker_name = f"Automated Instance #{random.randint(-100000000, 100000000)}"
-                # The api_key identifies a unique user in the horde
-                self.api_key = "0000000000"
-                # Put other users whose prompts you want to prioritize.
-                # The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
-                self.priority_usernames = []
-                self.max_power = 8
-                self.nsfw = True
-                self.censor_nsfw = False
-                self.blacklist = []
-                self.censorlist = []
-                self.models_to_load = ["stable_diffusion"]
         logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account")
-        bd = temp()
-    return(bd)
+    if args.api_key: bridge_data.api_key = args.api_key 
+    if args.worker_name: bridge_data.worker_name = args.worker_name 
+    if args.horde_url: bridge_data.horde_url = args.horde_url 
+    if args.priority_usernames: bridge_data.priority_usernames = args.priority_usernames 
+    if args.max_power: bridge_data.max_power = args.max_power 
+    if args.model: bridge_data.model = [args.model] 
+    if args.sfw: bridge_data.nsfw = False
+    if args.censor_nsfw: bridge_data.censor_nsfw = args.censor_nsfw
+    if args.blacklist: bridge_data.blacklist = args.blacklist
+    if args.censorlist: bridge_data.censorlist = args.censorlist
+    if args.allow_img2img: bridge_data.allow_img2img = args.allow_img2img
+    if args.allow_unsafe_ip: bridge_data.allow_unsafe_ip = args.allow_unsafe_ip
+    if bridge_data.max_power < 2:
+        bridge_data.max_power = 2
+    bridge_data.max_pixels = 64*64*8*bridge_data.max_power
+    return(bridge_data)
 
 if __name__ == "__main__":
     
@@ -294,44 +352,19 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     bd = load_bridge_data()
     # test_logger()
-    api_key = args.api_key if args.api_key else bd.api_key
-    worker_name = args.worker_name if args.worker_name else bd.worker_name
-    horde_url = args.horde_url if args.horde_url else bd.horde_url
-    priority_usernames = args.priority_usernames if args.priority_usernames else bd.priority_usernames
-    max_power = args.max_power if args.max_power else bd.max_power
-    model_names = [args.model] if args.model else bd.models_to_load
-    check_models(model_names)
+    check_models(bd.model_names)
     model_manager = ModelManager()
     model_manager.init()
-    for model in model_names:
+    for model in bd.model_names:
         logger.init(f'{model}', status="Loading")
         success = model_manager.load_model(model)
         if success:
             logger.init_ok(f'{model}', status="Loaded")
         else:
             logger.init_err(f'{model}', status="Error")
+    logger.init(f"API Key '{bd.api_key}'. Server Name '{bd.worker_name}'. Horde URL '{bd.horde_url}'. Max Pixels {bd.max_pixels}", status="Joining Horde")
     try:
-        nsfw = not args.sfw if args.sfw else bd.nsfw 
-    except AttributeError:
-        nsfw = True
-    try:
-        censor_nsfw = args.censor_nsfw if args.censor_nsfw else bd.censor_nsfw
-    except AttributeError:
-        censor_nsfw = False
-    try:
-        blacklist = args.blacklist if args.blacklist else bd.blacklist
-    except AttributeError:
-        blacklist = []
-    try:
-        censorlist = args.censorlist if args.censorlist else bd.censorlist
-    except AttributeError:
-        censorlist = []
-    if max_power < 2:
-        max_power = 2
-    max_pixels = 64*64*8*max_power
-    logger.init(f"API Key '{api_key}'. Server Name '{worker_name}'. Horde URL '{horde_url}'. Max Pixels {max_pixels}", status="Joining Horde")
-    try:
-        bridge(args.interval, api_key, worker_name, horde_url, model_manager, priority_usernames, max_pixels, nsfw, censor_nsfw, blacklist, censorlist)
+        bridge(args.interval, model_manager, bd)
     except KeyboardInterrupt:
         logger.info(f"Keyboard Interrupt Received. Ending Process")
     logger.init(f"{worker_name} Instance", status="Stopped")
