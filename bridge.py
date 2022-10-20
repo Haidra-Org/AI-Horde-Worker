@@ -248,7 +248,9 @@ def check_models(models):
         elif choice in ['y', 'Y', '', 'yes']:
             for model in not_found_models:
                 logger.init(f"Model: {model}", status="Downloading")
-                mm.download_model(model)
+                if not mm.download_model(model):
+                    logger.message("Something went wrong when downloading the model and it does not fit the expected checksum. Please check that your HuggingFace authentication is correct and that you've accepted the model license from the browser.")
+                    sys.exit(0)
     logger.init_ok("Models", status="OK")
     if exists('./bridgeData.py'):
         logger.init_ok("Bridge Config", status="OK")
