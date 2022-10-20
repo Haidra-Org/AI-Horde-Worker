@@ -23,7 +23,11 @@ blacklist = []
 censorlist = []
 # The models to use. You can select a different main model, or select more than one if you have enough VRAM
 # The last model in this list takes priority when the client accepts more than 1
+# if you do not know which models you can add here, use the below command
+# python show_available_models.py
 models_to_load = [
     "stable_diffusion"
+    # "trinart"
+    # "Furry Epoch"
     # "waifu_diffusion"
 ]
