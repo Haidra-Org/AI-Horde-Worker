@@ -21,6 +21,10 @@ censor_nsfw = False
 blacklist = []
 # A list of words for which you always want to allow the NSFW censor filter, even when this worker is in NSFW mode
 censorlist = []
+# If set to False, this worker will no longer pick img2img jobs
+allow_img2img = True
+# If set to False, this worker will no longer pick img2img jobs from unsafe IPs
+allow_unsafe_ip = True
 # The models to use. You can select a different main model, or select more than one if you have enough VRAM
 # The last model in this list takes priority when the client accepts more than 1
 # if you do not know which models you can add here, use the below command
