@@ -3,6 +3,37 @@
     "name": "stable_diffusion",
     "type": "ckpt",
     "description": "Generalist AI image generating model. The baseline for all finetuned models.",
+    "version": "1.5",
+    "style": "generalist",
+    "nsfw": false,
+    "download_all": true,
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/ldm/stable-diffusion-v1/model_1_5.ckpt"
+        },
+        {
+          "path": "configs/stable-diffusion/v1-inference.yaml"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "model_1_5.ckpt",
+          "file_path": "models/ldm/stable-diffusion-v1",
+          "file_url": "https://{username}:{password}@huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt",
+          "hf_auth": true
+        }
+      ]
+    },
+    "available": false
+  },  
+  "stable_diffusion_1.4": {
+    "name": "stable_diffusion",
+    "type": "ckpt",
+    "description": "Generalist AI image generating model. The baseline for all finetuned models.",
     "version": "1.4",
     "style": "generalist",
     "nsfw": false,
