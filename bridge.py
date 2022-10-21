@@ -35,27 +35,27 @@ max_content_length = 1024
 max_length = 80
 current_softprompt = None
 softprompts = {}
-
+import os
 
 class BridgeData(object):
     def __init__(self):
         random.seed()
-        self.horde_url = "https://stablehorde.net"
+        self.horde_url =os.environ.get("HORDE_URL", "https://stablehorde.net")
         # Give a cool name to your instance
-        self.worker_name = f"Automated Instance #{random.randint(-100000000, 100000000)}"
+        self.worker_name = os.environ.get("HORDE_WORKER_NAME", f"Automated Instance #{random.randint(-100000000, 100000000)}")
         # The api_key identifies a unique user in the horde
-        self.api_key = "0000000000"
+        self.api_key = os.environ.get("HORDE_API_KEY", "0000000000")
         # Put other users whose prompts you want to prioritize.
         # The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
-        self.priority_usernames = []
-        self.max_power = 8
-        self.nsfw = True
-        self.censor_nsfw = False
-        self.blacklist = []
-        self.censorlist = []
-        self.allow_img2img = True
-        self.allow_unsafe_ip = True
-        self.model_names = ["stable_diffusion"]
+        self.priority_usernames =  list(filter(lambda a : a,os.environ.get("HORDE_PRIORITY_USERNAMES", "").split(",")))
+        self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
+        self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
+        self.censor_nsfw =  os.environ.get("HORDE_CENSOR", "false") == "true"
+        self.blacklist = list(filter(lambda a : a,os.environ.get("HORDE_BLACKLIST", "").split(",")))
+        self.censorlist =  list(filter(lambda a : a,os.environ.get("HORDE_CENSORLIST", "").split(",")))
+        self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
+        self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
+        self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64*64*8*self.max_power
 
 
