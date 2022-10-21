@@ -367,4 +367,4 @@ if __name__ == "__main__":
         bridge(args.interval, model_manager, bd)
     except KeyboardInterrupt:
         logger.info(f"Keyboard Interrupt Received. Ending Process")
-    logger.init(f"{worker_name} Instance", status="Stopped")
+    logger.init(f"{bd.worker_name} Instance", status="Stopped")
