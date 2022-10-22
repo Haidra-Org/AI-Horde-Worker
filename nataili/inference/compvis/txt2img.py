@@ -81,6 +81,11 @@ class txt2img:
         image_dict = {
             "seed": seed
         }
+        
+        if '###' in prompt:
+            prompt, negprompt = prompt.split('###', 1)
+            prompt = prompt.strip()
+            negprompt = negprompt.strip()
 
         if sampler_name == 'PLMS':
             sampler = PLMSSampler(self.model)
@@ -137,7 +142,7 @@ class txt2img:
                 prompts = all_prompts[n * batch_size:(n + 1) * batch_size]
                 seeds = all_seeds[n * batch_size:(n + 1) * batch_size]
 
-                uc = self.model.get_learned_conditioning(len(prompts) * [''])
+                uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
 
                 if isinstance(prompts, tuple):
                     prompts = list(prompts)
