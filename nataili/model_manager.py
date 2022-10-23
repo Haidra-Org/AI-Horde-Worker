@@ -24,8 +24,8 @@ logging.set_verbosity_error()
 
 models = json.load(open('./db.json'))
 dependencies = json.load(open('./db_dep.json'))
-remote_models = "https://raw.githubusercontent.com/db0/nataili-model-reference/main/db.json"
-remote_dependencies = "https://raw.githubusercontent.com/db0/nataili-model-reference/main/db_dep.json"
+remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json"
+remote_dependencies = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db_dep.json"
 
 class ModelManager():
     def __init__(self, hf_auth=None, download=True):
