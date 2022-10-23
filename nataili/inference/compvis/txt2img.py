@@ -81,7 +81,7 @@ class txt2img:
         image_dict = {
             "seed": seed
         }
-        
+        negprompt = ''
         if '###' in prompt:
             prompt, negprompt = prompt.split('###', 1)
             prompt = prompt.strip()
