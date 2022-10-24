@@ -261,7 +261,7 @@ def check_models(models):
         for model in not_found_models:
             dl = mm.get_model_download(model)
             for m in dl:
-                if 'huggingface.co' in m['file_url']:
+                if m.get('hf_auth', False):
                     needs_hf = True
         if needs_hf or choice in ['all', 'a']:
             try:

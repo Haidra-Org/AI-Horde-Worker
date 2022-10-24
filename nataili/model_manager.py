@@ -14,6 +14,7 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 from gfpgan import GFPGANer
 from realesrgan import RealESRGANer
 from ldm.models.blip import blip_decoder
+from tqdm import tqdm
 import open_clip
 import clip
 
@@ -275,11 +276,18 @@ class ModelManager():
     def download_file(self, url, file_path):
         # make directory
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        pbar_desc = file_path.split('/')[-1]
         r = requests.get(url, stream=True)
         with open(file_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=16*1024):
-                if chunk:
-                    f.write(chunk)
+            with tqdm(
+                # all optional kwargs
+                unit='B', unit_scale=True, unit_divisor=1024, miniters=1,
+                desc=pbar_desc, total=int(r.headers.get('content-length', 0))
+            ) as pbar:
+                for chunk in r.iter_content(chunk_size=16*1024):
+                    if chunk:
+                        f.write(chunk)
+                        pbar.update(len(chunk))                        
 
     def download_model(self, model_name):
         if model_name in self.available_models:
