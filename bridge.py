@@ -244,7 +244,7 @@ def check_models(models):
     not_found_models = []
     for model in models:
         if not mm.get_model(model):
-            logger.err(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
+            logger.error(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
             sys.exit(1)
         if not mm.validate_model(model):
             models_exist = False
