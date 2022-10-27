@@ -76,6 +76,8 @@ def bridge(interval, model_manager, bd):
         elif current_id:
             logger.debug(f"Retrying ({loop_retry}/10) for generation id {current_id}...")
         available_models = model_manager.get_loaded_models_names()
+        if "safety_checker" in available_models:
+            available_models.remove("safety_checker")
         gen_dict = {
             "name": bd.worker_name,
             "max_pixels": bd.max_pixels,
@@ -345,6 +347,7 @@ def load_bridge_data():
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
     bridge_data.max_pixels = 64*64*8*bridge_data.max_power
+    bridge_data.model_names.append('safety_checker')
     return(bridge_data)
 
 if __name__ == "__main__":
@@ -358,7 +361,7 @@ if __name__ == "__main__":
     check_models(bd.model_names)
     model_manager = ModelManager()
     model_manager.init()
-    for model in bd.model_names + ['safety_checker']:
+    for model in bd.model_names:
         logger.init(f'{model}', status="Loading")
         success = model_manager.load_model(model)
         if success:
