@@ -19,7 +19,7 @@ from nataili.util.load_learned_embed_in_clip import load_learned_embed_in_clip
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 from slugify import slugify
-from nataili.util.logger import logger
+from nataili.util import logger
 
 class txt2img:
     def __init__(self, model, device, output_dir, save_extension='jpg',

@@ -668,7 +668,8 @@
     "config": {
       "files": [
         {
-          "path": "models/safety_checker/pytorch_model.bin"
+          "path": "models/safety_checker/pytorch_model.bin",
+          "md5sum": "dbbcb50d4df4572a720b104fae1e8187"
         },
         {
           "path": "models/safety_checker/config.json"

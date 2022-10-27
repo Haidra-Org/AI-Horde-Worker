@@ -24,7 +24,7 @@ from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
 from nataili.inference.compvis.txt2img import txt2img
 from nataili.util.cache import torch_gc
-from nataili.util import logger,set_logger_verbosity, quiesce_logger, test_logger
+from nataili.util import logger, set_logger_verbosity, quiesce_logger
 from PIL import Image, ImageFont, ImageDraw, ImageFilter, ImageOps, ImageChops, UnidentifiedImageError
 from io import BytesIO
 from base64 import binascii
@@ -165,13 +165,16 @@ def bridge(interval, model_manager, bd):
             req_type = "img2img"
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
+            safety_checker = model_manager.loaded_models['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
             if source_image:
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
                 gen_payload['init_img'] = Image.open(BytesIO(img_bytes))
-                generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
+                generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             else:
-                generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
+                generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
         except KeyError:
             continue
         # If the received image is unreadable, we continue
@@ -280,7 +283,7 @@ def check_models(models):
                 logger.init(f"Model: {model}", status="Downloading")
                 if not mm.download_model(model):
                     logger.message("Something went wrong when downloading the model and it does not fit the expected checksum. Please check that your HuggingFace authentication is correct and that you've accepted the model license from the browser.")
-                    sys.exit(0)
+                    sys.exit(1)
     logger.init_ok("Models", status="OK")
     if exists('./bridgeData.py'):
         logger.init_ok("Bridge Config", status="OK")
@@ -289,7 +292,7 @@ def check_models(models):
             for line in firstfile:
                 secondfile.write(line)
         logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
-        sys.exit(0)
+        sys.exit(2)
     
 def load_bridge_data():
     bridge_data = BridgeData()
@@ -342,6 +345,7 @@ def load_bridge_data():
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
     bridge_data.max_pixels = 64*64*8*bridge_data.max_power
+    bridge_data.model_names.append('safety_checker')
     return(bridge_data)
 
 if __name__ == "__main__":

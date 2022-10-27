@@ -22,7 +22,7 @@ from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 from slugify import slugify
 import PIL
-from nataili.util.logger import logger
+from nataili.util import logger
 
 
 class img2img:

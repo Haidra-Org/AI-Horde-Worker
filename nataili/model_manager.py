@@ -362,8 +362,8 @@ class ModelManager():
                 if not self.check_file_available(file_path) or model_name in self.tainted_models:
                     logger.debug(f'Downloading {download_url} to {file_path}')
                     self.download_file(download_url, file_path)
-                    if not self.validate_model(model_name):
-                        return False
+        if not self.validate_model(model_name):
+            return False
         if model_name in self.tainted_models:
             self.tainted_models.remove(model_name)
         self.init()
