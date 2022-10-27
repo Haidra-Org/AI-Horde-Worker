@@ -85,7 +85,7 @@
       "files": [
         {
           "path": "models/custom/waifu-diffusion.ckpt",
-          "md5sum": "a2aa170e3f513b32a3fd8841656e0123"
+          "md5sum": "dc688dc907c953532c659374e7ddf1e4"
         },
         {
           "path": "configs/stable-diffusion/v1-inference.yaml"
@@ -95,7 +95,7 @@
         {
           "file_name": "waifu-diffusion.ckpt",
           "file_path": "models/custom",
-          "file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-full.ckpt"
+          "file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-float32.ckpt"
         }
       ]
     },
