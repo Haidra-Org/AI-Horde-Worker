@@ -9,6 +9,7 @@ import numpy as np
 import PIL
 import torch
 from einops import rearrange
+from transformers import CLIPFeatureExtractor
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
@@ -21,12 +22,13 @@ from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 from slugify import slugify
 import PIL
+from nataili.util.logger import logger
 
 
 class img2img:
     def __init__(self, model, device, output_dir, save_extension='jpg',
     output_file_path=False, load_concepts=False, concepts_dir=None,
-    verify_input=True, auto_cast=True):
+    verify_input=True, auto_cast=True, filter_nsfw=False, safety_checker=None):
         self.model = model
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -41,6 +43,9 @@ class img2img:
         self.info = ''
         self.stats = ''
         self.images = []
+        self.filter_nsfw = filter_nsfw
+        self.safety_checker = safety_checker
+        self.feature_extractor = CLIPFeatureExtractor()
 
     def create_random_tensors(self, shape, seeds):
         xs = []
@@ -520,6 +525,15 @@ class img2img:
                     x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                     x_sample = x_sample.astype(np.uint8)
                     image = PIL.Image.fromarray(x_sample)
+                    if self.safety_checker is not None and self.filter_nsfw:
+                        image_features = self.feature_extractor(image, return_tensors="pt").to(self.device)
+                        output_images, has_nsfw_concept = self.safety_checker(
+                            clip_input=image_features.pixel_values, images=x_sample
+                        )
+                        if has_nsfw_concept:
+                            logger.info(f"Image {filename} has NSFW concept")
+                            image = output_images[0]
+                            image = PIL.Image.fromarray(image)
                     image_dict['image'] = image
                     self.images.append(image_dict)
 
