@@ -345,7 +345,6 @@ def load_bridge_data():
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
     bridge_data.max_pixels = 64*64*8*bridge_data.max_power
-    bridge_data.model_names.append('safety_checker')
     return(bridge_data)
 
 if __name__ == "__main__":
@@ -359,7 +358,7 @@ if __name__ == "__main__":
     check_models(bd.model_names)
     model_manager = ModelManager()
     model_manager.init()
-    for model in bd.model_names:
+    for model in bd.model_names + ['safety_checker']:
         logger.init(f'{model}', status="Loading")
         success = model_manager.load_model(model)
         if success:
