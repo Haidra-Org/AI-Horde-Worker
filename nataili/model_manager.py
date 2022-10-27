@@ -17,6 +17,7 @@ from ldm.models.blip import blip_decoder
 from tqdm import tqdm
 import open_clip
 import clip
+from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 
 from nataili.util.cache import torch_gc
 from nataili.util import logger
@@ -43,6 +44,9 @@ class ModelManager():
                 self.models = json.load(open('./db.json'))
                 self.dependencies = json.load(open('./db_dep.json'))
                 logger.init_warn("Model Reference", status="Local")
+        else:
+            self.models = json.load(open('./db.json'))
+            self.dependencies = json.load(open('./db_dep.json'))
         self.available_models = []
         self.tainted_models = []
         self.available_dependencies = []
@@ -238,8 +242,18 @@ class ModelManager():
         elif self.models[model_name]['type'] == 'clip':
             self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id)
             return True
+        elif self.models[model_name]['type'] == 'safety_checker':
+            self.loaded_models[model_name] = self.load_safety_checker(model_name, gpu_id)
+            return True
         else:
             return False
+
+    def load_safety_checker(self, model_name='', gpu_id=0):
+        model_path = os.path.dirname(self.get_model_files(model_name)[0]['path'])
+        device = torch.device(f"cuda:{gpu_id}")
+        model = StableDiffusionSafetyChecker.from_pretrained(model_path)
+        model = model.eval().to(device)
+        return {'model': model, 'device': device}
 
     def validate_model(self, model_name):
         files = self.get_model_files(model_name)

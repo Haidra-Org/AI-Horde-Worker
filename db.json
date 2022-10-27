@@ -660,5 +660,40 @@
       
     },
     "available": false
+  },
+  "safety_checker": {
+    "name": "safety_checker",
+    "type": "safety_checker",
+    "description": "Safety checker",
+    "config": {
+      "files": [
+        {
+          "path": "models/safety_checker/pytorch_model.bin"
+        },
+        {
+          "path": "models/safety_checker/config.json"
+        },
+        {
+          "path": "models/safety_checker/preprocessor_config.json"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "pytorch_model.bin",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/pytorch_model.bin"
+        },
+        {
+          "file_name": "config.json",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/config.json"
+        },
+        {
+          "file_name": "preprocessor_config.json",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/preprocessor_config.json"
+        }
+      ]
+    }
   }
 }

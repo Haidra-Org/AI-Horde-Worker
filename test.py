@@ -30,6 +30,12 @@ logger.init(f'{models_to_load}', status="Loading")
 
 @logger.catch
 def test():
+    tic = time.time()
+    model = 'safety_checker'
+    logger.init(f'Model: {model}', status="Loading")
+    success = mm.load_model(model)
+    toc = time.time()
+    logger.init_ok(f'Loading {model}: Took {toc-tic} seconds', status=success)
     for model in models_to_load:
         torch_gc()
         tic = time.time()
@@ -50,11 +56,18 @@ def test():
 
             torch_gc()
 
-            logger.info(f'Testing img2img with prompt "cute <nvidiafu> girl"')
+            logger.info(f'Testing nsfw filter with prompt "boobs"')
 
-            i2i = img2img(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], 'test_output', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
+            t2i = txt2img(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], 'test_output', filter_nsfw=True, safety_checker=mm.loaded_models['safety_checker']['model'])
+            t2i.generate('boobs')
+
+            torch_gc()
+
+            logger.info(f'Testing img2img with prompt "cute anime girl"')
+
+            i2i = img2img(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], 'test_output')
             init_img = PIL.Image.open(init_img)
-            i2i.generate('cute <nvidiafu> girl', init_image)
+            i2i.generate('cute anime girl', init_image)
             torch_gc()
 
         logger.init_ok(f'Model {model}', status="Unloading")
