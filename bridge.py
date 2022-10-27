@@ -347,7 +347,8 @@ def load_bridge_data():
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
     bridge_data.max_pixels = 64*64*8*bridge_data.max_power
-    bridge_data.model_names.append('safety_checker')
+    if bridge_data.censor_nsfw or len(bridge_data.censorlist):
+        bridge_data.model_names.append('safety_checker')
     return(bridge_data)
 
 if __name__ == "__main__":
