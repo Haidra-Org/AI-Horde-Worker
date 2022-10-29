@@ -190,7 +190,7 @@ def bridge(interval, model_manager, bd):
                 img_mask = Image.open(BytesIO(img_bytes))
                 if img_mask.size != img_source.size:
                     logger.warning(f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}")
-                    img_mask.resize(img_source.size)
+                    img_mask = img_mask.resize(img_source.size)
             if req_type == "img2img":
                 gen_payload['init_img'] = img_source
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
