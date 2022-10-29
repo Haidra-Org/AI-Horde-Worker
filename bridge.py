@@ -19,6 +19,7 @@ arg_parser.add_argument('--debug', action="store_true", default=False, help="Sho
 arg_parser.add_argument('-v', '--verbosity', action='count', default=0, help="The default logging level is ERROR or higher. This value increases the amount of logging seen in your screen")
 arg_parser.add_argument('-q', '--quiet', action='count', default=0, help="The default logging level is ERROR or higher. This value decreases the amount of logging seen in your screen")
 arg_parser.add_argument('--log_file', action='store_true', default=False, help="If specified will dump the log to the specified file")
+arg_parser.add_argument('--skip_md5', action='store_true', default=False, help="If specified will not check the downloaded model md5sum.")
 args = arg_parser.parse_args()
 
 from nataili.inference.diffusers.inpainting import inpainting
@@ -294,7 +295,7 @@ def check_models(models, mm):
         if not model_info:
             logger.error(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
             sys.exit(1)
-        if not mm.validate_model(model):
+        if not args.skip_md5 and not mm.validate_model(model):
             models_exist = False
             not_found_models.append(model)
         # Diffusers library uses its own internal download mechanism
