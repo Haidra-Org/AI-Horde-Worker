@@ -19,6 +19,7 @@ import open_clip
 import clip
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers import StableDiffusionInpaintPipeline
+from nataili.util.voodoo import push_model_to_plasma, load_from_plasma
 
 from nataili.util.cache import torch_gc
 from nataili.util import logger
@@ -180,7 +181,7 @@ class ModelManager():
         config_path = self.get_model_files(model_name)[1]['path']
         model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
         device = torch.device(f"cuda:{gpu_id}")
-        model = (model if precision=='full' else model.half()).to(device)
+        model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
         torch_gc()
         return {'model': model, 'device': device}
     
