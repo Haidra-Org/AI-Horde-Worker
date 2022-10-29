@@ -45,4 +45,6 @@ For more information, see: https://github.com/db0/AI-Horde/blob/main/README_Stab
 
 The bridge has experimental inpainting support via Diffusers library. This **can** work in parallel with the compvis/ckpt implementation, but it is not suggested unless you have plenty of VRAM to spare.
 
+**run `update-runtime.cmd` or `update-runtime.sh` as dependencies have been updated**
+
 To set your worker to serve inpainting, add "stable_diffusion_inpainting" into your bridgeData's models_to_load list. The rest will be handled automatically. Workers without this model will not receive inpainting requests. Workers with **just** this model will **not** receive any requests **other** than inpainting! This will be fixed as soon as Diffusers are supported fully.
