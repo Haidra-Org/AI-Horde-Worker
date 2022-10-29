@@ -196,9 +196,9 @@ def bridge(interval, model_manager, bd):
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             elif req_type == "inpainting" or req_type == "outpainting":
-                del gen_payload["save_grid"]
-                del gen_payload["sampler_name"]
-                del gen_payload["denoising_strength"]
+                if "save_grid" in gen_payload: del gen_payload["save_grid"]
+                if "sampler_name" in gen_payload: del gen_payload["sampler_name"]
+                if "denoising_strength" in gen_payload: del gen_payload["denoising_strength"]
                 gen_payload['inpaint_img'] = img_source
 
                 if img_mask:

@@ -133,7 +133,9 @@ class inpainting:
                  guidance_scale=cfg_scale,
                  num_inference_steps=ddim_steps,
                  generator=generator,
-                 num_images_per_prompt=n_iter
+                 num_images_per_prompt=n_iter,
+                 width=width,
+                 height=height                 
               ).images
 
               for i, x_sample in enumerate(x_samples):
