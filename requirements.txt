@@ -15,7 +15,8 @@ omegaconf==2.2.3
 # see https://github.com/pallets/markupsafe/issues/304
 Jinja2==3.1.2  # Jinja2 is required by Gradio
 
-diffusers==0.4.1
+#diffusers==0.4.1
+diffusers==0.6.0
 
 # Img2text
 ftfy==6.1.1
@@ -47,7 +48,8 @@ realesrgan==0.3.0
 test-tube>=0.7.5
 timm==0.6.7
 torch-fidelity==0.3.0
-transformers==4.19.2 # do not change
+#transformers==4.19.2 # do not change
+transformers
 wget
 
 # Optional packages commonly used with Stable Diffusion workflow

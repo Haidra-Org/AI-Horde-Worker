@@ -12,6 +12,7 @@ arg_parser.add_argument('--blacklist', nargs='+', required=False, help="List the
 arg_parser.add_argument('--censorlist', nargs='+', required=False, help="List the words that you want to censor.")
 arg_parser.add_argument('--censor_nsfw', action='store_true', required=False, help="Set to true if you want this bridge worker to censor NSFW images.")
 arg_parser.add_argument('--allow_img2img', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img request.")
+arg_parser.add_argument('--allow_painting', action='store_true', required=False, help="Set to true if you want this bridge worker to allow inpainting/outpainting requests.")
 arg_parser.add_argument('--allow_unsafe_ip', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img requests from unsafe IPs.")
 arg_parser.add_argument('-m', '--model', action='store', required=False, help="Which model to run on this horde.")
 arg_parser.add_argument('--debug', action="store_true", default=False, help="Show debugging messages.")
@@ -20,6 +21,7 @@ arg_parser.add_argument('-q', '--quiet', action='count', default=0, help="The de
 arg_parser.add_argument('--log_file', action='store_true', default=False, help="If specified will dump the log to the specified file")
 args = arg_parser.parse_args()
 
+from nataili.inference.diffusers.inpainting import inpainting
 from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
 from nataili.inference.compvis.txt2img import txt2img
@@ -54,6 +56,7 @@ class BridgeData(object):
         self.blacklist = list(filter(lambda a : a,os.environ.get("HORDE_BLACKLIST", "").split(",")))
         self.censorlist =  list(filter(lambda a : a,os.environ.get("HORDE_CENSORLIST", "").split(",")))
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
+        self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64*64*8*self.max_power
@@ -86,8 +89,9 @@ def bridge(interval, model_manager, bd):
             "blacklist": bd.blacklist,
             "models": available_models,
             "allow_img2img": bd.allow_img2img,
+            "allow_painting": bd.allow_painting,
             "allow_unsafe_ip": bd.allow_unsafe_ip,
-            "bridge_version": 3,
+            "bridge_version": 4,
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
@@ -141,7 +145,9 @@ def bridge(interval, model_manager, bd):
             use_nsfw_censor = True
         use_gfpgan = current_payload.get("use_gfpgan", True)
         use_real_esrgan = current_payload.get("use_real_esrgan", False)
+        source_processing = pop.get("source_processing")
         source_image = pop.get("source_image")
+        source_mask = pop.get("source_mask")
         # These params will always exist in the payload from the horde
         gen_payload = {
             "prompt": current_payload["prompt"],
@@ -164,16 +170,39 @@ def bridge(interval, model_manager, bd):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
-            req_type = "img2img"
+           if source_processing == "img2img":
+              req_type = "img2img"
+           elif source_processing == "inpainting":
+              req_type = "inpainting"
+           if source_processing == "outpainting":
+              req_type = "outpainting"
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
             safety_checker = model_manager.loaded_models['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
             if source_image:
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
-                gen_payload['init_img'] = Image.open(BytesIO(img_bytes))
+                img_source = Image.open(BytesIO(img_bytes))
+                
+            if source_mask:
+                base64_bytes = source_mask.encode('utf-8')
+                img_bytes = base64.b64decode(base64_bytes)
+                img_mask = Image.open(BytesIO(img_bytes))
+
+            if req_type == "img2img":
+                gen_payload['init_img'] = img_source
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
+            elif req_type == "inpainting" or req_type == "outpainting":
+                del gen_payload["save_grid"]
+                del gen_payload["sampler_name"]
+                del gen_payload["denoising_strength"]
+                gen_payload['inpaint_img'] = img_source
+
+                if img_mask:
+                   gen_payload['inpaint_mask'] = img_mask
+
+                generator = inpainting(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations')
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
@@ -239,21 +268,36 @@ def bridge(interval, model_manager, bd):
                 continue
         time.sleep(interval)
 
+def check_mm_auth(model_manager):
+    if model_manager.has_authentication():
+        return
+    try:
+        from creds import hf_username,hf_password
+    except:
+        hf_username = input("Please type your huggingface.co username: ")
+        hf_password = input("Please type your huggingface.co Access Token or password: ")
+    hf_auth = {"username": hf_username, "password": hf_password}
+    model_manager.set_authentication(hf_auth=hf_auth)
+
+
 @logger.catch(reraise=True)
-def check_models(models):
+def check_models(models, mm):
     logger.init("Models", status="Checking")
     from os.path import exists
     import sys
-    mm = ModelManager()
     models_exist = True
     not_found_models = []
     for model in models:
-        if not mm.get_model(model):
+        model_info = mm.get_model(model)
+        if not model_info:
             logger.error(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
             sys.exit(1)
         if not mm.validate_model(model):
             models_exist = False
             not_found_models.append(model)
+        # Diffusers library uses its own internal download mechanism
+        if model_info['type'] == 'diffusers' and model_info['hf_auth']:
+            check_mm_auth(mm)
     if not models_exist:
         choice = input(f"You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. Would you like to download your prespecified models?\n\
         y: Download {not_found_models} (default).\n\
@@ -268,14 +312,10 @@ def check_models(models):
             for m in dl:
                 if m.get('hf_auth', False):
                     needs_hf = True
-        if needs_hf or choice in ['all', 'a']:
-            try:
-                from creds import hf_username,hf_password
-            except:
-                hf_username = input("Please type your huggingface.co username: ")
-                hf_password = input("Please type your huggingface.co Access Token or password: ")
-            hf_auth = {"username": hf_username, "password": hf_password}
-            mm.set_authentication(hf_auth=hf_auth)
+        if choice in ['all', 'a']:
+            needs_hf = True
+        if needs_hf:
+            check_mm_auth(mm)
         mm.init()
         mm.taint_models(not_found_models)
         if choice in ['all', 'a']:
@@ -296,6 +336,7 @@ def check_models(models):
         logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
         sys.exit(2)
     
+@logger.catch(reraise=True)
 def load_bridge_data():
     bridge_data = BridgeData()
     try:
@@ -327,6 +368,10 @@ def load_bridge_data():
         except AttributeError:
             pass
         try:
+            bridge_data.allow_painting = bd.allow_painting
+        except AttributeError:
+            pass
+        try:
             bridge_data.allow_unsafe_ip = bd.allow_unsafe_ip
         except AttributeError:
             pass
@@ -343,6 +388,7 @@ def load_bridge_data():
     if args.blacklist: bridge_data.blacklist = args.blacklist
     if args.censorlist: bridge_data.censorlist = args.censorlist
     if args.allow_img2img: bridge_data.allow_img2img = args.allow_img2img
+    if args.allow_painting: bridge_data.allow_painting = args.allow_painting
     if args.allow_unsafe_ip: bridge_data.allow_unsafe_ip = args.allow_unsafe_ip
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
@@ -359,8 +405,8 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     bd = load_bridge_data()
     # test_logger()
-    check_models(bd.model_names)
     model_manager = ModelManager()
+    check_models(bd.model_names, model_manager)
     model_manager.init()
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")

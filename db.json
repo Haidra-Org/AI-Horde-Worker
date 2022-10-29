@@ -632,33 +632,11 @@
     },
     "available": false
   },
-  "diffusers_stable_diffusion": {
-    "name": "diffusers_stable_diffusion",
+  "stable_diffusion_inpainting": {
+    "name": "stable_diffusion_inpainting",
     "type": "diffusers",
-    "requires": [
-      "clip-vit-large-patch14"
-    ],
-    "config": {
-      "files": [
-        {
-          "path": "models/diffusers/"
-        }
-      ],
-      "download": [
-        {
-          "file_name": "diffusers_stable_diffusion",
-          "file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v1-4.git",
-          "git": true,
-          "hf_auth": true,
-          "post_process": [
-            {
-              "delete": "models/diffusers/stable-diffusion-v1-4/.git"
-            }
-          ]
-        }
-      ]
-      
-    },
+    "hf_path": "runwayml/stable-diffusion-inpainting",
+    "hf_auth": true,
     "available": false
   },
   "safety_checker": {
