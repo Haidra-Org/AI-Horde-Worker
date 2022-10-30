@@ -1,1 +1,1 @@
-./runtime.sh python bridge.py
+./runtime.sh python bridge.py $*
