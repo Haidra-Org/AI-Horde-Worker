@@ -22,6 +22,7 @@ else:
 from numba import cuda as ncuda
 device = ncuda.get_current_device()
 
+xformers_available = False
 logger.init("xformers optimizations", status="Checking")
 if (7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0):
     xformers_available = importlib.util.find_spec("xformers") is not None
