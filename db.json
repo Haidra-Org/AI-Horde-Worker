@@ -480,7 +480,7 @@
         {
           "file_name": "xynthii_fp16.ckpt",
           "file_path": "models/custom",
-          "file_url": "https://huggingface.co/hlky/xynthii-diffusion/resolve/main/models/xynthii_fp16.ckpt"
+          "file_url": "https://huggingface.co/hlky/xynthii-diffusion/resolve/main/xynthii_fp16.ckpt"
         }
       ]
     },
