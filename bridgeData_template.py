@@ -43,7 +43,7 @@ models_to_load = [
     # "Spier-Verse Diffusion",
     # "Elden Ring Diffusion",
     # "Robo-Diffusion",
-    # "Modern Disney Diffusion",
+    # "mo-di-diffusion",
 
     # "stable_diffusion_inpainting", # Enable this to allow inpainting/outpainting. Careful of trying to enable this in tandem with other models if you have 8G or less VRAM!
 ]

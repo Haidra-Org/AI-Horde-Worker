@@ -1,6 +1,6 @@
 This repository provides python libraries for running Stable Diffusion
 
-Sample use: 
+Sample use:
 
 ```python
 from nataili.model_manager import ModelManager
@@ -10,7 +10,7 @@ from nataili.util.cache import torch_gc
 # The model manager loads and unloads the SD models and has features to download them or find their location
 model_manager = ModelManager()
 model_manager.init()
-# The model to use for the generation. 
+# The model to use for the generation.
 model = "stable_diffusion"
 success = model_manager.load_model(model)
 if success:
@@ -48,3 +48,6 @@ The bridge has experimental inpainting support via Diffusers library. This **can
 **run `update-runtime.cmd` or `update-runtime.sh` as dependencies have been updated**
 
 To set your worker to serve inpainting, add "stable_diffusion_inpainting" into your bridgeData's models_to_load list. The rest will be handled automatically. Workers without this model will not receive inpainting requests. Workers with **just** this model will **not** receive any requests **other** than inpainting! This will be fixed as soon as Diffusers are supported fully.
+
+## Model Usage
+Many models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)

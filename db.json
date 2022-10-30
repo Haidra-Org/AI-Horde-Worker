@@ -30,7 +30,7 @@
       ]
     },
     "available": false
-  },  
+  },
   "stable_diffusion_1.4": {
     "name": "stable_diffusion_1.4",
     "type": "ckpt",
@@ -219,6 +219,37 @@
           "file_name": "trinart.ckpt",
           "file_path": "models/custom",
           "file_url": "https://huggingface.co/naclbit/trinart_stable_diffusion_v2/resolve/main/trinart2_step95000.ckpt"
+        }
+      ]
+    },
+    "available": false
+  },
+  "mo-di-diffusion": {
+    "name": "mo-di-diffusion",
+    "type": "ckpt",
+    "description": "Popular animation studio styled generations.",
+    "version": "1",
+    "style": "dreambooth",
+    "nsfw": false,
+    "download_all": true,
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/custom/mo-di-diffusion.ckpt",
+          "md5sum": "393f79603e5cab05307670d0f71a5193"
+        },
+        {
+          "path": "configs/stable-diffusion/v1-inference.yaml"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "mo-di-diffusion.ckpt",
+          "file_path": "models/custom",
+          "file_url": "https://huggingface.co/nitrosocke/mo-di-diffusion/resolve/main/moDi-v1-pruned.ckpt"
         }
       ]
     },
