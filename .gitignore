@@ -169,3 +169,5 @@ z_version_env.tmp
 custom-conda-path.txt
 bridgeData.py
 src/taming-transformers
+
+/xformers-*

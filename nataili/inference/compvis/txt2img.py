@@ -299,4 +299,4 @@ class txt2img:
 
         del sampler
 
-        return
+        return 

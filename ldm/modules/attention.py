@@ -2,12 +2,44 @@ from inspect import isfunction
 import math
 import torch
 import torch.nn.functional as F
+import importlib
+import sys
 from torch import nn, einsum
 from einops import rearrange, repeat
+from typing import Optional, Any
+from nataili.util import logger
+
 
 from ldm.modules.diffusionmodules.util import checkpoint
 
 import psutil
+
+if sys.version_info < (3, 8):
+    import importlib_metadata
+else:
+    import importlib.metadata as importlib_metadata
+
+from numba import cuda as ncuda
+device = ncuda.get_current_device()
+
+logger.init("xformers optimizations", status="Checking")
+if (7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0):
+    xformers_available = importlib.util.find_spec("xformers") is not None
+    try:
+        importlib_metadata.version("xformers")
+
+    except importlib_metadata.PackageNotFoundError:
+        xformers_available = False
+    if xformers_available:
+        import xformers
+        import xformers.ops
+        logger.init_ok("xformers optimizations", status="Loaded")
+    else:
+        xformers = None
+        logger.init_err("xformers optimizations", status="Missing")
+else:
+    xformers = None
+    logger.init_err("xformers optimizations", status="Not Possible")
 
 
 def exists(val):
@@ -266,10 +298,15 @@ class CrossAttention(nn.Module):
 class BasicTransformerBlock(nn.Module):
     def __init__(self, dim, n_heads, d_head, dropout=0., context_dim=None, gated_ff=True, checkpoint=True):
         super().__init__()
-        self.attn1 = CrossAttention(query_dim=dim, heads=n_heads, dim_head=d_head, dropout=dropout)  # is a self-attention
+        if xformers_available:
+            self.attn1 = MemoryEfficientCrossAttention(query_dim=dim, heads=n_heads, dim_head=d_head, dropout=dropout)  # is a self-attention
+            self.attn2 = MemoryEfficientCrossAttention(query_dim=dim, context_dim=context_dim,
+                                        heads=n_heads, dim_head=d_head, dropout=dropout)  # is self-attn if context is none
+        else:
+            self.attn1 = CrossAttention(query_dim=dim, heads=n_heads, dim_head=d_head, dropout=dropout)  # is a self-attention
+            self.attn2 = CrossAttention(query_dim=dim, context_dim=context_dim,
+                                        heads=n_heads, dim_head=d_head, dropout=dropout)  # is self-attn if context is none
         self.ff = FeedForward(dim, dropout=dropout, glu=gated_ff)
-        self.attn2 = CrossAttention(query_dim=dim, context_dim=context_dim,
-                                    heads=n_heads, dim_head=d_head, dropout=dropout)  # is self-attn if context is none
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.norm3 = nn.LayerNorm(dim)
@@ -330,3 +367,30 @@ class SpatialTransformer(nn.Module):
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
         x = self.proj_out(x)
         return x + x_in
+
+
+class MemoryEfficientCrossAttention(nn.Module):
+    def __init__(self, query_dim, context_dim=None, heads=8, dim_head=64, dropout=0.0):
+        super().__init__()
+        inner_dim = dim_head * heads
+        context_dim = default(context_dim, query_dim)
+
+        self.heads = heads
+        self.dim_head = dim_head
+
+        self.to_q = nn.Linear(query_dim, inner_dim, bias=False)
+        self.to_k = nn.Linear(context_dim, inner_dim, bias=False)
+        self.to_v = nn.Linear(context_dim, inner_dim, bias=False)
+
+        self.to_out = nn.Sequential(nn.Linear(inner_dim, query_dim), nn.Dropout(dropout))
+        self.attention_op: Optional[Any] = None
+
+    def forward(self, x, context=None):
+        q = self.to_q(x)
+        context = default(context, x)
+        k, v = self.to_k(context), self.to_v(context)
+        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b n h d', h=self.heads).contiguous(), (q, k, v))
+        out = xformers.ops.memory_efficient_attention(q, k, v, attn_bias=None, op=self.attention_op)
+        out = rearrange(out, 'b n h d -> b n (h d)', h=self.heads)
+
+        return self.to_out(out)

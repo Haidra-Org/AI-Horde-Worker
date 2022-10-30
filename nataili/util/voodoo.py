@@ -58,7 +58,7 @@ def replace_tensors(m: torch.nn.Module, tensors: List[Dict], device="cuda"):
 def load_from_plasma(ref, device="cuda"):
     skeleton, weights = ray.get(ref)
     replace_tensors(skeleton, weights, device=device)
-    skeleton.eval().half().to(device)
+    skeleton.eval().to(device, memory_format=torch.channels_last)
     yield skeleton
     torch.cuda.empty_cache()
 
