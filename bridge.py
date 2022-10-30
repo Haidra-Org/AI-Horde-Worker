@@ -171,6 +171,8 @@ def bridge(interval, model_manager, bd):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
+           img_source = None
+           img_mask = None
            if source_processing == "img2img":
               req_type = "img2img"
            elif source_processing == "inpainting":
@@ -184,7 +186,6 @@ def bridge(interval, model_manager, bd):
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
                 img_source = Image.open(BytesIO(img_bytes))
-                
             if source_mask:
                 base64_bytes = source_mask.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
@@ -200,6 +201,18 @@ def bridge(interval, model_manager, bd):
                 if "save_grid" in gen_payload: del gen_payload["save_grid"]
                 if "sampler_name" in gen_payload: del gen_payload["sampler_name"]
                 if "denoising_strength" in gen_payload: del gen_payload["denoising_strength"]
+                if img_mask is None:
+                    try:
+                        red, green, blue, alpha = img_source.split()
+                    except ValueError:
+                        logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
+                        current_id = None
+                        current_payload = None
+                        current_generation = None
+                        loop_retry = 0
+                        continue
+                        ## TODO: Send faulted
+
                 gen_payload['inpaint_img'] = img_source
 
                 if img_mask:

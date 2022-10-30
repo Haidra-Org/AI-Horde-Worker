@@ -13,6 +13,7 @@ from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+from nataili.util import logger
 
 class inpainting:
     def __init__(self, pipe, device, output_dir, save_extension='jpg', output_file_path=False, load_concepts=False,
@@ -75,17 +76,18 @@ class inpainting:
         inpaint_img = self.resize_image('resize', inpaint_img, width, height)
 
         # mask information has been transferred in the Alpha channel of the inpaint image
+        logger.debug(inpaint_mask)
         if inpaint_mask is None:
-           red, green, blue, alpha = inpaint_img.split()
-           
-           if alpha is None:
+           try:
+               red, green, blue, alpha = inpaint_img.split()
+           except ValueError:
               raise Exception("inpainting image doesn't have an alpha channel.")              
            
            # tbd: generated mask has to be converted into pure black/white. currently only greyscale.
            #inpaint_mask = alpha.point(lambda x: 255 if x > 0 else 0, mode='1')
            inpaint_mask = alpha
            inpaint_mask = PIL.ImageOps.invert(inpaint_mask)
-           #inpaint_mask.save("./inpaint_mask_generated.png", format="PNG")
+        #    inpaint_mask.save("inpaint_mask_generated.png", format="PNG")
         else:
            inpaint_mask = self.resize_image('resize', inpaint_mask, width, height)
 
