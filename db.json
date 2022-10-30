@@ -372,7 +372,8 @@
     "config": {
       "files": [
         {
-          "path": "models/custom/elden_ring_diffusion.ckpt"
+          "path": "models/custom/elden_ring_diffusion.ckpt",
+          "md5sum": "bb51785c2b5d524fa626c9b0727e7fdb"
         },
         {
           "path": "configs/stable-diffusion/v1-inference.yaml"
@@ -404,7 +405,8 @@
     "config": {
       "files": [
         {
-          "path": "models/custom/robo_diffusion.ckpt"
+          "path": "models/custom/robo_diffusion.ckpt",
+          "md5sum": "a43cbf2fc8a98652435c2f5a95f487ad"
         },
         {
           "path": "configs/stable-diffusion/v1-inference.yaml"
@@ -415,6 +417,70 @@
           "file_name": "robo_diffusion.ckpt",
           "file_path": "models/custom",
           "file_url": "https://huggingface.co/nousr/robo-diffusion/resolve/main/models/robo-diffusion-v1.ckpt"
+        }
+      ]
+    },
+    "available": false
+  },
+  "mo-di-diffusion": {
+    "name": "mo-di-diffusion",
+    "type": "ckpt",
+    "description": "Popular animation studio styled generations.",
+    "version": "1",
+    "style": "dreambooth",
+    "nsfw": false,
+    "download_all": true,
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/custom/mo-di-diffusion.ckpt",
+          "md5sum": "393f79603e5cab05307670d0f71a5193"
+        },
+        {
+          "path": "configs/stable-diffusion/v1-inference.yaml"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "mo-di-diffusion.ckpt",
+          "file_path": "models/custom",
+          "file_url": "https://huggingface.co/nitrosocke/mo-di-diffusion/resolve/main/moDi-v1-pruned.ckpt"
+        }
+      ]
+    },
+    "available": false
+  },
+  "Xynthii-Diffusion": {
+    "name": "Xynthii-Diffusion",
+    "type": "ckpt",
+    "description": "Xynthii-Diffusion (cyclops monster girls)",
+    "version": "1",
+    "style": "dreambooth",
+    "trigger": "xynthii",
+    "homepage": "https://huggingface.co/hlky/xynthii-diffusion",
+    "nsfw": false,
+    "download_all": false,
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/custom/xynthii_fp16.ckpt",
+          "md5sum": "012fa83214f6310f0491d828a2750e9f"
+        },
+        {
+          "path": "configs/stable-diffusion/v1-inference.yaml"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "xynthii_fp16.ckpt",
+          "file_path": "models/custom",
+          "file_url": "https://huggingface.co/hlky/xynthii-diffusion/resolve/main/xynthii_fp16.ckpt"
         }
       ]
     },
@@ -632,9 +698,41 @@
     },
     "available": false
   },
+  "diffusers_stable_diffusion": {
+    "name": "diffusers_stable_diffusion",
+    "type": "diffusers",
+    "requires": [
+      "clip-vit-large-patch14"
+    ],
+    "config": {
+      "files": [
+        {
+          "path": "models/diffusers/"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "diffusers_stable_diffusion",
+          "file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v1-4.git",
+          "git": true,
+          "hf_auth": true,
+          "post_process": [
+            {
+              "delete": "models/diffusers/stable-diffusion-v1-4/.git"
+            }
+          ]
+        }
+      ]
+      
+    },
+    "available": false
+  },
   "stable_diffusion_inpainting": {
     "name": "stable_diffusion_inpainting",
     "type": "diffusers",
+    "description": "Generalist model specialized for movifying areas of existing images",
+    "version": "1.5",
+    "style": "inpainting",
     "hf_path": "runwayml/stable-diffusion-inpainting",
     "hf_auth": true,
     "available": false
