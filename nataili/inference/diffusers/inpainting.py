@@ -17,7 +17,7 @@ from nataili.util import logger
 
 class inpainting:
     def __init__(self, pipe, device, output_dir, save_extension='jpg', output_file_path=False, load_concepts=False,
-      concepts_dir=None, verify_input=True, auto_cast=True):
+      concepts_dir=None, verify_input=True, auto_cast=True, filter_nsfw = False):
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
@@ -32,6 +32,7 @@ class inpainting:
         self.info = ''
         self.stats = ''
         self.images = []
+        self.filter_nsfw = filter_nsfw
 
     def resize_image(self, resize_mode, im, width, height):
         LANCZOS = (PIL.Image.Resampling.LANCZOS if hasattr(PIL.Image, 'Resampling') else PIL.Image.LANCZOS)
@@ -72,6 +73,10 @@ class inpainting:
     def generate(self, prompt: str, inpaint_img=None, inpaint_mask=None, ddim_steps=50, n_iter=1, batch_size=1,
       cfg_scale=7.5, seed=None, height=512, width=512, save_individual_images: bool = True):
 
+        safety_checker = None
+        if not self.filter_nsfw:
+            safety_checker = self.pipe.safety_checker
+            self.pipe.safety_checker = None
         seed = seed_to_int(seed)
         inpaint_img = self.resize_image('resize', inpaint_img, width, height)
 
@@ -147,6 +152,9 @@ class inpainting:
                  }
                  
                  self.images.append(image_dict)
+                 if safety_checker:
+                    self.pipe.safety_checker = safety_checker
+                 
 
                  if save_individual_images:
                     sanitized_prompt = slugify(prompt)

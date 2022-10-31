@@ -244,7 +244,7 @@ class ModelManager():
            model_path,
            revision="fp16",
            torch_dtype=torch.float16,
-           use_auth_token=self.models[model_name]['hf_auth']
+           use_auth_token=self.models[model_name]['hf_auth'],
         ).to("cuda")
         return {'model': pipe, 'device': "cuda"}
 
