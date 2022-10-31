@@ -1,4 +1,4 @@
-import requests, json, os, time, argparse, urllib3, time,base64,re
+import requests, json, os, time, argparse, urllib3, time, base64, re, getpass
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-i', '--interval', action="store", required=False, type=int, default=1, help="The amount of seconds with which to check if there's new prompts to generate")
@@ -300,7 +300,7 @@ def check_mm_auth(model_manager):
         from creds import hf_username,hf_password
     except:
         hf_username = input("Please type your huggingface.co username: ")
-        hf_password = input("Please type your huggingface.co Access Token or password: ")
+        hf_password = getpass.getpass("Please type your huggingface.co Access Token or password: ")
     hf_auth = {"username": hf_username, "password": hf_password}
     model_manager.set_authentication(hf_auth=hf_auth)
 
