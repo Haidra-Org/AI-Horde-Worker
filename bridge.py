@@ -21,8 +21,12 @@ arg_parser.add_argument('-q', '--quiet', action='count', default=0, help="The de
 arg_parser.add_argument('--log_file', action='store_true', default=False, help="If specified will dump the log to the specified file")
 arg_parser.add_argument('--skip_md5', action='store_true', default=False, help="If specified will not check the downloaded model md5sum.")
 arg_parser.add_argument('--disable_voodoo', action='store_true', default=False, help="If specified this bridge will not use voodooray to offload models into RAM and save VRAM (useful for cloud providers).")
+arg_parser.add_argument('--disable_xformers', action='store_true', default=False, help="If specified this bridge will not try use xformers to speed up generations. This should normally be automatic, but in case you need to disable it manually, you can do so here.")
 args = arg_parser.parse_args()
 
+from nataili import disable_xformers, disable_voodoo
+disable_xformers.toggle(args.disable_xformers) 
+disable_voodoo.toggle(args.disable_voodoo) 
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
@@ -97,11 +101,12 @@ def bridge(interval, model_manager, bd):
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
+        logger.debug("Starting pop")
         if current_id:
             loop_retry += 1
         else:
             try:
-                pop_req = requests.post(horde_url + '/api/v2/generate/pop', json = gen_dict, headers = headers)
+                pop_req = requests.post(horde_url + '/api/v2/generate/pop', json = gen_dict, headers = headers, timeout=10)
             except requests.exceptions.ConnectionError:
                 logger.warning(f"Server {horde_url} unavailable during pop. Waiting 10 seconds...")
                 time.sleep(10)
@@ -139,6 +144,7 @@ def bridge(interval, model_manager, bd):
             current_id = pop['id']
             current_payload = pop['payload']
         model = pop.get("model", available_models[0])
+        logger.debug("preparing payload")
         # logger.info([current_id,current_payload])
         use_nsfw_censor = current_payload.get("use_nsfw_censor", False)
         if bd.censor_nsfw and not bd.nsfw:
@@ -198,7 +204,7 @@ def bridge(interval, model_manager, bd):
                 gen_payload['init_img'] = img_source
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor,
-                disable_voodoo=args.disable_voodoo)
+                disable_voodoo=disable_voodoo.active)
             elif req_type == "inpainting" or req_type == "outpainting":
                 if "save_grid" in gen_payload: del gen_payload["save_grid"]
                 if "sampler_name" in gen_payload: del gen_payload["sampler_name"]
@@ -224,7 +230,7 @@ def bridge(interval, model_manager, bd):
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor,
-                disable_voodoo=args.disable_voodoo)
+                disable_voodoo=disable_voodoo.active)
         except KeyError:
             continue
         # If the received image is unreadable, we continue
@@ -260,7 +266,7 @@ def bridge(interval, model_manager, bd):
         current_generation = seed
         while current_id and current_generation != None:
             try:
-                submit_req = requests.post(horde_url + '/api/v2/generate/submit', json = submit_dict, headers = headers)
+                submit_req = requests.post(horde_url + '/api/v2/generate/submit', json = submit_dict, headers = headers, timeout=20)
                 try:
                     submit = submit_req.json()
                 except json.decoder.JSONDecodeError:
@@ -286,6 +292,7 @@ def bridge(interval, model_manager, bd):
                 time.sleep(10)
                 continue
         time.sleep(interval)
+        logger.debug("Starting next iteration")
 
 def check_mm_auth(model_manager):
     if model_manager.has_authentication():
@@ -424,7 +431,7 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     bd = load_bridge_data()
     # test_logger()
-    model_manager = ModelManager(disable_voodoo=args.disable_voodoo)
+    model_manager = ModelManager(disable_voodoo=disable_voodoo.active)
     check_models(bd.model_names, model_manager)
     model_manager.init()
     for model in bd.model_names:

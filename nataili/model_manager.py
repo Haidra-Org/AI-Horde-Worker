@@ -31,10 +31,6 @@ dependencies = json.load(open('./db_dep.json'))
 remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json"
 remote_dependencies = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db_dep.json"
 
-from numba import cuda
-device = cuda.get_current_device()
-print((7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0))
-
 class ModelManager():
     def __init__(self, hf_auth=None, download=True,disable_voodoo=True):
         if download:
@@ -188,6 +184,7 @@ class ModelManager():
         device = torch.device(f"cuda:{gpu_id}")
         model = model if precision == 'full' else model.half()
         if not self.disable_voodoo:
+            logger.debug(f"Doing voodoo on {model_name}")
             model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
         else:
             model = (model if precision=='full' else model.half()).to(device)

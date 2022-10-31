@@ -8,6 +8,7 @@ from torch import nn, einsum
 from einops import rearrange, repeat
 from typing import Optional, Any
 from nataili.util import logger
+from nataili import disable_xformers
 
 
 from ldm.modules.diffusionmodules.util import checkpoint
@@ -24,7 +25,10 @@ device = ncuda.get_current_device()
 
 xformers_available = False
 logger.init("xformers optimizations", status="Checking")
-if (7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0):
+if disable_xformers.active:
+    xformers = None
+    logger.init_err("xformers optimizations", status="Disabled")
+elif (7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0):
     xformers_available = importlib.util.find_spec("xformers") is not None
     try:
         importlib_metadata.version("xformers")
