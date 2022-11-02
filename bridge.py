@@ -112,7 +112,11 @@ def bridge(interval, model_manager, bd):
                 time.sleep(10)
                 continue
             except TypeError:
-                logger.warning(f"Server {horde_url} unavailable during pop. Waiting 10 seconds...")
+                logger.warning(f"Server {horde_url} unavailable during pop. Waiting 2 seconds...")
+                time.sleep(2)
+                continue
+            except requests.exceptions.ReadTimeout:
+                logger.warning(f"Server {horde_url} timed out during pop. Waiting 2 seconds...")
                 time.sleep(2)
                 continue
             try:
@@ -308,6 +312,10 @@ def bridge(interval, model_manager, bd):
                 loop_retry = 0
             except requests.exceptions.ConnectionError:
                 logger.warning(f"Server {horde_url} unavailable during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)")
+                time.sleep(10)
+                continue
+            except requests.exceptions.ReadTimeout:
+                logger.warning(f"Server {horde_url} timed out during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)")
                 time.sleep(10)
                 continue
         time.sleep(interval)
