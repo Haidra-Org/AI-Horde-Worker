@@ -76,6 +76,7 @@ def bridge(interval, model_manager, bd):
     current_payload = None
     loop_retry = 0
     while True:
+        ### Pop new request from the Horde
         if loop_retry > 10 and current_id:
             logger.error(f"Exceeded retry count {loop_retry} for generation id {current_id}. Aborting generation!")
             current_id = None
@@ -101,7 +102,6 @@ def bridge(interval, model_manager, bd):
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
-        logger.debug("Starting pop")
         if current_id:
             loop_retry += 1
         else:
@@ -143,8 +143,8 @@ def bridge(interval, model_manager, bd):
                 continue
             current_id = pop['id']
             current_payload = pop['payload']
+        ### Generate Image
         model = pop.get("model", available_models[0])
-        logger.debug("preparing payload")
         # logger.info([current_id,current_payload])
         use_nsfw_censor = current_payload.get("use_nsfw_censor", False)
         if bd.censor_nsfw and not bd.nsfw:
@@ -186,6 +186,26 @@ def bridge(interval, model_manager, bd):
               req_type = "inpainting"
            if source_processing == "outpainting":
               req_type = "outpainting"
+        # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
+        if model == "stable_diffusion_inpainting" and req_type not in ["inpainting","outpainting"]:
+            # Try to find any other model to do text2img or img2img
+            for m in available_models:
+                if m != "stable_diffusion_inpainting":
+                    model = m
+            # if the model persists as inpainting for text2img or img2img, we abort.
+            if model == "stable_diffusion_inpainting":
+                # We remove the base64 from the prompt to avoid flooding the output on the error
+                if len(pop.get("source_image",'')) > 10:
+                    pop["source_image"] = len(pop.get("source_image",''))
+                if len(pop.get("source_mask",'')) > 10:
+                    pop["source_mask"] = len(pop.get("source_mask",''))
+                logger.error(f"Received an non-inpainting request for inpainting model. This shouldn't happen. Inform the developer. Current payload {pop}")
+                current_id = None
+                current_payload = None
+                current_generation = None
+                loop_retry = 0
+                continue
+                ## TODO: Send faulted
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
             safety_checker = model_manager.loaded_models['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
@@ -206,9 +226,11 @@ def bridge(interval, model_manager, bd):
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor,
                 disable_voodoo=disable_voodoo.active)
             elif req_type == "inpainting" or req_type == "outpainting":
+                # These variables do not exist in the outpainting implementation
                 if "save_grid" in gen_payload: del gen_payload["save_grid"]
                 if "sampler_name" in gen_payload: del gen_payload["sampler_name"]
                 if "denoising_strength" in gen_payload: del gen_payload["denoising_strength"]
+                # We prevent sending an inpainting without mask or transparency, as it will crash us.
                 if img_mask is None:
                     try:
                         red, green, blue, alpha = img_source.split()
@@ -245,9 +267,7 @@ def bridge(interval, model_manager, bd):
             generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
         generator.generate(**gen_payload)
         torch_gc()
-      
-
-
+        ### Submit back to horde
         # images, seed, info, stats = txt2img(**current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
@@ -291,7 +311,6 @@ def bridge(interval, model_manager, bd):
                 time.sleep(10)
                 continue
         time.sleep(interval)
-        logger.debug("Starting next iteration")
 
 def check_mm_auth(model_manager):
     if model_manager.has_authentication():

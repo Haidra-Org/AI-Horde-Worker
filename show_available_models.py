@@ -12,3 +12,4 @@ for model_name in filtered_models:
         ppmodels += f" : {filtered_models[model_name].get('description')}"
     ppmodels += '\n'
 print(f"## Known ckpt Models ##\n{ppmodels}")
+input("Press ENTER to continue")
