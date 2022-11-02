@@ -88,15 +88,11 @@ class inpainting:
            except ValueError:
               raise Exception("inpainting image doesn't have an alpha channel.")              
            
-           # tbd: generated mask has to be converted into pure black/white. currently only greyscale.
-           #inpaint_mask = alpha.point(lambda x: 255 if x > 0 else 0, mode='1')
            inpaint_mask = alpha
            inpaint_mask = PIL.ImageOps.invert(inpaint_mask)
-        #    inpaint_mask.save("inpaint_mask_generated.png", format="PNG")
         else:
            inpaint_mask = self.resize_image('resize', inpaint_mask, width, height)
 
-        # tbd: is this still needed?
         torch_gc()
 
         if self.load_concepts and self.concepts_dir is not None:
@@ -108,15 +104,6 @@ class inpainting:
 
         sample_path = os.path.join(self.output_dir, "samples")
         os.makedirs(sample_path, exist_ok=True)
-
-        # tbd: model doesn't exist
-        if self.verify_input and 1 == 0:
-            try:
-                check_prompt_length(self.model, prompt, self.comments)
-            except:
-                import traceback
-                print("Error verifying input:", file=sys.stderr)
-                print(traceback.format_exc(), file=sys.stderr)
 
         all_prompts = batch_size * [prompt]
         all_seeds = [seed + x for x in range(len(all_prompts))]
@@ -154,7 +141,6 @@ class inpainting:
                  self.images.append(image_dict)
                  if safety_checker:
                     self.pipe.safety_checker = safety_checker
-                 
 
                  if save_individual_images:
                     sanitized_prompt = slugify(prompt)
@@ -184,7 +170,6 @@ class inpainting:
         for comment in self.comments:
             self.info += "\n\n" + comment
 
-        # tbd: is this still needed?
         torch_gc()
 
         del generator
