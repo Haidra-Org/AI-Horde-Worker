@@ -321,7 +321,7 @@ class ModelManager():
         # make directory
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         pbar_desc = file_path.split('/')[-1]
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, allow_redirects=True)
         with open(file_path, 'wb') as f:
             with tqdm(
                 # all optional kwargs
