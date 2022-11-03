@@ -7,6 +7,7 @@ mm = ModelManager()
 filtered_models = mm.get_filtered_models(type='ckpt')
 ppmodels = ''
 for model_name in filtered_models:
+    if model_name == 'LDSR': continue
     ppmodels += model_name
     if filtered_models[model_name].get('description'):
         ppmodels += f" : {filtered_models[model_name].get('description')}"
