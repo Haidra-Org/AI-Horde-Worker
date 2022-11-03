@@ -6,6 +6,7 @@ import os
 import random
 import sys
 import time
+import importlib
 from base64 import binascii
 from io import BytesIO
 
@@ -208,15 +209,202 @@ class BridgeData(object):
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
+        self.initialized = False
+
+    @logger.catch(reraise=True)
+    def reload_data(self):
+        previous_url = self.horde_url
+        previous_api_key = self.api_key
+        try:
+            import bridgeData as bd
+            importlib.reload(bd)
+            self.api_key = bd.api_key
+            self.worker_name = bd.worker_name
+            self.horde_url = bd.horde_url
+            self.priority_usernames = bd.priority_usernames
+            self.max_power = bd.max_power
+            self.model_names = bd.models_to_load
+            try:
+                self.nsfw = bd.nsfw
+            except AttributeError:
+                pass
+            try:
+                self.censor_nsfw = bd.censor_nsfw
+            except AttributeError:
+                pass
+            try:
+                self.blacklist = bd.blacklist
+            except AttributeError:
+                pass
+            try:
+                self.censorlist = bd.censorlist
+            except AttributeError:
+                pass
+            try:
+                self.allow_img2img = bd.allow_img2img
+            except AttributeError:
+                pass
+            try:
+                self.allow_painting = bd.allow_painting
+            except AttributeError:
+                pass
+            try:
+                self.allow_unsafe_ip = bd.allow_unsafe_ip
+            except AttributeError:
+                pass
+        except (ImportError, AttributeError):
+            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account")
+        if args.api_key:
+            self.api_key = args.api_key
+        if args.worker_name:
+            self.worker_name = args.worker_name
+        if args.horde_url:
+            self.horde_url = args.horde_url
+        if args.priority_usernames:
+            self.priority_usernames = args.priority_usernames
+        if args.max_power:
+            self.max_power = args.max_power
+        if args.model:
+            self.model = [args.model]
+        if args.sfw:
+            self.nsfw = False
+        if args.censor_nsfw:
+            self.censor_nsfw = args.censor_nsfw
+        if args.blacklist:
+            self.blacklist = args.blacklist
+        if args.censorlist:
+            self.censorlist = args.censorlist
+        if args.allow_img2img:
+            self.allow_img2img = args.allow_img2img
+        if args.allow_painting:
+            self.allow_painting = args.allow_painting
+        if args.allow_unsafe_ip:
+            self.allow_unsafe_ip = args.allow_unsafe_ip
+        if self.max_power < 2:
+            self.max_power = 2
+        self.max_pixels = 64 * 64 * 8 * self.max_power
+        if self.censor_nsfw or len(self.censorlist):
+            self.model_names.append("safety_checker")
+        if not self.initialized or previous_api_key != self.api_key:
+            try:
+                user_req = requests.get(
+                    self.horde_url + "/api/v2/find_user",
+                    headers={"apikey": self.api_key},
+                    timeout=10,
+                )
+                user_req = user_req.json()
+                self.username = user_req["username"]
+            except:
+                logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
+                self.username = "N/A"
+        if not self.initialized or previous_url != self.horde_url:
+            logger.init(
+                (
+                    f"Username '{self.username}'. Server Name '{self.worker_name}'. "
+                    f"Horde URL '{self.horde_url}'. Max Pixels {self.max_pixels}"
+                ),
+                status="Joining Horde",
+            )
+
+    @logger.catch(reraise=True)
+    def check_models(self,mm):
+        if not self.initialized:
+            logger.init("Models", status="Checking")
+        models_exist = True
+        not_found_models = []
+        for model in self.model_names:
+            model_info = mm.get_model(model)
+            if not model_info:
+                logger.error(
+                    f"Model name requested {model} in bridgeData is unknown to us. "
+                    "Please check your configuration. Aborting!"
+                )
+                sys.exit(1)
+            if model in mm.get_loaded_models_names():
+                continue
+            if not args.skip_md5 and not mm.validate_model(model):
+                models_exist = False
+                not_found_models.append(model)
+            # Diffusers library uses its own internal download mechanism
+            if model_info["type"] == "diffusers" and model_info["hf_auth"]:
+                check_mm_auth(mm)
+        if not models_exist:
+            choice = input(
+                "You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. "
+                f"Would you like to download your prespecified models?\n\
+            y: Download {not_found_models} (default).\n\
+            n: Abort and exit\n\
+            all: Download all models (This can take a significant amount of time and bandwidth)?\n\
+            Please select an option: "
+            )
+            if choice not in ["y", "Y", "", "yes", "all", "a"]:
+                sys.exit(1)
+            needs_hf = False
+            for model in not_found_models:
+                dl = mm.get_model_download(model)
+                for m in dl:
+                    if m.get("hf_auth", False):
+                        needs_hf = True
+            if choice in ["all", "a"]:
+                needs_hf = True
+            if needs_hf:
+                check_mm_auth(mm)
+            mm.init()
+            mm.taint_models(not_found_models)
+            if choice in ["all", "a"]:
+                mm.download_all()
+            elif choice in ["y", "Y", "", "yes"]:
+                for model in not_found_models:
+                    logger.init(f"Model: {model}", status="Downloading")
+                    if not mm.download_model(model):
+                        logger.message(
+                            "Something went wrong when downloading the model and it does not fit the expected checksum. "
+                            "Please check that your HuggingFace authentication is correct and that you've accepted the "
+                            "model license from the browser."
+                        )
+                        sys.exit(1)
+            mm.init()
+        if not self.initialized:
+            logger.init_ok("Models", status="OK")
+        if os.path.exists("./bridgeData.py"):
+            if not self.initialized:
+                logger.init_ok("Bridge Config", status="OK")
+        elif input(
+            "You do not appear to have a bridgeData.py. Would you like to create it from the template now? (y/n)"
+        ) in ["y", "Y", "", "yes"]:
+            with open("bridgeData_template.py", "r") as firstfile, open("bridgeData.py", "a") as secondfile:
+                for line in firstfile:
+                    secondfile.write(line)
+            logger.message(
+                "bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge"
+            )
+            sys.exit(2)
+
+    def reload_models(self, mm):
+        for model in mm.get_loaded_models_names():
+            if model not in self.model_names:
+                logger.init(f"{model}", status="Unloading")
+                mm.unload_model(model)
+        for model in self.model_names:
+            if model not in mm.get_loaded_models_names():
+                logger.init(f"{model}", status="Loading")
+                success = mm.load_model(model)
+                if success:
+                    logger.init_ok(f"{model}", status="Loaded")
+                else:
+                    logger.init_err(f"{model}", status="Error")
+        self.initialized = True
 
 
 @logger.catch(reraise=True)
 def bridge(interval, model_manager, bd):
-    horde_url = bd.horde_url  # Will replace later
     current_id = None
     current_payload = None
     loop_retry = 0
     while True:
+        bd.reload_data()
+        bd.check_models(model_manager)
+        bd.reload_models(model_manager)
         # Pop new request from the Horde
         if loop_retry > 10 and current_id:
             logger.error(f"Exceeded retry count {loop_retry} for generation id {current_id}. Aborting generation!")
@@ -251,36 +439,36 @@ def bridge(interval, model_manager, bd):
         else:
             try:
                 pop_req = requests.post(
-                    horde_url + "/api/v2/generate/pop",
+                    bd.horde_url + "/api/v2/generate/pop",
                     json=gen_dict,
                     headers=headers,
                     timeout=10,
                 )
             except requests.exceptions.ConnectionError:
-                logger.warning(f"Server {horde_url} unavailable during pop. Waiting 10 seconds...")
+                logger.warning(f"Server {bd.horde_url} unavailable during pop. Waiting 10 seconds...")
                 time.sleep(10)
                 continue
             except TypeError:
-                logger.warning(f"Server {horde_url} unavailable during pop. Waiting 2 seconds...")
+                logger.warning(f"Server {bd.horde_url} unavailable during pop. Waiting 2 seconds...")
                 time.sleep(2)
                 continue
             except requests.exceptions.ReadTimeout:
-                logger.warning(f"Server {horde_url} timed out during pop. Waiting 2 seconds...")
+                logger.warning(f"Server {bd.horde_url} timed out during pop. Waiting 2 seconds...")
                 time.sleep(2)
                 continue
             try:
                 pop = pop_req.json()
             except json.decoder.JSONDecodeError:
-                logger.error(f"Could not decode response from {horde_url} as json. Please inform its administrator!")
+                logger.error(f"Could not decode response from {bd.horde_url} as json. Please inform its administrator!")
                 time.sleep(interval)
                 continue
             if pop is None:
-                logger.error(f"Something has gone wrong with {horde_url}. Please inform its administrator!")
+                logger.error(f"Something has gone wrong with {bd.horde_url}. Please inform its administrator!")
                 time.sleep(interval)
                 continue
             if not pop_req.ok:
                 logger.warning(
-                    f"During gen pop, server {horde_url} responded with status code {pop_req.status_code}: "
+                    f"During gen pop, server {bd.horde_url} responded with status code {pop_req.status_code}: "
                     f"{pop['message']}. Waiting for 10 seconds..."
                 )
                 if "errors" in pop:
@@ -293,7 +481,7 @@ def bridge(interval, model_manager, bd):
                     skipped_info = f" Skipped Info: {skipped_info}."
                 else:
                     skipped_info = ""
-                logger.debug(f"Server {horde_url} has no valid generations to do for us.{skipped_info}")
+                logger.debug(f"Server {bd.horde_url} has no valid generations to do for us.{skipped_info}")
                 time.sleep(interval)
                 continue
             current_id = pop["id"]
@@ -493,7 +681,7 @@ def bridge(interval, model_manager, bd):
         while current_id and current_generation is not None:
             try:
                 submit_req = requests.post(
-                    horde_url + "/api/v2/generate/submit",
+                    bd.horde_url + "/api/v2/generate/submit",
                     json=submit_dict,
                     headers=headers,
                     timeout=20,
@@ -502,7 +690,7 @@ def bridge(interval, model_manager, bd):
                     submit = submit_req.json()
                 except json.decoder.JSONDecodeError:
                     logger.error(
-                        f"Something has gone wrong with {horde_url} during submit. "
+                        f"Something has gone wrong with {bd.horde_url} during submit. "
                         f"Please inform its administrator!  (Retry {loop_retry}/10)"
                     )
                     time.sleep(interval)
@@ -511,7 +699,7 @@ def bridge(interval, model_manager, bd):
                     logger.warning("The generation we were working on got stale. Aborting!")
                 elif not submit_req.ok:
                     logger.warning(
-                        f"During gen submit, server {horde_url} responded with status code {submit_req.status_code}: "
+                        f"During gen submit, server {bd.horde_url} responded with status code {submit_req.status_code}: "
                         f"{submit['message']}. Waiting for 10 seconds...  (Retry {loop_retry}/10)"
                     )
                     if "errors" in submit:
@@ -528,13 +716,13 @@ def bridge(interval, model_manager, bd):
                 loop_retry = 0
             except requests.exceptions.ConnectionError:
                 logger.warning(
-                    f"Server {horde_url} unavailable during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)"
+                    f"Server {bd.horde_url} unavailable during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue
             except requests.exceptions.ReadTimeout:
                 logger.warning(
-                    f"Server {horde_url} timed out during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)"
+                    f"Server {bd.horde_url} timed out during submit. Waiting 10 seconds...  (Retry {loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue
@@ -553,179 +741,17 @@ def check_mm_auth(model_manager):
     model_manager.set_authentication(hf_auth=hf_auth)
 
 
-@logger.catch(reraise=True)
-def check_models(models, mm):
-    logger.init("Models", status="Checking")
-
-    models_exist = True
-    not_found_models = []
-    for model in models:
-        model_info = mm.get_model(model)
-        if not model_info:
-            logger.error(
-                f"Model name requested {model} in bridgeData is unknown to us. "
-                "Please check your configuration. Aborting!"
-            )
-            sys.exit(1)
-        if not args.skip_md5 and not mm.validate_model(model):
-            models_exist = False
-            not_found_models.append(model)
-        # Diffusers library uses its own internal download mechanism
-        if model_info["type"] == "diffusers" and model_info["hf_auth"]:
-            check_mm_auth(mm)
-    if not models_exist:
-        choice = input(
-            "You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. "
-            f"Would you like to download your prespecified models?\n\
-        y: Download {not_found_models} (default).\n\
-        n: Abort and exit\n\
-        all: Download all models (This can take a significant amount of time and bandwidth)?\n\
-        Please select an option: "
-        )
-        if choice not in ["y", "Y", "", "yes", "all", "a"]:
-            sys.exit(1)
-        needs_hf = False
-        for model in not_found_models:
-            dl = mm.get_model_download(model)
-            for m in dl:
-                if m.get("hf_auth", False):
-                    needs_hf = True
-        if choice in ["all", "a"]:
-            needs_hf = True
-        if needs_hf:
-            check_mm_auth(mm)
-        mm.init()
-        mm.taint_models(not_found_models)
-        if choice in ["all", "a"]:
-            mm.download_all()
-        elif choice in ["y", "Y", "", "yes"]:
-            for model in not_found_models:
-                logger.init(f"Model: {model}", status="Downloading")
-                if not mm.download_model(model):
-                    logger.message(
-                        "Something went wrong when downloading the model and it does not fit the expected checksum. "
-                        "Please check that your HuggingFace authentication is correct and that you've accepted the "
-                        "model license from the browser."
-                    )
-                    sys.exit(1)
-    logger.init_ok("Models", status="OK")
-    if os.path.exists("./bridgeData.py"):
-        logger.init_ok("Bridge Config", status="OK")
-    elif input(
-        "You do not appear to have a bridgeData.py. Would you like to create it from the template now? (y/n)"
-    ) in ["y", "Y", "", "yes"]:
-        with open("bridgeData_template.py", "r") as firstfile, open("bridgeData.py", "a") as secondfile:
-            for line in firstfile:
-                secondfile.write(line)
-        logger.message(
-            "bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge"
-        )
-        sys.exit(2)
-
-
-@logger.catch(reraise=True)
-def load_bridge_data():
-    bridge_data = BridgeData()
-    try:
-        import bridgeData as bd
-
-        bridge_data.api_key = bd.api_key
-        bridge_data.worker_name = bd.worker_name
-        bridge_data.horde_url = bd.horde_url
-        bridge_data.priority_usernames = bd.priority_usernames
-        bridge_data.max_power = bd.max_power
-        bridge_data.model_names = bd.models_to_load
-        try:
-            bridge_data.nsfw = bd.nsfw
-        except AttributeError:
-            pass
-        try:
-            bridge_data.censor_nsfw = bd.censor_nsfw
-        except AttributeError:
-            pass
-        try:
-            bridge_data.blacklist = bd.blacklist
-        except AttributeError:
-            pass
-        try:
-            bridge_data.censorlist = bd.censorlist
-        except AttributeError:
-            pass
-        try:
-            bridge_data.allow_img2img = bd.allow_img2img
-        except AttributeError:
-            pass
-        try:
-            bridge_data.allow_painting = bd.allow_painting
-        except AttributeError:
-            pass
-        try:
-            bridge_data.allow_unsafe_ip = bd.allow_unsafe_ip
-        except AttributeError:
-            pass
-    except (ImportError, AttributeError):
-        logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account")
-    if args.api_key:
-        bridge_data.api_key = args.api_key
-    if args.worker_name:
-        bridge_data.worker_name = args.worker_name
-    if args.horde_url:
-        bridge_data.horde_url = args.horde_url
-    if args.priority_usernames:
-        bridge_data.priority_usernames = args.priority_usernames
-    if args.max_power:
-        bridge_data.max_power = args.max_power
-    if args.model:
-        bridge_data.model = [args.model]
-    if args.sfw:
-        bridge_data.nsfw = False
-    if args.censor_nsfw:
-        bridge_data.censor_nsfw = args.censor_nsfw
-    if args.blacklist:
-        bridge_data.blacklist = args.blacklist
-    if args.censorlist:
-        bridge_data.censorlist = args.censorlist
-    if args.allow_img2img:
-        bridge_data.allow_img2img = args.allow_img2img
-    if args.allow_painting:
-        bridge_data.allow_painting = args.allow_painting
-    if args.allow_unsafe_ip:
-        bridge_data.allow_unsafe_ip = args.allow_unsafe_ip
-    if bridge_data.max_power < 2:
-        bridge_data.max_power = 2
-    bridge_data.max_pixels = 64 * 64 * 8 * bridge_data.max_power
-    if bridge_data.censor_nsfw or len(bridge_data.censorlist):
-        bridge_data.model_names.append("safety_checker")
-    return bridge_data
-
-
 if __name__ == "__main__":
 
     set_logger_verbosity(args.verbosity)
     if args.log_file:
         logger.add("koboldai_bridge_log.log", retention="7 days", level="warning")  # Automatically rotate too big file
     quiesce_logger(args.quiet)
-    bd = load_bridge_data()
-    # test_logger()
     model_manager = ModelManager(disable_voodoo=disable_voodoo.active)
-    check_models(bd.model_names, model_manager)
     model_manager.init()
-    for model in bd.model_names:
-        logger.init(f"{model}", status="Loading")
-        success = model_manager.load_model(model)
-        if success:
-            logger.init_ok(f"{model}", status="Loaded")
-        else:
-            logger.init_err(f"{model}", status="Error")
-    logger.init(
-        (
-            f"API Key '{bd.api_key}'. Server Name '{bd.worker_name}'. "
-            f"Horde URL '{bd.horde_url}'. Max Pixels {bd.max_pixels}"
-        ),
-        status="Joining Horde",
-    )
+    bridge_data = BridgeData()
     try:
-        bridge(args.interval, model_manager, bd)
+        bridge(args.interval, model_manager, bridge_data)
     except KeyboardInterrupt:
         logger.info("Keyboard Interrupt Received. Ending Process")
-    logger.init(f"{bd.worker_name} Instance", status="Stopped")
+    logger.init(f"{bridge_data.worker_name} Instance", status="Stopped")
