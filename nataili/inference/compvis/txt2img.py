@@ -20,7 +20,13 @@ from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 from slugify import slugify
 from nataili.util import logger
-from nataili.util.voodoo import load_from_plasma, performance
+try:
+    from nataili.util.voodoo import load_from_plasma, performance
+except ModuleNotFoundError as e:
+    from nataili import disable_voodoo
+    if not disable_voodoo.active:
+        raise e
+
 
 class txt2img:
     def __init__(self, model, device, output_dir, save_extension='jpg',

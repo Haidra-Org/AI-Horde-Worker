@@ -19,7 +19,14 @@ import open_clip
 import clip
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers import StableDiffusionInpaintPipeline
-from nataili.util.voodoo import push_model_to_plasma, load_from_plasma
+try:
+    from nataili.util.voodoo import push_model_to_plasma, load_from_plasma
+except ModuleNotFoundError as e:
+    from nataili import disable_voodoo
+    if not disable_voodoo.active:
+        raise e
+
+
 
 from nataili.util.cache import torch_gc
 from nataili.util import logger
