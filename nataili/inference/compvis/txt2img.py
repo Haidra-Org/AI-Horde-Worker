@@ -1,38 +1,51 @@
 import os
 import re
 import sys
-from contextlib import contextmanager, nullcontext
+from contextlib import nullcontext
 
 import numpy as np
 import PIL
 import torch
 from einops import rearrange
+from slugify import slugify
+from transformers import CLIPFeatureExtractor
+
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
-from transformers import CLIPFeatureExtractor
+from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.image_grid import image_grid
 from nataili.util.load_learned_embed_in_clip import load_learned_embed_in_clip
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from slugify import slugify
-from nataili.util import logger
+
 try:
     from nataili.util.voodoo import load_from_plasma, performance
 except ModuleNotFoundError as e:
     from nataili import disable_voodoo
+
     if not disable_voodoo.active:
         raise e
 
 
 class txt2img:
-    def __init__(self, model, device, output_dir, save_extension='jpg',
-    output_file_path=False, load_concepts=False, concepts_dir=None,
-    verify_input=True, auto_cast=True, filter_nsfw=False, safety_checker=None,
-    disable_voodoo=False):
+    def __init__(
+        self,
+        model,
+        device,
+        output_dir,
+        save_extension="jpg",
+        output_file_path=False,
+        load_concepts=False,
+        concepts_dir=None,
+        verify_input=True,
+        auto_cast=True,
+        filter_nsfw=False,
+        safety_checker=None,
+        disable_voodoo=False,
+    ):
         self.model = model
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -44,8 +57,8 @@ class txt2img:
         self.device = device
         self.comments = []
         self.output_images = []
-        self.info = ''
-        self.stats = ''
+        self.info = ""
+        self.stats = ""
         self.images = []
         self.filter_nsfw = filter_nsfw
         self.safety_checker = safety_checker
@@ -70,23 +83,41 @@ class txt2img:
         # tokenizer =  model.cond_stage_model.tokenizer
         # text_encoder = model.cond_stage_model.transformer
         # diffusers codebase
-        #tokenizer = pipe.tokenizer
-        #text_encoder = pipe.text_encoder
+        # tokenizer = pipe.tokenizer
+        # text_encoder = pipe.text_encoder
 
-        ext = ('.pt', '.bin')
+        ext = (".pt", ".bin")
         for token_name in prompt_tokens:
-            embedding_path = os.path.join(self.concepts_dir, token_name)	
+            embedding_path = os.path.join(self.concepts_dir, token_name)
             if os.path.exists(embedding_path):
                 for files in os.listdir(embedding_path):
                     if files.endswith(ext):
-                        load_learned_embed_in_clip(f"{os.path.join(embedding_path, files)}", model.cond_stage_model.transformer, model.cond_stage_model.tokenizer, f"<{token_name}>")
+                        load_learned_embed_in_clip(
+                            f"{os.path.join(embedding_path, files)}",
+                            model.cond_stage_model.transformer,
+                            model.cond_stage_model.tokenizer,
+                            f"<{token_name}>",
+                        )
             else:
                 print(f"Concept {token_name} not found in {self.concepts_dir}")
                 return
 
     @performance
-    def generate(self, prompt: str, ddim_steps=50, sampler_name='k_lms', n_iter=1, batch_size=1, cfg_scale=7.5, seed=None,
-                height=512, width=512, save_individual_images: bool = True, save_grid: bool = True, ddim_eta:float = 0.0):
+    def generate(
+        self,
+        prompt: str,
+        ddim_steps=50,
+        sampler_name="k_lms",
+        n_iter=1,
+        batch_size=1,
+        cfg_scale=7.5,
+        seed=None,
+        height=512,
+        width=512,
+        save_individual_images: bool = True,
+        save_grid: bool = True,
+        ddim_eta: float = 0.0,
+    ):
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
                 # not needed?
@@ -94,43 +125,46 @@ class txt2img:
                 model.eval()
                 seed = seed_to_int(seed)
 
-                image_dict = {
-                    "seed": seed
-                }
-                negprompt = ''
-                if '###' in prompt:
-                    prompt, negprompt = prompt.split('###', 1)
+                image_dict = {"seed": seed}
+                negprompt = ""
+                if "###" in prompt:
+                    prompt, negprompt = prompt.split("###", 1)
                     prompt = prompt.strip()
                     negprompt = negprompt.strip()
 
-                if sampler_name == 'PLMS':
+                if sampler_name == "PLMS":
                     sampler = PLMSSampler(model)
-                elif sampler_name == 'DDIM':
+                elif sampler_name == "DDIM":
                     sampler = DDIMSampler(model)
-                elif sampler_name == 'k_dpm_2_a':
-                    sampler = KDiffusionSampler(model,'dpm_2_ancestral')
-                elif sampler_name == 'k_dpm_2':
-                    sampler = KDiffusionSampler(model,'dpm_2')
-                elif sampler_name == 'k_euler_a':
-                    sampler = KDiffusionSampler(model,'euler_ancestral')
-                elif sampler_name == 'k_euler':
-                    sampler = KDiffusionSampler(model,'euler')
-                elif sampler_name == 'k_heun':
-                    sampler = KDiffusionSampler(model,'heun')
-                elif sampler_name == 'k_lms':
-                    sampler = KDiffusionSampler(model,'lms')
+                elif sampler_name == "k_dpm_2_a":
+                    sampler = KDiffusionSampler(model, "dpm_2_ancestral")
+                elif sampler_name == "k_dpm_2":
+                    sampler = KDiffusionSampler(model, "dpm_2")
+                elif sampler_name == "k_euler_a":
+                    sampler = KDiffusionSampler(model, "euler_ancestral")
+                elif sampler_name == "k_euler":
+                    sampler = KDiffusionSampler(model, "euler")
+                elif sampler_name == "k_heun":
+                    sampler = KDiffusionSampler(model, "heun")
+                elif sampler_name == "k_lms":
+                    sampler = KDiffusionSampler(model, "lms")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
 
                 def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
-                    samples_ddim, _ = sampler.sample(S=ddim_steps, conditioning=conditioning, unconditional_guidance_scale=cfg_scale,
-                    unconditional_conditioning=unconditional_conditioning, x_T=x)
+                    samples_ddim, _ = sampler.sample(
+                        S=ddim_steps,
+                        conditioning=conditioning,
+                        unconditional_guidance_scale=cfg_scale,
+                        unconditional_conditioning=unconditional_conditioning,
+                        x_T=x,
+                    )
                     return samples_ddim
 
                 torch_gc()
-                
+
                 if self.load_concepts and self.concepts_dir is not None:
-                    prompt_tokens = re.findall('<([a-zA-Z0-9-]+)>', prompt)    
+                    prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
                         self.process_prompt_tokens(prompt_tokens, model)
 
@@ -142,8 +176,9 @@ class txt2img:
                 if self.verify_input:
                     try:
                         check_prompt_length(model, prompt, self.comments)
-                    except:
+                    except Exception:
                         import traceback
+
                         print("Error verifying input:", file=sys.stderr)
                         print(traceback.format_exc(), file=sys.stderr)
 
@@ -153,8 +188,8 @@ class txt2img:
                 with torch.no_grad():
                     for n in range(n_iter):
                         print(f"Iteration: {n+1}/{n_iter}")
-                        prompts = all_prompts[n * batch_size:(n + 1) * batch_size]
-                        seeds = all_seeds[n * batch_size:(n + 1) * batch_size]
+                        prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                        seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
                         uc = model.get_learned_conditioning(len(prompts) * [negprompt])
 
@@ -169,50 +204,60 @@ class txt2img:
 
                         x = self.create_random_tensors(shape, seeds=seeds)
 
-                        samples_ddim = sample(init_data=None, x=x, conditioning=c, unconditional_conditioning=uc, sampler_name=sampler_name)
+                        samples_ddim = sample(
+                            init_data=None,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                        )
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
         else:
             seed = seed_to_int(seed)
 
-            image_dict = {
-                "seed": seed
-            }
-            negprompt = ''
-            if '###' in prompt:
-                prompt, negprompt = prompt.split('###', 1)
+            image_dict = {"seed": seed}
+            negprompt = ""
+            if "###" in prompt:
+                prompt, negprompt = prompt.split("###", 1)
                 prompt = prompt.strip()
                 negprompt = negprompt.strip()
 
-            if sampler_name == 'PLMS':
+            if sampler_name == "PLMS":
                 sampler = PLMSSampler(self.model)
-            elif sampler_name == 'DDIM':
+            elif sampler_name == "DDIM":
                 sampler = DDIMSampler(self.model)
-            elif sampler_name == 'k_dpm_2_a':
-                sampler = KDiffusionSampler(self.model,'dpm_2_ancestral')
-            elif sampler_name == 'k_dpm_2':
-                sampler = KDiffusionSampler(self.model,'dpm_2')
-            elif sampler_name == 'k_euler_a':
-                sampler = KDiffusionSampler(self.model,'euler_ancestral')
-            elif sampler_name == 'k_euler':
-                sampler = KDiffusionSampler(self.model,'euler')
-            elif sampler_name == 'k_heun':
-                sampler = KDiffusionSampler(self.model,'heun')
-            elif sampler_name == 'k_lms':
-                sampler = KDiffusionSampler(self.model,'lms')
+            elif sampler_name == "k_dpm_2_a":
+                sampler = KDiffusionSampler(self.model, "dpm_2_ancestral")
+            elif sampler_name == "k_dpm_2":
+                sampler = KDiffusionSampler(self.model, "dpm_2")
+            elif sampler_name == "k_euler_a":
+                sampler = KDiffusionSampler(self.model, "euler_ancestral")
+            elif sampler_name == "k_euler":
+                sampler = KDiffusionSampler(self.model, "euler")
+            elif sampler_name == "k_heun":
+                sampler = KDiffusionSampler(self.model, "heun")
+            elif sampler_name == "k_lms":
+                sampler = KDiffusionSampler(self.model, "lms")
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
 
             def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
-                samples_ddim, _ = sampler.sample(S=ddim_steps, conditioning=conditioning, unconditional_guidance_scale=cfg_scale,
-                unconditional_conditioning=unconditional_conditioning, x_T=x)
+                nonlocal sampler
+                samples_ddim, _ = sampler.sample(
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                )
                 return samples_ddim
 
             torch_gc()
-            
+
             if self.load_concepts and self.concepts_dir is not None:
-                prompt_tokens = re.findall('<([a-zA-Z0-9-]+)>', prompt)    
+                prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
                     self.process_prompt_tokens(prompt_tokens)
 
@@ -224,8 +269,9 @@ class txt2img:
             if self.verify_input:
                 try:
                     check_prompt_length(self.model, prompt, self.comments)
-                except:
+                except Exception:
                     import traceback
+
                     print("Error verifying input:", file=sys.stderr)
                     print(traceback.format_exc(), file=sys.stderr)
 
@@ -237,8 +283,8 @@ class txt2img:
             with torch.no_grad(), precision_scope("cuda"):
                 for n in range(n_iter):
                     print(f"Iteration: {n+1}/{n_iter}")
-                    prompts = all_prompts[n * batch_size:(n + 1) * batch_size]
-                    seeds = all_seeds[n * batch_size:(n + 1) * batch_size]
+                    prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                    seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
                     uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
 
@@ -253,7 +299,13 @@ class txt2img:
 
                     x = self.create_random_tensors(shape, seeds=seeds)
 
-                    samples_ddim = sample(init_data=None, x=x, conditioning=c, unconditional_conditioning=uc, sampler_name=sampler_name)
+                    samples_ddim = sample(
+                        init_data=None,
+                        x=x,
+                        conditioning=c,
+                        unconditional_conditioning=uc,
+                        sampler_name=sampler_name,
+                    )
 
                     x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                     x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
@@ -263,9 +315,11 @@ class txt2img:
             full_path = os.path.join(os.getcwd(), sample_path)
             sample_path_i = sample_path
             base_count = get_next_sequence_number(sample_path_i)
-            filename = f"{base_count:05}-{ddim_steps}_{sampler_name}_{seeds[i]}_{sanitized_prompt}"[:200-len(full_path)]
+            filename = f"{base_count:05}-{ddim_steps}_{sampler_name}_{seeds[i]}_{sanitized_prompt}"[
+                : 200 - len(full_path)
+            ]
 
-            x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+            x_sample = 255.0 * rearrange(x_sample.cpu().numpy(), "c h w -> h w c")
             x_sample = x_sample.astype(np.uint8)
             image = PIL.Image.fromarray(x_sample)
             if self.safety_checker is not None and self.filter_nsfw:
@@ -277,11 +331,11 @@ class txt2img:
                     logger.info(f"Image {filename} has NSFW concept")
                     image = output_images[0]
                     image = PIL.Image.fromarray(image)
-            image_dict['image'] = image
+            image_dict["image"] = image
             self.images.append(image_dict)
 
             if save_individual_images:
-                path = os.path.join(sample_path, filename + '.' + self.save_extension)
+                path = os.path.join(sample_path, filename + "." + self.save_extension)
                 success = save_sample(image, filename, sample_path_i, self.save_extension)
                 if success:
                     if self.output_file_path:
@@ -295,8 +349,8 @@ class txt2img:
                 {prompt}
                 Steps: {ddim_steps}, Sampler: {sampler_name}, CFG scale: {cfg_scale}, Seed: {seed}
                 """.strip()
-        self.stats = f'''
-                '''
+        self.stats = """
+                """
 
         for comment in self.comments:
             self.info += "\n\n" + comment
@@ -305,4 +359,4 @@ class txt2img:
 
         del sampler
 
-        return 
+        return

@@ -1,12 +1,13 @@
 import contextlib
 import copy
 from functools import wraps
-from typing import Dict, List, Tuple, TypeVar, Union
+from typing import Dict, List, Tuple, TypeVar
 
 import ray
 import torch
 
 T = TypeVar("T")
+
 
 def performance(f: T) -> T:
     @wraps(f)
@@ -15,17 +16,14 @@ def performance(f: T) -> T:
 
     return wrapper
 
+
 def extract_tensors(m: torch.nn.Module) -> Tuple[torch.nn.Module, List[Dict]]:
     tensors = []
     for _, module in m.named_modules():
         params = {
-            name: torch.clone(param).cpu().detach().numpy()
-            for name, param in module.named_parameters(recurse=False)
+            name: torch.clone(param).cpu().detach().numpy() for name, param in module.named_parameters(recurse=False)
         }
-        buffers = {
-            name: torch.clone(buf).cpu().detach().numpy()
-            for name, buf in module.named_buffers(recurse=False)
-        }
+        buffers = {name: torch.clone(buf).cpu().detach().numpy() for name, buf in module.named_buffers(recurse=False)}
         tensors.append({"params": params, "buffers": buffers})
 
     m_copy = copy.deepcopy(m)
@@ -46,9 +44,7 @@ def replace_tensors(m: torch.nn.Module, tensors: List[Dict], device="cuda"):
         for name, array in tensor_dict["params"].items():
             module.register_parameter(
                 name,
-                torch.nn.Parameter(
-                    torch.as_tensor(array, device=device), requires_grad=False
-                ),
+                torch.nn.Parameter(torch.as_tensor(array, device=device), requires_grad=False),
             )
         for name, array in tensor_dict["buffers"].items():
             module.register_buffer(name, torch.as_tensor(array, device=device))
@@ -61,6 +57,7 @@ def load_from_plasma(ref, device="cuda"):
     skeleton.eval().to(device, memory_format=torch.channels_last)
     yield skeleton
     torch.cuda.empty_cache()
+
 
 def push_model_to_plasma(model: torch.nn.Module) -> ray.ObjectRef:
     ref = ray.put(extract_tensors(model))

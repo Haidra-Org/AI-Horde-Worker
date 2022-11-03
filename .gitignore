@@ -155,6 +155,7 @@ cython_debug/
 
 # repo specific
 /models/
+models
 /outputs/
 /temp/
 /gfpgan/
@@ -171,3 +172,4 @@ bridgeData.py
 src/taming-transformers
 
 /xformers-*
+/bin/

@@ -6,7 +6,8 @@ worker_name = "My Awesome Instance"
 # Visit https://stablehorde.net/register to create one before you can join
 api_key = "0000000000"
 # Put other users whose prompts you want to prioritize.
-# The owner's username is always included so you don't need to add it here, unless you want it to have lower priority than another user
+# The owner's username is always included so you don't need to add it here,
+# unless you want it to have lower priority than another user
 priority_usernames = []
 # The amount of power your system can handle
 # 8 means 512*512. Each increase increases the possible resoluion by 64 pixes
@@ -28,23 +29,25 @@ allow_painting = True
 # If set to False, this worker will no longer pick img2img jobs from unsafe IPs
 allow_unsafe_ip = True
 # The models to use. You can select a different main model, or select more than one.
-# With you can easily load 5 of these models with 32Gb RAM and 6G VRAM. Adjust how many models you load based on how much RAM (not VRAM) you have available
+# With you can easily load 5 of these models with 32Gb RAM and 6G VRAM.
+# Adjust how many models you load based on how much RAM (not VRAM) you have available.
 # The last model in this list takes priority when the client accepts more than 1
 # if you do not know which models you can add here, use the below command
 # python show_available_models.py
 models_to_load = [
-    "stable_diffusion", # This is the standard compvis model. It is not using Diffusers (yet)
-    ## Specialized Style models
+    "stable_diffusion",  # This is the standard compvis model. It is not using Diffusers (yet)
+    # Specialized Style models:
     # "trinart",
     # "Furry Epoch",
     # "Yiffy",
     # "waifu_diffusion",
-    ## Dreambooth Models
+    # Dreambooth Models:
     # "Arcane Diffusion",
     # "Spier-Verse Diffusion",
     # "Elden Ring Diffusion",
     # "Robo-Diffusion",
     # "mo-di-diffusion",
-
-    # "stable_diffusion_inpainting", # Enable this to allow inpainting/outpainting. Careful of trying to enable this in tandem with other models if you have 8G or less VRAM!
+    # "stable_diffusion_inpainting",
+    # Enable this to allow inpainting/outpainting.
+    # Careful of trying to enable this in tandem with other models if you have 8G or less VRAM!
 ]

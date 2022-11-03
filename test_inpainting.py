@@ -1,5 +1,6 @@
-from nataili.inference.diffusers.inpainting import inpainting
 from PIL import Image
+
+from nataili.inference.diffusers.inpainting import inpainting
 
 original = Image.open("./inpaint_original.png")
 mask = Image.open("./inpaint_mask.png")

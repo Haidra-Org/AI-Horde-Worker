@@ -1,6 +1,7 @@
 from pathlib import Path
 
-def get_next_sequence_number(path, prefix=''):
+
+def get_next_sequence_number(path, prefix=""):
     """
     Determines and returns the next sequence number to use when saving an
     image in the specified directory.
@@ -13,10 +14,10 @@ def get_next_sequence_number(path, prefix=''):
     """
     result = -1
     for p in Path(path).iterdir():
-        if p.name.endswith(('.png', '.jpg')) and p.name.startswith(prefix):
-            tmp = p.name[len(prefix):]
+        if p.name.endswith((".png", ".jpg")) and p.name.startswith(prefix):
+            tmp = p.name[len(prefix) :]
             try:
-                result = max(int(tmp.split('-')[0]), result)
+                result = max(int(tmp.split("-")[0]), result)
             except ValueError:
                 pass
     return result + 1

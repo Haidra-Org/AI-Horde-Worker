@@ -13,7 +13,7 @@ def image_grid(imgs, n_rows=None):
     cols = math.ceil(len(imgs) / rows)
 
     w, h = imgs[0].size
-    grid = PIL.Image.new('RGB', size=(cols * w, rows * h), color='black')
+    grid = PIL.Image.new("RGB", size=(cols * w, rows * h), color="black")
 
     for i, img in enumerate(imgs):
         grid.paste(img, box=(i % cols * w, i // cols * h))
