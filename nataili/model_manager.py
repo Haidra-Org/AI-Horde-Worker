@@ -293,7 +293,10 @@ class ModelManager:
             revision="fp16",
             torch_dtype=torch.float16,
             use_auth_token=self.models[model_name]["hf_auth"],
-        ).to("cuda")
+        )
+        
+        pipe.enable_attention_slicing()
+        pipe.to("cuda")
         return {"model": pipe, "device": "cuda"}
 
     def load_model(self, model_name="", precision="half", gpu_id=0):
