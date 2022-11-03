@@ -227,9 +227,9 @@ def bridge(interval, model_manager, bd):
         elif current_id:
             logger.debug(f"Retrying ({loop_retry}/10) for generation id {current_id}...")
         available_models = model_manager.get_loaded_models_names()
-        if 'LDSR' in available_models:
+        if "LDSR" in available_models:
             logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
-            available_models.remove('LDSR')
+            available_models.remove("LDSR")
         if "safety_checker" in available_models:
             available_models.remove("safety_checker")
         gen_dict = {
