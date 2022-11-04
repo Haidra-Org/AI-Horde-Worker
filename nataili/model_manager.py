@@ -29,7 +29,6 @@ except ModuleNotFoundError as e:
     if not disable_voodoo.active:
         raise e
 
-
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 
@@ -190,14 +189,17 @@ class ModelManager:
     def load_ckpt(self, model_name="", precision="half", gpu_id=0):
         ckpt_path = self.get_model_files(model_name)[0]["path"]
         config_path = self.get_model_files(model_name)[1]["path"]
-        model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
         device = torch.device(f"cuda:{gpu_id}")
-        model = model if precision == "full" else model.half()
         if not self.disable_voodoo:
+            model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
+            model = model if precision == "full" else model.half()
             logger.debug(f"Doing voodoo on {model_name}")
             model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
         else:
-            model = (model if precision == "full" else model.half()).to(device)
+            model = self.load_model_from_config(
+                model_path=ckpt_path, config_path=config_path, map_location=f"cuda:{gpu_id}"
+            )
+            model = (model if precision == "full" else model.half()).to(device, memory_format=torch.channels_last)
         torch_gc()
         return {"model": model, "device": device}
 
@@ -294,7 +296,7 @@ class ModelManager:
             torch_dtype=torch.float16,
             use_auth_token=self.models[model_name]["hf_auth"],
         )
-        
+
         pipe.enable_attention_slicing()
         pipe.to("cuda")
         return {"model": pipe, "device": "cuda"}
