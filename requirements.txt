@@ -50,8 +50,9 @@ realesrgan==0.3.0
 test-tube>=0.7.5
 timm==0.6.7
 torch-fidelity==0.3.0
-#transformers==4.19.2 # do not change
-transformers
+#do not change transformers version
+transformers==4.21.3 # do not change
+#do not change transformers version
 wget
 
 # Optional packages commonly used with Stable Diffusion workflow
