@@ -31,6 +31,7 @@ except ModuleNotFoundError as e:
 
 from nataili.util import logger
 from nataili.util.cache import torch_gc
+from nataili.util.load_list import load_list
 
 logging.set_verbosity_error()
 
@@ -271,22 +272,35 @@ class ModelManager:
         model = (model if precision == "full" else model.half()).to(device)
         return {"model": model, "device": device}
 
-    def load_open_clip(self, model_name="", precision="half", gpu_id=0):
+    def load_data_lists(self, data_path="data/img2txt"):
+        data_lists = {}
+        data_lists['artists'] = load_list(os.path.join(data_path, 'artists.txt'))
+        data_lists['flavors'] = load_list(os.path.join(data_path, 'flavors.txt'))
+        data_lists['mediums'] = load_list(os.path.join(data_path, 'mediums.txt'))
+        data_lists['movements'] = load_list(os.path.join(data_path, 'movements.txt'))
+        data_lists['sites'] = load_list(os.path.join(data_path, 'sites.txt'))
+        data_lists['techniques'] = load_list(os.path.join(data_path, 'techniques.txt'))
+        data_lists['tags'] = load_list(os.path.join(data_path, 'tags.txt'))
+        return data_lists
+
+    def load_open_clip(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         pretrained = self.get_model(model_name)["pretrained_name"]
         device = torch.device(f"cuda:{gpu_id}")
-        model, _, preprocesses = open_clip.create_model_and_transforms(
+        model, _, preprocess = open_clip.create_model_and_transforms(
             model_name, pretrained=pretrained, cache_dir="models/clip"
         )
         model = model.eval()
         model = (model if precision == "full" else model.half()).to(device)
-        return {"model": model, "device": device, "preprocesses": preprocesses}
+        data_lists = self.load_data_lists(data_path=data_path)
+        return {"model": model, "device": device, "preprocess": preprocess, "data_lists": data_lists}
 
-    def load_clip(self, model_name="", precision="half", gpu_id=0):
+    def load_clip(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         device = torch.device(f"cuda:{gpu_id}")
-        model, preprocesses = clip.load(model_name, device=device, download_root="models/clip")
+        model, preprocess = clip.load(model_name, device=device, download_root="models/clip")
         model = model.eval()
         model = (model if precision == "full" else model.half()).to(device)
-        return {"model": model, "device": device, "preprocesses": preprocesses}
+        data_lists = self.load_data_lists(data_path=data_path)
+        return {"model": model, "device": device, "preprocess": preprocess, "data_lists": data_lists}
 
     def load_diffuser(self, model_name=""):
         model_path = self.models[model_name]["hf_path"]
@@ -301,7 +315,7 @@ class ModelManager:
         pipe.to("cuda")
         return {"model": pipe, "device": "cuda"}
 
-    def load_model(self, model_name="", precision="half", gpu_id=0):
+    def load_model(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         if model_name not in self.available_models:
             return False
         if self.models[model_name]["type"] == "ckpt":
@@ -317,10 +331,10 @@ class ModelManager:
             self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512, "base")
             return True
         elif self.models[model_name]["type"] == "open_clip":
-            self.loaded_models[model_name] = self.load_open_clip(model_name, precision, gpu_id)
+            self.loaded_models[model_name] = self.load_open_clip(model_name, precision, gpu_id, data_path)
             return True
         elif self.models[model_name]["type"] == "clip":
-            self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id)
+            self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id, data_path)
             return True
         elif self.models[model_name]["type"] == "diffusers":
             self.loaded_models[model_name] = self.load_diffuser(model_name)
