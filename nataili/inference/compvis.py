@@ -91,6 +91,8 @@ class CompVis:
         save_grid: bool = True,
         ddim_eta: float = 0.0,
     ):
+        if init_img:
+            init_img = resize_image(resize_mode, init_img, width, height)
         if mask_mode == "mask":
             if init_mask:
                 init_mask = process_init_mask(init_mask)
@@ -150,7 +152,7 @@ class CompVis:
 
             init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
 
-        def init():
+        def init(model, init_img):
             image = init_img.convert("RGB")
             image = np.array(image).astype(np.float32) / 255.0
             image = image[None].transpose(0, 3, 1, 2)
@@ -323,7 +325,7 @@ class CompVis:
                         shape = [opt_C, height // opt_f, width // opt_f]
 
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
-                        init_data = init() if init_img else None
+                        init_data = init(model, init_img) if init_img else None
                         samples_ddim = sample_img2img(
                             init_data=init_data,
                             x=x,
@@ -392,8 +394,15 @@ class CompVis:
 
                     x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
-                    samples_ddim = sample(
-                        init_data=None,
+                    init_data = init(self.model, init_img) if init_img else None
+                    samples_ddim = sample_img2img(
+                        init_data=init_data,
+                        x=x,
+                        conditioning=c,
+                        unconditional_conditioning=uc,
+                        sampler_name=sampler_name,
+                    ) if init_img else sample(
+                        init_data=init_data,
                         x=x,
                         conditioning=c,
                         unconditional_conditioning=uc,
