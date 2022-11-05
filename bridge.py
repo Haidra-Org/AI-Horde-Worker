@@ -637,8 +637,33 @@ def bridge(interval, model_manager, bd):
                 "bridge_generations",
                 filter_nsfw=use_nsfw_censor,
             )
-        generator.generate(**gen_payload)
-        torch_gc()
+        try:
+            generator.generate(**gen_payload)
+            torch_gc()
+        except RuntimeError:
+            logger.error(
+                "Something went wrong when processing request. Probably an img2img error "
+                "Falling back to text2img to try and rescue this run.\n"
+                f"Please inform the developers of th below payload:\n{gen_payload}"
+            )
+            if "denoising_strength" in gen_payload:
+                del gen_payload["denoising_strength"]
+            if "init_img" in gen_payload:
+                del gen_payload["init_img"]
+            if "init_mask" in gen_payload:
+                del gen_payload["init_mask"]
+            try:
+                generator.generate(**gen_payload)
+                torch_gc()
+            except RuntimeError:
+                logger.error(
+                    "Rescue Attempt also failed. Aborting!"
+                )
+                current_id = None
+                current_payload = None
+                current_generation = None
+                loop_retry = 0
+                continue                
         # Submit back to horde
         # images, seed, info, stats = txt2img(**current_payload)
         buffer = BytesIO()
