@@ -480,6 +480,14 @@ class img2img:
             )
 
             init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
+
+        originalPrompt = prompt
+        negprompt = ""
+        if "###" in prompt:
+            prompt, negprompt = prompt.split("###", 1)
+            prompt = prompt.strip()
+            negprompt = negprompt.strip()
+            
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
                 seed = seed_to_int(seed)
@@ -631,7 +639,8 @@ class img2img:
                         prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
-                        uc = model.get_learned_conditioning(len(prompts) * [""])
+
+                        uc = model.get_learned_conditioning(len(prompts) * [negprompt])
 
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
@@ -862,8 +871,9 @@ class img2img:
                         self.output_images.append(image)
                 else:
                     return
+
         self.info = f"""
-                {prompt}
+                {originalPrompt}
                 Steps: {ddim_steps}, Sampler: {sampler_name}, CFG scale: {cfg_scale}, Seed: {seed}
                 """.strip()
         self.stats = """
