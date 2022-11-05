@@ -680,11 +680,17 @@ def bridge(interval, model_manager, bd):
         current_generation = seed
         while current_id and current_generation is not None:
             try:
+                logger.debug(
+                    f"posting payload with size of {round(sys.getsizeof(json.dumps(submit_dict)) / 1024,1)} kb"
+                )
                 submit_req = requests.post(
                     bd.horde_url + "/api/v2/generate/submit",
                     json=submit_dict,
                     headers=headers,
                     timeout=20,
+                )
+                logger.debug(
+                    f"Upload completed in {submit_req.elapsed.total_seconds()}"
                 )
                 try:
                     submit = submit_req.json()
