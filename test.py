@@ -1,7 +1,7 @@
 import time
 
-from nataili.inference.compvis.img2img import img2img
-from nataili.inference.compvis.txt2img import txt2img
+from nataili.inference.compvis import CompVis
+
 from nataili.model_manager import ModelManager
 from nataili.util.cache import torch_gc
 from nataili.util.logger import logger
@@ -52,10 +52,11 @@ def test():
             logger.debug(f"Running inference on {model}")
             logger.info('Testing txt2img with prompt "collosal corgi"')
 
-            t2i = txt2img(
+            t2i = CompVis(
                 mm.loaded_models[model]["model"],
                 mm.loaded_models[model]["device"],
                 "test_output",
+                disable_voodoo=True,
             )
             t2i.generate("collosal corgi")
 
@@ -63,12 +64,13 @@ def test():
 
             logger.info('Testing nsfw filter with prompt "boobs"')
 
-            t2i = txt2img(
+            t2i = CompVis(
                 mm.loaded_models[model]["model"],
                 mm.loaded_models[model]["device"],
                 "test_output",
                 filter_nsfw=True,
                 safety_checker=mm.loaded_models["safety_checker"]["model"],
+                disable_voodoo=True,
             )
             t2i.generate("boobs")
 
@@ -76,13 +78,14 @@ def test():
 
             logger.info('Testing img2img with prompt "cute anime girl"')
 
-            i2i = img2img(
+            i2i = CompVis(
                 mm.loaded_models[model]["model"],
                 mm.loaded_models[model]["device"],
                 "test_output",
+                disable_voodoo=True,
             )
             # init_img = PIL.Image.open(init_img)
-            i2i.generate("cute anime girl", init_image)
+            i2i.generate("cute anime girl", init_img=init_image)
             torch_gc()
 
         logger.init_ok(f"Model {model}", status="Unloading")

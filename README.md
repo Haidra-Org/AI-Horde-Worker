@@ -4,7 +4,7 @@ Sample use:
 
 ```python
 from nataili.model_manager import ModelManager
-from nataili.inference.compvis.txt2img import txt2img
+from nataili.inference.compvis import CompVis
 from nataili.util.cache import torch_gc
 
 # The model manager loads and unloads the SD models and has features to download them or find their location
@@ -18,7 +18,7 @@ if success:
 else:
     print(f'{model} load error')
 # Other classes exist like img2img
-generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'output_dir')
+generator = CompVis(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'output_dir')
 generator.generate('a donkey with a hat')
 torch_gc()
 # The image key in the generator contains a PIL image of the generation

@@ -172,8 +172,7 @@ disable_voodoo.toggle(args.disable_voodoo)
 
 # Note: for now we cannot put them at the top of the file because the imports
 # will use the disable_voodoo and disable_xformers global variables
-from nataili.inference.compvis.img2img import img2img  # noqa: E402
-from nataili.inference.compvis.txt2img import txt2img  # noqa: E402
+from nataili.inference.compvis import CompVis  # noqa: E402
 from nataili.inference.diffusers.inpainting import inpainting  # noqa: E402
 from nataili.model_manager import ModelManager  # noqa: E402
 
@@ -578,87 +577,65 @@ def bridge(interval, model_manager, bd):
                         f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}"
                     )
                     img_mask = img_mask.resize(img_source.size)
-            if req_type == "img2img":
-                gen_payload["init_img"] = img_source
-                generator = img2img(
-                    model_manager.loaded_models[model]["model"],
-                    model_manager.loaded_models[model]["device"],
-                    "bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    safety_checker=safety_checker,
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=disable_voodoo.active,
-                )
-            elif req_type == "inpainting" or req_type == "outpainting":
-                # These variables do not exist in the outpainting implementation
-                if "save_grid" in gen_payload:
-                    del gen_payload["save_grid"]
-                if "sampler_name" in gen_payload:
-                    del gen_payload["sampler_name"]
-                if "denoising_strength" in gen_payload:
-                    del gen_payload["denoising_strength"]
-                # We prevent sending an inpainting without mask or transparency, as it will crash us.
-                if img_mask is None:
-                    try:
-                        red, green, blue, alpha = img_source.split()
-                    except ValueError:
-                        logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
-                        current_id = None
-                        current_payload = None
-                        current_generation = None
-                        loop_retry = 0
-                        continue
-                        # TODO: Send faulted
-
-                gen_payload["inpaint_img"] = img_source
-
-                if img_mask:
-                    gen_payload["inpaint_mask"] = img_mask
-                generator = inpainting(
-                    model_manager.loaded_models[model]["model"],
-                    model_manager.loaded_models[model]["device"],
-                    "bridge_generations",
-                    filter_nsfw=use_nsfw_censor,
-                )
-            else:
-                generator = txt2img(
-                    model_manager.loaded_models[model]["model"],
-                    model_manager.loaded_models[model]["device"],
-                    "bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    safety_checker=safety_checker,
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=disable_voodoo.active,
-                )
         except KeyError:
             continue
         # If the received image is unreadable, we continue
         except UnidentifiedImageError:
             logger.error("Source image received for img2img is unreadable. Falling back to text2img!")
+            req_type = "txt2img"
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
-            generator = txt2img(
-                model_manager.loaded_models[model]["model"],
-                model_manager.loaded_models[model]["device"],
-                "bridge_generations",
-                load_concepts=True,
-                concepts_dir="models/custom/sd-concepts-library",
-            )
         except binascii.Error:
             logger.error(
                 "Source image received for img2img is cannot be base64 decoded (binascii.Error). "
                 "Falling back to text2img!"
             )
+            req_type = "txt2img"
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
-            generator = txt2img(
+        if req_type in ["img2img", "txt2img"]:
+            if req_type == "img2img":
+                gen_payload["init_img"] = img_source
+                if img_mask:
+                    gen_payload["init_mask"] = img_mask
+            generator = CompVis(
+                model=model_manager.loaded_models[model]["model"],
+                device=model_manager.loaded_models[model]["device"],
+                output_dir="bridge_generations",
+                load_concepts=True,
+                concepts_dir="models/custom/sd-concepts-library",
+                safety_checker=safety_checker,
+                filter_nsfw=use_nsfw_censor,
+                disable_voodoo=disable_voodoo.active,
+            )
+        else:
+            # These variables do not exist in the outpainting implementation
+            if "save_grid" in gen_payload:
+                del gen_payload["save_grid"]
+            if "sampler_name" in gen_payload:
+                del gen_payload["sampler_name"]
+            if "denoising_strength" in gen_payload:
+                del gen_payload["denoising_strength"]
+            # We prevent sending an inpainting without mask or transparency, as it will crash us.
+            if img_mask is None:
+                try:
+                    red, green, blue, alpha = img_source.split()
+                except ValueError:
+                    logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
+                    current_id = None
+                    current_payload = None
+                    current_generation = None
+                    loop_retry = 0
+                    continue
+                    # TODO: Send faulted
+            gen_payload["inpaint_img"] = img_source
+            if img_mask:
+                gen_payload["inpaint_mask"] = img_mask
+            generator = inpainting(
                 model_manager.loaded_models[model]["model"],
                 model_manager.loaded_models[model]["device"],
                 "bridge_generations",
-                load_concepts=True,
-                concepts_dir="models/custom/sd-concepts-library",
+                filter_nsfw=use_nsfw_censor,
             )
         generator.generate(**gen_payload)
         torch_gc()

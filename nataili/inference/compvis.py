@@ -3,23 +3,28 @@ import re
 import sys
 from contextlib import nullcontext
 
+import k_diffusion as K
 import numpy as np
 import PIL
+import skimage
 import torch
+import tqdm
 from einops import rearrange
 from slugify import slugify
 from transformers import CLIPFeatureExtractor
 
 from ldm.models.diffusion.ddim import DDIMSampler
-from ldm.models.diffusion.kdiffusion import KDiffusionSampler
+from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.load_learned_embed_in_clip import load_learned_embed_in_clip
+
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+from nataili.util.img2img import *
+from nataili.util.create_random_tensors import create_random_tensors
 
 try:
     from nataili.util.voodoo import load_from_plasma, performance
@@ -29,8 +34,7 @@ except ModuleNotFoundError as e:
     if not disable_voodoo.active:
         raise e
 
-
-class txt2img:
+class CompVis:
     def __init__(
         self,
         model,
@@ -65,47 +69,16 @@ class txt2img:
         self.feature_extractor = CLIPFeatureExtractor()
         self.disable_voodoo = disable_voodoo
 
-    def create_random_tensors(self, shape, seeds):
-        xs = []
-        for seed in seeds:
-            torch.manual_seed(seed)
-
-            # randn results depend on device; gpu and cpu get different results for same seed;
-            # the way I see it, it's better to do this on CPU, so that everyone gets same result;
-            # but the original script had it like this so i do not dare change it for now because
-            # it will break everyone's seeds.
-            xs.append(torch.randn(shape, device=self.device))
-        x = torch.stack(xs)
-        return x
-
-    def process_prompt_tokens(self, prompt_tokens, model):
-        # compviz codebase
-        # tokenizer =  model.cond_stage_model.tokenizer
-        # text_encoder = model.cond_stage_model.transformer
-        # diffusers codebase
-        # tokenizer = pipe.tokenizer
-        # text_encoder = pipe.text_encoder
-
-        ext = (".pt", ".bin")
-        for token_name in prompt_tokens:
-            embedding_path = os.path.join(self.concepts_dir, token_name)
-            if os.path.exists(embedding_path):
-                for files in os.listdir(embedding_path):
-                    if files.endswith(ext):
-                        load_learned_embed_in_clip(
-                            f"{os.path.join(embedding_path, files)}",
-                            model.cond_stage_model.transformer,
-                            model.cond_stage_model.tokenizer,
-                            f"<{token_name}>",
-                        )
-            else:
-                print(f"Concept {token_name} not found in {self.concepts_dir}")
-                return
-
     @performance
     def generate(
         self,
         prompt: str,
+        init_img=None,
+        init_mask=None,
+        mask_mode="mask",
+        resize_mode="resize",
+        noise_mode="seed",
+        denoising_strength: float = 0.8,
         ddim_steps=50,
         sampler_name="k_lms",
         n_iter=1,
@@ -118,20 +91,189 @@ class txt2img:
         save_grid: bool = True,
         ddim_eta: float = 0.0,
     ):
+        if mask_mode == "mask":
+            if init_mask:
+                init_mask = process_init_mask(init_mask)
+        elif mask_mode == "invert":
+            if init_mask:
+                init_mask = process_init_mask(init_mask)
+                init_mask = PIL.ImageOps.invert(init_mask)
+        elif mask_mode == "alpha":
+            init_img_transparency = init_img.split()[-1].convert(
+                "L"
+            )  # .point(lambda x: 255 if x > 0 else 0, mode='1')
+            init_mask = init_img_transparency
+            init_mask = init_mask.convert("RGB")
+            init_mask = resize_image(resize_mode, init_mask, width, height)
+            init_mask = init_mask.convert("RGB")
+
+        assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
+        t_enc = int(denoising_strength * ddim_steps)
+
+        if (
+            init_mask is not None
+            and (noise_mode == "matched" or noise_mode == "find_and_matched")
+            and init_img is not None
+        ):
+            noise_q = 0.99
+            color_variation = 0.0
+            mask_blend_factor = 1.0
+
+            np_init = (np.asarray(init_img.convert("RGB")) / 255.0).astype(
+                np.float64
+            )  # annoyingly complex mask fixing
+            np_mask_rgb = 1.0 - (np.asarray(PIL.ImageOps.invert(init_mask).convert("RGB")) / 255.0).astype(np.float64)
+            np_mask_rgb -= np.min(np_mask_rgb)
+            np_mask_rgb /= np.max(np_mask_rgb)
+            np_mask_rgb = 1.0 - np_mask_rgb
+            np_mask_rgb_hardened = 1.0 - (np_mask_rgb < 0.99).astype(np.float64)
+            blurred = skimage.filters.gaussian(np_mask_rgb_hardened[:], sigma=16.0, channel_axis=2, truncate=32.0)
+            blurred2 = skimage.filters.gaussian(np_mask_rgb_hardened[:], sigma=16.0, channel_axis=2, truncate=32.0)
+            # np_mask_rgb_dilated = np_mask_rgb + blurred  # fixup mask todo: derive magic constants
+            # np_mask_rgb = np_mask_rgb + blurred
+            np_mask_rgb_dilated = np.clip((np_mask_rgb + blurred2) * 0.7071, 0.0, 1.0)
+            np_mask_rgb = np.clip((np_mask_rgb + blurred) * 0.7071, 0.0, 1.0)
+
+            noise_rgb = get_matched_noise(np_init, np_mask_rgb, noise_q, color_variation)
+            blend_mask_rgb = np.clip(np_mask_rgb_dilated, 0.0, 1.0) ** (mask_blend_factor)
+            noised = noise_rgb[:]
+            blend_mask_rgb **= 2.0
+            noised = np_init[:] * (1.0 - blend_mask_rgb) + noised * blend_mask_rgb
+
+            np_mask_grey = np.sum(np_mask_rgb, axis=2) / 3.0
+            ref_mask = np_mask_grey < 1e-3
+
+            all_mask = np.ones((height, width), dtype=bool)
+            noised[all_mask, :] = skimage.exposure.match_histograms(
+                noised[all_mask, :] ** 1.0, noised[ref_mask, :], channel_axis=1
+            )
+
+            init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
+
+        def init():
+            image = init_img.convert("RGB")
+            image = np.array(image).astype(np.float32) / 255.0
+            image = image[None].transpose(0, 3, 1, 2)
+            image = torch.from_numpy(image)
+
+            mask_channel = None
+            if init_mask:
+                alpha = resize_image(resize_mode, init_mask, width // 8, height // 8)
+                mask_channel = alpha.split()[-1]
+
+            mask = None
+            if mask_channel is not None:
+                mask = np.array(mask_channel).astype(np.float32) / 255.0
+                mask = 1 - mask
+                mask = np.tile(mask, (4, 1, 1))
+                mask = mask[None].transpose(0, 1, 2, 3)
+                mask = torch.from_numpy(mask).to(model.device)
+
+            init_image = 2.0 * image - 1.0
+            init_image = init_image.to(model.device)
+            init_latent = model.get_first_stage_encoding(
+                model.encode_first_stage(init_image)
+            )  # move to latent space
+
+            return (
+                init_latent,
+                mask,
+            )
+
+        def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+            t_enc_steps = t_enc
+            obliterate = False
+            if ddim_steps == t_enc_steps:
+                t_enc_steps = t_enc_steps - 1
+                obliterate = True
+
+            if sampler_name != "DDIM":
+                x0, z_mask = init_data
+
+                sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
+                noise = x * sigmas[ddim_steps - t_enc_steps - 1]
+
+                xi = x0 + noise
+
+                # Obliterate masked image
+                if z_mask is not None and obliterate:
+                    random = torch.randn(z_mask.shape, device=xi.device)
+                    xi = (z_mask * noise) + ((1 - z_mask) * xi)
+
+                sigma_sched = sigmas[ddim_steps - t_enc_steps - 1 :]
+                model_wrap_cfg = CFGMaskedDenoiser(sampler.model_wrap)
+                samples_ddim = K.sampling.__dict__[f"sample_{sampler.get_sampler_name()}"](
+                    model_wrap_cfg,
+                    xi,
+                    sigma_sched,
+                    extra_args={
+                        "cond": conditioning,
+                        "uncond": unconditional_conditioning,
+                        "cond_scale": cfg_scale,
+                        "mask": z_mask,
+                        "x0": x0,
+                        "xi": xi,
+                    },
+                    disable=False,
+                )
+            else:
+
+                x0, z_mask = init_data
+
+                sampler.make_schedule(ddim_num_steps=ddim_steps, ddim_eta=0.0, verbose=False)
+                z_enc = sampler.stochastic_encode(
+                    x0,
+                    torch.tensor([t_enc_steps] * batch_size).to(self.model.device),
+                )
+
+                # Obliterate masked image
+                if z_mask is not None and obliterate:
+                    random = torch.randn(z_mask.shape, device=z_enc.device)
+                    z_enc = (z_mask * random) + ((1 - z_mask) * z_enc)
+
+                    # decode it
+                samples_ddim = sampler.decode(
+                    z_enc,
+                    conditioning,
+                    t_enc_steps,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    z_mask=z_mask,
+                    x0=x0,
+                )
+            return samples_ddim
+
+        def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+            samples_ddim, _ = sampler.sample(
+                S=ddim_steps,
+                conditioning=conditioning,
+                unconditional_guidance_scale=cfg_scale,
+                unconditional_conditioning=unconditional_conditioning,
+                x_T=x,
+            )
+            return samples_ddim
+
+        seed = seed_to_int(seed)
+
+        image_dict = {"seed": seed}
+        negprompt = ""
+        if "###" in prompt:
+            prompt, negprompt = prompt.split("###", 1)
+            prompt = prompt.strip()
+            negprompt = negprompt.strip()
+        
+        if self.load_concepts and self.concepts_dir is not None:
+            prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
+            if prompt_tokens:
+                self.process_prompt_tokens(prompt_tokens, model)
+
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        sample_path = os.path.join(self.output_dir, "samples")
+        os.makedirs(sample_path, exist_ok=True)
+
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
-                # not needed?
-                model.half()
-                model.eval()
-                seed = seed_to_int(seed)
-
-                image_dict = {"seed": seed}
-                negprompt = ""
-                if "###" in prompt:
-                    prompt, negprompt = prompt.split("###", 1)
-                    prompt = prompt.strip()
-                    negprompt = negprompt.strip()
-
                 if sampler_name == "PLMS":
                     sampler = PLMSSampler(model)
                 elif sampler_name == "DDIM":
@@ -150,28 +292,6 @@ class txt2img:
                     sampler = KDiffusionSampler(model, "lms")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
-
-                def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
-                    samples_ddim, _ = sampler.sample(
-                        S=ddim_steps,
-                        conditioning=conditioning,
-                        unconditional_guidance_scale=cfg_scale,
-                        unconditional_conditioning=unconditional_conditioning,
-                        x_T=x,
-                    )
-                    return samples_ddim
-
-                torch_gc()
-
-                if self.load_concepts and self.concepts_dir is not None:
-                    prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
-                    if prompt_tokens:
-                        self.process_prompt_tokens(prompt_tokens, model)
-
-                os.makedirs(self.output_dir, exist_ok=True)
-
-                sample_path = os.path.join(self.output_dir, "samples")
-                os.makedirs(sample_path, exist_ok=True)
 
                 if self.verify_input:
                     try:
@@ -202,10 +322,16 @@ class txt2img:
                         opt_f = 8
                         shape = [opt_C, height // opt_f, width // opt_f]
 
-                        x = self.create_random_tensors(shape, seeds=seeds)
-
-                        samples_ddim = sample(
-                            init_data=None,
+                        x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                        init_data = init() if init_img else None
+                        samples_ddim = sample_img2img(
+                            init_data=init_data,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                        ) if init_img else sample(
+                            init_data=init_data,
                             x=x,
                             conditioning=c,
                             unconditional_conditioning=uc,
@@ -214,16 +340,8 @@ class txt2img:
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+
         else:
-            seed = seed_to_int(seed)
-
-            image_dict = {"seed": seed}
-            negprompt = ""
-            if "###" in prompt:
-                prompt, negprompt = prompt.split("###", 1)
-                prompt = prompt.strip()
-                negprompt = negprompt.strip()
-
             if sampler_name == "PLMS":
                 sampler = PLMSSampler(self.model)
             elif sampler_name == "DDIM":
@@ -243,29 +361,6 @@ class txt2img:
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
 
-            def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
-                nonlocal sampler
-                samples_ddim, _ = sampler.sample(
-                    S=ddim_steps,
-                    conditioning=conditioning,
-                    unconditional_guidance_scale=cfg_scale,
-                    unconditional_conditioning=unconditional_conditioning,
-                    x_T=x,
-                )
-                return samples_ddim
-
-            torch_gc()
-
-            if self.load_concepts and self.concepts_dir is not None:
-                prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
-                if prompt_tokens:
-                    self.process_prompt_tokens(prompt_tokens)
-
-            os.makedirs(self.output_dir, exist_ok=True)
-
-            sample_path = os.path.join(self.output_dir, "samples")
-            os.makedirs(sample_path, exist_ok=True)
-
             if self.verify_input:
                 try:
                     check_prompt_length(self.model, prompt, self.comments)
@@ -278,9 +373,7 @@ class txt2img:
                 all_prompts = batch_size * n_iter * [prompt]
                 all_seeds = [seed + x for x in range(len(all_prompts))]
 
-            precision_scope = torch.autocast if self.auto_cast else nullcontext
-
-            with torch.no_grad(), precision_scope("cuda"):
+            with torch.no_grad():
                 for n in range(n_iter):
                     print(f"Iteration: {n+1}/{n_iter}")
                     prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
@@ -297,7 +390,7 @@ class txt2img:
                     opt_f = 8
                     shape = [opt_C, height // opt_f, width // opt_f]
 
-                    x = self.create_random_tensors(shape, seeds=seeds)
+                    x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                     samples_ddim = sample(
                         init_data=None,
