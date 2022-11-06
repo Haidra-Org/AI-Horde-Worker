@@ -264,11 +264,6 @@ class CompVis:
             prompt = prompt.strip()
             negprompt = negprompt.strip()
         
-        if self.load_concepts and self.concepts_dir is not None:
-            prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
-            if prompt_tokens:
-                self.process_prompt_tokens(prompt_tokens, model)
-
         os.makedirs(self.output_dir, exist_ok=True)
 
         sample_path = os.path.join(self.output_dir, "samples")
@@ -294,7 +289,10 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "lms")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
-
+                if self.load_concepts and self.concepts_dir is not None:
+                    prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
+                    if prompt_tokens:
+                        self.process_prompt_tokens(prompt_tokens, model)
                 if self.verify_input:
                     try:
                         check_prompt_length(model, prompt, self.comments)
@@ -362,7 +360,10 @@ class CompVis:
                 sampler = KDiffusionSampler(self.model, "lms")
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
-
+            if self.load_concepts and self.concepts_dir is not None:
+                prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
+                if prompt_tokens:
+                    self.process_prompt_tokens(prompt_tokens, self.model)
             if self.verify_input:
                 try:
                     check_prompt_length(self.model, prompt, self.comments)
