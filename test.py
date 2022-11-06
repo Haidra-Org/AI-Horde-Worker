@@ -21,14 +21,23 @@ for model in mm.available_models:
     logger.debug(model)
 
 models_to_load = [
-    # 'stable_diffusion',
+    'stable_diffusion',
     # 'waifu_diffusion',
-    "trinart",
+    #"trinart",
     # 'GFPGAN', 'RealESRGAN_x4plus', 'RealESRGAN_x4plus_anime_6B',
     # 'BLIP', 'ViT-L/14', 'ViT-g-14', 'ViT-H-14'
 ]
 logger.init(f"{models_to_load}", status="Loading")
 
+def test_compvis(model, prompt, sampler):
+    compvis = CompVis(
+        mm.loaded_models[model]["model"],
+        mm.loaded_models[model]["device"],
+        "test_output",
+        disable_voodoo=True,
+    )
+    compvis.generate(prompt, sampler_name=sampler)
+    logger.info(f'Testing txt2img with prompt {prompt} with sampler {sampler} for model {model}')
 
 @logger.catch
 def test():
@@ -51,15 +60,18 @@ def test():
 
         if model in ["stable_diffusion", "waifu_diffusion", "trinart"]:
             logger.debug(f"Running inference on {model}")
-            logger.info('Testing txt2img with prompt "collosal corgi"')
+            
 
-            t2i = CompVis(
-                mm.loaded_models[model]["model"],
-                mm.loaded_models[model]["device"],
-                "test_output",
-                disable_voodoo=True,
-            )
-            t2i.generate("collosal corgi")
+            test_compvis(model, "collosal corgi", "k_dpm_fast")
+            test_compvis(model, "collosal corgi", "k_dpm_adaptive")
+            test_compvis(model, "collosal corgi", "k_dpmpp_2s_a")
+            test_compvis(model, "collosal corgi", "k_dpmpp_2m")
+            test_compvis(model, "collosal corgi", "k_dpm_2_a")
+            test_compvis(model, "collosal corgi", "k_dpm_2")
+            test_compvis(model, "collosal corgi", "k_euler_a")
+            test_compvis(model, "collosal corgi", "k_euler")
+            test_compvis(model, "collosal corgi", "k_heun")
+            test_compvis(model, "collosal corgi", "k_lms")
 
             torch_gc()
 

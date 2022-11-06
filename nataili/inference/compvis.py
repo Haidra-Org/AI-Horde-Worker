@@ -287,6 +287,14 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "heun")
                 elif sampler_name == "k_lms":
                     sampler = KDiffusionSampler(model, "lms")
+                elif sampler_name == "k_dpm_fast":
+                    sampler = KDiffusionSampler(model, "dpm_fast")
+                elif sampler_name == "k_dpm_adaptive":
+                    sampler = KDiffusionSampler(model, "dpm_adaptive")
+                elif sampler_name == "k_dpmpp_2s_a":
+                    sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
+                elif sampler_name == "k_dpmpp_2m":
+                    sampler = KDiffusionSampler(model, "dpmpp_2m")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
                 if self.load_concepts and self.concepts_dir is not None:
@@ -358,6 +366,14 @@ class CompVis:
                 sampler = KDiffusionSampler(self.model, "heun")
             elif sampler_name == "k_lms":
                 sampler = KDiffusionSampler(self.model, "lms")
+            elif sampler_name == "k_dpm_fast":
+                sampler = KDiffusionSampler(self.model, "dpm_fast")
+            elif sampler_name == "k_dpm_adaptive":
+                sampler = KDiffusionSampler(self.model, "dpm_adaptive")
+            elif sampler_name == "k_dpmpp_2s_a":
+                sampler = KDiffusionSampler(self.model, "dpmpp_2s_ancestral")
+            elif sampler_name == "k_dpmpp_2m":
+                sampler = KDiffusionSampler(self.model, "dpmpp_2m")
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
             if self.load_concepts and self.concepts_dir is not None:
