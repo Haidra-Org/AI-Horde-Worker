@@ -6,24 +6,56 @@ from nataili.util import logger
 
 image = PIL.Image.open("01.png").convert("RGB")
 
-mm = ModelManager()
+mm = ModelManager(download=False)
 mm.init()
 
-model = "BLIP"
+def test_caption(model, fast_test=True):
+    if model not in mm.available_models:
+        logger.error(f"{model} not available")
+        logger.info(f"Downloading {model}")
+        mm.download_model(model)
 
-if model not in mm.available_models:
-    logger.error("BLIP not available")
-    logger.info("Downloading BLIP")
-    mm.download_model(model)
+    if model not in mm.loaded_models:
+        tic = time.time()
+        logger.info(f"Loading {model}")
+        success = mm.load_model(model)
+        logger.init_ok(f"Loading {model}", status=success)
+        toc = time.time()
+        logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status=success)
 
-tic = time.time()
-logger.info("Loading BLIP")
-success = mm.load_model(model)
-logger.init_ok("Loading BLIP", status=success)
-toc = time.time()
-logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status=success)
-start = time.time()
+    start = time.time()
 
-for i in range(100):
-    caption = Caption(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"])(image)
-    logger.info(caption)
+    blip = Caption(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"])
+
+    if fast_test:
+        logger.info(f"Fast test for {model}")
+        logger.info(f"caption: {blip(image, sample=False)} sample: False")
+        logger.info(f"caption: {blip(image, sample=True)} sample: True")
+    else:
+        logger.info(f"Slow test for {model}")
+        num_beams = [3, 5]
+        max_length = [30, 50, 70]
+        top_p = [0.9, 0.95]
+        repetition_penalty = [1.0, 1.2]
+        for n in num_beams:
+            for m in max_length:
+                    for t in top_p:
+                        for r in repetition_penalty:
+                            caption = blip(image, num_beams=n, max_length=m, top_p=t, repetition_penalty=r)
+                            logger.info(f"Num Beams: {n}, Max Length: {m}, Top P: {t}, Repetition Penalty: {r}")
+                            logger.info(caption)
+        caption = blip(image, sample=False)
+        logger.info(f"caption: {caption} sample: False")
+        caption = blip(image, sample=False, num_beams=5)
+        logger.info(f"caption: {caption} sample: False, num_beams=5")
+        caption = blip(image, sample=False, num_beams=7, max_length=50)
+        logger.info(f"caption: {caption} sample: False, num_beams=7, max_length=50")
+
+    end = time.time()
+
+    logger.info(f"Total time: {end-start}")
+
+test_caption("BLIP", fast_test=True)
+test_caption("BLIP_Large", fast_test=True)
+test_caption("BLIP", fast_test=False)
+test_caption("BLIP_Large", fast_test=False)

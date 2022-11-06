@@ -619,6 +619,25 @@
     },
     "available": false
   },
+  "BLIP_Large": {
+    "name": "BLIP_Large",
+    "type": "blip",
+    "config": {
+      "files": [
+        {
+          "path": "models/blip/model_large_caption.pth"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "model_large_caption.pth",
+          "file_path": "models/blip",
+          "file_url": "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"
+        }
+      ]
+    },
+    "available": false
+  },
   "ViT-L/14": {
     "name": "ViT-L/14",
     "type": "clip",

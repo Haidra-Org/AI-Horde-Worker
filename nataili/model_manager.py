@@ -257,9 +257,10 @@ class ModelManager:
         precision="half",
         gpu_id=0,
         blip_image_eval_size=512,
-        vit="base",
+        vit="large",
     ):
         # vit = 'base' or 'large'
+        vit = 'base' if model_name == 'BLIP' else 'large'
         model_path = self.get_model_files(model_name)[0]["path"]
         device = torch.device(f"cuda:{gpu_id}")
         model = blip_decoder(
@@ -328,7 +329,7 @@ class ModelManager:
             self.loaded_models[model_name] = self.load_gfpgan(model_name, gpu_id)
             return True
         elif self.models[model_name]["type"] == "blip":
-            self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512, "base")
+            self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512)
             return True
         elif self.models[model_name]["type"] == "open_clip":
             self.loaded_models[model_name] = self.load_open_clip(model_name, precision, gpu_id, data_path)
