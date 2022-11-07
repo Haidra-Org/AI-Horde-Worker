@@ -2,6 +2,7 @@ import os
 
 from nataili.util.load_learned_embed_in_clip import load_learned_embed_in_clip
 
+
 def process_prompt_tokens(prompt_tokens, model, concepts_dir):
     # compviz codebase
     # tokenizer =  model.cond_stage_model.tokenizer

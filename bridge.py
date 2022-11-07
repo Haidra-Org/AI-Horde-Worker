@@ -1,12 +1,12 @@
 import argparse
 import base64
 import getpass
+import importlib
 import json
 import os
 import random
 import sys
 import time
-import importlib
 from base64 import binascii
 from io import BytesIO
 
@@ -216,6 +216,7 @@ class BridgeData(object):
         previous_api_key = self.api_key
         try:
             import bridgeData as bd
+
             importlib.reload(bd)
             self.api_key = bd.api_key
             self.worker_name = bd.worker_name
@@ -293,7 +294,7 @@ class BridgeData(object):
                 )
                 user_req = user_req.json()
                 self.username = user_req["username"]
-            except:
+            except Exception:
                 logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
                 self.username = "N/A"
         if not self.initialized or previous_url != self.horde_url:
@@ -306,7 +307,7 @@ class BridgeData(object):
             )
 
     @logger.catch(reraise=True)
-    def check_models(self,mm):
+    def check_models(self, mm):
         if not self.initialized:
             logger.init("Models", status="Checking")
         models_exist = True
@@ -329,7 +330,8 @@ class BridgeData(object):
                 check_mm_auth(mm)
         if not models_exist:
             choice = input(
-                "You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. "
+                "You do not appear to have downloaded the models needed yet.\n"
+                "You need at least a main model to proceed. "
                 f"Would you like to download your prespecified models?\n\
             y: Download {not_found_models} (default).\n\
             n: Abort and exit\n\
@@ -357,9 +359,9 @@ class BridgeData(object):
                     logger.init(f"Model: {model}", status="Downloading")
                     if not mm.download_model(model):
                         logger.message(
-                            "Something went wrong when downloading the model and it does not fit the expected checksum. "
-                            "Please check that your HuggingFace authentication is correct and that you've accepted the "
-                            "model license from the browser."
+                            "Something went wrong when downloading the model and it does not fit the expected "
+                            "checksum. Please check that your HuggingFace authentication is correct and that "
+                            "you've accepted the model license from the browser."
                         )
                         sys.exit(1)
             mm.init()
@@ -375,7 +377,8 @@ class BridgeData(object):
                 for line in firstfile:
                     secondfile.write(line)
             logger.message(
-                "bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge"
+                "bridgeData.py created. Bridge will exit. "
+                "Please edit bridgeData.py with your setup and restart the bridge"
             )
             sys.exit(2)
 
@@ -458,7 +461,9 @@ def bridge(interval, model_manager, bd):
             try:
                 pop = pop_req.json()
             except json.decoder.JSONDecodeError:
-                logger.error(f"Could not decode response from {bd.horde_url} as json. Please inform its administrator!")
+                logger.error(
+                    f"Could not decode response from {bd.horde_url} as json. Please inform its administrator!"
+                )
                 time.sleep(interval)
                 continue
             if pop is None:
@@ -656,14 +661,12 @@ def bridge(interval, model_manager, bd):
                 generator.generate(**gen_payload)
                 torch_gc()
             except RuntimeError:
-                logger.error(
-                    "Rescue Attempt also failed. Aborting!"
-                )
+                logger.error("Rescue Attempt also failed. Aborting!")
                 current_id = None
                 current_payload = None
                 current_generation = None
                 loop_retry = 0
-                continue                
+                continue
         # Submit back to horde
         # images, seed, info, stats = txt2img(**current_payload)
         buffer = BytesIO()
@@ -691,9 +694,7 @@ def bridge(interval, model_manager, bd):
                     headers=headers,
                     timeout=20,
                 )
-                logger.debug(
-                    f"Upload completed in {submit_req.elapsed.total_seconds()}"
-                )
+                logger.debug(f"Upload completed in {submit_req.elapsed.total_seconds()}")
                 try:
                     submit = submit_req.json()
                 except json.decoder.JSONDecodeError:
@@ -707,7 +708,8 @@ def bridge(interval, model_manager, bd):
                     logger.warning("The generation we were working on got stale. Aborting!")
                 elif not submit_req.ok:
                     logger.warning(
-                        f"During gen submit, server {bd.horde_url} responded with status code {submit_req.status_code}: "
+                        f"During gen submit, server {bd.horde_url} "
+                        f"responded with status code {submit_req.status_code}: "
                         f"{submit['message']}. Waiting for 10 seconds...  (Retry {loop_retry}/10)"
                     )
                     if "errors" in submit:

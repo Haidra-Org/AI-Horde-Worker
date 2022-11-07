@@ -1,14 +1,12 @@
 import os
 import re
 import sys
-from contextlib import nullcontext
 
 import k_diffusion as K
 import numpy as np
 import PIL
 import skimage
 import torch
-import tqdm
 from einops import rearrange
 from slugify import slugify
 from transformers import CLIPFeatureExtractor
@@ -19,13 +17,12 @@ from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.check_prompt_length import check_prompt_length
+from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-
+from nataili.util.img2img import get_matched_noise, process_init_mask, resize_image
+from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from nataili.util.process_prompt_tokens import process_prompt_tokens
-from nataili.util.img2img import *
-from nataili.util.create_random_tensors import create_random_tensors
 
 try:
     from nataili.util.voodoo import load_from_plasma, performance
@@ -34,6 +31,7 @@ except ModuleNotFoundError as e:
 
     if not disable_voodoo.active:
         raise e
+
 
 class CompVis:
     def __init__(
@@ -174,9 +172,7 @@ class CompVis:
 
             init_image = 2.0 * image - 1.0
             init_image = init_image.to(model.device)
-            init_latent = model.get_first_stage_encoding(
-                model.encode_first_stage(init_image)
-            )  # move to latent space
+            init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
 
             return (
                 init_latent,
@@ -184,6 +180,7 @@ class CompVis:
             )
 
         def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+            nonlocal sampler
             t_enc_steps = t_enc
             obliterate = False
             if ddim_steps == t_enc_steps:
@@ -264,7 +261,7 @@ class CompVis:
             prompt, negprompt = prompt.split("###", 1)
             prompt = prompt.strip()
             negprompt = negprompt.strip()
-        
+
         os.makedirs(self.output_dir, exist_ok=True)
 
         sample_path = os.path.join(self.output_dir, "samples")
@@ -333,18 +330,22 @@ class CompVis:
 
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
                         init_data = init(model, init_img) if init_img else None
-                        samples_ddim = sample_img2img(
-                            init_data=init_data,
-                            x=x,
-                            conditioning=c,
-                            unconditional_conditioning=uc,
-                            sampler_name=sampler_name,
-                        ) if init_img else sample(
-                            init_data=init_data,
-                            x=x,
-                            conditioning=c,
-                            unconditional_conditioning=uc,
-                            sampler_name=sampler_name,
+                        samples_ddim = (
+                            sample_img2img(
+                                init_data=init_data,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
+                            )
+                            if init_img
+                            else sample(
+                                init_data=init_data,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
+                            )
                         )
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
@@ -413,18 +414,22 @@ class CompVis:
                     x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                     init_data = init(self.model, init_img) if init_img else None
-                    samples_ddim = sample_img2img(
-                        init_data=init_data,
-                        x=x,
-                        conditioning=c,
-                        unconditional_conditioning=uc,
-                        sampler_name=sampler_name,
-                    ) if init_img else sample(
-                        init_data=init_data,
-                        x=x,
-                        conditioning=c,
-                        unconditional_conditioning=uc,
-                        sampler_name=sampler_name,
+                    samples_ddim = (
+                        sample_img2img(
+                            init_data=init_data,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                        )
+                        if init_img
+                        else sample(
+                            init_data=init_data,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                        )
                     )
 
                     x_samples_ddim = self.model.decode_first_stage(samples_ddim)

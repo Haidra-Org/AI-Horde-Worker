@@ -1,9 +1,10 @@
-import PIL
+import k_diffusion as K
 import numpy as np
+import PIL
 import skimage
 import torch
-import k_diffusion as K
 import tqdm
+
 
 def process_init_mask(init_mask: PIL.Image):
     if init_mask.mode == "RGBA":
@@ -12,6 +13,7 @@ def process_init_mask(init_mask: PIL.Image):
         init_mask = PIL.Image.alpha_composite(background, init_mask)
         init_mask = init_mask.convert("RGB")
     return init_mask
+
 
 def resize_image(resize_mode, im, width, height):
     LANCZOS = PIL.Image.Resampling.LANCZOS if hasattr(PIL.Image, "Resampling") else PIL.Image.LANCZOS
@@ -67,6 +69,7 @@ def resize_image(resize_mode, im, width, height):
 
     return res
 
+
 # helper fft routines that keep ortho normalization and auto-shift before and after fft
 def _fft2(data):
     if data.ndim > 2:  # has channels
@@ -82,6 +85,7 @@ def _fft2(data):
 
     return out_fft
 
+
 def _ifft2(data):
     if data.ndim > 2:  # has channels
         out_ifft = np.zeros((data.shape[0], data.shape[1], data.shape[2]), dtype=np.complex128)
@@ -95,6 +99,7 @@ def _ifft2(data):
         out_ifft[:, :] = np.fft.ifftshift(out_ifft[:, :])
 
     return out_ifft
+
 
 def _get_gaussian_window(width, height, std=3.14, mode=0):
 
@@ -114,6 +119,7 @@ def _get_gaussian_window(width, height, std=3.14, mode=0):
 
     return window
 
+
 def _get_masked_window_rgb(np_mask_grey, hardness=1.0):
     np_mask_rgb = np.zeros((np_mask_grey.shape[0], np_mask_grey.shape[1], 3))
     if hardness != 1.0:
@@ -123,6 +129,7 @@ def _get_masked_window_rgb(np_mask_grey, hardness=1.0):
     for c in range(3):
         np_mask_rgb[:, :, c] = hardened[:]
     return np_mask_rgb
+
 
 def get_matched_noise(_np_src_image, np_mask_rgb, noise_q, color_variation):
     """
@@ -240,6 +247,7 @@ def get_matched_noise(_np_src_image, np_mask_rgb, noise_q, color_variation):
 
     return np.clip(matched_noise, 0.0, 1.0)
 
+
 def find_noise_for_image(
     model,
     device,
@@ -294,4 +302,3 @@ def find_noise_for_image(
         x = x + d * dt
 
     return x / sigmas[-1]
-

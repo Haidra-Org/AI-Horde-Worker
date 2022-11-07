@@ -1,13 +1,16 @@
 import time
+
 import PIL
-from nataili.model_manager import ModelManager
+
 from nataili.blip.caption import Caption
+from nataili.model_manager import ModelManager
 from nataili.util import logger
 
 image = PIL.Image.open("01.png").convert("RGB")
 
 mm = ModelManager(download=False)
 mm.init()
+
 
 def test_caption(model, fast_test=True):
     if model not in mm.available_models:
@@ -39,11 +42,11 @@ def test_caption(model, fast_test=True):
         repetition_penalty = [1.0, 1.2]
         for n in num_beams:
             for m in max_length:
-                    for t in top_p:
-                        for r in repetition_penalty:
-                            caption = blip(image, num_beams=n, max_length=m, top_p=t, repetition_penalty=r)
-                            logger.info(f"Num Beams: {n}, Max Length: {m}, Top P: {t}, Repetition Penalty: {r}")
-                            logger.info(caption)
+                for t in top_p:
+                    for r in repetition_penalty:
+                        caption = blip(image, num_beams=n, max_length=m, top_p=t, repetition_penalty=r)
+                        logger.info(f"Num Beams: {n}, Max Length: {m}, Top P: {t}, Repetition Penalty: {r}")
+                        logger.info(caption)
         caption = blip(image, sample=False)
         logger.info(f"caption: {caption} sample: False")
         caption = blip(image, sample=False, num_beams=5)
@@ -54,6 +57,7 @@ def test_caption(model, fast_test=True):
     end = time.time()
 
     logger.info(f"Total time: {end-start}")
+
 
 test_caption("BLIP", fast_test=True)
 test_caption("BLIP_Large", fast_test=True)

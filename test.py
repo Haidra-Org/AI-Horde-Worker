@@ -1,8 +1,8 @@
 import time
+
 import PIL
 
 from nataili.inference.compvis import CompVis
-
 from nataili.model_manager import ModelManager
 from nataili.util.cache import torch_gc
 from nataili.util.logger import logger
@@ -21,13 +21,14 @@ for model in mm.available_models:
     logger.debug(model)
 
 models_to_load = [
-    'stable_diffusion',
+    "stable_diffusion",
     # 'waifu_diffusion',
-    #"trinart",
+    # "trinart",
     # 'GFPGAN', 'RealESRGAN_x4plus', 'RealESRGAN_x4plus_anime_6B',
     # 'BLIP', 'ViT-L/14', 'ViT-g-14', 'ViT-H-14'
 ]
 logger.init(f"{models_to_load}", status="Loading")
+
 
 def test_compvis(model, prompt, sampler):
     compvis = CompVis(
@@ -37,7 +38,8 @@ def test_compvis(model, prompt, sampler):
         disable_voodoo=True,
     )
     compvis.generate(prompt, sampler_name=sampler)
-    logger.info(f'Testing txt2img with prompt {prompt} with sampler {sampler} for model {model}')
+    logger.info(f"Testing txt2img with prompt {prompt} with sampler {sampler} for model {model}")
+
 
 @logger.catch
 def test():
@@ -60,7 +62,6 @@ def test():
 
         if model in ["stable_diffusion", "waifu_diffusion", "trinart"]:
             logger.debug(f"Running inference on {model}")
-            
 
             test_compvis(model, "collosal corgi", "k_dpm_fast")
             test_compvis(model, "collosal corgi", "k_dpm_adaptive")

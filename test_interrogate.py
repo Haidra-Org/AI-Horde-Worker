@@ -1,4 +1,3 @@
-import time
 import PIL
 
 from nataili.clip.interrogate import Interrogator
