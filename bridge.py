@@ -432,7 +432,7 @@ def bridge(interval, model_manager, bd):
             "allow_img2img": bd.allow_img2img,
             "allow_painting": bd.allow_painting,
             "allow_unsafe_ip": bd.allow_unsafe_ip,
-            "bridge_version": 5,
+            "bridge_version": 6,
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
@@ -525,6 +525,8 @@ def bridge(interval, model_manager, bd):
             gen_payload["ddim_eta"] = current_payload["ddim_eta"]
         if "denoising_strength" in current_payload and source_image:
             gen_payload["denoising_strength"] = current_payload["denoising_strength"]
+        if current_payload.get("karras", False):
+            gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
