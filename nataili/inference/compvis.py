@@ -23,6 +23,7 @@ from nataili.util.get_next_sequence_number import get_next_sequence_number
 
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.img2img import *
 from nataili.util.create_random_tensors import create_random_tensors
 
@@ -300,7 +301,7 @@ class CompVis:
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
-                        self.process_prompt_tokens(prompt_tokens, model)
+                        process_prompt_tokens(prompt_tokens, model, self.concepts_dir)
                 if self.verify_input:
                     try:
                         check_prompt_length(model, prompt, self.comments)
@@ -379,7 +380,7 @@ class CompVis:
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
-                    self.process_prompt_tokens(prompt_tokens, self.model)
+                    process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
             if self.verify_input:
                 try:
                     check_prompt_length(self.model, prompt, self.comments)

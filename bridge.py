@@ -429,7 +429,7 @@ def bridge(interval, model_manager, bd):
             "allow_img2img": bd.allow_img2img,
             "allow_painting": bd.allow_painting,
             "allow_unsafe_ip": bd.allow_unsafe_ip,
-            "bridge_version": 4,
+            "bridge_version": 5,
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
