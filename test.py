@@ -1,4 +1,5 @@
 import time
+import uuid
 
 import PIL
 
@@ -30,15 +31,71 @@ models_to_load = [
 logger.init(f"{models_to_load}", status="Loading")
 
 
-def test_compvis(model, prompt, sampler):
+def test_compvis(
+    model,
+    prompt,
+    sampler,
+    steps=30,
+    output_dir=None,
+    seed=None,
+    init_img=None,
+    denoising_strength=0.75,
+    sigma_override=None,
+    filter_nsfw=False,
+    safety_checker=None,
+):
+    log_message = f"sampler: {sampler} steps: {steps} model: {model}"
+    if seed:
+        log_message += f" seed: {seed}"
+    if sigma_override:
+        log_message += f" sigma_override: {sigma_override}"
+    logger.info(log_message)
+    if filter_nsfw:
+        logger.info("Filtering NSFW")
+    if init_img:
+        logger.info("Using init image")
+        logger.info(f"Denoising strength: {denoising_strength}")
     compvis = CompVis(
         mm.loaded_models[model]["model"],
         mm.loaded_models[model]["device"],
-        "test_output",
+        output_dir,
         disable_voodoo=True,
+        filter_nsfw=filter_nsfw,
+        safety_checker=safety_checker,
     )
-    compvis.generate(prompt, sampler_name=sampler)
-    logger.info(f"Testing txt2img with prompt {prompt} with sampler {sampler} for model {model}")
+    compvis.generate(
+        prompt,
+        sampler_name=sampler,
+        ddim_steps=steps,
+        seed=seed,
+        init_img=init_img,
+        sigma_override=sigma_override,
+        denoising_strength=denoising_strength,
+    )
+
+
+samplers = [
+    "k_dpm_fast",
+    "k_dpmpp_2s_a",
+    "k_dpm_adaptive",
+    "k_dpmpp_2m",
+    "k_dpm_2_a",
+    "k_dpm_2",
+    "k_euler_a",
+    "k_euler",
+    "k_heun",
+    "k_lms",
+]
+
+step_counts = [5, 7, 8, 15]
+
+sigma_overrides = [
+    {"min": 0.6958, "max": 9.9172, "rho": 7.0},
+]
+
+denoising_strengths = [0.22, 0.44, 0.88]
+
+output_dir = f"./test_output/{str(uuid.uuid4())}"
 
 
 @logger.catch
@@ -61,46 +118,60 @@ def test():
         torch_gc()
 
         if model in ["stable_diffusion", "waifu_diffusion", "trinart"]:
+            logger.info(f"Output dir: {output_dir}")
             logger.debug(f"Running inference on {model}")
+            logger.info(f"Testing {len(samplers)} samplers")
+            prompt = (
+                "Headshot of cybernetic female character, cybernetic implants, solid background color,"
+                "digital art, illustration, smooth color, cinematic moody lighting, cyberpunk, body modification,"
+                "wenjun lin, studio ghibli, pixiv, artgerm, greg rutkowski, ilya kuvshinov"
+            )
+            logger.info(f"Prompt: {prompt}")
+            for sampler in samplers:
+                test_compvis(model, prompt, sampler, output_dir=output_dir)
 
-            test_compvis(model, "collosal corgi", "k_dpm_fast")
-            test_compvis(model, "collosal corgi", "k_dpm_adaptive")
-            test_compvis(model, "collosal corgi", "k_dpmpp_2s_a")
-            test_compvis(model, "collosal corgi", "k_dpmpp_2m")
-            test_compvis(model, "collosal corgi", "k_dpm_2_a")
-            test_compvis(model, "collosal corgi", "k_dpm_2")
-            test_compvis(model, "collosal corgi", "k_euler_a")
-            test_compvis(model, "collosal corgi", "k_euler")
-            test_compvis(model, "collosal corgi", "k_heun")
-            test_compvis(model, "collosal corgi", "k_lms")
+            samplers.remove("k_dpm_adaptive")  # This sampler doesn't work with step counts
+            logger.info(f"Testing {len(samplers)} samplers with Karras on step counts {step_counts}")
+            logger.info(f"Prompt: {prompt}")
+            for sampler in samplers:
+                sampler = f"{sampler}_karras"
+                for steps in step_counts:
+                    test_compvis(model, prompt, sampler, steps=steps, output_dir=output_dir)
 
-            torch_gc()
+            logger.info(
+                f"Testing {len(samplers)} samplers with Karras on step counts {step_counts} and sigma overrides"
+            )
+            logger.info(f"Prompt: {prompt}")
+            for sampler in samplers:
+                sampler = f"{sampler}_karras"
+                for steps in step_counts:
+                    for sigma_override in sigma_overrides:
+                        test_compvis(
+                            model, prompt, sampler, steps=steps, sigma_override=sigma_override, output_dir=output_dir
+                        )
 
-            logger.info('Testing nsfw filter with prompt "boobs"')
-
-            t2i = CompVis(
-                mm.loaded_models[model]["model"],
-                mm.loaded_models[model]["device"],
-                "test_output",
+            prompt = "boobs"
+            logger.info(f"Prompt: {prompt}")
+            test_compvis(
+                model,
+                prompt,
+                "k_lms",
                 filter_nsfw=True,
                 safety_checker=mm.loaded_models["safety_checker"]["model"],
-                disable_voodoo=True,
+                output_dir=output_dir,
             )
-            t2i.generate("boobs")
 
-            torch_gc()
-
-            logger.info('Testing img2img with prompt "cute anime girl"')
-
-            i2i = CompVis(
-                mm.loaded_models[model]["model"],
-                mm.loaded_models[model]["device"],
-                "test_output",
-                disable_voodoo=True,
-            )
-            # init_img = PIL.Image.open(init_img)
-            i2i.generate("cute anime girl", init_img=init_image)
-            torch_gc()
+            prompt = "cute anime girl"
+            logger.info(f"Prompt: {prompt}")
+            for denoising_strength in denoising_strengths:
+                test_compvis(
+                    model,
+                    prompt,
+                    "k_lms",
+                    init_img=init_image,
+                    denoising_strength=denoising_strength,
+                    output_dir=output_dir,
+                )
 
         logger.init_ok(f"Model {model}", status="Unloading")
         mm.unload_model(model)

@@ -89,6 +89,7 @@ class CompVis:
         save_individual_images: bool = True,
         save_grid: bool = True,
         ddim_eta: float = 0.0,
+        sigma_override: dict = None,
     ):
         if init_img:
             init_img = resize_image(resize_mode, init_img, width, height)
@@ -243,13 +244,23 @@ class CompVis:
                 )
             return samples_ddim
 
-        def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+        def sample(
+            init_data,
+            x,
+            conditioning,
+            unconditional_conditioning,
+            sampler_name,
+            karras=False,
+            sigma_override: dict = None,
+        ):
             samples_ddim, _ = sampler.sample(
                 S=ddim_steps,
                 conditioning=conditioning,
                 unconditional_guidance_scale=cfg_scale,
                 unconditional_conditioning=unconditional_conditioning,
                 x_T=x,
+                karras=karras,
+                sigma_override=sigma_override,
             )
             return samples_ddim
 
@@ -266,6 +277,11 @@ class CompVis:
 
         sample_path = os.path.join(self.output_dir, "samples")
         os.makedirs(sample_path, exist_ok=True)
+
+        karras = False
+        if "karras" in sampler_name:
+            karras = True
+            sampler_name = sampler_name.replace("_karras", "")
 
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
@@ -330,6 +346,7 @@ class CompVis:
 
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
                         init_data = init(model, init_img) if init_img else None
+
                         samples_ddim = (
                             sample_img2img(
                                 init_data=init_data,
@@ -345,6 +362,8 @@ class CompVis:
                                 conditioning=c,
                                 unconditional_conditioning=uc,
                                 sampler_name=sampler_name,
+                                karras=karras,
+                                sigma_override=sigma_override,
                             )
                         )
 
@@ -429,6 +448,8 @@ class CompVis:
                             conditioning=c,
                             unconditional_conditioning=uc,
                             sampler_name=sampler_name,
+                            karras=karras,
+                            sigma_override=sigma_override,
                         )
                     )
 
@@ -440,6 +461,8 @@ class CompVis:
             full_path = os.path.join(os.getcwd(), sample_path)
             sample_path_i = sample_path
             base_count = get_next_sequence_number(sample_path_i)
+            if karras:
+                sampler_name += "_karras"
             filename = f"{base_count:05}-{ddim_steps}_{sampler_name}_{seeds[i]}_{sanitized_prompt}"[
                 : 200 - len(full_path)
             ]

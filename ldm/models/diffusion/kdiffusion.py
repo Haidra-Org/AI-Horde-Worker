@@ -11,12 +11,34 @@ class KDiffusionSampler:
         self.generation_callback = callback
     def get_sampler_name(self):
         return self.schedule
-    def sample(self, S, conditioning, unconditional_guidance_scale, unconditional_conditioning, x_T):
+    def sample(self, S, conditioning, unconditional_guidance_scale, unconditional_conditioning, x_T,
+              karras=False, sigma_override: dict = None
+        ):
+        if sigma_override:
+            if 'min' not in sigma_override:
+                raise ValueError("sigma_override must have a 'min' key")
+            if 'max' not in sigma_override:
+                raise ValueError("sigma_override must have a 'max' key")
+            if 'rho' not in sigma_override:
+                raise ValueError("sigma_override must have a 'rho' key")
         extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
-        if self.schedule in ["dpm_fast", "dpm_adaptive"]:
-            sigma_min=self.model_wrap.sigmas[0]
-            sigma_max=self.model_wrap.sigmas[-1]
-        sigmas = self.model_wrap.get_sigmas(S)
+        sigma_min=self.model_wrap.sigmas[0] if sigma_override is None else sigma_override['min']
+        sigma_max=self.model_wrap.sigmas[-1] if sigma_override is None else sigma_override['max']
+        sigmas = None
+        if karras:
+            if sigma_override is None:
+                if S > 8:
+                    sigmas = K.sampling.get_sigmas_karras(S, 0.0292, 14.6146, 7., self.model.device)
+                elif S == 8:
+                    sigmas = K.sampling.get_sigmas_karras(S, 0.0936, 14.6146, 7., self.model.device)
+                elif S <= 7 and S > 5:
+                    sigmas = K.sampling.get_sigmas_karras(S, 0.1072, 14.6146, 7., self.model.device)
+                elif S <= 5:
+                    sigmas = K.sampling.get_sigmas_karras(S, 0.1072, 7.0796, 9., self.model.device)
+            else:
+                sigmas = K.sampling.get_sigmas_karras(S, sigma_override['min'], sigma_override['max'], sigma_override['rho'], self.model.device)
+        else:
+            sigmas = self.model_wrap.get_sigmas(S)
         x = x_T * sigmas[0]
         model_wrap_cfg = CFGDenoiser(self.model_wrap)
         samples_ddim = None
