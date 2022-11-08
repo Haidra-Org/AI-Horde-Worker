@@ -182,8 +182,10 @@ arg_parser.add_argument(
 args = arg_parser.parse_args()
 
 disable_xformers.toggle(args.disable_xformers)
-disable_voodoo.toggle(args.disable_voodoo)
 disable_local_ray_temp.toggle(args.disable_local_ray_temp)
+disable_voodoo.toggle(args.disable_voodoo)
+if disable_voodoo.active:
+    disable_local_ray_temp.activate()
 
 # Note: for now we cannot put them at the top of the file because the imports
 # will use the disable_voodoo and disable_xformers global variables
