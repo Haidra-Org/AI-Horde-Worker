@@ -13,7 +13,7 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from nataili import disable_voodoo, disable_xformers
+from nataili import disable_voodoo, disable_xformers, disable_local_ray_temp
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
 from nataili.util.cache import torch_gc
 
@@ -165,10 +165,25 @@ arg_parser.add_argument(
         " This should normally be automatic, but in case you need to disable it manually, you can do so here."
     ),
 )
+arg_parser.add_argument(
+    "--disable_local_ray_temp",
+    action="store_true",
+    default=False,
+    help=("If specified this bridge will make the system use the default ray path for temp files instead of local."),
+)
+arg_parser.add_argument(
+    "--hf_token",
+    action="store",
+    type=str,
+    required=False,
+    help="When defined, will use this huggingface token to download models.",
+)
+
 args = arg_parser.parse_args()
 
 disable_xformers.toggle(args.disable_xformers)
 disable_voodoo.toggle(args.disable_voodoo)
+disable_local_ray_temp.toggle(args.disable_local_ray_temp)
 
 # Note: for now we cannot put them at the top of the file because the imports
 # will use the disable_voodoo and disable_xformers global variables
