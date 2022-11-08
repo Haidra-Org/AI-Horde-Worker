@@ -1,12 +1,21 @@
 import contextlib
 import copy
+import os
+import shutil
 from functools import wraps
 from typing import Dict, List, Tuple, TypeVar
+from nataili.util import logger
 
 import ray
 import torch
 
 T = TypeVar("T")
+
+ray_temp_dir = './ray'
+shutil.rmtree(ray_temp_dir, ignore_errors=True)
+os.makedirs(ray_temp_dir, exist_ok=True)
+ray.init(_temp_dir=ray_temp_dir)
+logger.init(f"Ray temp dir '{ray_temp_dir}'", status="Prepared")
 
 
 def performance(f: T) -> T:
