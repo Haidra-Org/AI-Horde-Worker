@@ -4,14 +4,15 @@ import os
 import shutil
 from functools import wraps
 from typing import Dict, List, Tuple, TypeVar
-from nataili.util import logger
+
+import torch
 
 import ray
-import torch
+from nataili.util import logger
 
 T = TypeVar("T")
 
-ray_temp_dir = './ray'
+ray_temp_dir = "./ray"
 shutil.rmtree(ray_temp_dir, ignore_errors=True)
 os.makedirs(ray_temp_dir, exist_ok=True)
 ray.init(_temp_dir=ray_temp_dir)
