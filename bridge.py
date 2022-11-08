@@ -763,6 +763,10 @@ def bridge(interval, model_manager, bd):
 def check_mm_auth(model_manager):
     if model_manager.has_authentication():
         return
+    if args.hf_token:
+        hf_auth = {"username": "USER", "password": args.hf_token}
+        model_manager.set_authentication(hf_auth=hf_auth)
+        return
     try:
         from creds import hf_password, hf_username
     except ImportError:
