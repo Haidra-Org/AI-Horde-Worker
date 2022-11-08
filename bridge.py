@@ -485,7 +485,7 @@ def bridge(interval, model_manager, bd):
                     skipped_info = f" Skipped Info: {skipped_info}."
                 else:
                     skipped_info = ""
-                logger.debug(f"Server {bd.horde_url} has no valid generations to do for us.{skipped_info}")
+                logger.info(f"Server {bd.horde_url} has no valid generations to do for us.{skipped_info}")
                 time.sleep(interval)
                 continue
             current_id = pop["id"]
