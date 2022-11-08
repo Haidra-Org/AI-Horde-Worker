@@ -461,6 +461,7 @@ def bridge(interval, model_manager, bd):
                     headers=headers,
                     timeout=10,
                 )
+                logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
             except requests.exceptions.ConnectionError:
                 logger.warning(f"Server {bd.horde_url} unavailable during pop. Waiting 10 seconds...")
                 time.sleep(10)
@@ -753,7 +754,8 @@ def bridge(interval, model_manager, bd):
                 )
                 time.sleep(10)
                 continue
-        time.sleep(interval)
+        if not current_generation:
+            time.sleep(interval)
 
 
 def check_mm_auth(model_manager):
