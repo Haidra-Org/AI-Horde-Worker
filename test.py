@@ -1,3 +1,4 @@
+import argparse
 import time
 import uuid
 
@@ -7,6 +8,23 @@ from nataili.inference.compvis import CompVis
 from nataili.model_manager import ModelManager
 from nataili.util.cache import torch_gc
 from nataili.util.logger import logger
+
+from nataili import disable_xformers
+
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument(
+    "--disable_xformers",
+    action="store_true",
+    default=False,
+    help=(
+        "If specified this test will not try use xformers to speed up generations."
+        " This should normally be automatic, but in case you need to disable it manually, you can do so here."
+    ),
+)
+
+args = arg_parser.parse_args()
+
+disable_xformers.toggle(args.disable_xformers)
 
 init_image = PIL.Image.open("./01.png").convert("RGB")
 
