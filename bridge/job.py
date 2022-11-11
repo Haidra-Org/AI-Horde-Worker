@@ -318,24 +318,11 @@ class HordeJob:
                     logger.error("Rescue Attempt also failed. Aborting!")
                     self.status = JobStatus.FAULTED
                     break
-            # Submit back to horde
-            # images, seed, info, stats = txt2img(**self.current_payload)
-            buffer = BytesIO()
-            # We send as WebP to avoid using all the horde bandwidth
-            image = generator.images[0]["image"]
-            seed = generator.images[0]["seed"]
-            image.save(buffer, format="WebP", quality=90)
-            # logger.info(info)
+            self.image = generator.images[0]["image"]
+            self.seed = generator.images[0]["seed"]
             # We unload the generator from RAM
             generator = None
-            self.submit_dict = {
-                "id": self.current_id,
-                "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
-                "api_key": self.bd.api_key,
-                "seed": seed,
-                "max_pixels": self.bd.max_pixels,
-            }
-            self.current_generation = seed
+            self.current_generation = self.seed
             # Not a daemon, so that it can survive after this class is garbage collected
             submit_thread = threading.Thread(target=self.submit_job, args=())
             submit_thread.start()
@@ -344,6 +331,18 @@ class HordeJob:
 
     def submit_job(self):
         self.status = JobStatus.FINALIZING
+        # Submit back to horde
+        # images, seed, info, stats = txt2img(**self.current_payload)
+        buffer = BytesIO()
+        # We send as WebP to avoid using all the horde bandwidth
+        self.image.save(buffer, format="WebP", quality=90)
+        self.submit_dict = {
+            "id": self.current_id,
+            "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
+            "api_key": self.bd.api_key,
+            "seed": self.seed,
+            "max_pixels": self.bd.max_pixels,
+        }
         while self.is_finalizing():
             if self.loop_retry > 10:
                 logger.error(f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!")
