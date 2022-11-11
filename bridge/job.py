@@ -26,6 +26,28 @@ class HordeJob:
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
+        self.available_models = self.model_manager.get_loaded_models_names()
+        if "LDSR" in self.available_models:
+            logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
+            self.available_models.remove("LDSR")
+        if "safety_checker" in self.available_models:
+            self.available_models.remove("safety_checker")
+        self.gen_dict = {
+            "name": self.bd.worker_name,
+            "max_pixels": self.bd.max_pixels,
+            "priority_usernames": self.bd.priority_usernames,
+            "nsfw": self.bd.nsfw,
+            "blacklist": self.bd.blacklist,
+            "models": self.available_models,
+            "allow_img2img": self.bd.allow_img2img,
+            "allow_painting": self.bd.allow_painting,
+            "allow_unsafe_ip": self.bd.allow_unsafe_ip,
+            "threads": self.bd.max_threads,
+            "bridge_version": 6,
+        }
+        # logger.debug(gen_dict)
+        self.headers = {"apikey": self.bd.api_key}
+
         thread = threading.Thread(target=self.start_job, args=())
         thread.daemon = True
         thread.start()
@@ -68,26 +90,6 @@ class HordeJob:
                 break
             elif self.current_id:
                 logger.debug(f"Retrying ({self.loop_retry}/10) for generation id {self.current_id}...")
-            available_models = self.model_manager.get_loaded_models_names()
-            if "LDSR" in available_models:
-                logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
-                available_models.remove("LDSR")
-            if "safety_checker" in available_models:
-                available_models.remove("safety_checker")
-            gen_dict = {
-                "name": self.bd.worker_name,
-                "max_pixels": self.bd.max_pixels,
-                "priority_usernames": self.bd.priority_usernames,
-                "nsfw": self.bd.nsfw,
-                "blacklist": self.bd.blacklist,
-                "models": available_models,
-                "allow_img2img": self.bd.allow_img2img,
-                "allow_painting": self.bd.allow_painting,
-                "allow_unsafe_ip": self.bd.allow_unsafe_ip,
-                "bridge_version": 6,
-            }
-            # logger.debug(gen_dict)
-            self.headers = {"apikey": self.bd.api_key}
             if self.current_id:
                 self.loop_retry += 1
             else:
@@ -95,7 +97,7 @@ class HordeJob:
                 try:
                     pop_req = requests.post(
                         self.bd.horde_url + "/api/v2/generate/pop",
-                        json=gen_dict,
+                        json=self.gen_dict,
                         headers=self.headers,
                         timeout=10,
                     )
@@ -146,7 +148,7 @@ class HordeJob:
                 self.current_payload = pop["payload"]
             self.status = JobStatus.WORKING
             # Generate Image
-            model = pop.get("model", available_models[0])
+            model = pop.get("model", self.available_models[0])
             # logger.info([self.current_id,self.current_payload])
             use_nsfw_censor = self.current_payload.get("use_nsfw_censor", False)
             if self.bd.censor_nsfw and not self.bd.nsfw:
@@ -199,7 +201,7 @@ class HordeJob:
                 "outpainting",
             ]:
                 # Try to find any other model to do text2img or img2img
-                for m in available_models:
+                for m in self.available_models:
                     if m != "stable_diffusion_inpainting":
                         model = m
                 # if the model persists as inpainting for text2img or img2img, we abort.

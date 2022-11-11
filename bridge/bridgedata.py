@@ -2,6 +2,7 @@ import os
 import random
 import sys
 import importlib
+import requests
 from nataili.util import logger
 from . import args
 
@@ -124,7 +125,7 @@ class BridgeData(object):
                 user_req = user_req.json()
                 self.username = user_req["username"]
             except Exception:
-                logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
+                logger.warning(f"Server {self.horde_url} error during find_user. Settiyng username 'N/A'")
                 self.username = "N/A"
         if not self.initialized or previous_url != self.horde_url:
             logger.init(
@@ -225,3 +226,20 @@ class BridgeData(object):
                 else:
                     logger.init_err(f"{model}", status="Error")
         self.initialized = True
+
+
+def check_mm_auth(model_manager):
+    if model_manager.has_authentication():
+        return
+    if args.hf_token:
+        hf_auth = {"username": "USER", "password": args.hf_token}
+        model_manager.set_authentication(hf_auth=hf_auth)
+        return
+    try:
+        from creds import hf_password, hf_username
+    except ImportError:
+        hf_username = input("Please type your huggingface.co username: ")
+        hf_password = getpass.getpass("Please type your huggingface.co Access Token or password: ")
+    hf_auth = {"username": hf_username, "password": hf_password}
+    model_manager.set_authentication(hf_auth=hf_auth)
+

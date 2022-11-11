@@ -35,23 +35,6 @@ def bridge(model_manager, bd):
                 logger.info(f"Server {bd.horde_url} has no valid generations to do for us.{found_reason}")
         time.sleep(0.5)
 
-
-def check_mm_auth(model_manager):
-    if model_manager.has_authentication():
-        return
-    if args.hf_token:
-        hf_auth = {"username": "USER", "password": args.hf_token}
-        model_manager.set_authentication(hf_auth=hf_auth)
-        return
-    try:
-        from creds import hf_password, hf_username
-    except ImportError:
-        hf_username = input("Please type your huggingface.co username: ")
-        hf_password = getpass.getpass("Please type your huggingface.co Access Token or password: ")
-    hf_auth = {"username": hf_username, "password": hf_password}
-    model_manager.set_authentication(hf_auth=hf_auth)
-
-
 if __name__ == "__main__":
 
     set_logger_verbosity(args.verbosity)
