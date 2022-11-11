@@ -4,12 +4,11 @@ import uuid
 
 import PIL
 
+from nataili import disable_xformers
 from nataili.inference.compvis import CompVis
 from nataili.model_manager import ModelManager
 from nataili.util.cache import torch_gc
 from nataili.util.logger import logger
-
-from nataili import disable_xformers
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument(

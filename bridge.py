@@ -1,10 +1,9 @@
 import getpass
-import os
 import time
 
-from nataili.util import logger, quiesce_logger, set_logger_verbosity
-from bridge import args, disable_voodoo, BridgeData, HordeJob
+from bridge import BridgeData, HordeJob, args, disable_voodoo
 from nataili.model_manager import ModelManager
+from nataili.util import logger, quiesce_logger, set_logger_verbosity
 
 
 @logger.catch(reraise=True)
@@ -30,11 +29,12 @@ def bridge(model_manager, bd):
         if len(running_jobs) and polling_jobs == len(running_jobs):
             found_reason = None
             for j in running_jobs:
-                if j.skipped_info != None:
+                if j.skipped_info is not None:
                     found_reason = j.skipped_info
             if found_reason:
                 logger.info(f"Server {bd.horde_url} has no valid generations to do for us.{found_reason}")
         time.sleep(0.5)
+
 
 def check_mm_auth(model_manager):
     if model_manager.has_authentication():

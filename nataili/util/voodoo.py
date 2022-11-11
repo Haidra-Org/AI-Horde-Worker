@@ -14,13 +14,13 @@ from nataili.util import logger
 T = TypeVar("T")
 
 if not disable_local_ray_temp.active:
-    ray_temp_dir = os.path.abspath('./ray')
+    ray_temp_dir = os.path.abspath("./ray")
     shutil.rmtree(ray_temp_dir, ignore_errors=True)
     os.makedirs(ray_temp_dir, exist_ok=True)
     ray.init(_temp_dir=ray_temp_dir)
     logger.init(f"Ray temp dir '{ray_temp_dir}'", status="Prepared")
 else:
-    logger.init_warn(f"Ray temp dir'", status="OS Default")
+    logger.init_warn("Ray temp dir'", status="OS Default")
 
 
 def performance(f: T) -> T:
