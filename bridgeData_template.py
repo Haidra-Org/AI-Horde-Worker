@@ -14,6 +14,11 @@ priority_usernames = []
 # So if you put this to 2 (the minimum, your SD can only generate 64x64 pixels
 # If you put this to 32, it is equivalent to 1024x1024 pixels
 max_power = 8
+# The amount of parallel jobs to pick up for the horde. Each running job will consume the amount of RAM needed to run each model, and will also affect the speed of other running jobs
+# so make sure you have enough VRAM to load models in parallel, and that the speed of fulfilling requests is not too slow
+# Expected limit per VRAM size: <6 VMAM: 1, <=8 VRAM: 2, <=12 VRAM:3, <=14 VRAM: 4
+# But remember that the speed of your gens will also be affected for each parallel job
+max_threads = 1
 # Set this to false, if you do not want your worker to receive requests for NSFW generations
 nsfw = True
 # Set this to True if you want your worker to censor NSFW generations. This will only be active is horde_nsfw == False
