@@ -1,7 +1,7 @@
 from .argparser import args
 from .enums import JobStatus
 from nataili import disable_voodoo, disable_xformers, disable_local_ray_temp
-from .bridgedata import BridgeData
+from .bridge_data import BridgeData
 
 disable_xformers.toggle(args.disable_xformers)
 disable_local_ray_temp.toggle(args.disable_local_ray_temp)

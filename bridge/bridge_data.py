@@ -3,6 +3,7 @@ import random
 import sys
 import importlib
 import requests
+import getpass
 from nataili.util import logger
 from . import args
 
