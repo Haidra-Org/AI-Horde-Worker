@@ -6,6 +6,7 @@ from loguru import logger
 STDOUT_LEVELS = ["GENERATION", "PROMPT"]
 INIT_LEVELS = ["INIT", "INIT_OK", "INIT_WARN", "INIT_ERR"]
 MESSAGE_LEVELS = ["MESSAGE"]
+STATS_LEVELS = ["STATS"]
 # By default we're at error level or higher
 verbosity = 20
 quiet = 0
@@ -50,9 +51,15 @@ def is_msg_log(record):
 
 
 def is_stderr_log(record):
-    if record["level"].name in STDOUT_LEVELS + INIT_LEVELS + MESSAGE_LEVELS:
+    if record["level"].name in STDOUT_LEVELS + INIT_LEVELS + MESSAGE_LEVELS + STATS_LEVELS:
         return False
     if record["level"].no < verbosity + quiet:
+        return False
+    return True
+
+
+def is_stats_log(record):
+    if record["level"].name not in STATS_LEVELS:
         return False
     return True
 
@@ -93,6 +100,8 @@ try:
     # Messages contain important information without which this application might not be able to be used
     # As such, they have the highest priority
     logger.level("MESSAGE", no=61, color="<green>")
+    # Stats are info that might not display well in the terminal
+    logger.level("STATS", no=19, color="<blue>")
 except TypeError:
     pass
 
@@ -103,6 +112,7 @@ logger.__class__.init_ok = partialmethod(logger.__class__.log, "INIT_OK")
 logger.__class__.init_warn = partialmethod(logger.__class__.log, "INIT_WARN")
 logger.__class__.init_err = partialmethod(logger.__class__.log, "INIT_ERR")
 logger.__class__.message = partialmethod(logger.__class__.log, "MESSAGE")
+logger.__class__.stats = partialmethod(logger.__class__.log, "STATS")
 
 config = {
     "handlers": [
@@ -132,6 +142,14 @@ config = {
             "level": "MESSAGE",
             "colorize": True,
             "filter": is_msg_log,
+        },
+        {
+            "sink": "stats.log",
+            "format": logfmt,
+            "level": "STATS",
+            "colorize": False,
+            "filter": is_stats_log,
+            "retention": "7 days",
         },
     ],
 }

@@ -7,14 +7,14 @@ import getpass
 from nataili.util import logger
 from . import args
 
+
 class BridgeData(object):
     def __init__(self):
         random.seed()
         self.horde_url = os.environ.get("HORDE_URL", "https://stablehorde.net")
         # Give a cool name to your instance
         self.worker_name = os.environ.get(
-            "HORDE_WORKER_NAME",
-            f"Automated Instance #{random.randint(-100000000, 100000000)}",
+            "HORDE_WORKER_NAME", f"Automated Instance #{random.randint(-100000000, 100000000)}",
         )
         # The api_key identifies a unique user in the horde
         self.api_key = os.environ.get("HORDE_API_KEY", "0000000000")
@@ -119,9 +119,7 @@ class BridgeData(object):
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
-                    self.horde_url + "/api/v2/find_user",
-                    headers={"apikey": self.api_key},
-                    timeout=10,
+                    self.horde_url + "/api/v2/find_user", headers={"apikey": self.api_key}, timeout=10,
                 )
                 user_req = user_req.json()
                 self.username = user_req["username"]
@@ -243,4 +241,3 @@ def check_mm_auth(model_manager):
         hf_password = getpass.getpass("Please type your huggingface.co Access Token or password: ")
     hf_auth = {"username": hf_username, "password": hf_password}
     model_manager.set_authentication(hf_auth=hf_auth)
-

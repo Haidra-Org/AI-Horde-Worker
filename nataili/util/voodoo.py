@@ -5,9 +5,9 @@ import shutil
 from functools import wraps
 from typing import Dict, List, Tuple, TypeVar
 
+import ray
 import torch
 
-import ray
 from nataili import disable_local_ray_temp
 from nataili.util import logger
 

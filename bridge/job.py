@@ -13,15 +13,18 @@ from nataili.util import logger
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from bridge import JobStatus
-from bridge import disable_voodoo
+from bridge import disable_voodoo, bridge_stats
+
 
 class HordeJob:
     retry_interval = 1
+
     def __init__(self, mm, bd):
         self.model_manager = mm
         self.bd = bd
         self.current_id = None
         self.current_payload = None
+        self.current_model = None
         self.current_generation = None
         self.loop_retry = 0
         self.status = JobStatus.INIT
@@ -53,24 +56,15 @@ class HordeJob:
         thread.start()
 
     def is_finished(self):
-        if self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]:
-            return(False)
-        else:
-            return(True)
+        return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
 
     def is_polling(self):
-        if self.status in [JobStatus.POLLING]:
-            return(True)
-        else:
-            return(False)
+        return self.status in [JobStatus.POLLING]
 
     def is_finalizing(self):
-        '''True if generation has finished even if upload is still remaining
-        '''
-        if self.status in [JobStatus.FINALIZING]:
-            return(True)
-        else:
-            return(False)
+        """True if generation has finished even if upload is still remaining
+        """
+        return self.status in [JobStatus.FINALIZING]
 
     def delete(self):
         del self
@@ -85,7 +79,9 @@ class HordeJob:
             if self.is_finished():
                 break
             if self.loop_retry > 10 and self.current_id:
-                logger.error(f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!")
+                logger.error(
+                    f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!"
+                )
                 self.status = JobStatus.FAULTED
                 break
             elif self.current_id:
@@ -123,7 +119,9 @@ class HordeJob:
                     time.sleep(self.retry_interval)
                     continue
                 if pop is None:
-                    logger.error(f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!")
+                    logger.error(
+                        f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
+                    )
                     time.sleep(self.retry_interval)
                     continue
                 if not pop_req.ok:
@@ -149,6 +147,7 @@ class HordeJob:
             self.status = JobStatus.WORKING
             # Generate Image
             model = pop.get("model", self.available_models[0])
+            self.current_model = model
             # logger.info([self.current_id,self.current_payload])
             use_nsfw_censor = self.current_payload.get("use_nsfw_censor", False)
             if self.bd.censor_nsfw and not self.bd.nsfw:
@@ -345,7 +344,9 @@ class HordeJob:
         }
         while self.is_finalizing():
             if self.loop_retry > 10:
-                logger.error(f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!")
+                logger.error(
+                    f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!"
+                )
                 self.status = JobStatus.FAULTED
                 break
             self.loop_retry += 1
@@ -383,9 +384,10 @@ class HordeJob:
                         logger.warning(f"Detailed Request Errors: {submit['errors']}")
                     time.sleep(10)
                     continue
-                logger.info(
+                logger.debug(
                     f'Submitted generation with id {self.current_id} and contributed for {submit_req.json()["reward"]}'
                 )
+                bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
                 self.status = JobStatus.DONE
                 break
             except requests.exceptions.ConnectionError:
@@ -400,4 +402,3 @@ class HordeJob:
                 )
                 time.sleep(10)
                 continue
-    
