@@ -16,6 +16,10 @@ def bridge(model_manager, bd):
         bd.reload_data()
         bd.check_models(model_manager)
         bd.reload_models(model_manager)
+        if len(model_manager.get_loaded_models_names()) == 0:
+            time.sleep(2)
+            logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
+            continue
         polling_jobs = 0
         if len(running_jobs) < bd.max_threads:
             new_job = HordeJob(model_manager, bd)
