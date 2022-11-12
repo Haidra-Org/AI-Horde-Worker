@@ -3,6 +3,7 @@ import json
 import sys
 import time
 import threading
+import copy
 
 from base64 import binascii
 from io import BytesIO
@@ -21,7 +22,7 @@ class HordeJob:
 
     def __init__(self, mm, bd):
         self.model_manager = mm
-        self.bd = bd
+        self.bd = copy.deepcopy(bd)
         self.current_id = None
         self.current_payload = None
         self.current_model = None
@@ -29,6 +30,28 @@ class HordeJob:
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
+
+        thread = threading.Thread(target=self.start_job, args=())
+        thread.daemon = True
+        thread.start()
+
+    def is_finished(self):
+        return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
+
+    def is_polling(self):
+        return self.status in [JobStatus.POLLING]
+
+    def is_finalizing(self):
+        """True if generation has finished even if upload is still remaining
+        """
+        return self.status in [JobStatus.FINALIZING]
+
+    def delete(self):
+        del self
+
+    @logger.catch(reraise=True)
+    def start_job(self):
+        # Pop new request from the Horde
         self.available_models = self.model_manager.get_loaded_models_names()
         if "LDSR" in self.available_models:
             logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
@@ -50,33 +73,7 @@ class HordeJob:
         }
         # logger.debug(gen_dict)
         self.headers = {"apikey": self.bd.api_key}
-
-        thread = threading.Thread(target=self.start_job, args=())
-        thread.daemon = True
-        thread.start()
-
-    def is_finished(self):
-        return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
-
-    def is_polling(self):
-        return self.status in [JobStatus.POLLING]
-
-    def is_finalizing(self):
-        """True if generation has finished even if upload is still remaining
-        """
-        return self.status in [JobStatus.FINALIZING]
-
-    def delete(self):
-        del self
-
-    def prep_for_pop(self):
-        self.skipped_info = None
         self.status = JobStatus.POLLING
-
-    @logger.catch(reraise=True)
-    def start_job(self):
-        # Pop new request from the Horde
-        self.prep_for_pop()
         try:
             pop_req = requests.post(
                 self.bd.horde_url + "/api/v2/generate/pop",
