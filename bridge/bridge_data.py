@@ -4,6 +4,7 @@ import sys
 import importlib
 import requests
 import getpass
+import threading
 from nataili.util import logger
 from . import args
 
@@ -34,6 +35,7 @@ class BridgeData(object):
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.initialized = False
+        self.models_reloading = False
 
     @logger.catch(reraise=True)
     def reload_data(self):
@@ -126,7 +128,7 @@ class BridgeData(object):
             except Exception:
                 logger.warning(f"Server {self.horde_url} error during find_user. Settiyng username 'N/A'")
                 self.username = "N/A"
-        if not self.initialized or previous_url != self.horde_url:
+        if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
@@ -137,6 +139,8 @@ class BridgeData(object):
 
     @logger.catch(reraise=True)
     def check_models(self, mm):
+        if self.models_reloading:
+            return
         if not self.initialized:
             logger.init("Models", status="Checking")
         models_exist = True
@@ -212,6 +216,15 @@ class BridgeData(object):
             sys.exit(2)
 
     def reload_models(self, mm):
+        if self.models_reloading:
+            return
+        self.models_reloading = True
+        thread = threading.Thread(target=self._reload_models, args=(mm,))
+        thread.daemon = True
+        thread.start()
+    
+    @logger.catch(reraise=True)
+    def _reload_models(self, mm):
         for model in mm.get_loaded_models_names():
             if model not in self.model_names:
                 logger.init(f"{model}", status="Unloading")
@@ -225,6 +238,7 @@ class BridgeData(object):
                 else:
                     logger.init_err(f"{model}", status="Error")
         self.initialized = True
+        self.models_reloading = False
 
 
 def check_mm_auth(model_manager):

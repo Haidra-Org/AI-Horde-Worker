@@ -144,12 +144,21 @@ config = {
             "filter": is_msg_log,
         },
         {
-            "sink": "stats.log",
+            "sink": "logs/stats.log",
             "format": logfmt,
             "level": "STATS",
             "colorize": False,
             "filter": is_stats_log,
             "retention": "7 days",
+        },
+        {
+            "sink": "logs/trace.log",
+            "format": logfmt,
+            "level": "ERROR",
+            "colorize": True,
+            "retention": "3 days",
+            "backtrace": True,
+            "diagnose": True,
         },
     ],
 }

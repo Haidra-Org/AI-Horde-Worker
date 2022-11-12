@@ -16,6 +16,10 @@ def bridge(model_manager, bd):
         bd.reload_data()
         bd.check_models(model_manager)
         bd.reload_models(model_manager)
+        if len(model_manager.get_loaded_models_names()) == 0:
+            time.sleep(2)
+            logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
+            continue
         polling_jobs = 0
         if len(running_jobs) < bd.max_threads:
             new_job = HordeJob(model_manager, bd)
@@ -56,7 +60,7 @@ if __name__ == "__main__":
     if args.log_file:
         logger.add("koboldai_bridge_log.log", retention="7 days", level="warning")  # Automatically rotate too big file
     quiesce_logger(args.quiet)
-    logger.add("bridge.log", retention="1 days", level=10)
+    logger.add("logs/bridge.log", retention="1 days", level=10)
     model_manager = ModelManager(disable_voodoo=disable_voodoo.active)
     model_manager.init()
     bridge_data = BridgeData()
