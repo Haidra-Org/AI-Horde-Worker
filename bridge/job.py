@@ -73,83 +73,71 @@ class HordeJob:
         self.skipped_info = None
         self.status = JobStatus.POLLING
 
+    @logger.catch(reraise=True)
     def start_job(self):
         # Pop new request from the Horde
-        if self.is_finished():
-            return
-        if self.loop_retry > 10 and self.current_id:
-            logger.error(
-                f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!"
+        self.prep_for_pop()
+        try:
+            pop_req = requests.post(
+                self.bd.horde_url + "/api/v2/generate/pop",
+                json=self.gen_dict,
+                headers=self.headers,
+                timeout=10,
             )
+            logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
+        except requests.exceptions.ConnectionError:
+            logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 10 seconds...")
+            time.sleep(10)
             self.status = JobStatus.FAULTED
             return
-        elif self.current_id:
-            logger.debug(f"Retrying ({self.loop_retry}/10) for generation id {self.current_id}...")
-        if self.current_id:
-            self.loop_retry += 1
-        else:
-            self.prep_for_pop()
-            try:
-                pop_req = requests.post(
-                    self.bd.horde_url + "/api/v2/generate/pop",
-                    json=self.gen_dict,
-                    headers=self.headers,
-                    timeout=10,
-                )
-                logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
-            except requests.exceptions.ConnectionError:
-                logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 10 seconds...")
-                time.sleep(10)
-                self.status = JobStatus.FAULTED
-                return
-            except TypeError:
-                logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 2 seconds...")
-                time.sleep(2)
-                self.status = JobStatus.FAULTED
-                return
-            except requests.exceptions.ReadTimeout:
-                logger.warning(f"Server {self.bd.horde_url} timed out during pop. Waiting 2 seconds...")
-                time.sleep(2)
-                self.status = JobStatus.FAULTED
-                return
-            try:
-                pop = pop_req.json()
-            except json.decoder.JSONDecodeError:
-                logger.error(
-                    f"Could not decode response from {self.bd.horde_url} as json. Please inform its administrator!"
-                )
-                time.sleep(self.retry_interval)
-                self.status = JobStatus.FAULTED
-                return
-            if pop is None:
-                logger.error(
-                    f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
-                )
-                time.sleep(self.retry_interval)
-                self.status = JobStatus.FAULTED
-                return
-            if not pop_req.ok:
-                logger.warning(
-                    f"During gen pop, server {self.bd.horde_url} responded with status code {pop_req.status_code}: "
-                    f"{pop['message']}. Waiting for 10 seconds..."
-                )
-                if "errors" in pop:
-                    logger.warning(f"Detailed Request Errors: {pop['errors']}")
-                time.sleep(10)
-                self.status = JobStatus.FAULTED
-                return
-            if not pop.get("id"):
-                job_skipped_info = pop.get("skipped")
-                if job_skipped_info and len(job_skipped_info):
-                    self.skipped_info = f" Skipped Info: {job_skipped_info}."
-                else:
-                    self.skipped_info = ""
-                # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
-                time.sleep(self.retry_interval)
-                self.status = JobStatus.FAULTED
-                return
-            self.current_id = pop["id"]
-            self.current_payload = pop["payload"]
+        except TypeError:
+            logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 2 seconds...")
+            time.sleep(2)
+            self.status = JobStatus.FAULTED
+            return
+        except requests.exceptions.ReadTimeout:
+            logger.warning(f"Server {self.bd.horde_url} timed out during pop. Waiting 2 seconds...")
+            time.sleep(2)
+            self.status = JobStatus.FAULTED
+            return
+        try:
+            pop = pop_req.json()
+        except json.decoder.JSONDecodeError:
+            logger.error(
+                f"Could not decode response from {self.bd.horde_url} as json. Please inform its administrator!"
+            )
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return
+        if pop is None:
+            logger.error(
+                f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
+            )
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return
+        if not pop_req.ok:
+            logger.warning(
+                f"During gen pop, server {self.bd.horde_url} responded with status code {pop_req.status_code}: "
+                f"{pop['message']}. Waiting for 10 seconds..."
+            )
+            if "errors" in pop:
+                logger.warning(f"Detailed Request Errors: {pop['errors']}")
+            time.sleep(10)
+            self.status = JobStatus.FAULTED
+            return
+        if not pop.get("id"):
+            job_skipped_info = pop.get("skipped")
+            if job_skipped_info and len(job_skipped_info):
+                self.skipped_info = f" Skipped Info: {job_skipped_info}."
+            else:
+                self.skipped_info = ""
+            # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return
+        self.current_id = pop["id"]
+        self.current_payload = pop["payload"]
         self.status = JobStatus.WORKING
         # Generate Image
         model = pop.get("model", self.available_models[0])
@@ -304,7 +292,7 @@ class HordeJob:
         try:
             generator.generate(**gen_payload)
             torch_gc()
-        except RuntimeError:
+        except RuntimeError as e:
             logger.error(
                 "Something went wrong when processing request. Probably an img2img error "
                 "Falling back to text2img to try and rescue this run.\n"
