@@ -4,6 +4,7 @@ import sys
 import time
 import threading
 import copy
+import traceback
 
 from base64 import binascii
 from io import BytesIO
@@ -289,25 +290,17 @@ class HordeJob:
         try:
             generator.generate(**gen_payload)
             torch_gc()
-        except RuntimeError as e:
+        except RuntimeError as err:
+            stack_payload = gen_payload
+            stack_payload["request_type"] = req_type
+            stack_payload["model"] = model
             logger.error(
-                "Something went wrong when processing request. Probably an img2img error "
-                "Falling back to text2img to try and rescue this run.\n"
-                f"Please inform the developers of th below payload:\n{gen_payload}"
-            )
-            if "denoising_strength" in gen_payload:
-                del gen_payload["denoising_strength"]
-            if "init_img" in gen_payload:
-                del gen_payload["init_img"]
-            if "init_mask" in gen_payload:
-                del gen_payload["init_mask"]
-            try:
-                generator.generate(**gen_payload)
-                torch_gc()
-            except RuntimeError:
-                logger.error("Rescue Attempt also failed. Aborting!")
-                self.status = JobStatus.FAULTED
-                return
+                "Something went wrong when processing request.\n"
+                f"Please inform the developers of the below payload:\n{stack_payload}")
+            tb = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+            logger.trace(tb)
+            self.status = JobStatus.FAULTED
+            return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
         # We unload the generator from RAM

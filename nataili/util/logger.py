@@ -159,8 +159,8 @@ config = {
         {
             "sink": "logs/trace.log",
             "format": logfmt,
-            "level": "ERROR",
-            "colorize": True,
+            "level": "TRACE",
+            "colorize": False,
             "filter": is_trace_log,
             "retention": "3 days",
             "backtrace": True,
