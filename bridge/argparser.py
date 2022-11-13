@@ -145,5 +145,12 @@ arg_parser.add_argument(
     required=False,
     help="When defined, will use this huggingface token to download models.",
 )
+arg_parser.add_argument(
+    "-y",
+    "--yes",
+    action="store_true",
+    required=False,
+    help="Specify this argument to autodownload all missing models defined in your bridgeData.py",
+)
 
 args = arg_parser.parse_args()

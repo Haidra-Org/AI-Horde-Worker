@@ -63,6 +63,11 @@ def is_stats_log(record):
         return False
     return True
 
+def is_trace_log(record):
+    if record["level"].name not in ['TRACE','ERROR']:
+        return False
+    return True
+
 
 def test_logger():
     logger.generation(
@@ -156,6 +161,7 @@ config = {
             "format": logfmt,
             "level": "ERROR",
             "colorize": True,
+            "filter": is_trace_log,
             "retention": "3 days",
             "backtrace": True,
             "diagnose": True,

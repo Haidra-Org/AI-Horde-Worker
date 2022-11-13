@@ -353,12 +353,12 @@ class ModelManager:
         model = model.eval().to(device)
         return {"model": model, "device": device}
 
-    def validate_model(self, model_name):
+    def validate_model(self, model_name, skip_checksum=False):
         files = self.get_model_files(model_name)
         for file_details in files:
             if not self.check_file_available(file_details["path"]):
                 return False
-            if not self.validate_file(file_details):
+            if not skip_checksum and not self.validate_file(file_details):
                 return False
         return True
 

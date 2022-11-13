@@ -155,22 +155,25 @@ class BridgeData(object):
                 sys.exit(1)
             if model in mm.get_loaded_models_names():
                 continue
-            if not args.skip_md5 and not mm.validate_model(model):
+            if not mm.validate_model(model, skip_checksum=args.skip_md5):
                 models_exist = False
                 not_found_models.append(model)
             # Diffusers library uses its own internal download mechanism
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
                 check_mm_auth(mm)
         if not models_exist:
-            choice = input(
-                "You do not appear to have downloaded the models needed yet.\n"
-                "You need at least a main model to proceed. "
-                f"Would you like to download your prespecified models?\n\
-            y: Download {not_found_models} (default).\n\
-            n: Abort and exit\n\
-            all: Download all models (This can take a significant amount of time and bandwidth)?\n\
-            Please select an option: "
-            )
+            if args.yes:
+                choice = 'y'
+            else:
+                choice = input(
+                    "You do not appear to have downloaded the models needed yet.\n"
+                    "You need at least a main model to proceed. "
+                    f"Would you like to download your prespecified models?\n\
+                y: Download {not_found_models} (default).\n\
+                n: Abort and exit\n\
+                all: Download all basic models (This can take a significant amount of time and bandwidth)\n\
+                Please select an option: "
+                )
             if choice not in ["y", "Y", "", "yes", "all", "a"]:
                 sys.exit(1)
             needs_hf = False
