@@ -240,7 +240,7 @@ class BridgeData(object):
                     logger.init_ok(f"{model}", status="Loaded")
                 else:
                     logger.init_err(f"{model}", status="Error")
-        self.initialized = True
+            self.initialized = True
         self.models_reloading = False
 
 
