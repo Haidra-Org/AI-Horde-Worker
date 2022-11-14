@@ -5,11 +5,12 @@ import shutil
 from functools import wraps
 from typing import Dict, List, Tuple, TypeVar
 
-import ray
 import torch
 
+import ray
 from nataili import disable_local_ray_temp
 from nataili.util import logger
+from nataili.inference.aitemplate.model import Model
 
 T = TypeVar("T")
 
@@ -77,3 +78,20 @@ def push_model_to_plasma(model: torch.nn.Module) -> ray.ObjectRef:
     ref = ray.put(extract_tensors(model))
 
     return ref
+
+def init_ait_module(
+        model_name,
+        workdir,
+    ):
+        mod = Model(os.path.join(workdir, model_name))
+        return mod
+
+def push_ait_module(module: Model) -> ray.ObjectRef:
+    ref = ray.put(module)
+
+    return ref
+
+def load_ait_module(ref):
+    ait_module = ray.get(ref)
+
+    return ait_module
