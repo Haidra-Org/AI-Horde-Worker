@@ -1,7 +1,9 @@
 import k_diffusion as K
 import torch
 import torch.nn as nn
+
 from nataili.util.voodoo import performance
+
 
 class KDiffusionSampler:
     def __init__(self, m, sampler, callback=None):

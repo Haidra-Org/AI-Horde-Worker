@@ -1,21 +1,21 @@
 import base64
+import copy
 import json
 import sys
-import time
 import threading
-import copy
+import time
 import traceback
-
 from base64 import binascii
 from io import BytesIO
+
 import requests
 from PIL import Image, UnidentifiedImageError
-from nataili.util.cache import torch_gc
-from nataili.util import logger
+
+from bridge import JobStatus, bridge_stats, disable_voodoo
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
-from bridge import JobStatus
-from bridge import disable_voodoo, bridge_stats
+from nataili.util import logger
+from nataili.util.cache import torch_gc
 
 
 class HordeJob:

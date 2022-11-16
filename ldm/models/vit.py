@@ -8,17 +8,17 @@
  * https://github.com/rwightman/pytorch-image-models/tree/master/timm
 '''
 
+from functools import partial
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from functools import partial
-
-from timm.models.vision_transformer import _cfg, PatchEmbed
-from timm.models.registry import register_model
-from timm.models.layers import trunc_normal_, DropPath
-from timm.models.helpers import named_apply, adapt_input_conv
-
 from fairscale.nn.checkpoint.checkpoint_activations import checkpoint_wrapper
+from timm.models.helpers import adapt_input_conv, named_apply
+from timm.models.layers import DropPath, trunc_normal_
+from timm.models.registry import register_model
+from timm.models.vision_transformer import PatchEmbed, _cfg
+
 
 class Mlp(nn.Module):
     """ MLP as used in Vision Transformer, MLP-Mixer and related networks

@@ -5,16 +5,18 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  * By Junnan Li
 '''
-from models.med import BertConfig, BertModel, BertLMHeadModel
-from transformers import BertTokenizer
 import transformers
+from models.med import BertConfig, BertLMHeadModel, BertModel
+from transformers import BertTokenizer
+
 transformers.logging.set_verbosity_error()
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
+
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
@@ -267,6 +269,8 @@ def concat_all_gather(tensor):
 
 
 from typing import List
+
+
 def tie_encoder_decoder_weights(encoder: nn.Module, decoder: nn.Module, base_model_prefix: str, skip_key:str):
     uninitialized_encoder_weights: List[str] = []
     if decoder.__class__ != encoder.__class__:

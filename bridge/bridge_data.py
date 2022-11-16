@@ -1,11 +1,14 @@
+import getpass
+import importlib
 import os
 import random
 import sys
-import importlib
-import requests
-import getpass
 import threading
+
+import requests
+
 from nataili.util import logger
+
 from . import args
 
 

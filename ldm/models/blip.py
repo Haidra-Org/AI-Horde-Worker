@@ -6,19 +6,22 @@
  * By Junnan Li
 '''
 import warnings
+
 warnings.filterwarnings("ignore")
-
-from .vit import VisionTransformer, interpolate_pos_embed
-from .med import BertConfig, BertModel, BertLMHeadModel
-from transformers import BertTokenizer
-
-import torch
-from torch import nn
-#import torch.nn.functional as F
 
 import os
 from urllib.parse import urlparse
+
+import torch
 from timm.models.hub import download_cached_file
+from torch import nn
+from transformers import BertTokenizer
+
+from .med import BertConfig, BertLMHeadModel, BertModel
+from .vit import VisionTransformer, interpolate_pos_embed
+
+#import torch.nn.functional as F
+
 
 class BLIP_Base(nn.Module):
     def __init__(self,                 

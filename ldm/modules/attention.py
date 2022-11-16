@@ -1,19 +1,18 @@
-from inspect import isfunction
-import math
-import torch
-import torch.nn.functional as F
 import importlib
+import math
 import sys
-from torch import nn, einsum
-from einops import rearrange, repeat
-from typing import Optional, Any
-from nataili.util import logger
-from nataili import disable_xformers
-
-
-from ldm.modules.diffusionmodules.util import checkpoint
+from inspect import isfunction
+from typing import Any, Optional
 
 import psutil
+import torch
+import torch.nn.functional as F
+from einops import rearrange, repeat
+from torch import einsum, nn
+
+from ldm.modules.diffusionmodules.util import checkpoint
+from nataili import disable_xformers
+from nataili.util import logger
 
 if sys.version_info < (3, 8):
     import importlib_metadata
@@ -21,6 +20,7 @@ else:
     import importlib.metadata as importlib_metadata
 
 from numba import cuda as ncuda
+
 device = ncuda.get_current_device()
 
 xformers_available = False

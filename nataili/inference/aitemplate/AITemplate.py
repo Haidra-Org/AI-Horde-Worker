@@ -1,18 +1,13 @@
 import os
-import re
-from contextlib import nullcontext
 
-import PIL
-import PIL.ImageOps
 import torch
 from slugify import slugify
 
-from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
+
 
 class AITemplate:
     def __init__(
@@ -43,6 +38,7 @@ class AITemplate:
         self.images = []
         self.filter_nsfw = filter_nsfw
         self.pipe = pipe
+
     def generate(
         self,
         prompt: str,
@@ -54,9 +50,7 @@ class AITemplate:
         width=512,
         save_individual_images: bool = True,
     ):
-        safety_checker = None
         if not self.filter_nsfw:
-            safety_checker = self.pipe.safety_checker
             self.pipe.safety_checker = None
         seed = seed_to_int(seed)
 
@@ -74,7 +68,7 @@ class AITemplate:
             generator=generator,
             num_images_per_prompt=n_iter,
             width=width,
-            height=height
+            height=height,
         ).images
 
         for i, x_sample in enumerate(x_samples):
@@ -115,6 +109,7 @@ class AITemplate:
         del generator
 
         return
+
 
 if __name__ == "__main__":
     pass

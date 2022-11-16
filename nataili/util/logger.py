@@ -63,8 +63,9 @@ def is_stats_log(record):
         return False
     return True
 
+
 def is_trace_log(record):
-    if record["level"].name not in ['TRACE','ERROR']:
+    if record["level"].name not in ["TRACE", "ERROR"]:
         return False
     return True
 

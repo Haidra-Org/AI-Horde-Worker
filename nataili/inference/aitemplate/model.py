@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+# flake8: noqa: E731
 """
 Python bindings to the AIT runtime.
 """
@@ -66,18 +67,14 @@ def _check_tensors(
             raise ValueError(f"{list_name}[{i}] failed check: {condition_description}")
 
 
-def _check_tensors_contiguous_and_on_gpu(
-    tensors: Union[Dict[str, TorchTensor], List[TorchTensor]], name: str
-):
+def _check_tensors_contiguous_and_on_gpu(tensors: Union[Dict[str, TorchTensor], List[TorchTensor]], name: str):
     def is_bad_tensor(tensor: TorchTensor) -> bool:
         return not tensor.is_contiguous() or not tensor.is_cuda
 
     _check_tensors(tensors, is_bad_tensor, name, "contiguous and on GPU")
 
 
-def _check_tensors_contiguous_and_on_host(
-    tensors: Union[Dict[str, TorchTensor], List[TorchTensor]], name: str
-):
+def _check_tensors_contiguous_and_on_host(tensors: Union[Dict[str, TorchTensor], List[TorchTensor]], name: str):
     def is_bad_tensor(tensor: TorchTensor) -> bool:
         return not tensor.is_contiguous() or tensor.is_cuda
 
@@ -88,9 +85,7 @@ def torch_to_ait_data(tensor):
     """
     Convert a torch Tensor to a AITData.
     """
-    return AITData(
-        tensor.data_ptr(), list(tensor.size()), torch_dtype_to_string(tensor.dtype)
-    )
+    return AITData(tensor.data_ptr(), list(tensor.size()), torch_dtype_to_string(tensor.dtype))
 
 
 def _convert_tensor_args(params):
@@ -237,10 +232,7 @@ class Model(object):
 
         self._output_name_to_index = self._construct_output_name_to_index_map()
         self._input_name_to_index = self._construct_input_name_to_index_map()
-        self._output_ndims = [
-            len(self.get_output_maximum_shape(i))
-            for i in range(len(self._output_name_to_index))
-        ]
+        self._output_ndims = [len(self.get_output_maximum_shape(i)) for i in range(len(self._output_name_to_index))]
 
         # Set of pointers allocated with numpy_to_ait_data.
         # If the user forgets to free their data, we use this to
@@ -294,9 +286,7 @@ class Model(object):
     ):
         c_inputs = self._convert_params_to_c_format(inputs)
         c_outputs = self._convert_params_to_c_format(outputs)
-        c_stream = (
-            ctypes.c_void_p() if stream_ptr is None else ctypes.c_void_p(stream_ptr)
-        )
+        c_stream = ctypes.c_void_p() if stream_ptr is None else ctypes.c_void_p(stream_ptr)
 
         num_outputs = len(self._output_ndims)
         c_output_shapes_out = (ctypes.POINTER(ctypes.c_int64) * num_outputs)()
@@ -320,23 +310,22 @@ class Model(object):
             index_map = self._output_name_to_index
         if len(params) != len(index_map):
             raise ValueError(
-                f"Did not get correct number of {'inputs' if is_inputs else 'outputs'} expected {len(index_map)}, got {len(params)}"
+                (
+                    f"Did not get correct number of {'inputs' if is_inputs else 'outputs'}",
+                    " expected {len(index_map)}, got {len(params)}",
+                )
             )
 
         result = [None for i in range(len(index_map))]
         for name, tensor in params.items():
             if name not in index_map:
-                raise ValueError(
-                    f"Got unexpected {'input' if is_inputs else 'output'}: {name}"
-                )
+                raise ValueError(f"Got unexpected {'input' if is_inputs else 'output'}: {name}")
 
             result[index_map[name]] = tensor
 
         return result
 
-    def _make_ait_outputs(
-        self, outputs: List[AITData], c_output_shapes
-    ) -> Dict[str, List[int]]:
+    def _make_ait_outputs(self, outputs: List[AITData], c_output_shapes) -> Dict[str, List[int]]:
         output_shapes = []
         for i, c_shape in enumerate(c_output_shapes):
             shape = []
@@ -430,9 +419,7 @@ class Model(object):
         the maximum shape. The output memory blobs that are passed in to Run()
         should be interpreted and possibly truncated according to these sizes.
         """
-        return self._run_impl(
-            inputs, outputs, stream_ptr, sync, graph_mode, outputs_on_host=False
-        )
+        return self._run_impl(inputs, outputs, stream_ptr, sync, graph_mode, outputs_on_host=False)
 
     def _interpret_tensors_as_shapes(
         self,
@@ -440,10 +427,7 @@ class Model(object):
         outputs_ait: Dict[str, AITData],
     ) -> Dict[str, TorchTensor]:
         if isinstance(outputs, dict):
-            return {
-                name: _reshape_tensor(tensor, outputs_ait[name].shape)
-                for name, tensor in outputs.items()
-            }
+            return {name: _reshape_tensor(tensor, outputs_ait[name].shape) for name, tensor in outputs.items()}
         else:
             return {
                 name: _reshape_tensor(outputs[idx], outputs_ait[name].shape)
@@ -499,9 +483,7 @@ class Model(object):
         Warning: don't use this! It's not optimal with respect to performance.
         It's here for use by internal constant folding passes.
         """
-        return self._run_impl(
-            inputs, outputs, stream_ptr, graph_mode=graph_mode, outputs_on_host=True
-        )
+        return self._run_impl(inputs, outputs, stream_ptr, graph_mode=graph_mode, outputs_on_host=True)
 
     def _run_with_tensors_outputs_on_host(
         self,
@@ -626,14 +608,8 @@ class Model(object):
 
     def _construct_input_name_to_index_map(self) -> Dict[str, int]:
         num_inputs = ctypes.c_size_t()
-        self.DLL.AITemplateModelContainerGetNumInputs(
-            self.handle, ctypes.byref(num_inputs)
-        )
-        get_input_name = (
-            lambda idx, name: self.DLL.AITemplateModelContainerGetInputName(
-                self.handle, idx, name
-            )
-        )
+        self.DLL.AITemplateModelContainerGetNumInputs(self.handle, ctypes.byref(num_inputs))
+        get_input_name = lambda idx, name: self.DLL.AITemplateModelContainerGetInputName(self.handle, idx, name)
         return self._get_map_helper(num_inputs.value, get_input_name)
 
     def get_input_name_to_index_map(self) -> Dict[str, int]:
@@ -648,14 +624,8 @@ class Model(object):
 
     def _construct_output_name_to_index_map(self) -> Dict[str, int]:
         num_outputs = ctypes.c_size_t()
-        self.DLL.AITemplateModelContainerGetNumOutputs(
-            self.handle, ctypes.byref(num_outputs)
-        )
-        get_output_name = (
-            lambda idx, name: self.DLL.AITemplateModelContainerGetOutputName(
-                self.handle, idx, name
-            )
-        )
+        self.DLL.AITemplateModelContainerGetNumOutputs(self.handle, ctypes.byref(num_outputs))
+        get_output_name = lambda idx, name: self.DLL.AITemplateModelContainerGetOutputName(self.handle, idx, name)
         return self._get_map_helper(num_outputs.value, get_output_name)
 
     def get_output_name_to_index_map(self) -> Dict[str, int]:
@@ -680,9 +650,7 @@ class Model(object):
         b_name = name.encode("utf-8")
         c_name = ctypes.c_char_p(b_name)
         c_tensor = self._convert_single_param_to_c_format(tensor)
-        self.DLL.AITemplateModelContainerSetConstant(
-            self.handle, c_name, ctypes.byref(c_tensor)
-        )
+        self.DLL.AITemplateModelContainerSetConstant(self.handle, c_name, ctypes.byref(c_tensor))
 
     def set_constant_with_tensor(self, name: str, tensor: TorchTensor):
         """
@@ -695,9 +663,7 @@ class Model(object):
         self.torch_constant_tensors[name] = tensor
         self.set_constant(name, torch_to_ait_data(tensor))
 
-    def get_output_maximum_shape(
-        self, output_idx_or_name: Union[int, str]
-    ) -> List[int]:
+    def get_output_maximum_shape(self, output_idx_or_name: Union[int, str]) -> List[int]:
         """
         Get the maximum output shape. The input here can either be an output name
         or an index. The index is the runtime's internal index (as specified by
@@ -708,13 +674,14 @@ class Model(object):
         elif isinstance(output_idx_or_name, str):
             if output_idx_or_name not in self._output_name_to_index:
                 raise ValueError(
-                    f"Name {output_idx_or_name} not in OutputNameToIndexMap! Available names: {list(self._output_name_to_index.keys())}"
+                    (
+                        f"Name {output_idx_or_name} not in OutputNameToIndexMap!",
+                        " Available names: {list(self._output_name_to_index.keys())}",
+                    )
                 )
             output_idx = self._output_name_to_index[output_idx_or_name]
         else:
-            raise TypeError(
-                f"output_idx_or_name must be str or int, but got {type(output_idx_or_name)}"
-            )
+            raise TypeError(f"output_idx_or_name must be str or int, but got {type(output_idx_or_name)}")
 
         class Shape(ctypes.Structure):
             _fields_ = [
@@ -723,9 +690,7 @@ class Model(object):
             ]
 
         raw_shape = Shape()
-        self.DLL.AITemplateModelContainerGetMaximumOutputShape(
-            self.handle, output_idx, ctypes.byref(raw_shape)
-        )
+        self.DLL.AITemplateModelContainerGetMaximumOutputShape(self.handle, output_idx, ctypes.byref(raw_shape))
         return [raw_shape.shape_data[idx] for idx in range(raw_shape.size)]
 
     def get_output_dtype(self, index):
@@ -733,14 +698,10 @@ class Model(object):
         Get the expected dtype of an output.
         """
         output = ctypes.c_int()
-        self.DLL.AITemplateModelContainerGetOutputDtype(
-            self.handle, index, ctypes.byref(output)
-        )
+        self.DLL.AITemplateModelContainerGetOutputDtype(self.handle, index, ctypes.byref(output))
         return output.value
 
-    def allocate_gpu_memory(
-        self, nbytes: int, stream_ptr: Optional[int] = None, sync: bool = True
-    ) -> int:
+    def allocate_gpu_memory(self, nbytes: int, stream_ptr: Optional[int] = None, sync: bool = True) -> int:
         """
         Helper function for allocating memory on the GPU. Can be useful if
         third-party libraries like PyTorch or pycuda are not available.
@@ -757,9 +718,7 @@ class Model(object):
         )
         return ptr.value
 
-    def free_gpu_memory(
-        self, ptr: int, stream_ptr: Optional[int] = None, sync: bool = True
-    ) -> None:
+    def free_gpu_memory(self, ptr: int, stream_ptr: Optional[int] = None, sync: bool = True) -> None:
         """
         Helper function for freeing memory on the GPU. Can be useful if
         third-party libraries like PyTorch or pycuda are not available.
@@ -767,9 +726,7 @@ class Model(object):
         if ptr in self._allocated_ait_data:
             self._allocated_ait_data.remove(ptr)
 
-        self.DLL.AITemplateDeviceFree(
-            ctypes.c_void_p(ptr), ctypes.c_void_p(stream_ptr), ctypes.c_bool(sync)
-        )
+        self.DLL.AITemplateDeviceFree(ctypes.c_void_p(ptr), ctypes.c_void_p(stream_ptr), ctypes.c_bool(sync))
 
     def memcpy(
         self,
@@ -804,9 +761,7 @@ class Model(object):
         self.DLL.AITemplateModelContainerGetNumRuntimes(self.handle, ctypes.byref(out))
         return out.value
 
-    def numpy_to_ait_data(
-        self, arr: np.ndarray, stream_ptr: Optional[int] = None, sync: bool = True
-    ) -> AITData:
+    def numpy_to_ait_data(self, arr: np.ndarray, stream_ptr: Optional[int] = None, sync: bool = True) -> AITData:
         """
         Convert a numpy array to AIT-usable data. Mallocs and copies
         on the given stream.

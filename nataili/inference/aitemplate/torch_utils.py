@@ -33,7 +33,5 @@ def torch_dtype_to_string(dtype):
         torch.bool: "bool",
     }
     if dtype not in dtype_to_str:
-        raise ValueError(
-            f"Got unsupported input dtype {dtype}! Supported dtypes are: {list(dtype_to_str.keys())}"
-        )
+        raise ValueError(f"Got unsupported input dtype {dtype}! Supported dtypes are: {list(dtype_to_str.keys())}")
     return dtype_to_str[dtype]

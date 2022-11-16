@@ -98,9 +98,7 @@ def dtype_str_to_enum(dtype: str) -> int:
         the AITemplateDtype enum value.
     """
     if dtype not in _DTYPE_TO_ENUM:
-        raise ValueError(
-            f"Got unsupported input dtype {dtype}! Supported dtypes are: {list(_DTYPE_TO_ENUM.keys())}"
-        )
+        raise ValueError(f"Got unsupported input dtype {dtype}! Supported dtypes are: {list(_DTYPE_TO_ENUM.keys())}")
     return _DTYPE_TO_ENUM[dtype]
 
 

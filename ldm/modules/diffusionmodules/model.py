@@ -1,13 +1,14 @@
 # pytorch_diffusion + derived encoder decoder
 import gc
 import math
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 from einops import rearrange
 
-from ldm.util import instantiate_from_config
 from ldm.modules.attention import LinearAttention
+from ldm.util import instantiate_from_config
 
 
 def get_timestep_embedding(timesteps, embedding_dim):

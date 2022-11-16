@@ -3,7 +3,6 @@ import json
 import os
 import shutil
 import zipfile
-from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
 
 import clip
 import git
@@ -21,9 +20,10 @@ from transformers import logging
 
 from ldm.models.blip import blip_decoder
 from ldm.util import instantiate_from_config
+from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
 
 try:
-    from nataili.util.voodoo import push_model_to_plasma, push_ait_module, init_ait_module, load_ait_module
+    from nataili.util.voodoo import init_ait_module, push_model_to_plasma
 except ModuleNotFoundError as e:
     from nataili import disable_voodoo
 
@@ -59,7 +59,7 @@ class ModelManager:
                 self.models = json.load(open("./db.json"))
                 self.dependencies = json.load(open("./db_dep.json"))
                 logger.init_warn("Model Reference", status="Local")
-            
+
         else:
             self.models = json.load(open("./db.json"))
             self.dependencies = json.load(open("./db_dep.json"))
@@ -73,7 +73,7 @@ class ModelManager:
         self.set_authentication(hf_auth)
         self.disable_voodoo = disable_voodoo
         self.cuda_devices, self.recommended_gpu = self.detect_available_cuda_arch()
-        self.ait_workdir = './'
+        self.ait_workdir = "./"
 
     def detect_available_cuda_arch(self):
         # get nvidia sm_xx version
@@ -84,15 +84,15 @@ class ModelManager:
             cuda_arch = []
             for i in range(number_of_cuda_devices):
                 cuda_device = {
-                    'id': i,
-                    'name': torch.cuda.get_device_name(i),
-                    'sm': torch.cuda.get_device_capability(i)[0] * 10 + torch.cuda.get_device_capability(i)[1]
-                    }
+                    "id": i,
+                    "name": torch.cuda.get_device_name(i),
+                    "sm": torch.cuda.get_device_capability(i)[0] * 10 + torch.cuda.get_device_capability(i)[1],
+                }
                 cuda_arch.append(cuda_device)
             # sort by sm desc
-            cuda_arch = sorted(cuda_arch, key=lambda k: k['sm'], reverse=True)
+            cuda_arch = sorted(cuda_arch, key=lambda k: k["sm"], reverse=True)
             # recommended gpu = all gpu with highest sm
-            recommended_gpu = [x for x in cuda_arch if x['sm'] == cuda_arch[0]['sm']]
+            recommended_gpu = [x for x in cuda_arch if x["sm"] == cuda_arch[0]["sm"]]
             return cuda_arch, recommended_gpu
         else:
             return None
@@ -121,7 +121,7 @@ class ModelManager:
             if self.check_available(self.get_model_files(model)):
                 models_available.append(model)
         self.available_models = models_available
-        
+
         logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
         logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
         logger.info(f"Recommended GPU: {self.recommended_gpu}")
@@ -187,17 +187,17 @@ class ModelManager:
         if self.models[model_name]["type"] == "diffusers":
             return []
         return self.models[model_name]["config"]["files"]
-    
+
     def get_aitemplate_files(self, cuda_arch, model_name="stable_diffusion"):
         if cuda_arch == 89:
             return self.aitemplates[model_name]["config"]["sm89"]["files"]
         elif cuda_arch >= 80 and cuda_arch < 89:
-            return self.aitemplates[model_name]['config']['sm80']['files']
+            return self.aitemplates[model_name]["config"]["sm80"]["files"]
         elif cuda_arch == 75:
-            return self.aitemplates[model_name]['config']['sm75']['files']
+            return self.aitemplates[model_name]["config"]["sm75"]["files"]
         elif cuda_arch == 70:
             raise ValueError("CUDA Compute Capability not supported")
-            #return self.aitemplates[model_name]['config']['sm70']['files']
+            # return self.aitemplates[model_name]['config']['sm70']['files']
         else:
             raise ValueError("CUDA Compute Capability not supported")
 
@@ -205,15 +205,14 @@ class ModelManager:
         if cuda_arch == 89:
             return self.aitemplates[model_name]["config"]["sm89"]["download"]
         elif cuda_arch >= 80 and cuda_arch < 89:
-            return self.aitemplates[model_name]['config']['sm80']['download']
+            return self.aitemplates[model_name]["config"]["sm80"]["download"]
         elif cuda_arch == 75:
-            return self.aitemplates[model_name]['config']['sm75']['download']
+            return self.aitemplates[model_name]["config"]["sm75"]["download"]
         elif cuda_arch == 70:
             raise ValueError("CUDA Compute Capability not supported")
-            #return self.aitemplates[model_name]['config']['sm70']['download']
+            # return self.aitemplates[model_name]['config']['sm70']['download']
         else:
             raise ValueError("CUDA Compute Capability not supported")
-
 
     def get_dependency_files(self, dependency_name):
         return self.dependencies[dependency_name]["config"]["files"]
@@ -311,7 +310,7 @@ class ModelManager:
         }
 
         model_path = self.get_model_files(model_name)[0]["path"]
-        device = torch.device(f"cuda:{gpu_id}")
+        device = "cuda"
         model = RealESRGANer(
             scale=2,
             model_path=model_path,
@@ -319,6 +318,7 @@ class ModelManager:
             pre_pad=0,
             half=True if precision == "half" else False,
             device=device,
+            gpu_id=gpu_id,
         )
         return {"model": model, "device": device}
 
@@ -402,18 +402,18 @@ class ModelManager:
         return {"model": pipe, "device": "cuda"}
 
     def load_ait(self):
-        self.loaded_models['ait'] = {}
-        self.loaded_models['ait']['unet'] = init_ait_module("unet.so", self.ait_workdir)
-        self.loaded_models['ait']['clip'] = init_ait_module("clip.so", self.ait_workdir)
-        self.loaded_models['ait']['vae'] = init_ait_module("vae.so", self.ait_workdir)
-        self.loaded_models['ait']['pipe'] = StableDiffusionAITPipeline.from_pretrained(
+        self.loaded_models["ait"] = {}
+        self.loaded_models["ait"]["unet"] = init_ait_module("unet.so", self.ait_workdir)
+        self.loaded_models["ait"]["clip"] = init_ait_module("clip.so", self.ait_workdir)
+        self.loaded_models["ait"]["vae"] = init_ait_module("vae.so", self.ait_workdir)
+        self.loaded_models["ait"]["pipe"] = StableDiffusionAITPipeline.from_pretrained(
             "runwayml/stable-diffusion-v1-5",
             revision="fp16",
             torch_dtype=torch.float16,
-            use_auth_token=True if self.hf_auth is None else self.hf_auth['password'],
-            clip_ait_exe=self.loaded_models['ait']['clip'],
-            unet_ait_exe=self.loaded_models['ait']['unet'],
-            vae_ait_exe=self.loaded_models['ait']['vae'],
+            use_auth_token=True if self.hf_auth is None else self.hf_auth["password"],
+            clip_ait_exe=self.loaded_models["ait"]["clip"],
+            unet_ait_exe=self.loaded_models["ait"]["unet"],
+            vae_ait_exe=self.loaded_models["ait"]["vae"],
             filter_nsfw=False,
         ).to("cuda")
         return True

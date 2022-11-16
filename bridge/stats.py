@@ -1,5 +1,6 @@
 import json
 
+
 class BridgeStats:
     
     def __init__(self):
