@@ -25,6 +25,7 @@ def bridge(model_manager, bd):
             new_job = HordeJob(model_manager, bd)
             running_jobs.append(new_job)
             # logger.debug(f"started {new_job}")
+            time.sleep(0.5)
             continue
         for job in running_jobs:
             if job.is_finished():
