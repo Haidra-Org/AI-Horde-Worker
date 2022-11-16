@@ -489,6 +489,8 @@ class ModelManager:
 
     def check_available(self, files):
         available = True
+        if len(files) == 0:
+            return False
         for file in files:
             if not self.check_file_available(file["path"]):
                 available = False
