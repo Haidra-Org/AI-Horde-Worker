@@ -123,7 +123,8 @@ class BridgeData(object):
         if self.max_power < 2:
             self.max_power = 2
         self.max_pixels = 64 * 64 * 8 * self.max_power
-        self.model_names.append("safety_checker")
+        if self.censor_nsfw or len(self.censorlist):
+            self.model_names.append("safety_checker")
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
