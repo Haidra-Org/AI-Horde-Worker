@@ -196,10 +196,14 @@ class ModelManager:
         elif cuda_arch == 75:
             return self.aitemplates[model_name]["config"]["sm75"]["files"]
         elif cuda_arch == 70:
-            raise ValueError("CUDA Compute Capability not supported")
+            logger.warning("CUDA Compute Capability does not support AITemplates")
+            return []
+            # raise ValueError("CUDA Compute Capability not supported")
             # return self.aitemplates[model_name]['config']['sm70']['files']
         else:
-            raise ValueError("CUDA Compute Capability not supported")
+            logger.warning("CUDA Compute Capability does not support AITemplates")
+            return []
+            # raise ValueError("CUDA Compute Capability not supported")
 
     def get_aitemplate_download(self, cuda_arch, model_name="stable_diffusion"):
         if cuda_arch == 89:
@@ -209,10 +213,14 @@ class ModelManager:
         elif cuda_arch == 75:
             return self.aitemplates[model_name]["config"]["sm75"]["download"]
         elif cuda_arch == 70:
-            raise ValueError("CUDA Compute Capability not supported")
+            logger.warning("CUDA Compute Capability does not support AITemplates")
+            return []
+            # raise ValueError("CUDA Compute Capability not supported")
             # return self.aitemplates[model_name]['config']['sm70']['download']
         else:
-            raise ValueError("CUDA Compute Capability not supported")
+            logger.warning("CUDA Compute Capability does not support AITemplates")
+            return []
+            # raise ValueError("CUDA Compute Capability not supported")
 
     def get_dependency_files(self, dependency_name):
         return self.dependencies[dependency_name]["config"]["files"]
