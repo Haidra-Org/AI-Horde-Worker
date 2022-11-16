@@ -477,8 +477,8 @@ class CompVis:
                 )
                 if has_nsfw_concept:
                     logger.info(f"Image {filename} has NSFW concept")
-                    image = output_images[0]
-                    image = PIL.Image.fromarray(image)
+                    image = PIL.Image.new("RGB", (512, 512))
+                    image_dict["censored"] = True
             image_dict["image"] = image
             self.images.append(image_dict)
 

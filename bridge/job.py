@@ -141,11 +141,21 @@ class HordeJob:
         model = pop.get("model", self.available_models[0])
         self.current_model = model
         # logger.info([self.current_id,self.current_payload])
-        use_nsfw_censor = self.current_payload.get("use_nsfw_censor", False)
+        use_nsfw_censor = False
+        censor_image = None
+        censor_reason = None
         if self.bd.censor_nsfw and not self.bd.nsfw:
             use_nsfw_censor = True
+            censor_image = self.bd.censor_image_sfw_worker
+            censor_reason = "SFW worker"
         elif any(word in self.current_payload["prompt"] for word in self.bd.censorlist):
             use_nsfw_censor = True
+            censor_image = self.bd.censor_image_censorlist
+            censor_reason = "Censorlist"
+        elif self.current_payload.get("use_nsfw_censor", False):
+            use_nsfw_censor = True
+            censor_image = self.bd.censor_image_sfw_request
+            censor_reason = "Requested"
         # use_gfpgan = self.current_payload.get("use_gfpgan", True)
         # use_real_esrgan = self.current_payload.get("use_real_esrgan", False)
         source_processing = pop.get("source_processing")
@@ -216,6 +226,8 @@ class HordeJob:
                 if "safety_checker" in self.model_manager.loaded_models
                 else None
             )
+
+
             if source_image:
                 base64_bytes = source_image.encode("utf-8")
                 img_bytes = base64.b64decode(base64_bytes)
@@ -303,6 +315,9 @@ class HordeJob:
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
+        if generator.images[0].get("censored", False):
+            logger.debug(f"Image censored with reason: {censor_reason}")
+            self.image = censor_image
         # We unload the generator from RAM
         generator = None
         self.current_generation = self.seed
