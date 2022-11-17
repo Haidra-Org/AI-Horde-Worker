@@ -130,7 +130,8 @@ class ModelManager:
         aitemplate_available = []
         for aitemplate in self.aitemplates:
             logger.info(f"{aitemplate}")
-            if self.check_available(self.get_aitemplate_files(sm)):
+            ait_files = self.get_aitemplate_files(sm)
+            if len(ait_files) > 0 and self.check_available(ait_files):
                 aitemplate_available.append(aitemplate)
         self.available_aitemplates = aitemplate_available
         if len(self.available_aitemplates) == 0:
@@ -245,6 +246,9 @@ class ModelManager:
 
     def get_loaded_model(self, model_name):
         return self.loaded_models[model_name]
+
+    def is_model_loaded(self, model_name):
+        return model_name in self.loaded_models
 
     def unload_model(self, model_name):
         if model_name in self.loaded_models:
@@ -489,8 +493,7 @@ class ModelManager:
 
     def check_available(self, files):
         available = True
-        if len(files) == 0:
-            return False
+
         for file in files:
             if not self.check_file_available(file["path"]):
                 available = False

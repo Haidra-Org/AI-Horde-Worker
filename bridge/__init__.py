@@ -2,6 +2,7 @@ from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
 
 from .argparser import args
 from .bridge_data import BridgeData
+from .post_process import post_process
 from .enums import JobStatus
 from .stats import BridgeStats
 

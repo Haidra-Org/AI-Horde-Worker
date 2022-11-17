@@ -125,6 +125,8 @@ class BridgeData(object):
         self.max_pixels = 64 * 64 * 8 * self.max_power
         if self.censor_nsfw or len(self.censorlist):
             self.model_names.append("safety_checker")
+        self.model_names.append("GFPGAN")
+        self.model_names.append("RealESRGAN_x4plus")
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(

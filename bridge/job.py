@@ -11,7 +11,7 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from bridge import JobStatus, bridge_stats, disable_voodoo
+from bridge import JobStatus, bridge_stats, disable_voodoo, post_process
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -27,10 +27,10 @@ class HordeJob:
         self.current_id = None
         self.current_payload = None
         self.current_model = None
-        self.current_generation = None
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
+        self.upload_quality = 90
 
         thread = threading.Thread(target=self.start_job, args=())
         thread.daemon = True
@@ -54,11 +54,9 @@ class HordeJob:
     def start_job(self):
         # Pop new request from the Horde
         self.available_models = self.model_manager.get_loaded_models_names()
-        if "LDSR" in self.available_models:
-            logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
-            self.available_models.remove("LDSR")
-        if "safety_checker" in self.available_models:
-            self.available_models.remove("safety_checker")
+        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
+            if util_model in self.available_models:
+                self.available_models.remove(util_model)
         self.gen_dict = {
             "name": self.bd.worker_name,
             "max_pixels": self.bd.max_pixels,
@@ -70,7 +68,7 @@ class HordeJob:
             "allow_painting": self.bd.allow_painting,
             "allow_unsafe_ip": self.bd.allow_unsafe_ip,
             "threads": self.bd.max_threads,
-            "bridge_version": 6,
+            "bridge_version": 7,
         }
         # logger.debug(gen_dict)
         self.headers = {"apikey": self.bd.api_key}
@@ -320,12 +318,17 @@ class HordeJob:
             self.image = censor_image
         # We unload the generator from RAM
         generator = None
-        self.current_generation = self.seed
+        for post_processor in self.current_payload.get("post_processing", []):
+            logger.debug(f"Post-processing with {post_processor}...")
+            try:
+                self.image = post_process(post_processor, self.image, self.model_manager)
+            except AssertionError:
+                logger.warning(f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!")
+            if post_processor in ["RealESRGAN_x4plus"]:
+                self.upload_quality = 50
         # Not a daemon, so that it can survive after this class is garbage collected
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
-        if not self.current_generation:
-            time.sleep(self.retry_interval)
 
     def submit_job(self):
         self.status = JobStatus.FINALIZING
@@ -333,7 +336,7 @@ class HordeJob:
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
-        self.image.save(buffer, format="WebP", quality=90)
+        self.image.save(buffer, format="WebP", quality=self.upload_quality)
         self.submit_dict = {
             "id": self.current_id,
             "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
