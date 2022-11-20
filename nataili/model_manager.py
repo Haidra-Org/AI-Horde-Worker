@@ -677,19 +677,6 @@ class ModelManager:
         self.download_all_models()
         return True
 
-    """
-    FIXME: this method is present twice, commenting first one...
-
-    def check_all_available(self):
-        for model in self.models:
-            if not self.check_available(self.get_model_files(model)):
-                return False
-        for dependency in self.dependencies:
-            if not self.check_available(self.get_dependency_files(dependency)):
-                return False
-        return True
-    """
-
     def check_model_available(self, model_name):
         if model_name not in self.models:
             return False
