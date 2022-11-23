@@ -436,7 +436,7 @@ class CompVis:
                     shape = [opt_C, height // opt_f, width // opt_f]
                     if noise_mode in ["find", "find_and_matched"]:
                         x = torch.cat(batch_size * [find_noise_for_image(
-                            model, self.device,
+                            self.model, self.device,
                             init_img.convert('RGB'), '', find_noise_steps, 0.0, normalize=True)], dim=0)
                     else:
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
