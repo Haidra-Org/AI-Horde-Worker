@@ -264,6 +264,8 @@ class CompVis:
                 unconditional_conditioning=unconditional_conditioning,
                 x_T=x,
                 karras=karras,
+                batch_size=batch_size,
+                shape=shape,
                 sigma_override=sigma_override,
             )
             return samples_ddim
