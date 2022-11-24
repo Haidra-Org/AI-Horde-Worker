@@ -12,7 +12,7 @@
 			"files": [
 				{
 					"path": "models/ldm/stable-diffusion-v2/model_2_0.ckpt",
-					"md5sum": "76cce9b4e4410ff4fd1ec63d44cf7111"
+					"md5sum": "48cb3980ec03a370b68bd0a9d8eefece"
 				},
 				{
 					"path": "configs/stable-diffusion/v2-inference-v.yaml"
