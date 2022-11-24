@@ -334,6 +334,7 @@ class CompVis:
                     logger.info("Unknown sampler: " + sampler_name)
                 if self.model_name == "stable_diffusion_2.0":
                     sampler = DPMSolverSampler(model)
+                    sampler_name = "dpmsolver"
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
@@ -434,6 +435,7 @@ class CompVis:
                 logger.info("Unknown sampler: " + sampler_name)
             if self.model_name == "stable_diffusion_2.0":
                     sampler = DPMSolverSampler(self.model)
+                    sampler_name = "dpmsolver"
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
