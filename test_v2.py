@@ -88,16 +88,7 @@ def test_compvis(
 
 
 samplers = [
-    "k_dpm_fast",
-    "k_dpmpp_2s_a",
-    "k_dpm_adaptive",
-    "k_dpmpp_2m",
-    "k_dpm_2_a",
-    "k_dpm_2",
-    "k_euler_a",
-    "k_euler",
-    "k_heun",
-    "k_lms",
+    "dpmsolver"
 ]
 
 output_dir = f"./test_output/{str(uuid.uuid4())}"
