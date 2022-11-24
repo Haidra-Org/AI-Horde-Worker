@@ -257,7 +257,8 @@ class CompVis:
             karras=False,
             sigma_override: dict = None,
         ):
-            samples_ddim, _ = sampler.sample(
+            if sampler_name == "dpmsolver":
+                samples_ddim, _ = sampler.sample(
                 S=ddim_steps,
                 conditioning=conditioning,
                 unconditional_guidance_scale=cfg_scale,
@@ -268,6 +269,16 @@ class CompVis:
                 shape=shape,
                 sigma_override=sigma_override,
             )
+            else:
+                samples_ddim, _ = sampler.sample(
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                    karras=karras,
+                    sigma_override=sigma_override,
+                )
             return samples_ddim
 
         seed = seed_to_int(seed)
