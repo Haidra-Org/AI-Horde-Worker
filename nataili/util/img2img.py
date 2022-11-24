@@ -177,10 +177,11 @@ def get_matched_noise(_np_src_image, np_mask_rgb, noise_q, color_variation):
     height = _np_src_image.shape[1]
     num_channels = _np_src_image.shape[2]
 
-    # FIXME: the commented lines are never used. remove?
+    # FIXME: Vestigial stuff. Ldownload_dependencyeaving in case we discover we need it later.
+    # 20/11/2022 - Delete a while later after this date.
     # np_src_image = _np_src_image[:] * (1.0 - np_mask_rgb)
-    np_mask_grey = np.sum(np_mask_rgb, axis=2) / 3.0
     # np_src_grey = np.sum(np_src_image, axis=2) / 3.0
+    np_mask_grey = np.sum(np_mask_rgb, axis=2) / 3.0
     # all_mask = np.ones((width, height), dtype=bool)
     img_mask = np_mask_grey > 1e-6
     ref_mask = np_mask_grey < 1e-3

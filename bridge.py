@@ -32,6 +32,10 @@ def bridge(model_manager, bd):
                 job.delete()
                 running_jobs.remove(job)
                 # logger.debug(f"removed {job}")
+            elif job.is_stale():
+                job.delete()
+                logger.warning("Killing thread job because it hasn't completed after 20 minutes")
+                running_jobs.remove(job)
             elif job.is_polling():
                 polling_jobs += 1
         if len(running_jobs) and polling_jobs == len(running_jobs):

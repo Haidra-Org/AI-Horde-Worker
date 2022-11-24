@@ -31,6 +31,7 @@ class HordeJob:
         self.status = JobStatus.INIT
         self.skipped_info = None
         self.upload_quality = 90
+        self.start_time = time.time()
 
         thread = threading.Thread(target=self.start_job, args=())
         thread.daemon = True
@@ -49,6 +50,9 @@ class HordeJob:
 
     def delete(self):
         del self
+
+    def is_stale(self):
+        return time.time() - self.start_time > 1200
 
     @logger.catch(reraise=True)
     def start_job(self):

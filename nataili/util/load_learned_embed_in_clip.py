@@ -28,8 +28,7 @@ def load_learned_embed_in_clip(learned_embeds_path, text_encoder, tokenizer, tok
     # add the token in tokenizer
     token = token if token is not None else trained_token
 
-    # FIXME: following line is not used, remove?
-    # num_added_tokens = tokenizer.add_tokens(token)
+    tokenizer.add_tokens(token)
 
     # resize the token embeddings
     text_encoder.resize_token_embeddings(len(tokenizer))

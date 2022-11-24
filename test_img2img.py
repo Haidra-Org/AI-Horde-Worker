@@ -94,6 +94,7 @@ def test_compvis(
         denoising_strength=denoising_strength,
     )
 
+
 output_dir = f"./test_output/{str(uuid.uuid4())}"
 
 
@@ -119,10 +120,10 @@ def test():
         if model in ["stable_diffusion", "waifu_diffusion", "trinart"]:
             logger.info(f"Output dir: {output_dir}")
             logger.debug(f"Running inference on {model}")
-            
+
             prompt = "cute anime girl"
             logger.info(f"Prompt: {prompt}")
-            logger.info(f"noise_mode: seed")
+            logger.info("noise_mode: seed")
             test_compvis(
                 model,
                 prompt,
@@ -131,7 +132,7 @@ def test():
                 noise_mode="seed",
                 output_dir=output_dir,
             )
-            logger.info(f"noise_mode: find")
+            logger.info("noise_mode: find")
             test_compvis(
                 model,
                 prompt,
@@ -141,7 +142,7 @@ def test():
                 find_noise_steps=50,
                 output_dir=output_dir,
             )
-            logger.info(f"noise_mode: matched")
+            logger.info("noise_mode: matched")
             test_compvis(
                 model,
                 prompt,
@@ -150,7 +151,7 @@ def test():
                 noise_mode="matched",
                 output_dir=output_dir,
             )
-            logger.info(f"noise_mode: find_and_matched")
+            logger.info("noise_mode: find_and_matched")
             test_compvis(
                 model,
                 prompt,
