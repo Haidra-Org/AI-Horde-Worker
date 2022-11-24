@@ -271,6 +271,7 @@ class HordeJob:
             generator = CompVis(
                 model=self.model_manager.loaded_models[model]["model"],
                 device=self.model_manager.loaded_models[model]["device"],
+                model_name=model,
                 output_dir="bridge_generations",
                 load_concepts=True,
                 concepts_dir="models/custom/sd-concepts-library",

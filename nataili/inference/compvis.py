@@ -40,6 +40,7 @@ class CompVis:
         model,
         device,
         output_dir,
+        model_name=None,
         save_extension="jpg",
         output_file_path=False,
         load_concepts=False,
@@ -51,6 +52,7 @@ class CompVis:
         disable_voodoo=False,
     ):
         self.model = model
+        self.model_name = model_name
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
@@ -330,6 +332,8 @@ class CompVis:
                     sampler = DPMSolverSampler(model)
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
+                if self.model_name == "stable_diffusion_2.0":
+                    sampler = DPMSolverSampler(model)
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
@@ -428,6 +432,8 @@ class CompVis:
                 sampler = DPMSolverSampler(self.model)
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
+            if self.model_name == "stable_diffusion_2.0":
+                    sampler = DPMSolverSampler(self.model)
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:

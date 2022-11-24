@@ -74,6 +74,7 @@ def test_compvis(
         mm.loaded_models[model]["model"],
         mm.loaded_models[model]["device"],
         output_dir,
+        model_name=model,
         disable_voodoo=True,
         filter_nsfw=filter_nsfw,
         safety_checker=safety_checker,
@@ -92,7 +93,8 @@ def test_compvis(
 
 
 samplers = [
-    "dpmsolver"
+    "dpmsolver",
+    "notdpmsolver" # this checks forcing sampler from model_name works
 ]
 
 output_dir = f"./test_output/{str(uuid.uuid4())}"
