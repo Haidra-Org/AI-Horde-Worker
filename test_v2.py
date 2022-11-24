@@ -48,8 +48,10 @@ def test_compvis(
     model,
     prompt,
     sampler,
-    steps=30,
+    steps=50,
     output_dir=None,
+    width=512,
+    height=512,
     seed=None,
     init_img=None,
     denoising_strength=0.75,
@@ -81,6 +83,8 @@ def test_compvis(
         sampler_name=sampler,
         ddim_steps=steps,
         seed=seed,
+        width=width,
+        height=height,
         init_img=init_img,
         sigma_override=sigma_override,
         denoising_strength=denoising_strength,
@@ -124,7 +128,11 @@ def test():
             )
             logger.info(f"Prompt: {prompt}")
             for sampler in samplers:
-                test_compvis(model, prompt, sampler, output_dir=output_dir)
+                logger.info(f'512x512, 50 steps, {sampler}')
+                test_compvis(model, prompt, sampler,  width=512, height=512, output_dir=output_dir)
+                logger.warning('You will provably OOM if you have low vram')
+                logger.info(f'768x768, 50 steps, {sampler}')
+                test_compvis(model, prompt, sampler, width=768, height=768, output_dir=output_dir)
 
         logger.init_ok(f"Model {model}", status="Unloading")
         mm.unload_model(model)
