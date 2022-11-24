@@ -331,7 +331,7 @@ class CompVis:
                 elif sampler_name == "dpmsolver":
                     sampler = DPMSolverSampler(model)
                 else:
-                    raise Exception("Unknown sampler: " + sampler_name)
+                    logger.info("Unknown sampler: " + sampler_name)
                 if self.model_name == "stable_diffusion_2.0":
                     sampler = DPMSolverSampler(model)
                 if self.load_concepts and self.concepts_dir is not None:
@@ -431,7 +431,7 @@ class CompVis:
             elif sampler_name == "dpmsolver":
                 sampler = DPMSolverSampler(self.model)
             else:
-                raise Exception("Unknown sampler: " + sampler_name)
+                logger.info("Unknown sampler: " + sampler_name)
             if self.model_name == "stable_diffusion_2.0":
                     sampler = DPMSolverSampler(self.model)
             if self.load_concepts and self.concepts_dir is not None:
