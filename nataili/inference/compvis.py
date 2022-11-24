@@ -304,7 +304,10 @@ class CompVis:
 
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
-                if sampler_name == "PLMS":
+                if self.model_name == "stable_diffusion_2.0":
+                    sampler = DPMSolverSampler(model)
+                    sampler_name = "dpmsolver"
+                elif sampler_name == "PLMS":
                     sampler = PLMSSampler(model)
                 elif sampler_name == "DDIM":
                     sampler = DDIMSampler(model)
@@ -332,9 +335,6 @@ class CompVis:
                     sampler = DPMSolverSampler(model)
                 else:
                     logger.info("Unknown sampler: " + sampler_name)
-                if self.model_name == "stable_diffusion_2.0":
-                    sampler = DPMSolverSampler(model)
-                    sampler_name = "dpmsolver"
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
