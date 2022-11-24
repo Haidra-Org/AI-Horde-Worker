@@ -16,7 +16,6 @@ from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
-from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
@@ -316,17 +315,9 @@ class CompVis:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
                         process_prompt_tokens(prompt_tokens, model, self.concepts_dir)
-                if self.verify_input:
-                    try:
-                        check_prompt_length(model, prompt, self.comments)
-                    except Exception:
-                        import traceback
 
-                        print("Error verifying input:", file=sys.stderr)
-                        print(traceback.format_exc(), file=sys.stderr)
-
-                    all_prompts = batch_size * n_iter * [prompt]
-                    all_seeds = [seed + x for x in range(len(all_prompts))]
+                all_prompts = batch_size * n_iter * [prompt]
+                all_seeds = [seed + x for x in range(len(all_prompts))]
 
                 with torch.no_grad():
                     for n in range(n_iter):
@@ -418,17 +409,9 @@ class CompVis:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
                     process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
-            if self.verify_input:
-                try:
-                    check_prompt_length(self.model, prompt, self.comments)
-                except Exception:
-                    import traceback
 
-                    print("Error verifying input:", file=sys.stderr)
-                    print(traceback.format_exc(), file=sys.stderr)
-
-                all_prompts = batch_size * n_iter * [prompt]
-                all_seeds = [seed + x for x in range(len(all_prompts))]
+            all_prompts = batch_size * n_iter * [prompt]
+            all_seeds = [seed + x for x in range(len(all_prompts))]
 
             with torch.no_grad():
                 for n in range(n_iter):
