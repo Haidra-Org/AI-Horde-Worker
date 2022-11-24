@@ -154,8 +154,13 @@ cython_debug/
 
 
 # repo specific
-/models/
-models
+models/**/*.ckpt
+models/**/*.pth
+models/**/*.pt
+models/**/*.json
+models/**/*.bin
+models/**/*.txt
+models/**/*.yaml
 /outputs/
 /temp/
 /gfpgan/
