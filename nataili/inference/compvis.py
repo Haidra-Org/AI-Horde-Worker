@@ -11,6 +11,8 @@ from einops import rearrange
 from slugify import slugify
 from transformers import CLIPFeatureExtractor
 
+from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
+
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
@@ -250,6 +252,8 @@ class CompVis:
             conditioning,
             unconditional_conditioning,
             sampler_name,
+            batch_size=1,
+            shape=None,
             karras=False,
             sigma_override: dict = None,
         ):
@@ -309,6 +313,8 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
                 elif sampler_name == "k_dpmpp_2m":
                     sampler = KDiffusionSampler(model, "dpmpp_2m")
+                elif sampler_name == "dpmsolver":
+                    sampler = DPMSolverSampler(model)
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
                 if self.load_concepts and self.concepts_dir is not None:
@@ -371,6 +377,8 @@ class CompVis:
                                 unconditional_conditioning=uc,
                                 sampler_name=sampler_name,
                                 karras=karras,
+                                batch_size=batch_size,
+                                shape=shape,
                                 sigma_override=sigma_override,
                             )
                         )
@@ -403,6 +411,8 @@ class CompVis:
                 sampler = KDiffusionSampler(self.model, "dpmpp_2s_ancestral")
             elif sampler_name == "k_dpmpp_2m":
                 sampler = KDiffusionSampler(self.model, "dpmpp_2m")
+            elif sampler_name == "dpmsolver":
+                sampler = DPMSolverSampler(self.model)
             else:
                 raise Exception("Unknown sampler: " + sampler_name)
             if self.load_concepts and self.concepts_dir is not None:
@@ -465,6 +475,8 @@ class CompVis:
                             unconditional_conditioning=uc,
                             sampler_name=sampler_name,
                             karras=karras,
+                            batch_size=batch_size,
+                            shape=shape,
                             sigma_override=sigma_override,
                         )
                     )
