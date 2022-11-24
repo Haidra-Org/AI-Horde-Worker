@@ -15,7 +15,7 @@
 					"md5sum": "76cce9b4e4410ff4fd1ec63d44cf7111"
 				},
 				{
-					"path": "configs/stable-diffusion/v2-inference.yaml"
+					"path": "configs/stable-diffusion/v2-inference-v.yaml"
 				}
 			],
 			"download": [
