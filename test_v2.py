@@ -110,7 +110,12 @@ def test():
         torch_gc()
         tic = time.time()
         logger.init(f"Model: {model}", status="Loading")
-
+        
+        if model not in mm.available_models:
+            logger.error(f"Model {model} not available", status=False)
+            logger.init(f"Downloading {model}", status="Downloading")
+            mm.download_model(model)
+            logger.init_ok(f"Downloaded {model}", status=True)
         success = mm.load_model(model)
 
         toc = time.time()
