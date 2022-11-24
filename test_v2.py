@@ -27,7 +27,7 @@ disable_xformers.toggle(args.disable_xformers)
 
 init_image = PIL.Image.open("./01.png").convert("RGB")
 
-mm = ModelManager()
+mm = ModelManager(download=False) # TODO: update db reference
 
 mm.init()
 logger.debug("Available dependencies:")
