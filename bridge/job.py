@@ -167,29 +167,34 @@ class HordeJob:
         source_image = pop.get("source_image")
         source_mask = pop.get("source_mask")
         # These params will always exist in the payload from the horde
-        gen_payload = {
-            "prompt": self.current_payload["prompt"],
-            "height": self.current_payload["height"],
-            "width": self.current_payload["width"],
-            "seed": self.current_payload["seed"],
-            "n_iter": 1,
-            "batch_size": 1,
-            "save_individual_images": False,
-            "save_grid": False,
-        }
-        # These params might not always exist in the horde payload
-        if "ddim_steps" in self.current_payload:
-            gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
-        if "sampler_name" in self.current_payload:
-            gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-        if "cfg_scale" in self.current_payload:
-            gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
-        if "ddim_eta" in self.current_payload:
-            gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
-        if "denoising_strength" in self.current_payload and source_image:
-            gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-        if self.current_payload.get("karras", False):
-            gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+        try:
+            gen_payload = {
+                "prompt": self.current_payload["prompt"],
+                "height": self.current_payload["height"],
+                "width": self.current_payload["width"],
+                "seed": self.current_payload["seed"],
+                "n_iter": 1,
+                "batch_size": 1,
+                "save_individual_images": False,
+                "save_grid": False,
+            }
+            # These params might not always exist in the horde payload
+            if "ddim_steps" in self.current_payload:
+                gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
+            if "sampler_name" in self.current_payload:
+                gen_payload["sampler_name"] = self.current_payload["sampler_name"]
+            if "cfg_scale" in self.current_payload:
+                gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
+            if "ddim_eta" in self.current_payload:
+                gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
+            if "denoising_strength" in self.current_payload and source_image:
+                gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
+            if self.current_payload.get("karras", False):
+                gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+        except KeyError as e:
+            logger.error(f"Received incomplete payload from job. Aborting. ({e})")
+            self.status = JobStatus.FAULTED
+            return
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
