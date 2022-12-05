@@ -72,7 +72,7 @@ class HordeJob:
             "allow_painting": self.bd.allow_painting,
             "allow_unsafe_ip": self.bd.allow_unsafe_ip,
             "threads": self.bd.max_threads,
-            "bridge_version": 7,
+            "bridge_version": 8,
         }
         # logger.debug(gen_dict)
         self.headers = {"apikey": self.bd.api_key}
@@ -340,6 +340,7 @@ class HordeJob:
             if post_processor in ["RealESRGAN_x4plus"]:
                 self.upload_quality = 50
         # Not a daemon, so that it can survive after this class is garbage collected
+        self.r2_upload = pop.get("r2_upload")
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
 
@@ -350,9 +351,14 @@ class HordeJob:
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
         self.image.save(buffer, format="WebP", quality=self.upload_quality)
+        if self.r2_upload:
+            put_response = requests.put(self.r2_upload, data=buffer.getvalue())
+            generation = "R2"
+        else:
+            generation = base64.b64encode(buffer.getvalue()).decode("utf8")
         self.submit_dict = {
             "id": self.current_id,
-            "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
+            "generation": generation,
             "api_key": self.bd.api_key,
             "seed": self.seed,
             "max_pixels": self.bd.max_pixels,
