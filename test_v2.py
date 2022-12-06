@@ -27,7 +27,7 @@ disable_xformers.toggle(args.disable_xformers)
 
 init_image = PIL.Image.open("./01.png").convert("RGB")
 
-mm = ModelManager(download=False) # TODO: update db reference
+mm = ModelManager(download=False)  # TODO: update db reference
 
 mm.init()
 logger.debug("Available dependencies:")
@@ -92,10 +92,7 @@ def test_compvis(
     )
 
 
-samplers = [
-    "dpmsolver",
-    "notdpmsolver" # this checks forcing sampler from model_name works
-]
+samplers = ["dpmsolver", "notdpmsolver"]  # this checks forcing sampler from model_name works
 
 output_dir = f"./test_output/{str(uuid.uuid4())}"
 
@@ -112,7 +109,7 @@ def test():
         torch_gc()
         tic = time.time()
         logger.init(f"Model: {model}", status="Loading")
-        
+
         if model not in mm.available_models:
             logger.error(f"Model {model} not available", status=False)
             logger.init(f"Downloading {model}", status="Downloading")
@@ -135,10 +132,10 @@ def test():
             )
             logger.info(f"Prompt: {prompt}")
             for sampler in samplers:
-                logger.info(f'512x512, 50 steps, {sampler}')
-                test_compvis(model, prompt, sampler,  width=512, height=512, output_dir=output_dir)
-                logger.warning('You will provably OOM if you have low vram')
-                logger.info(f'768x768, 50 steps, {sampler}')
+                logger.info(f"512x512, 50 steps, {sampler}")
+                test_compvis(model, prompt, sampler, width=512, height=512, output_dir=output_dir)
+                logger.warning("You will provably OOM if you have low vram")
+                logger.info(f"768x768, 50 steps, {sampler}")
                 test_compvis(model, prompt, sampler, width=768, height=768, output_dir=output_dir)
 
         logger.init_ok(f"Model {model}", status="Unloading")

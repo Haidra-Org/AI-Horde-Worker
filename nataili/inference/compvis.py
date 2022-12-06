@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import k_diffusion as K
 import numpy as np
@@ -12,7 +11,6 @@ from slugify import slugify
 from transformers import CLIPFeatureExtractor
 
 from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
-
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
@@ -261,16 +259,16 @@ class CompVis:
         ):
             if sampler_name == "dpmsolver":
                 samples_ddim, _ = sampler.sample(
-                S=ddim_steps,
-                conditioning=conditioning,
-                unconditional_guidance_scale=cfg_scale,
-                unconditional_conditioning=unconditional_conditioning,
-                x_T=x,
-                karras=karras,
-                batch_size=batch_size,
-                shape=shape,
-                sigma_override=sigma_override,
-            )
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                    karras=karras,
+                    batch_size=batch_size,
+                    shape=shape,
+                    sigma_override=sigma_override,
+                )
             else:
                 samples_ddim, _ = sampler.sample(
                     S=ddim_steps,
@@ -434,8 +432,8 @@ class CompVis:
             else:
                 logger.info("Unknown sampler: " + sampler_name)
             if self.model_name == "stable_diffusion_2.0":
-                    sampler = DPMSolverSampler(self.model)
-                    sampler_name = "dpmsolver"
+                sampler = DPMSolverSampler(self.model)
+                sampler_name = "dpmsolver"
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
