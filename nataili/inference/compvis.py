@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import k_diffusion as K
 import numpy as np
@@ -12,7 +11,6 @@ from slugify import slugify
 from transformers import CLIPFeatureExtractor
 
 from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
-
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler

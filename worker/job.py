@@ -62,7 +62,7 @@ class HordeJob:
 
     def is_finished(self):
         """Check if the job is finished"""
-        return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
+        return self.status not in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
 
     def is_polling(self):
         """Check if the job is polling"""
@@ -106,14 +106,16 @@ class HordeJob:
             pop = pop_req.json()
         except json.decoder.JSONDecodeError:
             logger.error(
-                f"Could not decode response from {self.bridge_data.horde_url} as json. Please inform its administrator!"
+                f"Could not decode response from {self.bridge_data.horde_url} as json. "
+                "Please inform its administrator!"
             )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return None
         if not pop_req.ok:
             logger.warning(
-                f"During gen pop, server {self.bridge_data.horde_url} responded with status code {pop_req.status_code}: "
+                f"During gen pop, server {self.bridge_data.horde_url} "
+                f"responded with status code {pop_req.status_code}: "
                 f"{pop['message']}. Waiting for 10 seconds..."
             )
             if "errors" in pop:
@@ -431,13 +433,15 @@ class HordeJob:
                 break
             except requests.exceptions.ConnectionError:
                 logger.warning(
-                    f"Server {self.bridge_data.horde_url} unavailable during submit. Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
+                    f"Server {self.bridge_data.horde_url} unavailable during submit. "
+                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue
             except requests.exceptions.ReadTimeout:
                 logger.warning(
-                    f"Server {self.bridge_data.horde_url} timed out during submit. Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
+                    f"Server {self.bridge_data.horde_url} timed out during submit. "
+                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue

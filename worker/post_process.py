@@ -10,7 +10,8 @@ KNOWN_POST_PROCESSORS = {
 
 
 def post_process(model, image, model_manager):
-    """This is the post-processing function, it takes the model name, and the image, and returns the post processed image"""
+    """This is the post-processing function,
+    it takes the model name, and the image, and returns the post processed image"""
     if model not in KNOWN_POST_PROCESSORS:
         logger.warning(f"Post processor {model} is unknown. Returning original image")
         return image

@@ -4,13 +4,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from worker.argparser import args
-from worker.bridge_data import BridgeData
-from worker.stats import bridge_stats
-from worker.job import HordeJob
-
 from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
+from worker.argparser import args
+from worker.bridge_data import BridgeData
+from worker.job import HordeJob
+from worker.stats import bridge_stats
 
 
 def reload_data(this_bridge_data):
@@ -35,20 +34,21 @@ def bridge(this_model_manager, this_bridge_data):
                 logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
                 continue
             loop_count += 1
-            if loop_count % 10 == 0:
+            if loop_count % 2 == 0:
                 reload_data(this_bridge_data)
+                executor._max_workers = this_bridge_data.max_threads
                 loop_count = 0
 
             pop_count = 0
             while len(running_jobs) < this_bridge_data.max_threads:
                 pop_count += 1
-                if pop_count > 10:  # Just to allow reload to fire
+                if pop_count > 3:  # Just to allow reload to fire
                     break
                 new_job = HordeJob(this_model_manager, this_bridge_data)
                 pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
                 if pop is None:
                     continue
-                logger.info("Got a new job from the horde")
+                logger.debug("Got a new job from the horde")
                 running_jobs.append(executor.submit(new_job.start_job, pop))
 
             for job in running_jobs:

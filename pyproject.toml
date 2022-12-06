@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 500
+line-length = 119
 
 [tool.isort]
 py_version = 38
