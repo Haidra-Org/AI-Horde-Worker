@@ -19,7 +19,7 @@ RUN pip3 install loguru pytorch-lightning==1.7.7 GitPython
 
 RUN mkdir /nataili
 WORKDIR /nataili
-ADD ./bridge /nataili/bridge
+ADD worker /nataili/worker
 ADD ./configs /nataili/configs
 ADD ./data /nataili/data
 RUN mkdir /nataili/models

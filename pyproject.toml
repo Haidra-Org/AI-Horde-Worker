@@ -5,4 +5,10 @@ line-length = 119
 py_version = 38
 line_length = 119
 profile = "black"
-known_third_party = ["creds", "gfpgan", "ray"]
+known_third_party = ["creds", "gfpgan", "ray", "bridgeData"]
+
+[tool.pylint.FORMAT]
+max-line-length=500
+
+[tool.ruff]
+line-length = 500

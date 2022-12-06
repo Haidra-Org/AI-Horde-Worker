@@ -1,25 +1,30 @@
+"""The configuration of the bridge"""
 import getpass
 import importlib
 import os
 import random
 import sys
 import threading
+
+import bridgeData as bd
+import requests
 from PIL import Image
 
-import requests
-
+from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
 from nataili.util import logger
+from worker.argparser import args
 
-from . import args
 
+class BridgeData:
+    """Configuration object"""
 
-class BridgeData(object):
     def __init__(self):
         random.seed()
         self.horde_url = os.environ.get("HORDE_URL", "https://stablehorde.net")
         # Give a cool name to your instance
         self.worker_name = os.environ.get(
-            "HORDE_WORKER_NAME", f"Automated Instance #{random.randint(-100000000, 100000000)}",
+            "HORDE_WORKER_NAME",
+            f"Automated Instance #{random.randint(-100000000, 100000000)}",
         )
         # The api_key identifies a unique user in the horde
         self.api_key = os.environ.get("HORDE_API_KEY", "0000000000")
@@ -38,19 +43,29 @@ class BridgeData(object):
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
-        self.censor_image_sfw_worker = Image.open('assets/nsfw_censor_sfw_worker.png')
-        self.censor_image_censorlist = Image.open('assets/nsfw_censor_censorlist.png')
-        self.censor_image_sfw_request = Image.open('assets/nsfw_censor_sfw_request.png')
+        self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
+        self.censor_image_censorlist = Image.open("assets/nsfw_censor_censorlist.png")
+        self.censor_image_sfw_request = Image.open("assets/nsfw_censor_sfw_request.png")
         self.initialized = False
         self.models_reloading = False
+        self.username = None
+        self.model = None
+
+        disable_xformers.toggle(args.disable_xformers)
+        disable_local_ray_temp.toggle(args.disable_local_ray_temp)
+        disable_voodoo.toggle(args.disable_voodoo)
+        if disable_voodoo.active:
+            disable_local_ray_temp.activate()
+
+        self.disable_voodoo = disable_voodoo
 
     @logger.catch(reraise=True)
     def reload_data(self):
+        """Reloads configuration data"""
         previous_url = self.horde_url
         previous_api_key = self.api_key
         try:
-            import bridgeData as bd
-
+            # TODO - move this to a yaml file
             importlib.reload(bd)
             self.api_key = bd.api_key
             self.worker_name = bd.worker_name
@@ -90,8 +105,8 @@ class BridgeData(object):
                 self.max_threads = bd.max_threads
             except AttributeError:
                 pass
-        except (ImportError, AttributeError):
-            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account")
+        except (ImportError, AttributeError) as err:
+            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - %s", err)
         if args.api_key:
             self.api_key = args.api_key
         if args.worker_name:
@@ -120,22 +135,25 @@ class BridgeData(object):
             self.allow_painting = args.allow_painting
         if args.allow_unsafe_ip:
             self.allow_unsafe_ip = args.allow_unsafe_ip
-        if self.max_power < 2:
-            self.max_power = 2
+        self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
-        if self.censor_nsfw or len(self.censorlist):
+        if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
             self.model_names.append("safety_checker")
         self.model_names.append("GFPGAN")
         self.model_names.append("RealESRGAN_x4plus")
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
-                    self.horde_url + "/api/v2/find_user", headers={"apikey": self.api_key}, timeout=10,
+                    self.horde_url + "/api/v2/find_user",
+                    headers={"apikey": self.api_key},
+                    timeout=10,
                 )
                 user_req = user_req.json()
                 self.username = user_req["username"]
+
+            # pylint: disable=broad-except
             except Exception:
-                logger.warning(f"Server {self.horde_url} error during find_user. Settiyng username 'N/A'")
+                logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
                 self.username = "N/A"
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
@@ -147,7 +165,8 @@ class BridgeData(object):
             )
 
     @logger.catch(reraise=True)
-    def check_models(self, mm):
+    def check_models(self, model_manager):
+        """Check to see if we have the models needed"""
         if self.models_reloading:
             return
         if not self.initialized:
@@ -155,24 +174,24 @@ class BridgeData(object):
         models_exist = True
         not_found_models = []
         for model in self.model_names:
-            model_info = mm.get_model(model)
+            model_info = model_manager.get_model(model)
             if not model_info:
                 logger.error(
                     f"Model name requested {model} in bridgeData is unknown to us. "
                     "Please check your configuration. Aborting!"
                 )
                 sys.exit(1)
-            if model in mm.get_loaded_models_names():
+            if model in model_manager.get_loaded_models_names():
                 continue
-            if not mm.validate_model(model, skip_checksum=args.skip_md5):
+            if not model_manager.validate_model(model, skip_checksum=args.skip_md5):
                 models_exist = False
                 not_found_models.append(model)
             # Diffusers library uses its own internal download mechanism
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
-                check_mm_auth(mm)
+                check_mm_auth(model_manager)
         if not models_exist:
             if args.yes:
-                choice = 'y'
+                choice = "y"
             else:
                 choice = input(
                     "You do not appear to have downloaded the models needed yet.\n"
@@ -187,29 +206,29 @@ class BridgeData(object):
                 sys.exit(1)
             needs_hf = False
             for model in not_found_models:
-                dl = mm.get_model_download(model)
-                for m in dl:
-                    if m.get("hf_auth", False):
+                models_to_download = model_manager.get_model_download(model)
+                for download_model in models_to_download:
+                    if download_model.get("hf_auth", False):
                         needs_hf = True
             if choice in ["all", "a"]:
                 needs_hf = True
             if needs_hf:
-                check_mm_auth(mm)
-            mm.init()
-            mm.taint_models(not_found_models)
+                check_mm_auth(model_manager)
+            model_manager.init()
+            model_manager.taint_models(not_found_models)
             if choice in ["all", "a"]:
-                mm.download_all()
+                model_manager.download_all()
             elif choice in ["y", "Y", "", "yes"]:
                 for model in not_found_models:
                     logger.init(f"Model: {model}", status="Downloading")
-                    if not mm.download_model(model):
+                    if not model_manager.download_model(model):
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
                             "checksum. Please check that your HuggingFace authentication is correct and that "
                             "you've accepted the model license from the browser."
                         )
                         sys.exit(1)
-            mm.init()
+            model_manager.init()
         if not self.initialized:
             logger.init_ok("Models", status="OK")
         if os.path.exists("./bridgeData.py"):
@@ -223,28 +242,29 @@ class BridgeData(object):
                     secondfile.write(line)
             logger.message(
                 "bridgeData.py created. Bridge will exit. "
-                "Please edit bridgeData.py with your setup and restart the bridge"
+                "Please edit bridgeData.py with your setup and restart the worker"
             )
             sys.exit(2)
 
-    def reload_models(self, mm):
+    def reload_models(self, model_manager):
+        """Reloads models - Note this is IN A THREAD"""
         if self.models_reloading:
             return
         self.models_reloading = True
-        thread = threading.Thread(target=self._reload_models, args=(mm,))
+        thread = threading.Thread(target=self._reload_models, args=(model_manager,))
         thread.daemon = True
         thread.start()
-    
+
     @logger.catch(reraise=True)
-    def _reload_models(self, mm):
-        for model in mm.get_loaded_models_names():
+    def _reload_models(self, model_manager):
+        for model in model_manager.get_loaded_models_names():
             if model not in self.model_names:
                 logger.init(f"{model}", status="Unloading")
-                mm.unload_model(model)
+                model_manager.unload_model(model)
         for model in self.model_names:
-            if model not in mm.get_loaded_models_names():
+            if model not in model_manager.get_loaded_models_names():
                 logger.init(f"{model}", status="Loading")
-                success = mm.load_model(model)
+                success = model_manager.load_model(model)
                 if success:
                     logger.init_ok(f"{model}", status="Loaded")
                 else:
@@ -254,6 +274,7 @@ class BridgeData(object):
 
 
 def check_mm_auth(model_manager):
+    """Checks for hugging face authentication for model manager"""
     if model_manager.has_authentication():
         return
     if args.hf_token:

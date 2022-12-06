@@ -482,7 +482,10 @@ class ModelManager:
             logger.debug(f"Getting md5sum of {file_name}")
             with open(file_name, "rb") as file_to_check:
                 file_hash = hashlib.md5()
-                while chunk := file_to_check.read(8192):
+                while True:
+                    chunk = file_to_check.read(8192)  # Changed just because it broke pylint
+                    if not chunk:
+                        break
                     file_hash.update(chunk)
             if file_details["md5sum"] != file_hash.hexdigest():
                 return False

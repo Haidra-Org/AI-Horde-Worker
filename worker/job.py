@@ -1,3 +1,4 @@
+"""Get and process a job from the horde"""
 import base64
 import copy
 import json
@@ -11,19 +12,23 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from bridge import JobStatus, bridge_stats, disable_voodoo, post_process
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
 from nataili.util.cache import torch_gc
+from worker.enums import JobStatus
+from worker.post_process import post_process
+from worker.stats import bridge_stats
 
 
 class HordeJob:
+    """Get and process a job from the horde"""
+
     retry_interval = 1
 
     def __init__(self, mm, bd):
         self.model_manager = mm
-        self.bd = copy.deepcopy(bd)
+        self.bridge_data = copy.deepcopy(bd)
         self.current_id = None
         self.current_payload = None
         self.current_model = None
@@ -32,110 +37,121 @@ class HordeJob:
         self.skipped_info = None
         self.upload_quality = 90
         self.start_time = time.time()
-
-        thread = threading.Thread(target=self.start_job, args=())
-        thread.daemon = True
-        thread.start()
-
-    def is_finished(self):
-        return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
-
-    def is_polling(self):
-        return self.status in [JobStatus.POLLING]
-
-    def is_finalizing(self):
-        """True if generation has finished even if upload is still remaining
-        """
-        return self.status in [JobStatus.FINALIZING]
-
-    def delete(self):
-        del self
-
-    def is_stale(self):
-        return time.time() - self.start_time > 1200
-
-    @logger.catch(reraise=True)
-    def start_job(self):
-        # Pop new request from the Horde
+        self.seed = None
+        self.image = None
+        self.r2_upload = None
+        self.submit_dict = {}
+        self.headers = {"apikey": self.bridge_data.api_key}
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
+        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus"]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.gen_dict = {
-            "name": self.bd.worker_name,
-            "max_pixels": self.bd.max_pixels,
-            "priority_usernames": self.bd.priority_usernames,
-            "nsfw": self.bd.nsfw,
-            "blacklist": self.bd.blacklist,
+            "name": self.bridge_data.worker_name,
+            "max_pixels": self.bridge_data.max_pixels,
+            "priority_usernames": self.bridge_data.priority_usernames,
+            "nsfw": self.bridge_data.nsfw,
+            "blacklist": self.bridge_data.blacklist,
             "models": self.available_models,
-            "allow_img2img": self.bd.allow_img2img,
-            "allow_painting": self.bd.allow_painting,
-            "allow_unsafe_ip": self.bd.allow_unsafe_ip,
-            "threads": self.bd.max_threads,
-            "bridge_version": 7,
+            "allow_img2img": self.bridge_data.allow_img2img,
+            "allow_painting": self.bridge_data.allow_painting,
+            "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
+            "threads": self.bridge_data.max_threads,
+            "bridge_version": 8,
         }
-        # logger.debug(gen_dict)
-        self.headers = {"apikey": self.bd.api_key}
+
+    def is_finished(self):
+        """Check if the job is finished"""
+        return self.status not in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
+
+    def is_polling(self):
+        """Check if the job is polling"""
+        return self.status in [JobStatus.POLLING]
+
+    def is_finalizing(self):
+        """True if generation has finished even if upload is still remaining"""
+        return self.status in [JobStatus.FINALIZING]
+
+    def is_stale(self):
+        """Check if the job is stale"""
+        return time.time() - self.start_time > 1200
+
+    def get_job_from_server(self):
+        """Get a job from the horde"""
         self.status = JobStatus.POLLING
         try:
             pop_req = requests.post(
-                self.bd.horde_url + "/api/v2/generate/pop",
+                self.bridge_data.horde_url + "/api/v2/generate/pop",
                 json=self.gen_dict,
                 headers=self.headers,
-                timeout=50,
+                timeout=20,
             )
             logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
         except requests.exceptions.ConnectionError:
-            logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 10 seconds...")
+            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)
             self.status = JobStatus.FAULTED
-            return
         except TypeError:
-            logger.warning(f"Server {self.bd.horde_url} unavailable during pop. Waiting 2 seconds...")
+            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
             time.sleep(2)
             self.status = JobStatus.FAULTED
-            return
         except requests.exceptions.ReadTimeout:
-            logger.warning(f"Server {self.bd.horde_url} timed out during pop. Waiting 2 seconds...")
+            logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
             time.sleep(2)
             self.status = JobStatus.FAULTED
-            return
+
+        if self.status == JobStatus.FAULTED:
+            return None
         try:
             pop = pop_req.json()
         except json.decoder.JSONDecodeError:
             logger.error(
-                f"Could not decode response from {self.bd.horde_url} as json. Please inform its administrator!"
+                f"Could not decode response from {self.bridge_data.horde_url} as json. "
+                "Please inform its administrator!"
             )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
-            return
-        if pop is None:
-            logger.error(
-                f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return
+            return None
         if not pop_req.ok:
             logger.warning(
-                f"During gen pop, server {self.bd.horde_url} responded with status code {pop_req.status_code}: "
+                f"During gen pop, server {self.bridge_data.horde_url} "
+                f"responded with status code {pop_req.status_code}: "
                 f"{pop['message']}. Waiting for 10 seconds..."
             )
             if "errors" in pop:
                 logger.warning(f"Detailed Request Errors: {pop['errors']}")
             time.sleep(10)
             self.status = JobStatus.FAULTED
-            return
+            return None
         if not pop.get("id"):
             job_skipped_info = pop.get("skipped")
             if job_skipped_info and len(job_skipped_info):
                 self.skipped_info = f" Skipped Info: {job_skipped_info}."
             else:
                 self.skipped_info = ""
-            # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
+            logger.info(
+                f"Server {self.bridge_data.horde_url} has no valid generations to do for us.{self.skipped_info}"
+            )
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return None
+        return pop
+
+    @logger.catch(reraise=True)
+    def start_job(self, pop=None):
+        """Starts a job from a pop request"""
+        # Pop new request from the Horde
+        if pop is None:
+            pop = self.get_job_from_server()
+
+        if pop is None:
+            logger.error(
+                f"Something has gone wrong with {self.bridge_data.horde_url}. Please inform its administrator!"
+            )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return
+
         self.current_id = pop["id"]
         self.current_payload = pop["payload"]
         self.status = JobStatus.WORKING
@@ -146,20 +162,20 @@ class HordeJob:
         use_nsfw_censor = False
         censor_image = None
         censor_reason = None
-        if self.bd.censor_nsfw and not self.bd.nsfw:
+        if self.bridge_data.censor_nsfw and not self.bridge_data.nsfw:
             use_nsfw_censor = True
-            censor_image = self.bd.censor_image_sfw_worker
+            censor_image = self.bridge_data.censor_image_sfw_worker
             censor_reason = "SFW worker"
         censorlist_prompt = self.current_payload["prompt"]
         if "###" in censorlist_prompt:
-            censorlist_prompt, censorlist_negprompt = censorlist_prompt.split("###", 1)
-        elif any(word in censorlist_prompt for word in self.bd.censorlist):
+            _censorlist_prompt, _censorlist_negprompt = censorlist_prompt.split("###", 1)
+        elif any(word in censorlist_prompt for word in self.bridge_data.censorlist):
             use_nsfw_censor = True
-            censor_image = self.bd.censor_image_censorlist
+            censor_image = self.bridge_data.censor_image_censorlist
             censor_reason = "Censorlist"
         elif self.current_payload.get("use_nsfw_censor", False):
             use_nsfw_censor = True
-            censor_image = self.bd.censor_image_sfw_request
+            censor_image = self.bridge_data.censor_image_sfw_request
             censor_reason = "Requested"
         # use_gfpgan = self.current_payload.get("use_gfpgan", True)
         # use_real_esrgan = self.current_payload.get("use_real_esrgan", False)
@@ -167,29 +183,34 @@ class HordeJob:
         source_image = pop.get("source_image")
         source_mask = pop.get("source_mask")
         # These params will always exist in the payload from the horde
-        gen_payload = {
-            "prompt": self.current_payload["prompt"],
-            "height": self.current_payload["height"],
-            "width": self.current_payload["width"],
-            "seed": self.current_payload["seed"],
-            "n_iter": 1,
-            "batch_size": 1,
-            "save_individual_images": False,
-            "save_grid": False,
-        }
-        # These params might not always exist in the horde payload
-        if "ddim_steps" in self.current_payload:
-            gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
-        if "sampler_name" in self.current_payload:
-            gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-        if "cfg_scale" in self.current_payload:
-            gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
-        if "ddim_eta" in self.current_payload:
-            gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
-        if "denoising_strength" in self.current_payload and source_image:
-            gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-        if self.current_payload.get("karras", False):
-            gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+        try:
+            gen_payload = {
+                "prompt": self.current_payload["prompt"],
+                "height": self.current_payload["height"],
+                "width": self.current_payload["width"],
+                "seed": self.current_payload["seed"],
+                "n_iter": 1,
+                "batch_size": 1,
+                "save_individual_images": False,
+                "save_grid": False,
+            }
+            # These params might not always exist in the horde payload
+            if "ddim_steps" in self.current_payload:
+                gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
+            if "sampler_name" in self.current_payload:
+                gen_payload["sampler_name"] = self.current_payload["sampler_name"]
+            if "cfg_scale" in self.current_payload:
+                gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
+            if "ddim_eta" in self.current_payload:
+                gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
+            if "denoising_strength" in self.current_payload and source_image:
+                gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
+            if self.current_payload.get("karras", False):
+                gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+        except KeyError as err:
+            logger.error("Received incomplete payload from job. Aborting. (%s)", err)
+            self.status = JobStatus.FAULTED
+            return
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
@@ -207,9 +228,9 @@ class HordeJob:
             "outpainting",
         ]:
             # Try to find any other model to do text2img or img2img
-            for m in self.available_models:
-                if m != "stable_diffusion_inpainting":
-                    model = m
+            for available_model in self.available_models:
+                if available_model != "stable_diffusion_inpainting":
+                    model = available_model
             # if the model persists as inpainting for text2img or img2img, we abort.
             if model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
@@ -231,7 +252,6 @@ class HordeJob:
                 if "safety_checker" in self.model_manager.loaded_models
                 else None
             )
-
 
             if source_image:
                 base64_bytes = source_image.encode("utf-8")
@@ -271,12 +291,13 @@ class HordeJob:
             generator = CompVis(
                 model=self.model_manager.loaded_models[model]["model"],
                 device=self.model_manager.loaded_models[model]["device"],
+                model_name=model,
                 output_dir="bridge_generations",
                 load_concepts=True,
                 concepts_dir="models/custom/sd-concepts-library",
                 safety_checker=safety_checker,
                 filter_nsfw=use_nsfw_censor,
-                disable_voodoo=disable_voodoo.active,
+                disable_voodoo=self.bridge_data.disable_voodoo.active,
             )
         else:
             # These variables do not exist in the outpainting implementation
@@ -289,7 +310,7 @@ class HordeJob:
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
-                    red, green, blue, alpha = img_source.split()
+                    _red, _green, _blue, _alpha = img_source.split()
                 except ValueError:
                     logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
                     self.status = JobStatus.FAULTED
@@ -313,9 +334,10 @@ class HordeJob:
             stack_payload["model"] = model
             logger.error(
                 "Something went wrong when processing request.\n"
-                f"Please inform the developers of the below payload:\n{stack_payload}")
-            tb = "".join(traceback.format_exception(type(err), err, err.__traceback__))
-            logger.trace(tb)
+                f"Please inform the developers of the below payload:\n{stack_payload}"
+            )
+            trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+            logger.trace(trace)
             self.status = JobStatus.FAULTED
             return
         self.image = generator.images[0]["image"]
@@ -330,26 +352,36 @@ class HordeJob:
             try:
                 self.image = post_process(post_processor, self.image, self.model_manager)
             except AssertionError:
-                logger.warning(f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!")
+                logger.warning(
+                    f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!"
+                )
             if post_processor in ["RealESRGAN_x4plus"]:
                 self.upload_quality = 50
         # Not a daemon, so that it can survive after this class is garbage collected
+        self.r2_upload = pop.get("r2_upload")
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
 
     def submit_job(self):
+        """Submits the job to the server to earn our kudos."""
         self.status = JobStatus.FINALIZING
         # Submit back to horde
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
         self.image.save(buffer, format="WebP", quality=self.upload_quality)
+        if self.r2_upload:
+            put_response = requests.put(self.r2_upload, data=buffer.getvalue())
+            generation = "R2"
+            logger.debug("R2 Upload response: %s", put_response)
+        else:
+            generation = base64.b64encode(buffer.getvalue()).decode("utf8")
         self.submit_dict = {
             "id": self.current_id,
-            "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
-            "api_key": self.bd.api_key,
+            "generation": generation,
+            "api_key": self.bridge_data.api_key,
             "seed": self.seed,
-            "max_pixels": self.bd.max_pixels,
+            "max_pixels": self.bridge_data.max_pixels,
         }
         while self.is_finalizing():
             if self.loop_retry > 10:
@@ -364,17 +396,17 @@ class HordeJob:
                     f"posting payload with size of {round(sys.getsizeof(json.dumps(self.submit_dict)) / 1024,1)} kb"
                 )
                 submit_req = requests.post(
-                    self.bd.horde_url + "/api/v2/generate/submit",
+                    self.bridge_data.horde_url + "/api/v2/generate/submit",
                     json=self.submit_dict,
                     headers=self.headers,
-                    timeout=60,
+                    timeout=40,
                 )
                 logger.debug(f"Upload completed in {submit_req.elapsed.total_seconds()}")
                 try:
                     submit = submit_req.json()
                 except json.decoder.JSONDecodeError:
                     logger.error(
-                        f"Something has gone wrong with {self.bd.horde_url} during submit. "
+                        f"Something has gone wrong with {self.bridge_data.horde_url} during submit. "
                         f"Please inform its administrator!  (Retry {self.loop_retry}/10)"
                     )
                     time.sleep(self.retry_interval)
@@ -383,9 +415,9 @@ class HordeJob:
                     logger.warning("The generation we were working on got stale. Aborting!")
                     self.status = JobStatus.FAULTED
                     break
-                elif not submit_req.ok:
+                if not submit_req.ok:
                     logger.warning(
-                        f"During gen submit, server {self.bd.horde_url} "
+                        f"During gen submit, server {self.bridge_data.horde_url} "
                         f"responded with status code {submit_req.status_code}: "
                         f"{submit['message']}. Waiting for 10 seconds...  (Retry {self.loop_retry}/10)"
                     )
@@ -401,13 +433,15 @@ class HordeJob:
                 break
             except requests.exceptions.ConnectionError:
                 logger.warning(
-                    f"Server {self.bd.horde_url} unavailable during submit. Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
+                    f"Server {self.bridge_data.horde_url} unavailable during submit. "
+                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue
             except requests.exceptions.ReadTimeout:
                 logger.warning(
-                    f"Server {self.bd.horde_url} timed out during submit. Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
+                    f"Server {self.bridge_data.horde_url} timed out during submit. "
+                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
                 )
                 time.sleep(10)
                 continue

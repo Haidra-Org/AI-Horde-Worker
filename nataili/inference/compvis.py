@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import k_diffusion as K
 import numpy as np
@@ -11,12 +10,12 @@ from einops import rearrange
 from slugify import slugify
 from transformers import CLIPFeatureExtractor
 
+from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
-from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
@@ -39,6 +38,7 @@ class CompVis:
         model,
         device,
         output_dir,
+        model_name=None,
         save_extension="jpg",
         output_file_path=False,
         load_concepts=False,
@@ -50,6 +50,7 @@ class CompVis:
         disable_voodoo=False,
     ):
         self.model = model
+        self.model_name = model_name
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
@@ -251,18 +252,33 @@ class CompVis:
             conditioning,
             unconditional_conditioning,
             sampler_name,
+            batch_size=1,
+            shape=None,
             karras=False,
             sigma_override: dict = None,
         ):
-            samples_ddim, _ = sampler.sample(
-                S=ddim_steps,
-                conditioning=conditioning,
-                unconditional_guidance_scale=cfg_scale,
-                unconditional_conditioning=unconditional_conditioning,
-                x_T=x,
-                karras=karras,
-                sigma_override=sigma_override,
-            )
+            if sampler_name == "dpmsolver":
+                samples_ddim, _ = sampler.sample(
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                    karras=karras,
+                    batch_size=batch_size,
+                    shape=shape,
+                    sigma_override=sigma_override,
+                )
+            else:
+                samples_ddim, _ = sampler.sample(
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                    karras=karras,
+                    sigma_override=sigma_override,
+                )
             return samples_ddim
 
         seed = seed_to_int(seed)
@@ -286,7 +302,10 @@ class CompVis:
 
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
-                if sampler_name == "PLMS":
+                if self.model_name == "stable_diffusion_2.0":
+                    sampler = DPMSolverSampler(model)
+                    sampler_name = "dpmsolver"
+                elif sampler_name == "PLMS":
                     sampler = PLMSSampler(model)
                 elif sampler_name == "DDIM":
                     sampler = DDIMSampler(model)
@@ -310,23 +329,17 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
                 elif sampler_name == "k_dpmpp_2m":
                     sampler = KDiffusionSampler(model, "dpmpp_2m")
+                elif sampler_name == "dpmsolver":
+                    sampler = DPMSolverSampler(model)
                 else:
-                    raise Exception("Unknown sampler: " + sampler_name)
+                    logger.info("Unknown sampler: " + sampler_name)
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
                         process_prompt_tokens(prompt_tokens, model, self.concepts_dir)
-                if self.verify_input:
-                    try:
-                        check_prompt_length(model, prompt, self.comments)
-                    except Exception:
-                        import traceback
 
-                        print("Error verifying input:", file=sys.stderr)
-                        print(traceback.format_exc(), file=sys.stderr)
-
-                    all_prompts = batch_size * n_iter * [prompt]
-                    all_seeds = [seed + x for x in range(len(all_prompts))]
+                all_prompts = batch_size * n_iter * [prompt]
+                all_seeds = [seed + x for x in range(len(all_prompts))]
 
                 with torch.no_grad():
                     for n in range(n_iter):
@@ -380,6 +393,8 @@ class CompVis:
                                 unconditional_conditioning=uc,
                                 sampler_name=sampler_name,
                                 karras=karras,
+                                batch_size=batch_size,
+                                shape=shape,
                                 sigma_override=sigma_override,
                             )
                         )
@@ -412,23 +427,20 @@ class CompVis:
                 sampler = KDiffusionSampler(self.model, "dpmpp_2s_ancestral")
             elif sampler_name == "k_dpmpp_2m":
                 sampler = KDiffusionSampler(self.model, "dpmpp_2m")
+            elif sampler_name == "dpmsolver":
+                sampler = DPMSolverSampler(self.model)
             else:
-                raise Exception("Unknown sampler: " + sampler_name)
+                logger.info("Unknown sampler: " + sampler_name)
+            if self.model_name == "stable_diffusion_2.0":
+                sampler = DPMSolverSampler(self.model)
+                sampler_name = "dpmsolver"
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:
                     process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
-            if self.verify_input:
-                try:
-                    check_prompt_length(self.model, prompt, self.comments)
-                except Exception:
-                    import traceback
 
-                    print("Error verifying input:", file=sys.stderr)
-                    print(traceback.format_exc(), file=sys.stderr)
-
-                all_prompts = batch_size * n_iter * [prompt]
-                all_seeds = [seed + x for x in range(len(all_prompts))]
+            all_prompts = batch_size * n_iter * [prompt]
+            all_seeds = [seed + x for x in range(len(all_prompts))]
 
             with torch.no_grad():
                 for n in range(n_iter):
@@ -482,6 +494,8 @@ class CompVis:
                             unconditional_conditioning=uc,
                             sampler_name=sampler_name,
                             karras=karras,
+                            batch_size=batch_size,
+                            shape=shape,
                             sigma_override=sigma_override,
                         )
                     )
