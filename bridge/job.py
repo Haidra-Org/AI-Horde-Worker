@@ -119,7 +119,7 @@ class HordeJob:
                 self.skipped_info = f" Skipped Info: {job_skipped_info}."
             else:
                 self.skipped_info = ""
-            # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
+            logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return
