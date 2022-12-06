@@ -32,10 +32,25 @@ class HordeJob:
         self.skipped_info = None
         self.upload_quality = 90
         self.start_time = time.time()
+        self.headers = {"apikey": self.bd.api_key}
+        self.available_models = self.model_manager.get_loaded_models_names()
+        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
+            if util_model in self.available_models:
+                self.available_models.remove(util_model)
+        self.gen_dict = {
+            "name": self.bd.worker_name,
+            "max_pixels": self.bd.max_pixels,
+            "priority_usernames": self.bd.priority_usernames,
+            "nsfw": self.bd.nsfw,
+            "blacklist": self.bd.blacklist,
+            "models": self.available_models,
+            "allow_img2img": self.bd.allow_img2img,
+            "allow_painting": self.bd.allow_painting,
+            "allow_unsafe_ip": self.bd.allow_unsafe_ip,
+            "threads": self.bd.max_threads,
+            "bridge_version": 8,
+        }
 
-        thread = threading.Thread(target=self.start_job, args=())
-        thread.daemon = True
-        thread.start()
 
     def is_finished(self):
         return not self.status in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
@@ -54,28 +69,7 @@ class HordeJob:
     def is_stale(self):
         return time.time() - self.start_time > 1200
 
-    @logger.catch(reraise=True)
-    def start_job(self):
-        # Pop new request from the Horde
-        self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
-            if util_model in self.available_models:
-                self.available_models.remove(util_model)
-        self.gen_dict = {
-            "name": self.bd.worker_name,
-            "max_pixels": self.bd.max_pixels,
-            "priority_usernames": self.bd.priority_usernames,
-            "nsfw": self.bd.nsfw,
-            "blacklist": self.bd.blacklist,
-            "models": self.available_models,
-            "allow_img2img": self.bd.allow_img2img,
-            "allow_painting": self.bd.allow_painting,
-            "allow_unsafe_ip": self.bd.allow_unsafe_ip,
-            "threads": self.bd.max_threads,
-            "bridge_version": 8,
-        }
-        # logger.debug(gen_dict)
-        self.headers = {"apikey": self.bd.api_key}
+    def get_job_from_server(self):
         self.status = JobStatus.POLLING
         try:
             pop_req = requests.post(
@@ -109,13 +103,6 @@ class HordeJob:
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return
-        if pop is None:
-            logger.error(
-                f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return
         if not pop_req.ok:
             logger.warning(
                 f"During gen pop, server {self.bd.horde_url} responded with status code {pop_req.status_code}: "
@@ -126,6 +113,22 @@ class HordeJob:
             time.sleep(10)
             self.status = JobStatus.FAULTED
             return
+        return pop
+
+    @logger.catch(reraise=True)
+    def start_job(self, pop=None):
+        # Pop new request from the Horde
+        if pop is None:
+            pop = self.get_job_from_server()
+
+        if pop is None:
+            logger.error(
+                f"Something has gone wrong with {self.bd.horde_url}. Please inform its administrator!"
+            )
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return
+
         if not pop.get("id"):
             job_skipped_info = pop.get("skipped")
             if job_skipped_info and len(job_skipped_info):
@@ -236,7 +239,6 @@ class HordeJob:
                 if "safety_checker" in self.model_manager.loaded_models
                 else None
             )
-
 
             if source_image:
                 base64_bytes = source_image.encode("utf-8")
