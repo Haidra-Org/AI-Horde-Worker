@@ -1,5 +1,6 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
+
 import requests
 
 from bridge import BridgeData, HordeJob, args, bridge_stats, disable_voodoo
