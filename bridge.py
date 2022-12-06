@@ -56,12 +56,14 @@ def bridge(this_model_manager, this_bridge_data):
                     logger.debug("Job finished successfully")
                     running_jobs.remove(job)
                     run_count += 1
+                    continue
 
                 if job.exception():
                     logger.debug("Job failed with exception")
                     logger.exception(job.exception())
                     if job in running_jobs:  # Sometimes it's already removed
                         running_jobs.remove(job)
+                    continue
 
                 # check if any job has run for more than 60 seconds
                 if job.running() and job.running_for() > 180:
@@ -69,6 +71,7 @@ def bridge(this_model_manager, this_bridge_data):
                         running_jobs.remove(job)
                     job.cancel()
                     logger.warning("Cancelled job as was running for more than 180 seconds: %s", job.running_for())
+                    continue
 
             if run_count % 100 == 0:
                 logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
