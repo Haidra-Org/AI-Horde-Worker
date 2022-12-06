@@ -17,6 +17,7 @@ from worker.argparser import args
 
 class BridgeData:
     """Configuration object"""
+
     def __init__(self):
         random.seed()
         self.horde_url = os.environ.get("HORDE_URL", "https://stablehorde.net")
@@ -41,9 +42,9 @@ class BridgeData:
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
-        self.censor_image_sfw_worker = Image.open('assets/nsfw_censor_sfw_worker.png')
-        self.censor_image_censorlist = Image.open('assets/nsfw_censor_censorlist.png')
-        self.censor_image_sfw_request = Image.open('assets/nsfw_censor_sfw_request.png')
+        self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
+        self.censor_image_censorlist = Image.open("assets/nsfw_censor_censorlist.png")
+        self.censor_image_sfw_request = Image.open("assets/nsfw_censor_sfw_request.png")
         self.initialized = False
         self.models_reloading = False
         self.username = None
@@ -187,7 +188,7 @@ class BridgeData:
                 check_mm_auth(model_manager)
         if not models_exist:
             if args.yes:
-                choice = 'y'
+                choice = "y"
             else:
                 choice = input(
                     "You do not appear to have downloaded the models needed yet.\n"

@@ -226,10 +226,7 @@ class CompVis:
                 x0, z_mask = init_data
 
                 sampler.make_schedule(ddim_num_steps=ddim_steps, ddim_eta=0.0, verbose=False)
-                z_enc = sampler.stochastic_encode(
-                    x0,
-                    torch.tensor([t_enc_steps] * batch_size).to(self.model.device),
-                )
+                z_enc = sampler.stochastic_encode(x0, torch.tensor([t_enc_steps] * batch_size).to(self.model.device),)
 
                 # Obliterate masked image
                 if z_mask is not None and obliterate:
@@ -261,16 +258,16 @@ class CompVis:
         ):
             if sampler_name == "dpmsolver":
                 samples_ddim, _ = sampler.sample(
-                S=ddim_steps,
-                conditioning=conditioning,
-                unconditional_guidance_scale=cfg_scale,
-                unconditional_conditioning=unconditional_conditioning,
-                x_T=x,
-                karras=karras,
-                batch_size=batch_size,
-                shape=shape,
-                sigma_override=sigma_override,
-            )
+                    S=ddim_steps,
+                    conditioning=conditioning,
+                    unconditional_guidance_scale=cfg_scale,
+                    unconditional_conditioning=unconditional_conditioning,
+                    x_T=x,
+                    karras=karras,
+                    batch_size=batch_size,
+                    shape=shape,
+                    sigma_override=sigma_override,
+                )
             else:
                 samples_ddim, _ = sampler.sample(
                     S=ddim_steps,
@@ -434,8 +431,8 @@ class CompVis:
             else:
                 logger.info("Unknown sampler: " + sampler_name)
             if self.model_name == "stable_diffusion_2.0":
-                    sampler = DPMSolverSampler(self.model)
-                    sampler_name = "dpmsolver"
+                sampler = DPMSolverSampler(self.model)
+                sampler_name = "dpmsolver"
             if self.load_concepts and self.concepts_dir is not None:
                 prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                 if prompt_tokens:

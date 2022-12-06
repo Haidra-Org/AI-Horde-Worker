@@ -304,20 +304,10 @@ class ModelManager:
 
         RealESRGAN_models = {
             "RealESRGAN_x4plus": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=4,
+                num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4,
             ),
             "RealESRGAN_x4plus_anime_6B": RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=6,
-                num_grow_ch=32,
-                scale=4,
+                num_in_ch=3, num_out_ch=3, num_feat=64, num_block=6, num_grow_ch=32, scale=4,
             ),
         }
 
@@ -339,32 +329,19 @@ class ModelManager:
         model_path = self.get_model_files(model_name)[0]["path"]
         device = torch.device(f"cuda:{gpu_id}")
         model = GFPGANer(
-            model_path=model_path,
-            upscale=1,
-            arch="clean",
-            channel_multiplier=2,
-            bg_upsampler=None,
-            device=device,
+            model_path=model_path, upscale=1, arch="clean", channel_multiplier=2, bg_upsampler=None, device=device,
         )
         return {"model": model, "device": device}
 
     def load_blip(
-            self,
-            model_name="",
-            precision="half",
-            gpu_id=0,
-            blip_image_eval_size=512,
-            vit="large",
+        self, model_name="", precision="half", gpu_id=0, blip_image_eval_size=512, vit="large",
     ):
         # vit = 'base' or 'large'
         vit = "base" if model_name == "BLIP" else "large"
         model_path = self.get_model_files(model_name)[0]["path"]
         device = torch.device(f"cuda:{gpu_id}")
         model = blip_decoder(
-            pretrained=model_path,
-            med_config="configs/blip/med_config.json",
-            image_size=blip_image_eval_size,
-            vit=vit,
+            pretrained=model_path, med_config="configs/blip/med_config.json", image_size=blip_image_eval_size, vit=vit,
         )
         model = model.eval()
         model = (model if precision == "full" else model.half()).to(device)
@@ -403,10 +380,7 @@ class ModelManager:
     def load_diffuser(self, model_name=""):
         model_path = self.models[model_name]["hf_path"]
         pipe = StableDiffusionInpaintPipeline.from_pretrained(
-            model_path,
-            revision="fp16",
-            torch_dtype=torch.float16,
-            use_auth_token=self.models[model_name]["hf_auth"],
+            model_path, revision="fp16", torch_dtype=torch.float16, use_auth_token=self.models[model_name]["hf_auth"],
         )
 
         pipe.enable_attention_slicing()
@@ -509,13 +483,13 @@ class ModelManager:
         r = requests.get(url, stream=True, allow_redirects=True)
         with open(file_path, "wb") as f:
             with tqdm(
-                    # all optional kwargs
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    miniters=1,
-                    desc=pbar_desc,
-                    total=int(r.headers.get("content-length", 0)),
+                # all optional kwargs
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                miniters=1,
+                desc=pbar_desc,
+                total=int(r.headers.get("content-length", 0)),
             ) as pbar:
                 for chunk in r.iter_content(chunk_size=16 * 1024):
                     if chunk:

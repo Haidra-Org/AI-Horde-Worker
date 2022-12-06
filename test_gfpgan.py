@@ -22,11 +22,7 @@ logger.init(f"Model: {model}", status="Loading")
 success = mm.load_model(model)
 logger.init_ok(f"Loading {model}", status=success)
 
-facefixer = gfpgan(
-    mm.loaded_models[model]["model"],
-    mm.loaded_models[model]["device"],
-    "./",
-)
+facefixer = gfpgan(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], "./",)
 
 results = facefixer(input_image=image, strength=1.0)
 images = facefixer.output_images

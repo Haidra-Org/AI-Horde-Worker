@@ -255,10 +255,7 @@ class StableDiffusionAITPipeline(StableDiffusionPipeline):
             else:
                 uncond_tokens = negative_prompt
             uncond_input = self.tokenizer(
-                uncond_tokens,
-                padding="max_length",
-                max_length=max_length,
-                return_tensors="pt",
+                uncond_tokens, padding="max_length", max_length=max_length, return_tensors="pt",
             )
             uncond_embeddings = self.clip_inference(uncond_input.input_ids.to(self.device))
 
@@ -275,11 +272,7 @@ class StableDiffusionAITPipeline(StableDiffusionPipeline):
         latents_device = "cpu" if self.device.type == "mps" else self.device
         latents_shape = (batch_size, self.unet.in_channels, height // 8, width // 8)
         if latents is None:
-            latents = torch.randn(
-                latents_shape,
-                generator=generator,
-                device=latents_device,
-            )
+            latents = torch.randn(latents_shape, generator=generator, device=latents_device,)
         else:
             if latents.shape != latents_shape:
                 raise ValueError(f"Unexpected latents shape, got {latents.shape}, expected {latents_shape}")
@@ -312,7 +305,7 @@ class StableDiffusionAITPipeline(StableDiffusionPipeline):
             if isinstance(self.scheduler, LMSDiscreteScheduler):
                 sigma = self.scheduler.sigmas[i]
                 # the model input needs to be scaled to match the continuous ODE formulation in K-LMS
-                latent_model_input = latent_model_input / ((sigma**2 + 1) ** 0.5)
+                latent_model_input = latent_model_input / ((sigma ** 2 + 1) ** 0.5)
 
             # predict the noise residual
             noise_pred = self.unet_inference(latent_model_input, t, encoder_hidden_states=text_embeddings)

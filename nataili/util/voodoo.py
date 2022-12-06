@@ -58,8 +58,7 @@ def replace_tensors(m: torch.nn.Module, tensors: List[Dict], device="cuda"):
         # There are separate APIs to set parameters and buffers.
         for name, array in tensor_dict["params"].items():
             module.register_parameter(
-                name,
-                torch.nn.Parameter(torch.as_tensor(array, device=device), requires_grad=False),
+                name, torch.nn.Parameter(torch.as_tensor(array, device=device), requires_grad=False),
             )
         for name, array in tensor_dict["buffers"].items():
             module.register_buffer(name, torch.as_tensor(array, device=device))
@@ -81,8 +80,7 @@ def push_model_to_plasma(model: torch.nn.Module) -> ray.ObjectRef:
 
 
 def init_ait_module(
-    model_name,
-    workdir,
+    model_name, workdir,
 ):
     mod = Model(os.path.join(workdir, model_name))
     return mod

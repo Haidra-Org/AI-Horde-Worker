@@ -4,6 +4,7 @@ import json
 
 class BridgeStats:
     """Convenience functions for the stats"""
+
     stats = {}  # Deliberately on class level
 
     def update_inference_stats(self, model_name, kudos):
@@ -11,7 +12,7 @@ class BridgeStats:
         if "inference" not in self.stats:
             self.stats["inference"] = {}
         if model_name not in self.stats["inference"]:
-            self.stats["inference"][model_name] = { "kudos": 0, "count": 0 }
+            self.stats["inference"][model_name] = {"kudos": 0, "count": 0}
         self.stats["inference"][model_name]["count"] += 1
         self.stats["inference"][model_name]["kudos"] = round(self.stats["inference"][model_name]["kudos"] + kudos)
         stats_for_model = self.stats["inference"][model_name]

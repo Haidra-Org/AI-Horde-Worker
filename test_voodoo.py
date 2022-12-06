@@ -55,10 +55,7 @@ def test():
             logger.info('Testing txt2img with prompt "collosal corgi"')
 
             t2i = txt2img(
-                mm.loaded_models[model]["model"],
-                mm.loaded_models[model]["device"],
-                "test_output",
-                use_voodoo=True,
+                mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], "test_output", use_voodoo=True,
             )
             t2i.generate("collosal corgi")
 
@@ -81,10 +78,7 @@ def test():
             logger.info('Testing img2img with prompt "cute anime girl"')
 
             i2i = img2img(
-                mm.loaded_models[model]["model"],
-                mm.loaded_models[model]["device"],
-                "test_output",
-                use_voodoo=True,
+                mm.loaded_models[model]["model"], mm.loaded_models[model]["device"], "test_output", use_voodoo=True,
             )
             init_img = PIL.Image.open(init_image)
             i2i.generate("cute anime girl", init_img)

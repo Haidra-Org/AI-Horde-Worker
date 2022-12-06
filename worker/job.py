@@ -23,6 +23,7 @@ from worker.stats import bridge_stats
 
 class HordeJob:
     """Get and process a job from the horde"""
+
     retry_interval = 1
 
     def __init__(self, mm, bd):
@@ -42,7 +43,7 @@ class HordeJob:
         self.submit_dict = {}
         self.headers = {"apikey": self.bridge_data.api_key}
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
+        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus"]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.gen_dict = {
@@ -58,7 +59,6 @@ class HordeJob:
             "threads": self.bridge_data.max_threads,
             "bridge_version": 8,
         }
-
 
     def is_finished(self):
         """Check if the job is finished"""
@@ -128,7 +128,9 @@ class HordeJob:
                 self.skipped_info = f" Skipped Info: {job_skipped_info}."
             else:
                 self.skipped_info = ""
-            logger.info(f"Server {self.bridge_data.horde_url} has no valid generations to do for us.{self.skipped_info}")
+            logger.info(
+                f"Server {self.bridge_data.horde_url} has no valid generations to do for us.{self.skipped_info}"
+            )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return None
@@ -331,7 +333,8 @@ class HordeJob:
             stack_payload["model"] = model
             logger.error(
                 "Something went wrong when processing request.\n"
-                f"Please inform the developers of the below payload:\n{stack_payload}")
+                f"Please inform the developers of the below payload:\n{stack_payload}"
+            )
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
             self.status = JobStatus.FAULTED
@@ -348,7 +351,9 @@ class HordeJob:
             try:
                 self.image = post_process(post_processor, self.image, self.model_manager)
             except AssertionError:
-                logger.warning(f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!")
+                logger.warning(
+                    f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!"
+                )
             if post_processor in ["RealESRGAN_x4plus"]:
                 self.upload_quality = 50
         # Not a daemon, so that it can survive after this class is garbage collected
