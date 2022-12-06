@@ -43,19 +43,27 @@ def resize_image(resize_mode, im, width, height):
         if ratio < src_ratio:
             fill_height = height // 2 - src_h // 2
             res.paste(
-                resized.resize((width, fill_height), box=(0, 0, width, 0)), box=(0, 0),
+                resized.resize((width, fill_height), box=(0, 0, width, 0)),
+                box=(0, 0),
             )
             res.paste(
-                resized.resize((width, fill_height), box=(0, resized.height, width, resized.height),),
+                resized.resize(
+                    (width, fill_height),
+                    box=(0, resized.height, width, resized.height),
+                ),
                 box=(0, fill_height + src_h),
             )
         elif ratio > src_ratio:
             fill_width = width // 2 - src_w // 2
             res.paste(
-                resized.resize((fill_width, height), box=(0, 0, 0, height)), box=(0, 0),
+                resized.resize((fill_width, height), box=(0, 0, 0, height)),
+                box=(0, 0),
             )
             res.paste(
-                resized.resize((fill_width, height), box=(resized.width, 0, resized.width, height),),
+                resized.resize(
+                    (fill_width, height),
+                    box=(resized.width, 0, resized.width, height),
+                ),
                 box=(fill_width + src_w, 0),
             )
 
@@ -103,9 +111,9 @@ def _get_gaussian_window(width, height, std=3.14, mode=0):
     for y in range(height):
         fy = (y / height * 2.0 - 1.0) * window_scale_y
         if mode == 0:
-            window[:, y] = np.exp(-(x ** 2 + fy ** 2) * std)
+            window[:, y] = np.exp(-(x**2 + fy**2) * std)
         else:
-            window[:, y] = (1 / ((x ** 2 + 1.0) * (fy ** 2 + 1.0))) ** (
+            window[:, y] = (1 / ((x**2 + 1.0) * (fy**2 + 1.0))) ** (
                 std / 3.14
             )  # hey wait a minute that's not gaussian
 
@@ -205,7 +213,7 @@ def get_matched_noise(_np_src_image, np_mask_rgb, noise_q, color_variation):
     noise_rgb = np.real(_ifft2(noise_fft))
     shaped_noise_fft = _fft2(noise_rgb)
     shaped_noise_fft[:, :, :] = (
-        np.absolute(shaped_noise_fft[:, :, :]) ** 2 * (src_dist ** noise_q) * src_phase
+        np.absolute(shaped_noise_fft[:, :, :]) ** 2 * (src_dist**noise_q) * src_phase
     )  # perform the actual shaping
 
     brightness_variation = 0.0  # color_variation
@@ -217,7 +225,9 @@ def get_matched_noise(_np_src_image, np_mask_rgb, noise_q, color_variation):
     shaped_noise -= np.min(shaped_noise)
     shaped_noise /= np.max(shaped_noise)
     shaped_noise[img_mask, :] = skimage.exposure.match_histograms(
-        shaped_noise[img_mask, :] ** 1.0, contrast_adjusted_np_src[ref_mask, :], channel_axis=1,
+        shaped_noise[img_mask, :] ** 1.0,
+        contrast_adjusted_np_src[ref_mask, :],
+        channel_axis=1,
     )
     shaped_noise = _np_src_image[:] * (1.0 - np_mask_rgb) + shaped_noise * np_mask_rgb
     # _save_debug_img(shaped_noise, "shaped_noise")

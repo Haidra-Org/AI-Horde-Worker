@@ -25,7 +25,10 @@ src = [item for item in src if item not in ignore_src]
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument(
-    "--fix", action="store_true", required=False, help="Fix issues which can be fixed automatically",
+    "--fix",
+    action="store_true",
+    required=False,
+    help="Fix issues which can be fixed automatically",
 )
 args = arg_parser.parse_args()
 

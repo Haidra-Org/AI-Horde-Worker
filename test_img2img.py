@@ -125,7 +125,12 @@ def test():
             logger.info(f"Prompt: {prompt}")
             logger.info("noise_mode: seed")
             test_compvis(
-                model, prompt, "k_lms", init_img=init_image, noise_mode="seed", output_dir=output_dir,
+                model,
+                prompt,
+                "k_lms",
+                init_img=init_image,
+                noise_mode="seed",
+                output_dir=output_dir,
             )
             logger.info("noise_mode: find")
             test_compvis(
@@ -139,11 +144,21 @@ def test():
             )
             logger.info("noise_mode: matched")
             test_compvis(
-                model, prompt, "k_lms", init_img=init_image, noise_mode="matched", output_dir=output_dir,
+                model,
+                prompt,
+                "k_lms",
+                init_img=init_image,
+                noise_mode="matched",
+                output_dir=output_dir,
             )
             logger.info("noise_mode: find_and_matched")
             test_compvis(
-                model, prompt, "k_lms", init_img=init_image, noise_mode="find_and_matched", output_dir=output_dir,
+                model,
+                prompt,
+                "k_lms",
+                init_img=init_image,
+                noise_mode="find_and_matched",
+                output_dir=output_dir,
             )
 
         logger.init_ok(f"Model {model}", status="Unloading")

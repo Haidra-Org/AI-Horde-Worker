@@ -69,8 +69,7 @@ class HordeJob:
         return self.status in [JobStatus.POLLING]
 
     def is_finalizing(self):
-        """True if generation has finished even if upload is still remaining
-        """
+        """True if generation has finished even if upload is still remaining"""
         return self.status in [JobStatus.FINALIZING]
 
     def is_stale(self):

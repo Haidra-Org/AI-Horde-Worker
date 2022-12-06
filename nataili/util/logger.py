@@ -122,10 +122,33 @@ logger.__class__.stats = partialmethod(logger.__class__.log, "STATS")
 
 config = {
     "handlers": [
-        {"sink": sys.stderr, "format": logfmt, "colorize": True, "filter": is_stderr_log,},
-        {"sink": sys.stdout, "format": genfmt, "level": "PROMPT", "colorize": True, "filter": is_stdout_log,},
-        {"sink": sys.stdout, "format": initfmt, "level": "INIT", "colorize": True, "filter": is_init_log,},
-        {"sink": sys.stdout, "format": msgfmt, "level": "MESSAGE", "colorize": True, "filter": is_msg_log,},
+        {
+            "sink": sys.stderr,
+            "format": logfmt,
+            "colorize": True,
+            "filter": is_stderr_log,
+        },
+        {
+            "sink": sys.stdout,
+            "format": genfmt,
+            "level": "PROMPT",
+            "colorize": True,
+            "filter": is_stdout_log,
+        },
+        {
+            "sink": sys.stdout,
+            "format": initfmt,
+            "level": "INIT",
+            "colorize": True,
+            "filter": is_init_log,
+        },
+        {
+            "sink": sys.stdout,
+            "format": msgfmt,
+            "level": "MESSAGE",
+            "colorize": True,
+            "filter": is_msg_log,
+        },
         {
             "sink": "logs/stats.log",
             "format": logfmt,

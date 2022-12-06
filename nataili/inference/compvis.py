@@ -226,7 +226,10 @@ class CompVis:
                 x0, z_mask = init_data
 
                 sampler.make_schedule(ddim_num_steps=ddim_steps, ddim_eta=0.0, verbose=False)
-                z_enc = sampler.stochastic_encode(x0, torch.tensor([t_enc_steps] * batch_size).to(self.model.device),)
+                z_enc = sampler.stochastic_encode(
+                    x0,
+                    torch.tensor([t_enc_steps] * batch_size).to(self.model.device),
+                )
 
                 # Obliterate masked image
                 if z_mask is not None and obliterate:

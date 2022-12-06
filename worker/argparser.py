@@ -56,10 +56,16 @@ arg_parser.add_argument(
     help="Set to true if you do not want this worker generating NSFW images.",
 )
 arg_parser.add_argument(
-    "--blacklist", nargs="+", required=False, help="List the words that you want to blacklist.",
+    "--blacklist",
+    nargs="+",
+    required=False,
+    help="List the words that you want to blacklist.",
 )
 arg_parser.add_argument(
-    "--censorlist", nargs="+", required=False, help="List the words that you want to censor.",
+    "--censorlist",
+    nargs="+",
+    required=False,
+    help="List the words that you want to censor.",
 )
 arg_parser.add_argument(
     "--censor_nsfw",
@@ -86,7 +92,11 @@ arg_parser.add_argument(
     help="Set to true if you want this worker worker to allow img2img requests from unsafe IPs.",
 )
 arg_parser.add_argument(
-    "-m", "--model", action="store", required=False, help="Which model to run on this horde.",
+    "-m",
+    "--model",
+    action="store",
+    required=False,
+    help="Which model to run on this horde.",
 )
 arg_parser.add_argument("--debug", action="store_true", default=False, help="Show debugging messages.")
 arg_parser.add_argument(
@@ -110,10 +120,16 @@ arg_parser.add_argument(
     ),
 )
 arg_parser.add_argument(
-    "--log_file", action="store_true", default=False, help="If specified will dump the log to the specified file",
+    "--log_file",
+    action="store_true",
+    default=False,
+    help="If specified will dump the log to the specified file",
 )
 arg_parser.add_argument(
-    "--skip_md5", action="store_true", default=False, help="If specified will not check the downloaded model md5sum.",
+    "--skip_md5",
+    action="store_true",
+    default=False,
+    help="If specified will not check the downloaded model md5sum.",
 )
 arg_parser.add_argument(
     "--disable_voodoo",
