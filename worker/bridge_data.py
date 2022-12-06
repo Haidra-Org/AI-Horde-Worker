@@ -6,10 +6,10 @@ import random
 import sys
 import threading
 
+import bridgeData as bd
 import requests
 from PIL import Image
 
-import bridgeData as bd
 from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
 from nataili.util import logger
 from worker.argparser import args
