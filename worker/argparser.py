@@ -1,3 +1,4 @@
+"""Arg parsing for the main script."""
 import argparse
 
 arg_parser = argparse.ArgumentParser()
@@ -32,7 +33,7 @@ arg_parser.add_argument(
     action="store",
     required=False,
     type=str,
-    help="The SH Horde URL. Where the bridge will pickup prompts and send the finished generations.",
+    help="The SH Horde URL. Where the worker will pickup prompts and send the finished generations.",
 )
 arg_parser.add_argument(
     "--priority_usernames",
@@ -64,25 +65,25 @@ arg_parser.add_argument(
     "--censor_nsfw",
     action="store_true",
     required=False,
-    help="Set to true if you want this bridge worker to censor NSFW images.",
+    help="Set to true if you want this worker worker to censor NSFW images.",
 )
 arg_parser.add_argument(
     "--allow_img2img",
     action="store_true",
     required=False,
-    help="Set to true if you want this bridge worker to allow img2img request.",
+    help="Set to true if you want this worker worker to allow img2img request.",
 )
 arg_parser.add_argument(
     "--allow_painting",
     action="store_true",
     required=False,
-    help="Set to true if you want this bridge worker to allow inpainting/outpainting requests.",
+    help="Set to true if you want this worker worker to allow inpainting/outpainting requests.",
 )
 arg_parser.add_argument(
     "--allow_unsafe_ip",
     action="store_true",
     required=False,
-    help="Set to true if you want this bridge worker to allow img2img requests from unsafe IPs.",
+    help="Set to true if you want this worker worker to allow img2img requests from unsafe IPs.",
 )
 arg_parser.add_argument(
     "-m", "--model", action="store", required=False, help="Which model to run on this horde.",
@@ -119,7 +120,7 @@ arg_parser.add_argument(
     action="store_true",
     default=False,
     help=(
-        "If specified this bridge will not use voodooray to offload models into RAM and save VRAM"
+        "If specified this worker will not use voodooray to offload models into RAM and save VRAM"
         " (useful for cloud providers)."
     ),
 )
@@ -128,7 +129,7 @@ arg_parser.add_argument(
     action="store_true",
     default=False,
     help=(
-        "If specified this bridge will not try use xformers to speed up generations."
+        "If specified this worker will not try use xformers to speed up generations."
         " This should normally be automatic, but in case you need to disable it manually, you can do so here."
     ),
 )
@@ -136,7 +137,7 @@ arg_parser.add_argument(
     "--disable_local_ray_temp",
     action="store_true",
     default=False,
-    help=("If specified this bridge will make the system use the default ray path for temp files instead of local."),
+    help=("If specified this worker will make the system use the default ray path for temp files instead of local."),
 )
 arg_parser.add_argument(
     "--hf_token",

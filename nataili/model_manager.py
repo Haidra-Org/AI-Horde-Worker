@@ -349,12 +349,12 @@ class ModelManager:
         return {"model": model, "device": device}
 
     def load_blip(
-        self,
-        model_name="",
-        precision="half",
-        gpu_id=0,
-        blip_image_eval_size=512,
-        vit="large",
+            self,
+            model_name="",
+            precision="half",
+            gpu_id=0,
+            blip_image_eval_size=512,
+            vit="large",
     ):
         # vit = 'base' or 'large'
         vit = "base" if model_name == "BLIP" else "large"
@@ -482,7 +482,10 @@ class ModelManager:
             logger.debug(f"Getting md5sum of {file_name}")
             with open(file_name, "rb") as file_to_check:
                 file_hash = hashlib.md5()
-                while chunk := file_to_check.read(8192):
+                while True:
+                    chunk = file_to_check.read(8192)  # Changed just because it broke pylint
+                    if not chunk:
+                        break
                     file_hash.update(chunk)
             if file_details["md5sum"] != file_hash.hexdigest():
                 return False
@@ -506,13 +509,13 @@ class ModelManager:
         r = requests.get(url, stream=True, allow_redirects=True)
         with open(file_path, "wb") as f:
             with tqdm(
-                # all optional kwargs
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                miniters=1,
-                desc=pbar_desc,
-                total=int(r.headers.get("content-length", 0)),
+                    # all optional kwargs
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    miniters=1,
+                    desc=pbar_desc,
+                    total=int(r.headers.get("content-length", 0)),
             ) as pbar:
                 for chunk in r.iter_content(chunk_size=16 * 1024):
                     if chunk:
