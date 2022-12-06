@@ -113,6 +113,16 @@ class HordeJob:
             time.sleep(10)
             self.status = JobStatus.FAULTED
             return
+        if not pop.get("id"):
+            job_skipped_info = pop.get("skipped")
+            if job_skipped_info and len(job_skipped_info):
+                self.skipped_info = f" Skipped Info: {job_skipped_info}."
+            else:
+                self.skipped_info = ""
+            # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
+            time.sleep(self.retry_interval)
+            self.status = JobStatus.FAULTED
+            return
         return pop
 
     @logger.catch(reraise=True)
@@ -129,16 +139,6 @@ class HordeJob:
             self.status = JobStatus.FAULTED
             return
 
-        if not pop.get("id"):
-            job_skipped_info = pop.get("skipped")
-            if job_skipped_info and len(job_skipped_info):
-                self.skipped_info = f" Skipped Info: {job_skipped_info}."
-            else:
-                self.skipped_info = ""
-            # logger.info(f"Server {self.bd.horde_url} has no valid generations to do for us.{self.skipped_info}")
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return
         self.current_id = pop["id"]
         self.current_payload = pop["payload"]
         self.status = JobStatus.WORKING
