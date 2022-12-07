@@ -302,7 +302,7 @@ class CompVis:
 
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
-                if self.model_name == "stable_diffusion_2.0":
+                if self.model_name in ["stable_diffusion_2.0", "stable_diffusion_2.1"]:
                     sampler = DPMSolverSampler(model)
                     sampler_name = "dpmsolver"
                 elif sampler_name == "PLMS":
