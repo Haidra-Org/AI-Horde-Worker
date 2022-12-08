@@ -70,7 +70,8 @@ models_to_load = [
 # This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
 models_to_skip = [
     "stable_diffusion_inpainting",  # Inpainting is generally quite heavy along with other models for smaller GPUs.
-    # "stable_diffusion_2.1",  # Stable diffusiuon 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
+    # "stable_diffusion_2.1",  # Stable diffusion 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
+    # "stable_diffusion_2.0",  # Same as Stable diffusion 2.1
     ## Popular NSFW models:
     # "Zeipher Female Model",
     # "Hentai Diffusion",
