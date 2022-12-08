@@ -37,36 +37,37 @@ def bridge(this_model_manager, this_bridge_data):
                             reload_data(this_bridge_data)
                             executor._max_workers = this_bridge_data.max_threads
                             logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
-                            if len(this_bridge_data.predefined_models) >= this_bridge_data.number_of_dynamic_models:
-                                logger.warning(
-                                    "You have more than half of your dynamic models predefined in models_to_load! "
-                                    "This means there will be very little space to load models dynamically. "
-                                    "Please try to pre-specify at most "
-                                    "half the amount of number_of_dynamic_models in models_to_load"
-                                )
-                            try:
-                                models_data = requests.get(
-                                    bridge_data.horde_url + "/api/v2/status/models", timeout=10
-                                ).json()
-                                models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
-                                top_5 = [x["name"] for x in models_data[:5]]
-                                logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
-                                dynamic_models = this_bridge_data.predefined_models.copy()
-                                for model in models_data:
-                                    if model["name"] in this_bridge_data.models_to_skip:
-                                        continue
-                                    if model["name"] in dynamic_models:
-                                        continue
-                                    dynamic_models.append(model["name"])
-                                    if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
-                                        break
-                                logger.info(
-                                    "Dynamically loading new models to attack the relevant queue: {}", dynamic_models
-                                )
-                                this_bridge_data.model_names = dynamic_models
-                            # pylint: disable=broad-except
-                            except Exception as err:
-                                logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
+                            if this_bridge_data.dynamic_models:
+                                if len(this_bridge_data.predefined_models) >= this_bridge_data.number_of_dynamic_models:
+                                    logger.warning(
+                                        "You have more than half of your dynamic models predefined in models_to_load! "
+                                        "This means there will be very little space to load models dynamically. "
+                                        "Please try to pre-specify at most "
+                                        "half the amount of number_of_dynamic_models in models_to_load"
+                                    )
+                                try:
+                                    models_data = requests.get(
+                                        bridge_data.horde_url + "/api/v2/status/models", timeout=10
+                                    ).json()
+                                    models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
+                                    top_5 = [x["name"] for x in models_data[:5]]
+                                    logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
+                                    dynamic_models = this_bridge_data.predefined_models.copy()
+                                    for model in models_data:
+                                        if model["name"] in this_bridge_data.models_to_skip:
+                                            continue
+                                        if model["name"] in dynamic_models:
+                                            continue
+                                        dynamic_models.append(model["name"])
+                                        if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
+                                            break
+                                    logger.info(
+                                        "Dynamically loading new models to attack the relevant queue: {}", dynamic_models
+                                    )
+                                    this_bridge_data.model_names = dynamic_models
+                                # pylint: disable=broad-except
+                                except Exception as err:
+                                    logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
 
                             last_config_reload = time.time()
 
