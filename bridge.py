@@ -38,7 +38,10 @@ def bridge(this_model_manager, this_bridge_data):
                             executor._max_workers = this_bridge_data.max_threads
                             logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
                             if this_bridge_data.dynamic_models:
-                                if len(this_bridge_data.predefined_models) >= this_bridge_data.number_of_dynamic_models:
+                                if (
+                                    len(this_bridge_data.predefined_models)
+                                    >= this_bridge_data.number_of_dynamic_models
+                                ):
                                     logger.warning(
                                         "You have more than half of your dynamic models predefined in models_to_load! "
                                         "This means there will be very little space to load models dynamically. "
@@ -62,7 +65,8 @@ def bridge(this_model_manager, this_bridge_data):
                                         if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
                                             break
                                     logger.info(
-                                        "Dynamically loading new models to attack the relevant queue: {}", dynamic_models
+                                        "Dynamically loading new models to attack the relevant queue: {}",
+                                        dynamic_models,
                                     )
                                     this_bridge_data.model_names = dynamic_models
                                 # pylint: disable=broad-except
