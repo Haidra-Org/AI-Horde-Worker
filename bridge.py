@@ -39,14 +39,14 @@ def bridge(this_model_manager, this_bridge_data):
                             logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
                             if this_bridge_data.dynamic_models:
                                 if (
-                                    len(this_bridge_data.predefined_models)
-                                    >= this_bridge_data.number_of_dynamic_models
+                                    this_bridge_data.number_of_dynamic_models - len(this_bridge_data.predefined_models)
+                                    < 3
                                 ):
                                     logger.warning(
-                                        "You have more than half of your dynamic models predefined in models_to_load! "
-                                        "This means there will be very little space to load models dynamically. "
-                                        "Please try to pre-specify at most "
-                                        "half the amount of number_of_dynamic_models in models_to_load"
+                                        "You have less than 3 available slots to dynamically load models! "
+                                        "This means there will be very little buffer to swap models dynamically. "
+                                        "to match demand. Please try to only pre-specify as many models "
+                                        "so as to number_of_dynamic_models - len(models_to_load) >= 3"
                                     )
                                 try:
                                     models_data = requests.get(
@@ -56,17 +56,19 @@ def bridge(this_model_manager, this_bridge_data):
                                     top_5 = [x["name"] for x in models_data[:5]]
                                     logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
                                     dynamic_models = this_bridge_data.predefined_models.copy()
+                                    new_dynamic_models = []  # Only used for logging
                                     for model in models_data:
                                         if model["name"] in this_bridge_data.models_to_skip:
                                             continue
                                         if model["name"] in dynamic_models:
                                             continue
                                         dynamic_models.append(model["name"])
+                                        new_dynamic_models.append(model["name"])
                                         if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
                                             break
                                     logger.info(
                                         "Dynamically loading new models to attack the relevant queue: {}",
-                                        dynamic_models,
+                                        new_dynamic_models,
                                     )
                                     this_bridge_data.model_names = dynamic_models
                                 # pylint: disable=broad-except

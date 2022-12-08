@@ -38,7 +38,7 @@ allow_unsafe_ip = True
 dynamic_models = True
 
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
-number_of_dynamic_models = 5
+number_of_dynamic_models = 3
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
 # Adjust how many models you load based on how much RAM (not VRAM) you have available.
