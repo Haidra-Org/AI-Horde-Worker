@@ -50,6 +50,10 @@ class BridgeData:
         self.models_reloading = False
         self.username = None
         self.model = None
+        self.dynamic_models = True
+        self.number_of_dynamic_models = 2
+        self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
+        self.predefined_models = []
 
         disable_xformers.toggle(args.disable_xformers)
         disable_local_ray_temp.toggle(args.disable_local_ray_temp)
@@ -72,7 +76,10 @@ class BridgeData:
             self.horde_url = bd.horde_url
             self.priority_usernames = bd.priority_usernames
             self.max_power = bd.max_power
-            self.model_names = bd.models_to_load
+            if not self.dynamic_models:
+                self.model_names = bd.models_to_load
+            else:
+                self.predefined_models = bd.models_to_load
             try:
                 self.nsfw = bd.nsfw
             except AttributeError:
@@ -105,8 +112,20 @@ class BridgeData:
                 self.max_threads = bd.max_threads
             except AttributeError:
                 pass
+            try:
+                self.dynamic_models = bd.dynamic_models
+            except AttributeError:
+                pass
+            try:
+                self.number_of_dynamic_models = bd.number_of_dynamic_models
+            except AttributeError:
+                pass
+            try:
+                self.models_to_skip = bd.models_to_skip
+            except AttributeError:
+                pass
         except (ImportError, AttributeError) as err:
-            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - %s", err)
+            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.api_key:
             self.api_key = args.api_key
         if args.worker_name:
@@ -135,6 +154,13 @@ class BridgeData:
             self.allow_painting = args.allow_painting
         if args.allow_unsafe_ip:
             self.allow_unsafe_ip = args.allow_unsafe_ip
+        if self.dynamic_models:
+            try:
+                from creds import hf_password, hf_username  # noqa F401
+            except ImportError:
+                logger.warning(
+                    "Dynamic models enabled. Please setup creds.py so it won't prompt for authentication later"
+                )
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
@@ -190,7 +216,7 @@ class BridgeData:
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
                 check_mm_auth(model_manager)
         if not models_exist:
-            if args.yes:
+            if args.yes or self.dynamic_models:
                 choice = "y"
             else:
                 choice = input(

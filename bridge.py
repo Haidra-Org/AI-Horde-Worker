@@ -24,69 +24,115 @@ def bridge(this_model_manager, this_bridge_data):
     """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
     running_jobs = []
     run_count = 0
+    last_config_reload = 0  # Means immediate config reload
     logger.stats("Starting new stats session")
     reload_data(this_bridge_data)
-    with ThreadPoolExecutor(max_workers=this_bridge_data.max_threads) as executor:
-        loop_count = 0
-        while True:
-            if len(this_model_manager.get_loaded_models_names()) == 0:
-                time.sleep(2)
-                logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
-                continue
-            loop_count += 1
-            if loop_count % 2 == 0:
-                reload_data(this_bridge_data)
-                executor._max_workers = this_bridge_data.max_threads
-                loop_count = 0
+    try:
+        should_stop = False
+        while True:  # This is just to allow it to loop through this and handle shutdowns correctly
+            with ThreadPoolExecutor(max_workers=this_bridge_data.max_threads) as executor:
+                while True:
+                    try:
+                        if time.time() - last_config_reload > 60:
+                            reload_data(this_bridge_data)
+                            executor._max_workers = this_bridge_data.max_threads
+                            logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
+                            if len(this_bridge_data.predefined_models) >= this_bridge_data.number_of_dynamic_models:
+                                logger.warning(
+                                    "You have more than half of your dynamic models predefined in models_to_load! "
+                                    "This means there will be very little space to load models dynamically. "
+                                    "Please try to pre-specify at most "
+                                    "half the amount of number_of_dynamic_models in models_to_load"
+                                )
+                            try:
+                                models_data = requests.get(
+                                    bridge_data.horde_url + "/api/v2/status/models", timeout=10
+                                ).json()
+                                models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
+                                top_5 = [x["name"] for x in models_data[:5]]
+                                logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
+                                dynamic_models = this_bridge_data.predefined_models.copy()
+                                for model in models_data:
+                                    if model["name"] in this_bridge_data.models_to_skip:
+                                        continue
+                                    if model["name"] in dynamic_models:
+                                        continue
+                                    dynamic_models.append(model["name"])
+                                    if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
+                                        break
+                                logger.info(
+                                    "Dynamically loading new models to attack the relevant queue: {}", dynamic_models
+                                )
+                                this_bridge_data.model_names = dynamic_models
+                            # pylint: disable=broad-except
+                            except Exception as err:
+                                logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
 
-            pop_count = 0
-            while len(running_jobs) < this_bridge_data.max_threads:
-                pop_count += 1
-                if pop_count > 3:  # Just to allow reload to fire
-                    break
-                new_job = HordeJob(this_model_manager, this_bridge_data)
-                pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
-                if pop is None:
-                    continue
-                logger.debug("Got a new job from the horde")
-                running_jobs.append(executor.submit(new_job.start_job, pop))
+                            last_config_reload = time.time()
 
-            for job in running_jobs:
-                if job.done():
-                    logger.debug("Job finished successfully")
-                    running_jobs.remove(job)
-                    run_count += 1
-                    continue
+                        if len(this_model_manager.get_loaded_models_names()) == 0:
+                            time.sleep(5)
+                            logger.info(
+                                "No models loaded. Waiting for the first model to be up before polling the horde"
+                            )
+                            continue
 
-                if job.exception():
-                    logger.debug("Job failed with exception")
-                    logger.exception(job.exception())
-                    if job in running_jobs:  # Sometimes it's already removed
-                        running_jobs.remove(job)
-                    continue
+                        pop_count = 0
+                        while len(running_jobs) < this_bridge_data.max_threads:
+                            pop_count += 1
+                            if pop_count > 3:  # Just to allow reload to fire
+                                break
+                            new_job = HordeJob(this_model_manager, this_bridge_data)
+                            pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
+                            if pop is None:
+                                del new_job
+                                continue
+                            job_model = pop.get("model", "Unknown")
+                            logger.debug("Got a new job from the horde for model: {}", job_model)
+                            running_jobs.append(executor.submit(new_job.start_job, pop))
 
-                # check if any job has run for more than 60 seconds
-                if job.running() and job.running_for() > 180:
-                    if job in running_jobs:  # Sometimes it's already removed
-                        running_jobs.remove(job)
-                    job.cancel()
-                    logger.warning("Cancelled job as was running for more than 180 seconds: %s", job.running_for())
-                    continue
+                        for job in running_jobs:
+                            if job.done():
+                                run_count += 1
+                                logger.debug("Job finished successfully (Total Completed: {})", run_count)
+                                running_jobs.remove(job)
+                                continue
 
-            if run_count % 100 == 0:
-                logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
-                try:
-                    models_data = requests.get(bridge_data.horde_url + "/api/v2/status/models", timeout=10).json()
-                    models_data.sort(key=lambda x: (x["eta"], x["queued"] / x["performance"]), reverse=True)
-                    top_5 = [x["name"] for x in models_data[:5]]
-                    logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
+                            if job.exception():
+                                logger.error("Job failed with exception, {}", job.exception())
+                                logger.exception(job.exception())
+                                if job in running_jobs:  # Sometimes it's already removed
+                                    running_jobs.remove(job)
+                                continue
 
-                # pylint: disable=broad-except
-                except Exception as err:
-                    logger.debug("Failed to get models_req: %s", err)
-                run_count = 0
+                            # check if any job has run for more than 60 seconds
+                            if job.running() and job.running_for() > 180:
+                                logger.warning(
+                                    "Restarting all jobs, as job as was running for more than 180 seconds: {}",
+                                    job.running_for(),
+                                )
+                                for inner_job in running_jobs:  # Sometimes it's already removed
+                                    running_jobs.remove(inner_job)
+                                    job.cancel()
+                                executor.shutdown(wait=False)
+                                break
 
-            time.sleep(0.1)  # Give the CPU a break
+                        time.sleep(0.1)  # Give the CPU a break
+                    except KeyboardInterrupt:
+                        should_stop = True
+                        break
+
+            if should_stop:
+                break
+
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt detected, shutting down")
+
+    logger.info("Shutting down bridge")
+    executor.shutdown(wait=False)
+    for job in running_jobs:
+        job.cancel()
+    logger.info("Shutting down bridge - Done")
 
 
 if __name__ == "__main__":

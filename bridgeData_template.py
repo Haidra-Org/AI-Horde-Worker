@@ -33,17 +33,26 @@ allow_img2img = True
 allow_painting = True
 # If set to False, this worker will no longer pick img2img jobs from unsafe IPs
 allow_unsafe_ip = True
+# If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
+# Note this ultimately overrides the models_to_load list
+dynamic_models = True
+
+# Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
+number_of_dynamic_models = 5
 # The models to use. You can select a different main model, or select more than one.
-# With you can easily load 5 of these models with 32Gb RAM and 6G VRAM.
+# With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
 # Adjust how many models you load based on how much RAM (not VRAM) you have available.
 # The last model in this list takes priority when the client accepts more than 1
 # if you do not know which models you can add here, use the below command
 # python show_available_models.py
+## WARNING: In case you have dynamic models this list is instead specifying models to always load!
+# in that case, keep this list short, preferrably to only a few more obscure models you'd like to always see available
+# and at most at half the size of your number_of_dynamic_models number
 models_to_load = [
+    "stable_diffusion_2.1", # This is the standard compvis model. It is not using Diffusers (yet)
     "stable_diffusion",  # This is the standard compvis model. It is not using Diffusers (yet)
     ## Specialized Style models:
-    # "trinart",
-    # "Furry Epoch",
+    # "Anything Diffusion",
     # "Yiffy",
     # "waifu_diffusion",
     ## Dreambooth Models:
@@ -52,6 +61,17 @@ models_to_load = [
     # "Elden Ring Diffusion",
     # "Robo-Diffusion",
     # "mo-di-diffusion",
+    # "Knollingcase",
     ## Enable this to allow inpainting/outpainting.
     # "stable_diffusion_inpainting",
+]
+# This is used when dynamic_models == True
+# The models in this list will not be loaded when they exist in the top models
+# This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
+models_to_skip = [
+    "stable_diffusion_inpainting",  # Inpainting is generally quite heavy along with other models for smaller GPUs.
+    # "stable_diffusion_2.1",  # Stable diffusiuon 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
+    ## Popular NSFW models:
+    # "Zeipher Female Model",
+    # "Hentai Diffusion",
 ]

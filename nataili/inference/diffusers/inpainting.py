@@ -156,7 +156,7 @@ class inpainting:
 
                 prompt = all_prompts[n]
                 seed = all_seeds[n]
-                print("prompt: " + prompt + ", seed: " + str(seed))
+                # print("prompt: " + prompt + ", seed: " + str(seed))
 
                 generator = torch.Generator(device=self.device).manual_seed(seed)
 

@@ -35,7 +35,7 @@ class HordeJob:
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
-        self.upload_quality = 90
+        self.upload_quality = 95
         self.start_time = time.time()
         self.seed = None
         self.image = None
@@ -154,6 +154,7 @@ class HordeJob:
 
         self.current_id = pop["id"]
         self.current_payload = pop["payload"]
+        self.r2_upload = pop.get("r2_upload", False)
         self.status = JobStatus.WORKING
         # Generate Image
         model = pop.get("model", self.available_models[0])
@@ -208,7 +209,7 @@ class HordeJob:
             if self.current_payload.get("karras", False):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
         except KeyError as err:
-            logger.error("Received incomplete payload from job. Aborting. (%s)", err)
+            logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
             return
         # logger.debug(gen_payload)
@@ -351,14 +352,20 @@ class HordeJob:
             logger.debug(f"Post-processing with {post_processor}...")
             try:
                 self.image = post_process(post_processor, self.image, self.model_manager)
-            except AssertionError:
+            except (AssertionError, RuntimeError) as err:
                 logger.warning(
-                    f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!"
+                    "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
+                    post_processor,
+                    err,
                 )
-            if post_processor in ["RealESRGAN_x4plus"]:
-                self.upload_quality = 50
+            if self.r2_upload:
+                self.upload_quality = 95
+            else:
+                if post_processor in ["RealESRGAN_x4plus"]:
+                    self.upload_quality = 45
+                else:
+                    self.upload_quality = 75
         # Not a daemon, so that it can survive after this class is garbage collected
-        self.r2_upload = pop.get("r2_upload")
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
 
@@ -373,7 +380,7 @@ class HordeJob:
         if self.r2_upload:
             put_response = requests.put(self.r2_upload, data=buffer.getvalue())
             generation = "R2"
-            logger.debug("R2 Upload response: %s", put_response)
+            logger.debug("R2 Upload response: {}", put_response)
         else:
             generation = base64.b64encode(buffer.getvalue()).decode("utf8")
         self.submit_dict = {
@@ -399,7 +406,7 @@ class HordeJob:
                     self.bridge_data.horde_url + "/api/v2/generate/submit",
                     json=self.submit_dict,
                     headers=self.headers,
-                    timeout=40,
+                    timeout=60,
                 )
                 logger.debug(f"Upload completed in {submit_req.elapsed.total_seconds()}")
                 try:
