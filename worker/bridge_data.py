@@ -154,6 +154,8 @@ class BridgeData:
             self.allow_painting = args.allow_painting
         if args.allow_unsafe_ip:
             self.allow_unsafe_ip = args.allow_unsafe_ip
+        if args.disable_dynamic_models:
+            self.dynamic_models = False
         if self.dynamic_models:
             try:
                 from creds import hf_password, hf_username  # noqa F401

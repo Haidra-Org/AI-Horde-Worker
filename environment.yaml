@@ -17,7 +17,7 @@ name: ldm
 channels:
   - pytorch
   - defaults
-  - nvidia
+  - nvidia/label/cuda-11.7.0
 # Psst. If you change a dependency, make sure it's mirrored in the docker requirement
 # files as well.
 dependencies:

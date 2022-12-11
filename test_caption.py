@@ -15,44 +15,45 @@ mm.init()
 def test_caption(model, fast_test=True):
     if model not in mm.available_models:
         logger.error(f"{model} not available")
-        logger.info(f"Downloading {model}")
+        logger.init(f"{model}", status="Downloading")
         mm.download_model(model)
 
     if model not in mm.loaded_models:
         tic = time.time()
-        logger.info(f"Loading {model}")
-        success = mm.load_model(model)
-        logger.init_ok(f"Loading {model}", status=success)
+        logger.init(f"{model}", status="Loading")
+        mm.load_model(model)
+        logger.init_ok(f"Loading {model}", status="Success")
         toc = time.time()
-        logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status=success)
+        logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status="Success")
 
     start = time.time()
 
     blip = Caption(mm.loaded_models[model]["model"], mm.loaded_models[model]["device"])
 
     if fast_test:
-        logger.info(f"Fast test for {model}")
-        logger.info(f"caption: {blip(image, sample=False)} sample: False")
-        logger.info(f"caption: {blip(image, sample=True)} sample: True")
+        logger.message(f"Fast test for {model}")
+        logger.generation(f"caption: {blip(image, sample=False)} - sample: False")
+        logger.generation(f"caption: {blip(image, sample=True)} - sample: True")
     else:
-        logger.info(f"Slow test for {model}")
-        num_beams = [3, 5]
-        max_length = [30, 50, 70]
+        logger.message(f"Slow test for {model}")
+        num_beams = [3, 7]
+        min_length = [10, 20, 30]
         top_p = [0.9, 0.95]
-        repetition_penalty = [1.0, 1.2]
+        repetition_penalty = [1.0, 1.4]
         for n in num_beams:
-            for m in max_length:
+            for m in min_length:
                 for t in top_p:
                     for r in repetition_penalty:
-                        caption = blip(image, num_beams=n, max_length=m, top_p=t, repetition_penalty=r)
-                        logger.info(f"Num Beams: {n}, Max Length: {m}, Top P: {t}, Repetition Penalty: {r}")
-                        logger.info(caption)
+                        caption = blip(
+                            image, num_beams=n, min_length=m, max_length=m + 20, top_p=t, repetition_penalty=r
+                        )
+                        logger.generation(f"Beams: {n}, Min: {m}, TopP: {t}, RepP: {r}: {caption}")
         caption = blip(image, sample=False)
-        logger.info(f"caption: {caption} sample: False")
+        logger.generation(f"caption: {caption} sample: False")
         caption = blip(image, sample=False, num_beams=5)
-        logger.info(f"caption: {caption} sample: False, num_beams=5")
-        caption = blip(image, sample=False, num_beams=7, max_length=50)
-        logger.info(f"caption: {caption} sample: False, num_beams=7, max_length=50")
+        logger.generation(f"caption: {caption} sample: False, num_beams=5")
+        caption = blip(image, sample=False, num_beams=7, min_length=60, max_length=90)
+        logger.generation(f"caption: {caption} sample: False, num_beams=7, min_length=60, max_length=90")
 
     end = time.time()
 

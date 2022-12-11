@@ -169,5 +169,11 @@ arg_parser.add_argument(
     required=False,
     help="Specify this argument to autodownload all missing models defined in your bridgeData.py",
 )
+arg_parser.add_argument(
+    "--disable_dynamic_models",
+    action="store_true",
+    default=False,
+    help=("If specified this worker will not use dynamic models."),
+)
 
 args = arg_parser.parse_args()
