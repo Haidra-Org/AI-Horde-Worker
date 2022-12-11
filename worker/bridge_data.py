@@ -51,7 +51,8 @@ class BridgeData:
         self.username = None
         self.model = None
         self.dynamic_models = True
-        self.number_of_dynamic_models = 2
+        self.number_of_dynamic_models = 3
+        self.max_models_to_download = 10
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = []
 
@@ -118,6 +119,10 @@ class BridgeData:
                 pass
             try:
                 self.number_of_dynamic_models = bd.number_of_dynamic_models
+            except AttributeError:
+                pass
+            try:
+                self.max_models_to_download = bd.max_models_to_download
             except AttributeError:
                 pass
             try:
@@ -213,7 +218,11 @@ class BridgeData:
                 continue
             if not model_manager.validate_model(model, skip_checksum=args.skip_md5):
                 models_exist = False
-                not_found_models.append(model)
+                if (
+                    model_manager.count_available_models_by_types() + len(not_found_models)
+                    < self.max_models_to_download
+                ):
+                    not_found_models.append(model)
             # Diffusers library uses its own internal download mechanism
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
                 check_mm_auth(model_manager)

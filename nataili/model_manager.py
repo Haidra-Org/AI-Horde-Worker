@@ -235,6 +235,18 @@ class ModelManager:
     def get_available_models(self):
         return self.available_models
 
+    def get_available_models_by_types(self, model_types=None):
+        if not model_types:
+            model_types = ["ckpt", "diffusers"]
+        models_available = []
+        for model in self.models:
+            if self.models[model]["type"] in model_types and self.check_available(self.get_model_files(model)):
+                models_available.append(model)
+        return models_available
+
+    def count_available_models_by_types(self, model_types=None):
+        return len(self.get_available_models_by_types(model_types))
+
     def get_available_dependencies(self):
         return self.available_dependencies
 

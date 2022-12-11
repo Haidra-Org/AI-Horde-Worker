@@ -39,15 +39,19 @@ dynamic_models = True
 
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
 number_of_dynamic_models = 3
+# The maximum amount of models to download dynamically for this worker. Increase this amount of you have plenty of space. Keep it low if you do not
+# When the amount of models downloaded reaches this amount, the dynamic list will only use dynamic models already downloaded
+# Therefore make sure you put some generalist and popular models in your models_to_load list if this number is small!
+max_models_to_download = 10
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
 # Adjust how many models you load based on how much RAM (not VRAM) you have available.
 # The last model in this list takes priority when the client accepts more than 1
 # if you do not know which models you can add here, use the below command
 # python show_available_models.py
-## WARNING: In case you have dynamic models this list is instead specifying models to always load!
+## WARNING: In case you have dynamic models this list is instead specifying models to always load along with the dynamic models!
+# So your total list will be your specific models + the dynamic models
 # in that case, keep this list short, preferrably to only a few more obscure models you'd like to always see available
-# and at most at half the size of your number_of_dynamic_models number
 models_to_load = [
     "stable_diffusion_2.1", # This is the standard compvis model. It is not using Diffusers (yet)
     "stable_diffusion",  # This is the standard compvis model. It is not using Diffusers (yet)

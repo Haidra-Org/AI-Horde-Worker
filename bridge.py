@@ -1,5 +1,6 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
@@ -38,43 +39,44 @@ def bridge(this_model_manager, this_bridge_data):
                             executor._max_workers = this_bridge_data.max_threads
                             logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
                             if this_bridge_data.dynamic_models:
-                                if (
-                                    this_bridge_data.number_of_dynamic_models - len(this_bridge_data.predefined_models)
-                                    < 3
-                                ):
-                                    logger.warning(
-                                        "You have less than 3 available slots to dynamically load models! "
-                                        "This means there will be very little buffer to swap models dynamically. "
-                                        "to match demand. Please try to only pre-specify as many models "
-                                        "so as to number_of_dynamic_models - len(models_to_load) >= 3"
-                                    )
                                 try:
-                                    models_data = requests.get(
+                                    all_models_data = requests.get(
                                         bridge_data.horde_url + "/api/v2/status/models", timeout=10
                                     ).json()
+                                    # We remove models with no queue from our list of models to load dynamically
+                                    models_data = [md for md in all_models_data if md["queued"] > 0]
                                     models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
                                     top_5 = [x["name"] for x in models_data[:5]]
                                     logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
-                                    dynamic_models = this_bridge_data.predefined_models.copy()
-                                    new_dynamic_models = []  # Only used for logging
+                                    total_models = this_bridge_data.predefined_models.copy()
+                                    new_dynamic_models = []
                                     for model in models_data:
                                         if model["name"] in this_bridge_data.models_to_skip:
                                             continue
-                                        if model["name"] in dynamic_models:
+                                        if model["name"] in total_models:
                                             continue
-                                        dynamic_models.append(model["name"])
+                                        # If we've limited the amount of models to download,
+                                        # then we skip models which are not already downloaded
+                                        if (
+                                            this_model_manager.count_available_models_by_types()
+                                            >= this_bridge_data.max_models_to_download
+                                            and model["name"] not in this_model_manager.get_available_models()
+                                        ):
+                                            continue
+                                        total_models.append(model["name"])
                                         new_dynamic_models.append(model["name"])
-                                        if len(dynamic_models) >= this_bridge_data.number_of_dynamic_models:
+                                        if len(new_dynamic_models) >= this_bridge_data.number_of_dynamic_models:
                                             break
                                     logger.info(
                                         "Dynamically loading new models to attack the relevant queue: {}",
                                         new_dynamic_models,
                                     )
-                                    this_bridge_data.model_names = dynamic_models
+                                    this_bridge_data.model_names = total_models
                                 # pylint: disable=broad-except
                                 except Exception as err:
                                     logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
-
+                                    trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+                                    logger.trace(trace)
                             last_config_reload = time.time()
 
                         if len(this_model_manager.get_loaded_models_names()) == 0:
