@@ -46,20 +46,7 @@ remote_dependencies = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model
 class ModelManager:
     def __init__(self, hf_auth=None, download=True, disable_voodoo=True):
         if download:
-            try:
-                logger.init("Model Reference", status="Downloading")
-                r = requests.get(remote_models)
-                self.models = r.json()
-                r = requests.get(remote_dependencies)
-                self.dependencies = json.load(open("./db_dep.json"))
-                logger.init_ok("Model Reference", status="OK")
-                self.aitemplates = json.load(open("./aitemplate.json"))
-            except Exception:
-                logger.init_err("Model Reference", status="Download Error")
-                self.models = json.load(open("./db.json"))
-                self.dependencies = json.load(open("./db_dep.json"))
-                logger.init_warn("Model Reference", status="Local")
-
+            self.download_model_reference()
         else:
             self.models = json.load(open("./db.json"))
             self.dependencies = json.load(open("./db_dep.json"))
@@ -74,6 +61,21 @@ class ModelManager:
         self.disable_voodoo = disable_voodoo
         self.cuda_devices, self.recommended_gpu = self.detect_available_cuda_arch()
         self.ait_workdir = "./"
+
+    def download_model_reference(self):
+        try:
+            logger.init("Model Reference", status="Downloading")
+            r = requests.get(remote_models)
+            self.models = r.json()
+            r = requests.get(remote_dependencies)
+            self.dependencies = json.load(open("./db_dep.json"))
+            logger.init_ok("Model Reference", status="OK")
+            self.aitemplates = json.load(open("./aitemplate.json"))
+        except Exception:
+            logger.init_err("Model Reference", status="Download Error")
+            self.models = json.load(open("./db.json"))
+            self.dependencies = json.load(open("./db_dep.json"))
+            logger.init_warn("Model Reference", status="Local")
 
     def detect_available_cuda_arch(self):
         # get nvidia sm_xx version

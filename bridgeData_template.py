@@ -7,7 +7,6 @@ worker_name = "My Awesome Instance"
 api_key = "0000000000"
 # Put other users whose prompts you want to prioritize.
 # The owner's username is always included so you don't need to add it here,
-# unless you want it to have lower priority than another user
 priority_usernames = []
 # The amount of power your system can handle
 # 8 means 512*512. Each increase increases the possible resoluion by 64 pixes

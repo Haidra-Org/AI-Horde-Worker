@@ -35,6 +35,7 @@ def bridge(this_model_manager, this_bridge_data):
                 while True:
                     try:
                         if time.time() - last_config_reload > 60:
+                            this_model_manager.download_model_reference()
                             reload_data(this_bridge_data)
                             executor._max_workers = this_bridge_data.max_threads
                             logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
