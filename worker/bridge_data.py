@@ -213,6 +213,7 @@ class BridgeData:
                     f"Model name requested {model} in bridgeData is unknown to us. "
                     "Please check your configuration. Aborting!"
                 )
+                self.model_names.remove(model)
                 continue
             if model in model_manager.get_loaded_models_names():
                 continue
