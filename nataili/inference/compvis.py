@@ -518,11 +518,11 @@ class CompVis:
             x_sample = x_sample.astype(np.uint8)
             image = PIL.Image.fromarray(x_sample)
             if self.safety_checker is not None and self.filter_nsfw:
-                image_features = self.feature_extractor(image, return_tensors="pt").to(self.device)
+                image_features = self.feature_extractor(image, return_tensors="pt").to("cpu")
                 output_images, has_nsfw_concept = self.safety_checker(
                     clip_input=image_features.pixel_values, images=x_sample
                 )
-                if has_nsfw_concept:
+                if has_nsfw_concept and True in has_nsfw_concept:
                     logger.info(f"Image {filename} has NSFW concept")
                     image = PIL.Image.new("RGB", (512, 512))
                     image_dict["censored"] = True

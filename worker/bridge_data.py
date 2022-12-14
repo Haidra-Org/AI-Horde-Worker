@@ -170,8 +170,8 @@ class BridgeData:
                 )
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
-        if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
-            self.model_names.append("safety_checker")
+        # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
+        self.model_names.append("safety_checker")
         self.model_names.append("GFPGAN")
         self.model_names.append("RealESRGAN_x4plus")
         if not self.initialized or previous_api_key != self.api_key:
@@ -263,9 +263,9 @@ class BridgeData:
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
                             "checksum. Please check that your HuggingFace authentication is correct and that "
-                            "you've accepted the model license from the browser."
+                            "you've accepted the model license from the browser. This model will be skipped!"
                         )
-                        sys.exit(1)
+                        self.model_names.remove(model)
             model_manager.init()
         if not self.initialized:
             logger.init_ok("Models", status="OK")

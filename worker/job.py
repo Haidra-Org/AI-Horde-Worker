@@ -169,8 +169,8 @@ class HordeJob:
             censor_reason = "SFW worker"
         censorlist_prompt = self.current_payload["prompt"]
         if "###" in censorlist_prompt:
-            _censorlist_prompt, _censorlist_negprompt = censorlist_prompt.split("###", 1)
-        elif any(word in censorlist_prompt for word in self.bridge_data.censorlist):
+            censorlist_prompt, _censorlist_negprompt = censorlist_prompt.split("###", 1)
+        if any(word in censorlist_prompt for word in self.bridge_data.censorlist):
             use_nsfw_censor = True
             censor_image = self.bridge_data.censor_image_censorlist
             censor_reason = "Censorlist"

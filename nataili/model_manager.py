@@ -476,7 +476,8 @@ class ModelManager:
 
     def load_safety_checker(self, model_name="", gpu_id=0):
         model_path = os.path.dirname(self.get_model_files(model_name)[0]["path"])
-        device = torch.device(f"cuda:{gpu_id}")
+        # device = torch.device(f"cuda:{gpu_id}")
+        device = torch.device("cpu")
         model = StableDiffusionSafetyChecker.from_pretrained(model_path)
         model = model.eval().to(device)
         return {"model": model, "device": device}
