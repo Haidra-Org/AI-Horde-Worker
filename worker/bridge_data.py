@@ -209,11 +209,11 @@ class BridgeData:
         for model in self.model_names:
             model_info = model_manager.get_model(model)
             if not model_info:
-                logger.error(
+                logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
                     "Please check your configuration. Aborting!"
                 )
-                sys.exit(1)
+                continue
             if model in model_manager.get_loaded_models_names():
                 continue
             if not model_manager.validate_model(model, skip_checksum=args.skip_md5):
