@@ -218,11 +218,11 @@ class BridgeData:
             if model in model_manager.get_loaded_models_names():
                 continue
             if not model_manager.validate_model(model, skip_checksum=args.skip_md5):
-                models_exist = False
                 if (
                     model_manager.count_available_models_by_types() + len(not_found_models)
                     < self.max_models_to_download
                 ):
+                    models_exist = False
                     not_found_models.append(model)
             # Diffusers library uses its own internal download mechanism
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
