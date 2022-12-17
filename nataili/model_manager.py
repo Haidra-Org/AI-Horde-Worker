@@ -199,10 +199,7 @@ class ModelManager:
         elif cuda_arch == 75:
             return self.aitemplates[model_name]["config"]["sm75"]["files"]
         elif cuda_arch == 70:
-            logger.warning("CUDA Compute Capability does not support AITemplates")
-            return []
-            # raise ValueError("CUDA Compute Capability not supported")
-            # return self.aitemplates[model_name]['config']['sm70']['files']
+            return self.aitemplates[model_name]["config"]["sm70"]["files"]
         else:
             logger.warning("CUDA Compute Capability does not support AITemplates")
             return []
@@ -216,10 +213,7 @@ class ModelManager:
         elif cuda_arch == 75:
             return self.aitemplates[model_name]["config"]["sm75"]["download"]
         elif cuda_arch == 70:
-            logger.warning("CUDA Compute Capability does not support AITemplates")
-            return []
-            # raise ValueError("CUDA Compute Capability not supported")
-            # return self.aitemplates[model_name]['config']['sm70']['download']
+            return self.aitemplates[model_name]["config"]["sm70"]["download"]
         else:
             logger.warning("CUDA Compute Capability does not support AITemplates")
             return []
