@@ -199,7 +199,10 @@ class HordeJob:
             if "ddim_steps" in self.current_payload:
                 gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
             if "sampler_name" in self.current_payload:
+                # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
+                if self.model_manager.get_model(model).get("baseline") == "stable diffusion 2":
+                    gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
             if "ddim_eta" in self.current_payload:
