@@ -150,6 +150,13 @@ config = {
             "filter": is_msg_log,
         },
         {
+            "sink": "logs/bridge.log",
+            "format": logfmt,
+            "level": "DEBUG",
+            "colorize": False,
+            "retention": "3 days",
+        },
+        {
             "sink": "logs/stats.log",
             "format": logfmt,
             "level": "STATS",
