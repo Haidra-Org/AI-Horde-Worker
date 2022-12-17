@@ -333,7 +333,6 @@ class CompVis:
                     sampler = DPMSolverSampler(model)
                 else:
                     logger.info("Unknown sampler: " + sampler_name)
-                logger.debug([sampler_name, self.model_name])
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
