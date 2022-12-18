@@ -217,7 +217,8 @@ class HordeJob:
             return
         # logger.debug(gen_payload)
         req_type = "txt2img"
-        if source_image:
+        # TODO: Fix img2img for SD2
+        if source_image and self.model_manager.get_model(model).get("baseline") != "stable diffusion 2":
             img_source = None
             img_mask = None
             if source_processing == "img2img":
