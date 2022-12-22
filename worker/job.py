@@ -39,6 +39,7 @@ class HordeJob:
         self.seed = None
         self.image = None
         self.r2_upload = None
+        self.pop = None
         self.submit_dict = {}
         self.headers = {"apikey": self.bridge_data.api_key}
         self.available_models = self.model_manager.get_loaded_models_names()
@@ -103,6 +104,7 @@ class HordeJob:
             return None
         try:
             pop = pop_req.json()
+            self.pop = pop # I'll use it properly later
         except json.decoder.JSONDecodeError:
             logger.error(
                 f"Could not decode response from {self.bridge_data.horde_url} as json. "
