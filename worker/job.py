@@ -104,7 +104,7 @@ class HordeJob:
             return None
         try:
             pop = pop_req.json()
-            self.pop = pop # I'll use it properly later
+            self.pop = pop  # I'll use it properly later
         except json.decoder.JSONDecodeError:
             logger.error(
                 f"Could not decode response from {self.bridge_data.horde_url} as json. "
