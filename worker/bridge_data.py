@@ -34,6 +34,7 @@ class BridgeData:
         self.priority_usernames = list(filter(lambda a: a, os.environ.get("HORDE_PRIORITY_USERNAMES", "").split(",")))
         self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.max_threads = int(os.environ.get("HORDE_MAX_THREADS", 1))
+        self.queue_size = int(os.environ.get("HORDE_QUEUE_SIZE", 0))
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.censor_nsfw = os.environ.get("HORDE_CENSOR", "false") == "true"
         self.blacklist = list(filter(lambda a: a, os.environ.get("HORDE_BLACKLIST", "").split(",")))
@@ -114,6 +115,10 @@ class BridgeData:
             except AttributeError:
                 pass
             try:
+                self.queue_size = bd.queue_size
+            except AttributeError:
+                pass
+            try:
                 self.dynamic_models = bd.dynamic_models
             except AttributeError:
                 pass
@@ -143,6 +148,8 @@ class BridgeData:
             self.max_power = args.max_power
         if args.max_power:
             self.max_threads = args.max_threads
+        if args.queue_size:
+            self.queue_size = args.queue_size
         if args.model:
             self.model = [args.model]
         if args.sfw:

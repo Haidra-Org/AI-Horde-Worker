@@ -15,7 +15,6 @@ from PIL import Image, UnidentifiedImageError
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
-from nataili.util.cache import torch_gc
 from worker.enums import JobStatus
 from worker.post_process import post_process
 from worker.stats import bridge_stats
@@ -139,6 +138,7 @@ class HordeJob:
 
     @logger.catch(reraise=True)
     def start_job(self, pop=None):
+        logger.debug("Starting job in threadpool")
         """Starts a job from a pop request"""
         # Pop new request from the Horde
         if pop is None:
@@ -331,8 +331,9 @@ class HordeJob:
                 filter_nsfw=use_nsfw_censor,
             )
         try:
+            logger.debug("Starting generation...")
             generator.generate(**gen_payload)
-            torch_gc()
+            logger.debug("Finished generation...")
         except RuntimeError as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -350,6 +351,7 @@ class HordeJob:
         if generator.images[0].get("censored", False):
             logger.debug(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
+        logger.debug("censor done...")
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
@@ -369,9 +371,11 @@ class HordeJob:
                     self.upload_quality = 45
                 else:
                     self.upload_quality = 75
+        logger.debug("post-processing done...")
         # Not a daemon, so that it can survive after this class is garbage collected
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
+        logger.debug("Finished job in threadpool")
 
     def submit_job(self):
         """Submits the job to the server to earn our kudos."""

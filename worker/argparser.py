@@ -50,6 +50,12 @@ arg_parser.add_argument(
     help="How much power this instance has to generate pictures. Min: 2",
 )
 arg_parser.add_argument(
+    "--queue_size",
+    type=int,
+    required=False,
+    help="How many requests to keep in the queue. Min: 0",
+)
+arg_parser.add_argument(
     "--sfw",
     action="store_true",
     required=False,
