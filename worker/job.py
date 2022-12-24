@@ -43,7 +43,7 @@ class HordeJob:
         self.submit_dict = {}
         self.headers = {"apikey": self.bridge_data.api_key}
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus"]:
+        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.gen_dict = {
@@ -57,7 +57,7 @@ class HordeJob:
             "allow_painting": self.bridge_data.allow_painting,
             "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
             "threads": self.bridge_data.max_threads,
-            "bridge_version": 8,
+            "bridge_version": 9,
         }
 
     def is_finished(self):

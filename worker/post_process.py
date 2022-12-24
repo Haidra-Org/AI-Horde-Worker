@@ -1,12 +1,10 @@
 """Post process images"""
 from nataili.postprocess.gfpgan import gfpgan
+from nataili.upscalers.codeformers import CodeFormers
 from nataili.upscalers.realesrgan import realesrgan
 from nataili.util.logger import logger
 
-KNOWN_POST_PROCESSORS = {
-    "GFPGAN": gfpgan,
-    "RealESRGAN_x4plus": realesrgan,
-}
+KNOWN_POST_PROCESSORS = {"GFPGAN": gfpgan, "RealESRGAN_x4plus": realesrgan, "CodeFormers": CodeFormers}
 
 
 def post_process(model, image, model_manager):
@@ -34,4 +32,9 @@ def post_process(model, image, model_manager):
     )
 
     post_processor(input_image=image, strength=1.0)
+    # FIXME: We need to unload cofeformers every time as it seems to be causing exponential processing times
+    # if the same model is re-used.
+    if model == "CodeFormers":
+        logger.init(f"{model}", status="Unloading")
+        model_manager.unload_model(model)
     return post_processor.output_images[0]

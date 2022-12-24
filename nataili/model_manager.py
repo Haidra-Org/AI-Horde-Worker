@@ -10,6 +10,7 @@ import open_clip
 import requests
 import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
+from codeformer import CodeFormer
 from diffusers import StableDiffusionInpaintPipeline
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from gfpgan import GFPGANer
@@ -356,6 +357,13 @@ class ModelManager:
         )
         return {"model": model, "device": device}
 
+    def load_codeformers(self, model_name="", gpu_id=0):
+
+        # model_path = self.get_model_files(model_name)[0]["path"]
+        device = torch.device(f"cuda:{gpu_id}")
+        model = CodeFormer().cuda()
+        return {"model": model, "device": device}
+
     def load_blip(
         self,
         model_name="",
@@ -449,6 +457,9 @@ class ModelManager:
             return True
         elif self.models[model_name]["type"] == "gfpgan":
             self.loaded_models[model_name] = self.load_gfpgan(model_name, gpu_id)
+            return True
+        elif self.models[model_name]["type"] == "CodeFormers":
+            self.loaded_models[model_name] = self.load_codeformers(model_name, gpu_id)
             return True
         elif self.models[model_name]["type"] == "blip":
             self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512)

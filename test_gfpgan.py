@@ -1,3 +1,5 @@
+import time
+
 import PIL
 
 from nataili.model_manager import ModelManager
@@ -28,5 +30,8 @@ facefixer = gfpgan(
     "./",
 )
 
-results = facefixer(input_image=image, strength=1.0)
-images = facefixer.output_images
+for iter in range(1):
+    tick = time.time()
+    results = facefixer(input_image=image, strength=1.0)
+    images = facefixer.output_images
+    logger.init_ok(f"Job Completed. Took {time.time() - tick} seconds", status="Success")
