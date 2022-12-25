@@ -1,6 +1,6 @@
 """Post process images"""
 from nataili.postprocess.gfpgan import gfpgan
-from nataili.upscalers.codeformers import CodeFormers
+from nataili.postprocess.codeformers import CodeFormers
 from nataili.upscalers.realesrgan import realesrgan
 from nataili.util.logger import logger
 

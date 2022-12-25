@@ -3,7 +3,7 @@ import time
 import PIL
 
 from nataili.model_manager import ModelManager
-from nataili.upscalers.codeformers import CodeFormers
+from nataili.postprocess.codeformers import CodeFormers
 from nataili.util.logger import logger
 
 image = PIL.Image.open("./01.png").convert("RGB")
