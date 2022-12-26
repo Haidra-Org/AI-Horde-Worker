@@ -120,7 +120,6 @@ def bridge(this_model_manager, this_bridge_data):
                             if job.done():
                                 if job.exception(timeout=1):
                                     logger.error("Job failed with exception, {}", job.exception())
-                                    logger.trace("Job Payload {}", job.pop)
                                     logger.exception(job.exception())
                                 run_count += 1
                                 logger.debug(
