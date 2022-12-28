@@ -6,7 +6,6 @@ import random
 import sys
 import threading
 
-import bridgeData as bd
 import requests
 from PIL import Image
 
@@ -72,6 +71,7 @@ class BridgeData:
         previous_api_key = self.api_key
         try:
             # TODO - move this to a yaml file
+            import bridgeData as bd
             importlib.reload(bd)
             self.api_key = bd.api_key
             self.worker_name = bd.worker_name
