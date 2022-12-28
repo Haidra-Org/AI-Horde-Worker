@@ -163,6 +163,8 @@ def bridge(this_model_manager, this_bridge_data):
 
 # Helper functions
 def pop_job(this_model_manager, this_bridge_data):
+    # TODO: This class should be stored somewhere we can retrieve it,
+    # so that I can read some internal properties later.
     new_job = HordeJob(this_model_manager, this_bridge_data)
     pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
     if pop:

@@ -181,5 +181,11 @@ arg_parser.add_argument(
     default=False,
     help=("If specified this worker will not use dynamic models."),
 )
+arg_parser.add_argument(
+    "--disable_post_processing",
+    action="store_true",
+    default=False,
+    help=("If specified this worker will not load post-processors."),
+)
 
 args = arg_parser.parse_args()

@@ -35,10 +35,12 @@ allow_img2img = True
 allow_painting = True
 # If set to False, this worker will no longer pick img2img jobs from unsafe IPs
 allow_unsafe_ip = True
+# If set to false, this worker will not load post-processors like Codeformers and will not pick up jobs which require post-processing 
+# In the future this will be adjusted so that post-processing can be split from image generation
+allow_post_processing = True
 # If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
 # Note this ultimately overrides the models_to_load list
 dynamic_models = True
-
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
 number_of_dynamic_models = 3
 # The maximum amount of models to download dynamically for this worker. Increase this amount of you have plenty of space. Keep it low if you do not
