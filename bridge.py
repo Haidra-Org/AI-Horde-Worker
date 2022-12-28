@@ -32,8 +32,11 @@ def bridge(this_model_manager, this_bridge_data):
     try:
         should_stop = False
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
+            should_restart = False
             with ThreadPoolExecutor(max_workers=this_bridge_data.max_threads) as executor:
                 while True:
+                    if should_restart:
+                        break
                     try:
                         if time.time() - last_config_reload > 60:
                             this_model_manager.download_model_reference()
@@ -109,37 +112,37 @@ def bridge(this_model_manager, this_bridge_data):
                             if pop:
                                 job_model = pop.get("model", "Unknown")
                                 logger.debug("Starting job for model: {}", job_model)
-                                running_jobs.append((executor.submit(job.start_job, pop), time.monotonic()))
+                                running_jobs.append((executor.submit(job.start_job, pop), time.monotonic(), job))
                                 logger.debug("job submitted")
                             else:
                                 logger.debug("No job to start")
 
                         # Check if any jobs are done
-                        for (job, start_time) in running_jobs:
+                        for (job_thread, start_time, job) in running_jobs:
                             runtime = time.monotonic() - start_time
-                            if job.done():
-                                if job.exception(timeout=1):
-                                    logger.error("Job failed with exception, {}", job.exception())
-                                    logger.exception(job.exception())
+                            if job_thread.done():
+                                if job_thread.exception(timeout=1):
+                                    logger.error("Job failed with exception, {}", job_thread.exception())
+                                    logger.exception(job_thread.exception())
                                 run_count += 1
                                 logger.debug(
                                     f"Job finished successfully in {runtime:.3f}s (Total Completed: {run_count})"
                                 )
-                                running_jobs.remove((job, start_time))
+                                running_jobs.remove((job_thread, start_time, job))
                                 continue
 
                             # check if any job has run for more than 180 seconds
-                            if job.running() and runtime > 180:
+                            if job_thread.running() and job.is_stale():
                                 logger.warning(
-                                    "Restarting all jobs, as a job was running "
-                                    f"for more than 180 seconds: {runtime:.3f}s"
+                                    "Restarting all jobs, as a job is stale "
+                                    f": {runtime:.3f}s"
                                 )
-                                for (inner_job, inner_start_time) in running_jobs:  # Sometimes it's already removed
-                                    running_jobs.remove((inner_job, inner_start_time))
-                                    job.cancel()
+                                for (inner_job_thread, inner_start_time, inner_job) in running_jobs:  # Sometimes it's already removed
+                                    running_jobs.remove((inner_job_thread, inner_start_time, inner_job))
+                                    job_thread.cancel()
                                 executor.shutdown(wait=False)
+                                should_restart = True
                                 break
-
                         time.sleep(0.02)  # Give the CPU a break
                     except KeyboardInterrupt:
                         should_stop = True

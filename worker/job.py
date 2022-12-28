@@ -36,6 +36,7 @@ class HordeJob:
         self.skipped_info = None
         self.upload_quality = 95
         self.start_time = time.time()
+        self.stale_time = None
         self.seed = None
         self.image = None
         self.r2_upload = None
@@ -74,7 +75,11 @@ class HordeJob:
 
     def is_stale(self):
         """Check if the job is stale"""
-        return time.time() - self.start_time > 1200
+        if time.time() - self.start_time > 1200:
+            return True
+        if not self.stale_time:
+            return False
+        return time.time() > self.stale_time
 
     def get_job_from_server(self):
         """Get a job from the horde"""
@@ -153,9 +158,10 @@ class HordeJob:
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return
-
         self.current_id = pop["id"]
         self.current_payload = pop["payload"]
+        # We allow a generation a plentiful 3 seconds per step before we consider it stale
+        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         self.r2_upload = pop.get("r2_upload", False)
         self.status = JobStatus.WORKING
         # Generate Image
