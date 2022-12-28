@@ -133,11 +133,12 @@ def bridge(this_model_manager, this_bridge_data):
 
                             # check if any job has run for more than 180 seconds
                             if job_thread.running() and job.is_stale():
-                                logger.warning(
-                                    "Restarting all jobs, as a job is stale "
-                                    f": {runtime:.3f}s"
-                                )
-                                for (inner_job_thread, inner_start_time, inner_job) in running_jobs:  # Sometimes it's already removed
+                                logger.warning("Restarting all jobs, as a job is stale " f": {runtime:.3f}s")
+                                for (
+                                    inner_job_thread,
+                                    inner_start_time,
+                                    inner_job,
+                                ) in running_jobs:  # Sometimes it's already removed
                                     running_jobs.remove((inner_job_thread, inner_start_time, inner_job))
                                     job_thread.cancel()
                                 executor.shutdown(wait=False)
