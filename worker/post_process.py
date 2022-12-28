@@ -32,9 +32,4 @@ def post_process(model, image, model_manager):
     )
 
     post_processor(input_image=image, strength=1.0)
-    # FIXME: We need to unload cofeformers every time as it seems to be causing exponential processing times
-    # if the same model is re-used.
-    if model == "CodeFormers":
-        logger.init(f"{model}", status="Unloading")
-        model_manager.unload_model(model)
     return post_processor.output_images[0]

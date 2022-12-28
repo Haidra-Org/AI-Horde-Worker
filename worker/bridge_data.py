@@ -181,8 +181,7 @@ class BridgeData:
         self.model_names.append("safety_checker")
         self.model_names.append("GFPGAN")
         self.model_names.append("RealESRGAN_x4plus")
-        # We need to load this dynamically only when we need it
-        # self.model_names.append("CodeFormers")
+        self.model_names.append("CodeFormers")
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
