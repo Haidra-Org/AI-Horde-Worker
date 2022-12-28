@@ -57,6 +57,7 @@ class HordeJob:
             "allow_painting": self.bridge_data.allow_painting,
             "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
             "threads": self.bridge_data.max_threads,
+            "allow_post_processing": self.bridge_data.allow_post_processing,
             "bridge_version": 9,
         }
 

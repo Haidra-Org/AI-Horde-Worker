@@ -41,6 +41,7 @@ class BridgeData:
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
+        self.allow_post_processing = os.environ.get("allow_post_processing", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
@@ -72,6 +73,7 @@ class BridgeData:
         try:
             # TODO - move this to a yaml file
             import bridgeData as bd
+
             importlib.reload(bd)
             self.api_key = bd.api_key
             self.worker_name = bd.worker_name
@@ -134,6 +136,10 @@ class BridgeData:
                 self.model_names = bd.models_to_load
             else:
                 self.predefined_models = bd.models_to_load
+            try:
+                self.allow_post_processing = bd.allow_post_processing
+            except AttributeError:
+                pass
         except (ImportError, AttributeError) as err:
             logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.api_key:
@@ -168,6 +174,8 @@ class BridgeData:
             self.allow_unsafe_ip = args.allow_unsafe_ip
         if args.disable_dynamic_models:
             self.dynamic_models = False
+        if args.disable_post_processing:
+            self.allow_post_processing = False
         if self.dynamic_models:
             try:
                 from creds import hf_password, hf_username  # noqa F401
@@ -179,9 +187,10 @@ class BridgeData:
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
         self.model_names.append("safety_checker")
-        self.model_names.append("GFPGAN")
-        self.model_names.append("RealESRGAN_x4plus")
-        self.model_names.append("CodeFormers")
+        if self.allow_post_processing:
+            self.model_names.append("GFPGAN")
+            self.model_names.append("RealESRGAN_x4plus")
+            self.model_names.append("CodeFormers")
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
