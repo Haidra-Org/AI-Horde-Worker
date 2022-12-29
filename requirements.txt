@@ -18,7 +18,7 @@ omegaconf
 Jinja2
 
 #diffusers==0.4.1
-diffusers==0.6.0
+diffusers==0.11.1
 
 # Img2text
 ftfy

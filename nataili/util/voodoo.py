@@ -80,6 +80,28 @@ def push_model_to_plasma(model: torch.nn.Module) -> ray.ObjectRef:
     return ref
 
 
+@contextlib.contextmanager
+def load_diffusers_pipeline_from_plasma(ref, device="cuda"):
+    pipe, modules = ray.get(ref)
+    for name, weights in modules.items():
+        replace_tensors(getattr(pipe, name), weights, device=device)
+    pipe.to(device)
+    yield pipe
+    torch.cuda.empty_cache()
+
+
+def push_diffusers_pipeline_to_plasma(pipe) -> ray.ObjectRef:
+    modules = {}
+    components = pipe.components
+    for name, component in components.items():
+        if isinstance(component, torch.nn.Module):
+            skeleton, weights = extract_tensors(component)
+            setattr(pipe, name, skeleton)
+            modules[name] = weights
+    ref = ray.put((pipe, modules))
+    return ref
+
+
 def init_ait_module(
     model_name,
     workdir,

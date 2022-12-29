@@ -259,6 +259,12 @@ class HordeJob:
                 self.status = JobStatus.FAULTED
                 return
                 # TODO: Send faulted
+        if model != "stable_diffusion_inpainting" and req_type == "inpainting":
+            # Try to use inpainting model if available
+            if "stable_diffusion_inpainting" in self.available_models:
+                model = "stable_diffusion_inpainting"
+            else:
+                req_type = "img2img"
         logger.debug(f"{req_type} ({model}) request with id {self.current_id} picked up. Initiating work...")
         try:
             safety_checker = (
@@ -338,6 +344,7 @@ class HordeJob:
                 self.model_manager.loaded_models[model]["device"],
                 "bridge_generations",
                 filter_nsfw=use_nsfw_censor,
+                disable_voodoo=self.bridge_data.disable_voodoo.active,
             )
         try:
             logger.debug("Starting generation...")

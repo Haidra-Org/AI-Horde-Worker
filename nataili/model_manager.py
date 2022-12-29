@@ -24,7 +24,7 @@ from ldm.util import instantiate_from_config
 from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
 
 try:
-    from nataili.util.voodoo import init_ait_module, push_model_to_plasma
+    from nataili.util.voodoo import init_ait_module, push_diffusers_pipeline_to_plasma, push_model_to_plasma
 except ModuleNotFoundError as e:
     from nataili import disable_voodoo
 
@@ -416,18 +416,27 @@ class ModelManager:
         data_lists = self.load_data_lists(data_path=data_path)
         return {"model": model, "device": device, "preprocess": preprocess, "data_lists": data_lists}
 
-    def load_diffuser(self, model_name=""):
+    def load_diffuser(self, model_name="", precision="half", gpu_id=0):
         model_path = self.models[model_name]["hf_path"]
+        device = torch.device(f"cuda:{gpu_id}")
+
         pipe = StableDiffusionInpaintPipeline.from_pretrained(
             model_path,
-            revision="fp16",
-            torch_dtype=torch.float16,
+            revision="fp16" if precision == "half" else None,
+            torch_dtype=torch.float16 if precision == "half" else None,
             use_auth_token=self.models[model_name]["hf_auth"],
         )
-
         pipe.enable_attention_slicing()
-        pipe.to("cuda")
-        return {"model": pipe, "device": "cuda"}
+
+        if not self.disable_voodoo:
+            logger.debug(f"Doing voodoo on {model_name}")
+            pipe = push_diffusers_pipeline_to_plasma(pipe)
+        else:
+            pipe.to(device)
+
+        torch_gc()
+
+        return {"model": pipe, "device": device}
 
     def load_ait(self):
         self.loaded_models["ait"] = {}

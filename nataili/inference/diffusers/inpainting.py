@@ -7,11 +7,18 @@ import PIL.ImageOps
 import torch
 from slugify import slugify
 
+from nataili import disable_voodoo
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+
+try:
+    from nataili.util.voodoo import load_diffusers_pipeline_from_plasma, performance
+except ModuleNotFoundError as e:
+    if not disable_voodoo.active:
+        raise e
 
 
 class inpainting:
@@ -27,6 +34,7 @@ class inpainting:
         verify_input=True,
         auto_cast=True,
         filter_nsfw=False,
+        disable_voodoo=False,
     ):
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -43,6 +51,7 @@ class inpainting:
         self.stats = ""
         self.images = []
         self.filter_nsfw = filter_nsfw
+        self.disable_voodoo = disable_voodoo
 
     def resize_image(self, resize_mode, im, width, height):
         LANCZOS = PIL.Image.Resampling.LANCZOS if hasattr(PIL.Image, "Resampling") else PIL.Image.LANCZOS
@@ -98,6 +107,7 @@ class inpainting:
 
         return res
 
+    @performance
     def generate(
         self,
         prompt: str,
@@ -112,11 +122,6 @@ class inpainting:
         width=512,
         save_individual_images: bool = True,
     ):
-
-        safety_checker = None
-        if not self.filter_nsfw:
-            safety_checker = self.pipe.safety_checker
-            self.pipe.safety_checker = None
         seed = seed_to_int(seed)
         inpaint_img = self.resize_image("resize", inpaint_img, width, height)
 
@@ -160,24 +165,52 @@ class inpainting:
 
                 generator = torch.Generator(device=self.device).manual_seed(seed)
 
-                x_samples = self.pipe(
-                    prompt=prompt,
-                    image=inpaint_img,
-                    mask_image=inpaint_mask,
-                    guidance_scale=cfg_scale,
-                    num_inference_steps=ddim_steps,
-                    generator=generator,
-                    num_images_per_prompt=n_iter,
-                    width=width,
-                    height=height,
-                ).images
+                if not self.disable_voodoo:
+                    with load_diffusers_pipeline_from_plasma(self.pipe, self.device) as pipe:
+                        safety_checker = None
+                        if not self.filter_nsfw:
+                            safety_checker = pipe.safety_checker
+                            pipe.safety_checker = None
+
+                        x_samples = pipe(
+                            prompt=prompt,
+                            image=inpaint_img,
+                            mask_image=inpaint_mask,
+                            guidance_scale=cfg_scale,
+                            num_inference_steps=ddim_steps,
+                            generator=generator,
+                            num_images_per_prompt=n_iter,
+                            width=width,
+                            height=height,
+                        ).images
+
+                        if safety_checker:
+                            pipe.safety_checker = safety_checker
+                else:
+                    safety_checker = None
+                    if not self.filter_nsfw:
+                        safety_checker = self.pipe.safety_checker
+                        self.pipe.safety_checker = None
+
+                    x_samples = self.pipe(
+                        prompt=prompt,
+                        image=inpaint_img,
+                        mask_image=inpaint_mask,
+                        guidance_scale=cfg_scale,
+                        num_inference_steps=ddim_steps,
+                        generator=generator,
+                        num_images_per_prompt=n_iter,
+                        width=width,
+                        height=height,
+                    ).images
+
+                    if safety_checker:
+                        self.pipe.safety_checker = safety_checker
 
                 for i, x_sample in enumerate(x_samples):
                     image_dict = {"seed": seed, "image": x_sample}
 
                     self.images.append(image_dict)
-                    if safety_checker:
-                        self.pipe.safety_checker = safety_checker
 
                     if save_individual_images:
                         sanitized_prompt = slugify(prompt)
