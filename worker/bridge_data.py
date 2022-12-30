@@ -41,7 +41,8 @@ class BridgeData:
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
-        self.allow_post_processing = os.environ.get("allow_post_processing", "true") == "true"
+        self.allow_post_processing = os.environ.get("ALLOW_POST_PROCESSING", "true") == "true"
+        self.require_upfront_kudos = os.environ.get("REQUIRE_UPFRONT_KUDOS", "false") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
@@ -138,6 +139,10 @@ class BridgeData:
                 self.predefined_models = bd.models_to_load
             try:
                 self.allow_post_processing = bd.allow_post_processing
+            except AttributeError:
+                pass
+            try:
+                self.require_upfront_kudos = bd.require_upfront_kudos
             except AttributeError:
                 pass
         except (ImportError, AttributeError) as err:

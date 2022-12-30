@@ -35,9 +35,13 @@ allow_img2img = True
 allow_painting = True
 # If set to False, this worker will no longer pick img2img jobs from unsafe IPs
 allow_unsafe_ip = True
-# If set to false, this worker will not load post-processors like Codeformers and will not pick up jobs which require post-processing 
+# If set to False, this worker will not load post-processors like Codeformers and will not pick up jobs which require post-processing 
 # In the future this will be adjusted so that post-processing can be split from image generation
 allow_post_processing = True
+# If set to True, this worker will not only pick up jobs where the user has the required kudos upfront. 
+# Effectively this will exclude all anonymous accounts, and registered accounts who haven't contributed.
+# Users in priority_usernames and trusted users will bypass this restriction
+require_upfront_kudos = False
 # If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
 # Note this ultimately overrides the models_to_load list
 dynamic_models = True

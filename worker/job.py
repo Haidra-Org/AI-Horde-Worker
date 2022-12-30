@@ -59,6 +59,7 @@ class HordeJob:
             "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
             "threads": self.bridge_data.max_threads,
             "allow_post_processing": self.bridge_data.allow_post_processing,
+            "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": 9,
         }
 
