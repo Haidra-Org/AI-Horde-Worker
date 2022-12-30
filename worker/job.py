@@ -59,6 +59,7 @@ class HordeJob:
             "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
             "threads": self.bridge_data.max_threads,
             "allow_post_processing": self.bridge_data.allow_post_processing,
+            "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": 9,
         }
 
@@ -355,8 +356,9 @@ class HordeJob:
             stack_payload["request_type"] = req_type
             stack_payload["model"] = model
             logger.error(
-                "Something went wrong when processing request.\n"
-                f"Please inform the developers of the below payload:\n{stack_payload}"
+                "Something went wrong when processing request. "
+                "Please check your trace.log file for the full stack trace. "
+                f"Payload: {stack_payload}"
             )
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
