@@ -13,6 +13,7 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from nataili.inference.compvis import CompVis
+from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
 from worker.enums import JobStatus
@@ -110,8 +111,7 @@ class HordeJob:
         if self.status == JobStatus.FAULTED:
             return None
         try:
-            pop = pop_req.json()
-            self.pop = pop  # I'll use it properly later
+            self.pop = pop_req.json()  # I'll use it properly later
         except json.decoder.JSONDecodeError:
             logger.error(
                 f"Could not decode response from {self.bridge_data.horde_url} as json. "
@@ -124,15 +124,15 @@ class HordeJob:
             logger.warning(
                 f"During gen pop, server {self.bridge_data.horde_url} "
                 f"responded with status code {pop_req.status_code}: "
-                f"{pop['message']}. Waiting for 10 seconds..."
+                f"{self.pop['message']}. Waiting for 10 seconds..."
             )
-            if "errors" in pop:
-                logger.warning(f"Detailed Request Errors: {pop['errors']}")
+            if "errors" in self.pop:
+                logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
             time.sleep(10)
             self.status = JobStatus.FAULTED
             return None
-        if not pop.get("id"):
-            job_skipped_info = pop.get("skipped")
+        if not self.pop.get("id"):
+            job_skipped_info = self.pop.get("skipped")
             if job_skipped_info and len(job_skipped_info):
                 self.skipped_info = f" Skipped Info: {job_skipped_info}."
             else:
@@ -143,32 +143,31 @@ class HordeJob:
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return None
-        return pop
+        self.current_model = self.pop.get("model", self.available_models[0])
+        return self.pop
 
     @logger.catch(reraise=True)
-    def start_job(self, pop=None):
+    def start_job(self):
         logger.debug("Starting job in threadpool")
         """Starts a job from a pop request"""
         # Pop new request from the Horde
-        if pop is None:
-            pop = self.get_job_from_server()
+        if self.pop is None:
+            self.pop = self.get_job_from_server()
 
-        if pop is None:
+        if self.pop is None:
             logger.error(
                 f"Something has gone wrong with {self.bridge_data.horde_url}. Please inform its administrator!"
             )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
             return
-        self.current_id = pop["id"]
-        self.current_payload = pop["payload"]
+        self.current_id = self.pop["id"]
+        self.current_payload = self.pop["payload"]
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
-        self.r2_upload = pop.get("r2_upload", False)
+        self.r2_upload = self.pop.get("r2_upload", False)
         self.status = JobStatus.WORKING
         # Generate Image
-        model = pop.get("model", self.available_models[0])
-        self.current_model = model
         # logger.info([self.current_id,self.current_payload])
         use_nsfw_censor = False
         censor_image = None
@@ -190,9 +189,9 @@ class HordeJob:
             censor_reason = "Requested"
         # use_gfpgan = self.current_payload.get("use_gfpgan", True)
         # use_real_esrgan = self.current_payload.get("use_real_esrgan", False)
-        source_processing = pop.get("source_processing")
-        source_image = pop.get("source_image")
-        source_mask = pop.get("source_mask")
+        source_processing = self.pop.get("source_processing")
+        source_image = self.pop.get("source_image")
+        source_mask = self.pop.get("source_mask")
         # These params will always exist in the payload from the horde
         try:
             gen_payload = {
@@ -211,7 +210,7 @@ class HordeJob:
             if "sampler_name" in self.current_payload:
                 # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                if self.model_manager.get_model(model).get("baseline") == "stable diffusion 2":
+                if self.model_manager.get_model(self.current_model).get("baseline") == "stable diffusion 2":
                     gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
@@ -228,7 +227,7 @@ class HordeJob:
         # logger.debug(gen_payload)
         req_type = "txt2img"
         # TODO: Fix img2img for SD2
-        if source_image and self.model_manager.get_model(model).get("baseline") != "stable diffusion 2":
+        if source_image and self.model_manager.get_model(self.current_model).get("baseline") != "stable diffusion 2":
             img_source = None
             img_mask = None
             if source_processing == "img2img":
@@ -238,35 +237,50 @@ class HordeJob:
             if source_processing == "outpainting":
                 req_type = "outpainting"
         # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
-        if model == "stable_diffusion_inpainting" and req_type not in [
+        if self.current_model == "stable_diffusion_inpainting" and req_type not in [
             "inpainting",
             "outpainting",
         ]:
             # Try to find any other model to do text2img or img2img
             for available_model in self.available_models:
                 if available_model != "stable_diffusion_inpainting":
-                    model = available_model
+                    self.current_model = available_model
             # if the model persists as inpainting for text2img or img2img, we abort.
-            if model == "stable_diffusion_inpainting":
+            if self.current_model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
-                if len(pop.get("source_image", "")) > 10:
-                    pop["source_image"] = len(pop.get("source_image", ""))
-                if len(pop.get("source_mask", "")) > 10:
-                    pop["source_mask"] = len(pop.get("source_mask", ""))
+                if len(self.pop.get("source_image", "")) > 10:
+                    self.pop["source_image"] = len(self.pop.get("source_image", ""))
+                if len(self.pop.get("source_mask", "")) > 10:
+                    self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
                 logger.error(
                     "Received an non-inpainting request for inpainting model. This shouldn't happen. "
-                    f"Inform the developer. Current payload {pop}"
+                    f"Inform the developer. Current payload {self.pop}"
                 )
                 self.status = JobStatus.FAULTED
                 return
                 # TODO: Send faulted
-        if model != "stable_diffusion_inpainting" and req_type == "inpainting":
+        # Reject jobs for SD2Depth if not img2img
+        if self.current_model == "Stable Diffusion 2 Depth" and req_type != "img2img":
+            # We remove the base64 from the prompt to avoid flooding the output on the error
+            if len(self.pop.get("source_image", "")) > 10:
+                self.pop["source_image"] = len(self.pop.get("source_image", ""))
+            if len(self.pop.get("source_mask", "")) > 10:
+                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            logger.error(
+                "Received an non-img2img request for SD2Depth model. This shouldn't happen. "
+                f"Inform the developer. Current payload {self.pop}"
+            )
+            self.status = JobStatus.FAULTED
+            return
+        if self.current_model != "stable_diffusion_inpainting" and req_type == "inpainting":
             # Try to use inpainting model if available
             if "stable_diffusion_inpainting" in self.available_models:
-                model = "stable_diffusion_inpainting"
+                self.current_model = "stable_diffusion_inpainting"
             else:
                 req_type = "img2img"
-        logger.debug(f"{req_type} ({model}) request with id {self.current_id} picked up. Initiating work...")
+        logger.debug(
+            f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work..."
+        )
         try:
             safety_checker = (
                 self.model_manager.loaded_models["safety_checker"]["model"]
@@ -309,17 +323,34 @@ class HordeJob:
                 gen_payload["init_img"] = img_source
                 if img_mask:
                     gen_payload["init_mask"] = img_mask
-            generator = CompVis(
-                model=self.model_manager.loaded_models[model]["model"],
-                device=self.model_manager.loaded_models[model]["device"],
-                model_name=model,
-                output_dir="bridge_generations",
-                load_concepts=True,
-                concepts_dir="models/custom/sd-concepts-library",
-                safety_checker=safety_checker,
-                filter_nsfw=use_nsfw_censor,
-                disable_voodoo=self.bridge_data.disable_voodoo.active,
-            )
+            if self.current_model == "Stable Diffusion 2 Depth":
+                if "save_grid" in gen_payload:
+                    del gen_payload["save_grid"]
+                if "sampler_name" in gen_payload:
+                    del gen_payload["sampler_name"]
+                if "init_mask" in gen_payload:
+                    del gen_payload["init_mask"]
+                generator = Depth2Img(
+                    pipe=self.model_manager.loaded_models[self.current_model]["model"],
+                    device=self.model_manager.loaded_models[self.current_model]["device"],
+                    output_dir="bridge_generations",
+                    load_concepts=True,
+                    concepts_dir="models/custom/sd-concepts-library",
+                    filter_nsfw=use_nsfw_censor,
+                    disable_voodoo=self.bridge_data.disable_voodoo.active,
+                )
+            else:
+                generator = CompVis(
+                    model=self.model_manager.loaded_models[self.current_model]["model"],
+                    device=self.model_manager.loaded_models[self.current_model]["device"],
+                    model_name=self.current_model,
+                    output_dir="bridge_generations",
+                    load_concepts=True,
+                    concepts_dir="models/custom/sd-concepts-library",
+                    safety_checker=safety_checker,
+                    filter_nsfw=use_nsfw_censor,
+                    disable_voodoo=self.bridge_data.disable_voodoo.active,
+                )
         else:
             # These variables do not exist in the outpainting implementation
             if "save_grid" in gen_payload:
@@ -341,8 +372,8 @@ class HordeJob:
             if img_mask:
                 gen_payload["inpaint_mask"] = img_mask
             generator = inpainting(
-                self.model_manager.loaded_models[model]["model"],
-                self.model_manager.loaded_models[model]["device"],
+                self.model_manager.loaded_models[self.current_model]["model"],
+                self.model_manager.loaded_models[self.current_model]["device"],
                 "bridge_generations",
                 filter_nsfw=use_nsfw_censor,
                 disable_voodoo=self.bridge_data.disable_voodoo.active,
@@ -354,7 +385,7 @@ class HordeJob:
         except RuntimeError as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
-            stack_payload["model"] = model
+            stack_payload["model"] = self.current_model
             logger.error(
                 "Something went wrong when processing request. "
                 "Please check your trace.log file for the full stack trace. "

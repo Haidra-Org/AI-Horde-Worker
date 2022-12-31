@@ -1,791 +1,3322 @@
 {
-  "stable_diffusion_2.0": {
-		"name": "stable_diffusion_2.0",
-		"type": "ckpt",
-		"description": "Generalist AI image generating model. The baseline for all finetuned models.",
-		"version": "2.0",
-		"style": "generalist",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/ldm/stable-diffusion-v2/model_2_0.ckpt",
-					"md5sum": "48cb3980ec03a370b68bd0a9d8eefece"
-				},
-				{
-					"path": "configs/stable-diffusion/v2-inference-v.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model_2_0.ckpt",
-					"file_path": "models/ldm/stable-diffusion-v2",
-					"file_url": "https://huggingface.co/stabilityai/stable-diffusion-2/resolve/main/768-v-ema.ckpt"
-				}
-			]
-		},
-		"available": false
+	"stable_diffusion_2.1": {
+	  "name": "stable_diffusion_2.1",
+	  "baseline": "stable diffusion 2",
+	  "type": "ckpt",
+	  "description": "Generalist AI image generating model. The baseline for all finetuned models.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/stable_diffusion_2.1/01_juice.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/stable_diffusion_2.1/02_gigachad.webp"
+	  ],
+	  "version": "2.1",
+	  "style": "generalist",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/ldm/stable-diffusion-v2/model_2_1.ckpt"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v2-inference-v.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model_2_1.ckpt",
+			"file_path": "models/ldm/stable-diffusion-v2",
+			"file_url": "https://huggingface.co/stabilityai/stable-diffusion-2-1/resolve/main/v2-1_768-ema-pruned.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"stable_diffusion_2.0": {
+	  "name": "stable_diffusion_2.0",
+	  "baseline": "stable diffusion 2",
+	  "type": "ckpt",
+	  "description": "Generalist AI image generating model. The baseline for all finetuned models.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/stable_diffusion_2.0/01_bigdowg.webp"
+	  ],
+	  "version": "2.0",
+	  "style": "generalist",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/ldm/stable-diffusion-v2/model_2_0.ckpt",
+			"md5sum": "48cb3980ec03a370b68bd0a9d8eefece"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v2-inference-v.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model_2_0.ckpt",
+			"file_path": "models/ldm/stable-diffusion-v2",
+			"file_url": "https://huggingface.co/stabilityai/stable-diffusion-2/resolve/main/768-v-ema.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Stable Diffusion 2 Depth": {
+	  "name": "Stable Diffusion 2 Depth",
+	  "type": "diffusers",
+	  "description": "Generalist model specialized for creating depth maps of existing images, for img2img creations",
+	  "version": "2",
+	  "style": "depth2img",
+	  "hf_path": "stabilityai/stable-diffusion-2-depth",
+	  "hf_auth": false,
+	  "available": false	
 	},
 	"stable_diffusion": {
-		"name": "stable_diffusion",
-		"type": "ckpt",
-		"description": "Generalist AI image generating model. The baseline for all finetuned models.",
-		"version": "1.5",
-		"style": "generalist",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/ldm/stable-diffusion-v1/model_1_5.ckpt",
-					"md5sum": "76cce9b4e4410ff4fd1ec63d44cf7111"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model_1_5.ckpt",
-					"file_path": "models/ldm/stable-diffusion-v1",
-					"file_url": "https://{username}:{password}@huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt",
-					"hf_auth": true
-				}
-			]
-		},
-		"available": false
+	  "name": "stable_diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Generalist AI image generating model. The baseline for all finetuned models.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/stable_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1.5",
+	  "style": "generalist",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/ldm/stable-diffusion-v1/model_1_5.ckpt",
+			"md5sum": "76cce9b4e4410ff4fd1ec63d44cf7111"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model_1_5.ckpt",
+			"file_path": "models/ldm/stable-diffusion-v1",
+			"file_url": "https://{username}:{password}@huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt",
+			"hf_auth": true
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"stable_diffusion_1.4": {
-		"name": "stable_diffusion_1.4",
-		"type": "ckpt",
-		"description": "Generalist AI image generating model. The baseline for all finetuned models.",
-		"version": "1.4",
-		"style": "generalist",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/ldm/stable-diffusion-v1/model.ckpt",
-					"md5sum": "c01059060130b8242849d86e97212c84"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model.ckpt",
-					"file_path": "models/ldm/stable-diffusion-v1",
-					"file_url": "https://www.googleapis.com/storage/v1/b/aai-blog-files/o/sd-v1-4.ckpt?alt=media"
-				}
-			],
-			"alt_download": [
-				{
-					"file_name": "model.ckpt",
-					"file_path": "models/ldm/stable-diffusion-v1",
-					"file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt",
-					"hf_auth": true
-				}
-			]
-		},
-		"available": false
+	  "name": "stable_diffusion_1.4",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Generalist AI image generating model. The baseline for all finetuned models.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/stable_diffusion_1.4/01_bigdowg.webp"
+	  ],
+	  "version": "1.4",
+	  "style": "generalist",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/ldm/stable-diffusion-v1/model.ckpt",
+			"md5sum": "c01059060130b8242849d86e97212c84"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model.ckpt",
+			"file_path": "models/ldm/stable-diffusion-v1",
+			"file_url": "https://www.googleapis.com/storage/v1/b/aai-blog-files/o/sd-v1-4.ckpt?alt=media"
+		  }
+		],
+		"alt_download": [
+		  {
+			"file_name": "model.ckpt",
+			"file_path": "models/ldm/stable-diffusion-v1",
+			"file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt",
+			"hf_auth": true
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"waifu_diffusion": {
-		"name": "waifu_diffusion",
-		"type": "ckpt",
-		"description": "Anime styled generations.",
-		"version": "1.3",
-		"style": "anime",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/waifu-diffusion.ckpt",
-					"md5sum": "dc688dc907c953532c659374e7ddf1e4"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "waifu-diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-float32.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "waifu_diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Anime styled generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/waifu_diffusion/01_jakeukalane.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/waifu_diffusion/02_gigachad.webp"
+	  ],
+	  "version": "1.3",
+	  "style": "anime",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/waifu-diffusion.ckpt",
+			"md5sum": "dc688dc907c953532c659374e7ddf1e4"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "waifu-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-float32.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Furry Epoch": {
-		"name": "Furry Epoch",
-		"type": "ckpt",
-		"description": "Furry styled generations.",
-		"version": "4",
-		"style": "furry",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/furry-diffusion.ckpt",
-					"md5sum": "f8ef45a295ef4966682f6e8fc2c6830d"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "furry-diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://sexy.canine.wf/file/furry-ckpt/furry_epoch4.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Furry Epoch",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Furry styled generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/furry_epoch/01_gigachad.webp"
+	  ],
+	  "version": "4",
+	  "style": "furry",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/furry-diffusion.ckpt",
+			"md5sum": "f8ef45a295ef4966682f6e8fc2c6830d"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "furry-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://sexy.canine.wf/file/furry-ckpt/furry_epoch4.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Yiffy": {
-		"name": "Yiffy",
-		"type": "ckpt",
-		"description": "Furry styled generations.",
-		"version": "18",
-		"style": "furry",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/yiffy.ckpt",
-					"md5sum": "dbe25794e24af183565dc45e9ec99713"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "yiffy.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://sexy.canine.wf/file/yiffy-ckpt/yiffy-e18.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Yiffy",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Furry styled generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/yiffy/01_pika.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/yiffy/02_bigdowg.webp"
+	  ],
+	  "version": "18",
+	  "style": "furry",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/yiffy.ckpt",
+			"md5sum": "dbe25794e24af183565dc45e9ec99713"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "yiffy.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://sexy.canine.wf/file/yiffy-ckpt/yiffy-e18.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Zack3D": {
-		"name": "Zack3D",
-		"type": "ckpt",
-		"description": "Kink/NSFW oriented furry styled generations.",
-		"version": "1",
-		"style": "furry",
-		"nsfw": true,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/Zack3D.ckpt",
-					"md5sum": "aa944b1ecdaac60113027a0fdcda4f1b"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "Zack3D.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://sexy.canine.wf/file/furry-ckpt/Zack3D_Kinky-v1.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Zack3D",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Kink/NSFW oriented furry styled generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/zack3d/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "furry",
+	  "nsfw": true,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Zack3D.ckpt",
+			"md5sum": "aa944b1ecdaac60113027a0fdcda4f1b"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Zack3D.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://sexy.canine.wf/file/furry-ckpt/Zack3D_Kinky-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"trinart": {
-		"name": "trinart",
-		"type": "ckpt",
-		"description": "Manga styled generations.",
-		"version": "1",
-		"style": "anime",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/trinart.ckpt"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "trinart.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/naclbit/trinart_stable_diffusion_v2/resolve/main/trinart2_step95000.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "trinart",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Manga styled generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/trinart/01_monarch.webp"
+	  ],
+	  "version": "1",
+	  "style": "anime",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/trinart.ckpt",
+			"md5sum": "c90995db630d8415fbf51d6b72e71e15"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "trinart.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/naclbit/trinart_stable_diffusion_v2/resolve/main/trinart2_step95000.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"colorbook": {
-		"name": "colorbook",
-		"type": "ckpt",
-		"description": "Minimalist coloring book style images",
-		"version": "1",
-		"style": "dreambooth",
-		"trigger": "in VARPJ1 Coloring Book Art Style",
-		"homepage": "https://huggingface.co/jvkape/ColoringBookSD",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/colorbook.ckpt",
-					"md5sum": "c8fe9c392f08ab8b6269394038961509"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "colorbook.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/jvkape/ColoringBookSD/resolve/main/VARPJ1.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "colorbook",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Minimalist coloring book style images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/colorbook/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "line art",
+	  "trigger": [
+		"in VARPJ1 Coloring Book Art Style"
+	  ],
+	  "homepage": "https://huggingface.co/jvkape/ColoringBookSD",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/colorbook.ckpt",
+			"md5sum": "c8fe9c392f08ab8b6269394038961509"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "colorbook.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/jvkape/ColoringBookSD/resolve/main/VARPJ1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Arcane Diffusion": {
-		"name": "Arcane Diffusion",
-		"type": "ckpt",
-		"description": "Based on the Arcane TV show",
-		"version": "3",
-		"style": "dreambooth",
-		"trigger": "arcane style",
-		"homepage": "https://huggingface.co/nitrosocke/arcane-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/arcane_diffusion.ckpt",
-					"md5sum": "218055cf8b7f49559de4a6c939dec9ed"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "arcane_diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nitrosocke/Arcane-Diffusion/resolve/main/arcane-diffusion-v3.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Arcane Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Based on the Arcane TV show",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/arcane/01_bigdowg.jpg",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/arcane/02_bigdowg.jpg"
+	  ],
+	  "version": "3",
+	  "style": "cel shading",
+	  "trigger": [
+		"arcane style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/arcane-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/arcane_diffusion.ckpt",
+			"md5sum": "218055cf8b7f49559de4a6c939dec9ed"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "arcane_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/Arcane-Diffusion/resolve/main/arcane-diffusion-v3.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Squishmallow Diffusion": {
+	  "name": "Squishmallow Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Squishmallows",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/squishmallow_diffusion/01_bigdawg.webp"
+	  ],
+	  "version": "1",
+	  "style": "squishmallow",
+	  "trigger": [
+		"Squishmallow"
+	  ],
+	  "homepage": "https://huggingface.co/hlky/squishmallow",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/squishmallow_diffusion.ckpt",
+			"md5sum": "88495b1c5314f9430c56c86957f7e7dd"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "squishmallow_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/hlky/squishmallow/resolve/main/squishmallow_diffusion.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Spider-Verse Diffusion": {
-		"name": "Spider-Verse Diffusion",
-		"type": "ckpt",
-		"description": "Based on the Into the Spider-Verse movie's animation style",
-		"version": "1",
-		"style": "dreambooth",
-		"trigger": "spiderverse style",
-		"homepage": "https://huggingface.co/nitrosocke/spider-verse-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/spider-verse_diffusion.ckpt",
-					"md5sum": "45315570874b90caf6dba1750eeb9ec8"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "spider-verse_diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nitrosocke/spider-verse-diffusion/resolve/main/spiderverse-v1-pruned.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Spider-Verse Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Based on the Into the Spider-Verse movie's animation style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/spider_verse_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "cgi, comic book",
+	  "trigger": [
+		"spiderverse style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/spider-verse-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/spider-verse_diffusion.ckpt",
+			"md5sum": "45315570874b90caf6dba1750eeb9ec8"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "spider-verse_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/spider-verse-diffusion/resolve/main/spiderverse-v1-pruned.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Archer Diffusion": {
-		"name": "Archer Diffusion",
-		"type": "ckpt",
-		"description": "Based on the Archer's TV show animation style",
-		"version": "1",
-		"trigger": "archer style",
-		"style": "dreambooth",
-		"homepage": "https://huggingface.co/nitrosocke/archer-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/archer_diffusion.ckpt",
-					"md5sum": "b54b3a2a05efe39380b056008105f34c"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "archer_diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nitrosocke/archer-diffusion/resolve/main/archer-v1.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Archer Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Based on the Archer's TV show animation style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/archer_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "trigger": [
+		"archer style"
+	  ],
+	  "style": "comic book, 2d vector",
+	  "homepage": "https://huggingface.co/nitrosocke/archer-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/archer_diffusion.ckpt",
+			"md5sum": "b54b3a2a05efe39380b056008105f34c"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "archer_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/archer-diffusion/resolve/main/archer-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Elden Ring Diffusion": {
-		"name": "Elden Ring Diffusion",
-		"type": "ckpt",
-		"description": "Based on the Elden Ring video game style",
-		"version": "2",
-		"style": "dreambooth",
-		"trigger": "elden ring style",
-		"homepage": "https://huggingface.co/nitrosocke/elden-ring-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/elden_ring_diffusion.ckpt",
-					"md5sum": "bb51785c2b5d524fa626c9b0727e7fdb"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "elden_ring_diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nitrosocke/elden-ring-diffusion/resolve/main/eldenring-v2-pruned.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Elden Ring Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Based on the Elden Ring video game style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/elden_ring_diffusion/01_dethinhfil.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/elden_ring_diffusion/02_gigachad.webp"
+	  ],
+	  "version": "2",
+	  "style": "modern game engine",
+	  "trigger": [
+		"elden ring style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/elden-ring-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/elden_ring_diffusion.ckpt",
+			"md5sum": "bcc5873b5278e6a383fb86665bc84468"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "elden_ring_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/elden-ring-diffusion/resolve/main/eldenRing-v3-pruned.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Robo-Diffusion": {
-		"name": "Robo-Diffusion",
-		"type": "ckpt",
-		"description": "Robot oriented drawing style",
-		"version": "1",
-		"style": "dreambooth",
-		"trigger": "nousr robot",
-		"homepage": "https://huggingface.co/nousr/robo-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/robo_diffusion.ckpt",
-					"md5sum": "a43cbf2fc8a98652435c2f5a95f487ad"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "robo_diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nousr/robo-diffusion/resolve/main/models/robo-diffusion-v1.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Robo-Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Robot oriented drawing style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/robo_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "2D portrait render",
+	  "trigger": [
+		"nousr robot"
+	  ],
+	  "homepage": "https://huggingface.co/nousr/robo-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/robo_diffusion.ckpt",
+			"md5sum": "a43cbf2fc8a98652435c2f5a95f487ad"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "robo_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nousr/robo-diffusion/resolve/main/models/robo-diffusion-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"mo-di-diffusion": {
-		"name": "mo-di-diffusion",
-		"type": "ckpt",
-		"description": "Popular animation studio styled generations.",
-		"version": "1",
-		"style": "dreambooth",
-		"nsfw": false,
-		"download_all": true,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/mo-di-diffusion.ckpt",
-					"md5sum": "393f79603e5cab05307670d0f71a5193"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "mo-di-diffusion.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/nitrosocke/mo-di-diffusion/resolve/main/moDi-v1-pruned.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "mo-di-diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Popular animation studio modern style generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/mo_di_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "storybook realism",
+	  "trigger": [
+		"modern disney style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/mo-di-diffusion",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/mo-di-diffusion.ckpt",
+			"md5sum": "393f79603e5cab05307670d0f71a5193"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "mo-di-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/mo-di-diffusion/resolve/main/moDi-v1-pruned.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Classic Animation Diffusion": {
+	  "name": "Classic Animation Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Popular animation studio classic style generations.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/classic_animation_diffusion/01_bigdowg.jpg"
+	  ],
+	  "version": "1",
+	  "style": "timeless storybook",
+	  "trigger": [
+		"classic disney style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/classic-anim-diffusion",
+	  "nsfw": false,
+	  "download_all": true,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/classic-anim-diffusion.ckpt",
+			"md5sum": "ef6f168e2cceedb104ca57f6a1da27fd"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "classic-anim-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/classic-anim-diffusion/resolve/main/classicAnim-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"Xynthii-Diffusion": {
-		"name": "Xynthii-Diffusion",
-		"type": "ckpt",
-		"description": "Xynthii-Diffusion (cyclops monster girls)",
-		"version": "1",
-		"style": "dreambooth",
-		"trigger": "xynthii",
-		"homepage": "https://huggingface.co/hlky/xynthii-diffusion",
-		"nsfw": false,
-		"download_all": false,
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/custom/xynthii_fp16.ckpt",
-					"md5sum": "97e5057d0901d160e76bc9032cd32852"
-				},
-				{
-					"path": "configs/stable-diffusion/v1-inference.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "xynthii_fp16.ckpt",
-					"file_path": "models/custom",
-					"file_url": "https://huggingface.co/hlky/xynthii-diffusion/resolve/main/xynthii_epoch48_fp16.ckpt"
-				}
-			]
-		},
-		"available": false
+	  "name": "Xynthii-Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Xynthii-Diffusion (cyclops monster girls)",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/xynthii_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "neon drawing",
+	  "trigger": [
+		"xynthii"
+	  ],
+	  "homepage": "https://huggingface.co/hlky/xynthii-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/xynthii_fp16.ckpt",
+			"md5sum": "97e5057d0901d160e76bc9032cd32852"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "xynthii_fp16.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/hlky/xynthii-diffusion/resolve/main/xynthii_epoch48_fp16.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Comic-Diffusion": {
+	  "name": "Comic-Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Western Comic book style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/comic_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "2",
+	  "style": "comic book, 2d vector",
+	  "trigger": [
+		"charliebo artstyle",
+		"holliemengert artstyle",
+		"pepelarraz artstyle",
+		"andreasrocha artstyle",
+		"jamesdaly artstyle"
+	  ],
+	  "homepage": "https://huggingface.co/ogkalu/Comic-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/comic-diffusion-v2.ckpt",
+			"md5sum": "f5f797366a3684e56e1eefaf4ce57a0f"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "comic-diffusion-v2.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ogkalu/Comic-Diffusion/resolve/main/comic-diffusion-V2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Tron Legacy Diffusion": {
+	  "name": "Tron Legacy Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Tron Legacy movie style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/tron_legacy_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "futuristic portrait/landscape",
+	  "trigger": [
+		"trnlgcy"
+	  ],
+	  "homepage": "https://huggingface.co/dallinmackay/Tron-Legacy-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Tron-Legacy-Style-trnlgcy.ckpt",
+			"md5sum": "97cd368155eed1d0f71c064e3dcd8553"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Tron-Legacy-Style-trnlgcy.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/db0/tron-legacy-copy/resolve/main/Tron-Legacy-Style-trnlgcy.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Microworlds": {
+	  "name": "Microworlds",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Isometric microworlds",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/microworlds/01_bigdowg.jpg"
+	  ],
+	  "version": "1",
+	  "style": "3d render",
+	  "trigger": [
+		"microworld render style"
+	  ],
+	  "homepage": "https://publicprompts.art/microworlds-dreambooth-model/",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/microworld_PublicPrompts.ckpt",
+			"md5sum": "1ea601ec3be285f2dfb220fd8d2887ce"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "microworld_PublicPrompts.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/db0/microworlds/resolve/main/microworld_PublicPrompts.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Zeipher Female Model": {
+	  "name": "Zeipher Female Model",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "For creating images of nude solo women. Also known as f222",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/zeipher_female_model/01_bigdowg.webp"
+	  ],
+	  "version": "222",
+	  "style": "f222, boudoir photography",
+	  "homepage": "https://ai.zeipher.com/",
+	  "nsfw": true,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/f222.ckpt",
+			"md5sum": "900436d0801d1804fd52f269257fce9f"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "f222.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Reachout/F222/resolve/main/f222.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Redshift Diffusion": {
+	  "name": "Redshift Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Dreambooth model trained on high resolution 3D artworks",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/redshift/01_bigdowg.jpg"
+	  ],
+	  "version": "1",
+	  "style": "cinema4D",
+	  "trigger": [
+		"redshift style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/redshift-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/redshift.ckpt",
+			"md5sum": "ab2ae074f9ee9460d4244fb2cb1ade65"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "redshift.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/redshift-diffusion/resolve/main/redshift-diffusion-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Borderlands": {
+	  "name": "Borderlands",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Based on Borderlands video game style, trained on characters and scenes",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/borderlands/01_gigachad.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/borderlands/02_jakeukalane.webp"
+	  ],
+	  "version": "1",
+	  "style": "cell shading",
+	  "trigger": [
+		"borderlands"
+	  ],
+	  "homepage": "https://huggingface.co/PublicPrompts/borderlands",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/borderlands.ckpt",
+			"md5sum": "bbea57acf5c527e47db649804e0d7a20"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "borderlands.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/PublicPrompts/borderlands/resolve/main/borderlands.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Cyberpunk Anime Diffusion": {
+	  "name": "Cyberpunk Anime Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Cyberpunk anime characters",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/cyberpunk_anime_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "futuristic anime",
+	  "trigger": [
+		"dgs",
+		"illustration style"
+	  ],
+	  "homepage": "https://huggingface.co/DGSpitzer/Cyberpunk-Anime-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Cyberpunk-Anime-Diffusion.ckpt",
+			"md5sum": "12151c617aaadf6ba87d30997b0b7190"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Cyberpunk-Anime-Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/DGSpitzer/Cyberpunk-Anime-Diffusion/resolve/main/Cyberpunk-Anime-Diffusion.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Midjourney Diffusion": {
+	  "name": "Midjourney Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine tuned on Midjourney v4 images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/midjourney_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "generalist",
+	  "trigger": [
+		"mdjrny-v4 style"
+	  ],
+	  "homepage": "https://huggingface.co/prompthero/openjourney",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/mdjrny-v4.ckpt",
+			"md5sum": "241bfa51943fe0b52aa695bcaa142b3b"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "mdjrny-v4.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/prompthero/openjourney/resolve/main/mdjrny-v4.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Papercut Diffusion": {
+	  "name": "Papercut Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine tuned on Paper cut images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/papercut/01_bigdowg.jpg"
+	  ],
+	  "version": "1",
+	  "style": "paper cutout art",
+	  "trigger": [
+		"PaperCut"
+	  ],
+	  "homepage": "https://huggingface.co/Fictiverse/Stable_Diffusion_PaperCut_Model",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/PaperCut_v1.ckpt",
+			"md5sum": "353d94ec1c790b12aa01c1077a70848c"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "PaperCut_v1.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Fictiverse/Stable_Diffusion_PaperCut_Model/resolve/main/PaperCut_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"AIO Pixel Art": {
+	  "name": "AIO Pixel Art",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine tuned on pixel art sprites and scenes",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/aio_pixel_art/01_monarch.webp"
+	  ],
+	  "version": "1",
+	  "style": "pixel art",
+	  "trigger": [
+		"pixelsprite",
+		"16bitscene"
+	  ],
+	  "homepage": "https://huggingface.co/PublicPrompts/All-In-One-Pixel-Model",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/AIO-Pixel-Art.ckpt",
+			"md5sum": "c00345a631cca93c5cc19fbeb59ea8fc"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "AIO-Pixel-Art.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/PublicPrompts/All-In-One-Pixel-Model/resolve/main/Public-Prompts-Pixel-Model.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"JWST Deep Space Diffusion": {
+	  "name": "JWST Deep Space Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine tuned on JWST imagery",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/jwst_deep_space_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "space",
+	  "trigger": [
+		"jwst"
+	  ],
+	  "homepage": "https://huggingface.co/dallinmackay/JWST-Deep-Space-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/JWST-Deep-Space.ckpt",
+			"md5sum": "609109e33a48306701a463e0497a7326"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "JWST-Deep-Space.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/dallinmackay/JWST-Deep-Space-diffusion/resolve/main/JWST-Deep-Space.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"App Icon Diffusion": {
+	  "name": "App Icon Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Dreambooth model fine tuned on mobile app icons",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/app_icon_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "icons",
+	  "trigger": [
+		"IconsMi"
+	  ],
+	  "homepage": "https://huggingface.co/jvkape/IconsMI-AppIconsModelforSD",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/app-icon-diffusion-2k.ckpt",
+			"md5sum": "93ed6d6d23be0dde878223a13d6a715e"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "app-icon-diffusion-2k.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/jvkape/IconsMI-AppIconsModelforSD/resolve/main/IconsMi_step_2000.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Mega Merge Diffusion": {
+	  "name": "Mega Merge Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "SD 1.5 merged with 17 other models",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/mega_merge_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "generalist",
+	  "homepage": "https://huggingface.co/ShinCore/MMDv1-18",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/mega-merge-diffusion-a.ckpt",
+			"md5sum": "8b4d66961604d1a64ca8f8bca3797dd6"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "mega-merge-diffusion-a.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ShinCore/MMDv1-18/resolve/main/MMD%20V1-18%20MODEL%20MERGE%20ALPHA.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Voxel Art Diffusion": {
+	  "name": "Voxel Art Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine-tuned on voxel art style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/voxel_art_diffusion/01_dethinhfil.webp"
+	  ],
+	  "version": "1",
+	  "style": "voxel art",
+	  "trigger": [
+		"VoxelArt"
+	  ],
+	  "homepage": "https://huggingface.co/Fictiverse/Stable_Diffusion_VoxelArt_Model",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/VoxelArt_v1.ckpt",
+			"md5sum": "7c40e7f2c03a986b6037967eba8f5116"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "VoxelArt_v1.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Fictiverse/Stable_Diffusion_VoxelArt_Model/resolve/main/VoxelArt_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Van Gogh Diffusion": {
+	  "name": "Van Gogh Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion model trained on screenshots from the film Loving Vincent, best results with k_euler sampler",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/van_gogh_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "painting",
+	  "trigger": [
+		"lvngvncnt"
+	  ],
+	  "homepage": "https://huggingface.co/dallinmackay/Van-Gogh-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Van-Gogh-Diffusion.ckpt",
+			"md5sum": "a23f0e980e921972be5f819cb33cf8fe"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Van-Gogh-Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/dallinmackay/Van-Gogh-diffusion/resolve/main/Van-Gogh-Style-lvngvncnt-v2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Anything Diffusion": {
+	  "name": "Anything Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Highly detailed Anime styled generations",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/anything_diffusion/01.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/anything_diffusion/02_gigachad.webp"
+	  ],
+	  "version": "3",
+	  "style": "anime",
+	  "homepage": "https://huggingface.co/Linaqruf/anything-v3.0",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Anything-Diffusion-v3.ckpt",
+			"md5sum": "0aa33de6b36c239ba579e73edf10a026"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Anything-Diffusion-v3.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Linaqruf/anything-v3.0/resolve/main/Anything-V3.0-pruned.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"BubblyDubbly": {
+	  "name": "BubblyDubbly",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Dreamy sketched/painted portraits",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/bubblydubbly/01_bigdowg.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/bubblydubbly/02_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "painting",
+	  "trigger": [
+		"art by bubblydubbly"
+	  ],
+	  "homepage": "https://huggingface.co/Marre-Barre/bubblydubbly",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/bubblydubbly_7k.ckpt",
+			"md5sum": "fedc9d27158d97011c3d2ea7f1c46d9b"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "bubblydubbly_7k.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Marre-Barre/bubblydubbly/resolve/main/bubblydubbly_7k.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Dungeons and Diffusion": {
+	  "name": "Dungeons and Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Generates D&D styled characters, trained on art commissions",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/dungeons_and_diffusion/01_bigdowg.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/dungeons_and_diffusion/02_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "realistic fantasy render",
+	  "homepage": "https://huggingface.co/0xJustin/Dungeons-and-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Dungeons-and-Diffusion-30k.ckpt",
+			"md5sum": "591fb04c1cfceb7bac7aeedc6be8b030"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Dungeons-and-Diffusion-30k.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/0xJustin/Dungeons-and-Diffusion/resolve/main/model30000.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Clazy": {
+	  "name": "Clazy",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Generates clay-like figures",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/clazy/01_bigdowg.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/clazy/02_bigdowg.jpg"
+	  ],
+	  "version": "1",
+	  "style": "clay",
+	  "trigger": [
+		"clazy style"
+	  ],
+	  "homepage": "https://huggingface.co/Signorlimone/Clazy",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/clazy2600.ckpt",
+			"md5sum": "c1c647b006db1e4cedcf7601043fd50b"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "clazy2600.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Signorlimone/Clazy/resolve/main/clazy2600.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Nitro Diffusion": {
+	  "name": "Nitro Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Multi-Style model trained on Arcane, Archer and Mo-Di",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/nitro_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "Multi-style Portraits/Landscapes",
+	  "trigger": [
+		"archer style",
+		"arcane style",
+		"modern disney style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/Nitro-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/nitroDiffusion.ckpt",
+			"md5sum": "d6ae2998981a595062e75d89c60b34f2"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "nitroDiffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/Nitro-Diffusion/resolve/main/nitroDiffusion-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Samdoesarts Ultmerge": {
+	  "name": "Samdoesarts Ultmerge",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Portraits in the style of Sam Yang, merged with chewtoy and orange code's models",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/samdoesarts_ultmerge/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "painted portraits",
+	  "trigger": [
+		"samdoesarts style"
+	  ],
+	  "homepage": "https://civitai.com/models/68",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/samdoesarts_ultmerge.ckpt",
+			"md5sum": "c35c57f88b362bcc170d086805e4a677"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "samdoesarts_ultmerge.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/jinofcoolnes/sammod/resolve/main/samdoartsultmerge.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Synthwave": {
+	  "name": "Synthwave",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion model to create images in Synthwave/outrun style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/synthwave/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "neon lines, portrait/landscape",
+	  "trigger": [
+		"snthwve style"
+	  ],
+	  "homepage": "https://huggingface.co/PublicPrompts/Synthwave",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/synthwave.ckpt",
+			"md5sum": "99d37805cab8f98fc07c741345ab9a56"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "synthwave.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/PublicPrompts/Synthwave/resolve/main/snthwve%20style.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"vectorartz": {
+	  "name": "vectorartz",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Generate beautiful vector illustration",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/vectorartz/01.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/vectorartz/02_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "vector art",
+	  "trigger": [
+		"vectorartz"
+	  ],
+	  "homepage": "https://huggingface.co/coder119/Vectorartz_Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Vectorartz.ckpt",
+			"md5sum": "9b19bb97a2d97ed099b21260ca5de02f"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Vectorartz.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/coder119/Vectorartz_Diffusion/resolve/main/Vectorartz.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Ranma Diffusion": {
+	  "name": "Ranma Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "imitates the style of late '80s early 90's anime, Anything v3 base",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/ranma_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "anime",
+	  "trigger": [
+		"80sanimestyle"
+	  ],
+	  "homepage": "https://huggingface.co/tashachan28/ranma_diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/ranma_diffusion.ckpt",
+			"md5sum": "20dc21ad6ed6b75b67cfa7e9afb7d9a5"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "ranma_diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/tashachan28/ranma_diffusion/resolve/main/80s_anime_test_5_anythingmodel.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Ghibli Diffusion": {
+	  "name": "Ghibli Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "fine-tuned Stable Diffusion model trained on images from Studio Ghibli feature films",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/ghibli_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "anime",
+	  "trigger": [
+		"ghibli style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/Ghibli-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/ghibli-diffusion.ckpt",
+			"md5sum": "5dbed361a8f1e583207ce869f245ca4d"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "ghibli-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/Ghibli-Diffusion/resolve/main/ghibli-diffusion-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Hentai Diffusion": {
+	  "name": "Hentai Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Anime focused model with better hands, obscure poses/camera angles and consistent style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/hentai_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "17",
+	  "style": "anime",
+	  "trigger": [
+		"1girl, anime"
+	  ],
+	  "homepage": "https://github.com/Delcos/Hentai-Diffusion",
+	  "nsfw": true,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/hentai-diffusion.ckpt",
+			"md5sum": "1f6277fd3793a715f242d7c347302e9c"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "hentai-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Deltaadams/HentaiDiffusion/resolve/main/HD-17.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Guohua Diffusion": {
+	  "name": "Guohua Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "fine-tuned Stable Diffusion model trained on traditional Chinese paintings",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/guohua_diffusion/01_ghostdragon11.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/guohua_diffusion/02_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "painting",
+	  "trigger": [
+		"guohua style"
+	  ],
+	  "homepage": "https://huggingface.co/Langboat/Guohua-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/guohua-diffusion.ckpt",
+			"md5sum": "031f1e1bb108048028c55d729d1c26d7"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "guohua-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Langboat/Guohua-Diffusion/resolve/main/guohua.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Inkpunk Diffusion": {
+	  "name": "Inkpunk Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "inspired by Gorillaz art, FLCL and Yoji Shinkawa. Trained on images generated from Midjourney",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/inkpunk_diffusion/01_bigdowg.webp"
+	  ],
+	  "version": "2",
+	  "style": "inkpunk",
+	  "trigger": [
+		"nvinkpunk"
+	  ],
+	  "homepage": "https://huggingface.co/Envvi/Inkpunk-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/inkpunk-diffusion.ckpt",
+			"md5sum": "6a802d2914a08393e656b336f837efc7"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "inkpunk-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Envvi/Inkpunk-Diffusion/resolve/main/Inkpunk-Diffusion-v2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Fantasy Card Diffusion": {
+	  "name": "Fantasy Card Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "fantasy trading card style art, trained on all currently available Magic: the Gathering card art",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/fantasy_card_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "tcg",
+	  "trigger": [
+		"mtg card art"
+	  ],
+	  "homepage": "https://huggingface.co/volrath50/fantasy-card-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/fantasy-card-diffusion.ckpt",
+			"md5sum": "fb073a4b1103bd33a7bb636bb154475a"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "fantasy-card-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/volrath50/fantasy-card-diffusion/resolve/main/fantasycarddiffusion_140000.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Knollingcase": {
+	  "name": "Knollingcase",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "generates a glass display case with objects inside, inspired by Sean Preston. Trained on Midjourney images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/knollingcase/01_gigachad.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/knollingcase/02_ghostdragon11.webp"
+	  ],
+	  "version": "1",
+	  "style": "isometric display case",
+	  "trigger": [
+		"knollingcase"
+	  ],
+	  "homepage": "https://huggingface.co/Aybeeceedee/knollingcase",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/knollingcase.ckpt",
+			"md5sum": "b5be9d0a6f493ab0703ab3cbb28a3aa5"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "knollingcase.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Aybeeceedee/knollingcase/resolve/main/knollingcase.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Midjourney PaintArt": {
+	  "name": "Midjourney PaintArt",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Midjourney v4 painting style",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/midjourney_paintart/01_gigachad.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/midjourney_paintart/02_ghostdragon11.webp"
+	  ],
+	  "version": "1",
+	  "style": "painting",
+	  "trigger": [
+		"mdjrny-pntrt"
+	  ],
+	  "homepage": "https://huggingface.co/ShadoWxShinigamI/Midjourney-v4-PaintArt",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/mdjrny-pntrt.ckpt",
+			"md5sum": "13b9ad05bfb5192f066c629f036e29d5"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "mdjrny-pntrt.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ShadoWxShinigamI/Midjourney-v4-PaintArt/resolve/main/mdjrny-pntrt.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"RPG": {
+	  "name": "RPG",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "portraits of charecters in the style of the game Baldur's Gate",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/rpg/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "Baldur's Gate",
+	  "homepage": "https://huggingface.co/Anashel/rpg",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/rpg.ckpt",
+			"md5sum": "e27033b41a06a1f22c49b01cd8d5dd26"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "rpg.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Anashel/rpg/resolve/main/RPG-v2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Poison": {
+	  "name": "Poison",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Anything Diffusion fine-tuned to produce high-quality realistic anime styled images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/poison/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "anime",
+	  "homepage": "https://huggingface.co/Fansy/poison",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/poison.ckpt",
+			"md5sum": "6cd03a23653d7a22b119b3616f3bb725"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "poison.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Fansy/poison/resolve/main/poison.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Eimis Anime Diffusion": {
+	  "name": "Eimis Anime Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This model is trained with high quality and detailed anime images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/eimis_anime_diffusion/01_bigdawg.webp"
+	  ],
+	  "version": "1",
+	  "style": "anime",
+	  "homepage": "https://huggingface.co/eimiss/EimisAnimeDiffusion_1.0v",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/eimis_anime-diffusion.ckpt",
+			"md5sum": "15fb74cecd2767b99bed2676f9c19538"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "eimis_anime-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/eimiss/EimisAnimeDiffusion_1.0v/resolve/main/EimisAnimeDiffusion_1-0v.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Wavyfusion": {
+	  "name": "Wavyfusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "dreambooth model trained on a very diverse dataset ranging from photographs to paintings",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/wavyfusion/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "generalist",
+	  "trigger": [
+		"wa-vy style"
+	  ],
+	  "homepage": "https://huggingface.co/wavymulder/wavyfusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/wavyfusion.ckpt",
+			"md5sum": "7c1976221a93f502042102c9d0d43470"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "wavyfusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/wavymulder/wavyfusion/resolve/main/wa-vy-fusion_1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Dawgsmix": {
+	  "name": "Dawgsmix",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "anime and realistic anatomy focused merged of anything , trinart , f222 , sd1.5",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/dawgsmix/01_bigdowg.webp"
+	  ],
+	  "version": "1",
+	  "style": "realistic anime",
+	  "homepage": "https://huggingface.co/Sanjii/Dawgsmix",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/biggdawgs_mix.ckpt",
+			"md5sum": "498114d1e23035b06c6cc40ff0cf3674"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "biggdawgs_mix.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Sanjii/Dawgsmix/resolve/main/biggdawgs_mix.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Papercutcraft": {
+	  "name": "Papercutcraft",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Paper Cut Craft is a fine tuned Stable Diffusion model trained on Midjourney images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/papercutcraft/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "paper cutout art",
+	  "trigger": [
+		"papercutcraft style"
+	  ],
+	  "homepage": "https://huggingface.co/OlafII/papercutcraft-v1",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/papercutcraft.ckpt",
+			"md5sum": "9f37ef2b28367a64272f3350a92031fe"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "papercutcraft.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/OlafII/papercutcraft-v1/resolve/main/papercutcraft-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"kurzgesagt": {
+	  "name": "kurzgesagt",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "A DreamBooth finetune of Stable Diffusion v1.5 model trained on a bunch of stills from Kurzgesagt videos",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/kurzgesagt/01_gigachad.webp"
+	  ],
+	  "version": "1",
+	  "style": "kurzgesagt artstyle",
+	  "trigger": [
+		"kurzgesagt style"
+	  ],
+	  "homepage": "https://huggingface.co/questcoast/SD-Kurzgesagt-style-finetune",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/kurzgesagt-style-v1.ckpt",
+			"md5sum": "f012a7cacd0727eb52978150aa09abbb"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "kurzgesagt-style-v1.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/questcoast/SD-Kurzgesagt-style-finetune/resolve/main/kurzgesagt-style-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"ChromaV5": {
+	  "name": "ChromaV5",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "generates metalic/chrome looking images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/chromav5/01_gigachad.webp"
+	  ],
+	  "version": "1.6",
+	  "style": "generalist",
+	  "trigger": [
+		"ChromaV5"
+	  ],
+	  "homepage": "https://huggingface.co/SomaMythos/ChromaV5",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/chromav5.ckpt",
+			"md5sum": "2fd4063028dacb05997dba772e002b04"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "chromav5.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/SomaMythos/ChromaV5/resolve/main/ChromaV5.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Dreamlike Diffusion": {
+	  "name": "Dreamlike Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Dreamlike Diffusion 1.0 is SD 1.5 fine tuned on high quality art, made by dreamlike.art",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/dreamlike_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "generalist",
+	  "trigger": [
+		"dreamlikeart"
+	  ],
+	  "homepage": "https://huggingface.co/dreamlike-art/dreamlike-diffusion-1.0",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/dreamlike-diffusion.ckpt",
+			"md5sum": "5446a657cf71261b9df4e0a7b1f1a4a6"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "dreamlike-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/dreamlike-art/dreamlike-diffusion-1.0/resolve/main/dreamlike-diffusion-1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Analog Diffusion": {
+	  "name": "Analog Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "A dreambooth model trained on a diverse set of analog photographs",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/analog_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "generalist",
+	  "trigger": [
+		"analog style"
+	  ],
+	  "homepage": "https://huggingface.co/wavymulder/Analog-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/analog-diffusion.ckpt",
+			"md5sum": "73e73310bf9360e8098c1b82975c8dae"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "analog-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/wavymulder/Analog-Diffusion/resolve/main/analog-diffusion-1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Asim Simpsons": {
+	  "name": "Asim Simpsons",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "The Simpsons dreambooth model",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/asim_simpsons/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "cartoon",
+	  "trigger": [
+		"asim style"
+	  ],
+	  "homepage": "https://huggingface.co/PiyarSquare/sd_asim_simpsons",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/asim-simpsons.ckpt",
+			"md5sum": "cac2a1fcff8f2b1bd1d6e4514e412006"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "asim-simpsons.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/PiyarSquare/sd_asim_simpsons/resolve/main/asim_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Funko Diffusion": {
+	  "name": "Funko Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Stable Diffusion fine tuned on Funko Pop, by PromptHero.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/funko_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "cartoon",
+	  "trigger": [
+		"funko style"
+	  ],
+	  "homepage": "https://huggingface.co/prompthero/funko-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/funko-diffusion.ckpt",
+			"md5sum": "d2a2a80a8f725d517422259ce16c38fb"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "funko-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/prompthero/funko-diffusion/resolve/main/funko.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Double Exposure Diffusion": {
+	  "name": "Double Exposure Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "The Double Exposure Diffusion model, trained specifically on images of people and a few animals",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/double_exposure_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "2.0",
+	  "style": "generalist",
+	  "trigger": [
+		"dublex style, dublex"
+	  ],
+	  "homepage": "https://huggingface.co/joachimsallstrom/Double-Exposure-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/dublex-diffusion.ckpt",
+			"md5sum": "fb7dbe346c6390cf2b2f774e3048d424"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "dublex-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/joachimsallstrom/Double-Exposure-Diffusion/resolve/main/Double_Exposure_v2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Microscopic": {
+	  "name": "Microscopic",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This is the fine-tuned Stable Diffusion model trained on microscopic images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/microscopic/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "microscopic",
+	  "trigger": [
+		"microscopic"
+	  ],
+	  "homepage": "https://huggingface.co/Fictiverse/Stable_Diffusion_Microscopic_model",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/microscopic-diffusion.ckpt",
+			"md5sum": "c10f35dd08f93b15ef3d346d6fa1b9cf"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "microscopic-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Fictiverse/Stable_Diffusion_Microscopic_model/resolve/main/Microscopic_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Balloon Art": {
+	  "name": "Balloon Art",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This is the fine-tuned Stable Diffusion model trained on Twisted Balloon images",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/balloon_art/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "balloon",
+	  "trigger": [
+		"BalloonArt"
+	  ],
+	  "homepage": "https://huggingface.co/Fictiverse/Stable_Diffusion_BalloonArt_Model",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/balloonart-diffusion.ckpt",
+			"md5sum": "d2b965fc96600d464ae6094d9c8337e7"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "balloonart-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/Fictiverse/Stable_Diffusion_BalloonArt_Model/resolve/main/BalloonArt_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Future Diffusion": {
+	  "name": "Future Diffusion",
+	  "baseline": "stable diffusion 2",
+	  "type": "ckpt",
+	  "description": "This creates high quality 3D images with a futuristic Sci-Fi theme",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/future_diffusion/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "sci-fi",
+	  "trigger": [
+		"future style"
+	  ],
+	  "homepage": "https://huggingface.co/nitrosocke/Future-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/future-diffusion.ckpt",
+			"md5sum": "985396d8ee97c1bad8bdbd9dd55b04ae"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v2-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "future-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/nitrosocke/Future-Diffusion/resolve/main/future-diffusion-v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	  "Seek.art MEGA": {
+	  "name": "Seek.art MEGA",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Seek.art MEGA is a general use 'anything' model that significantly improves on 1.5 across dozens of styles. Created by Coreco at seek.art",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/seek_art_mega/01_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "generalist",
+	  "homepage": "https://huggingface.co/coreco/seek.art_MEGA",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/seek-art-mega.ckpt",
+			"md5sum": "6877d4bcade9febd181a126a7686d8f8"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "seek-art-mega.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/coreco/seek.art_MEGA/resolve/main/seek_art_mega_v1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Valorant Diffusion": {
+	  "name": "Valorant Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This model was trained on the Valorant agents splash arts, and some extra arts on the official website",
+	  "version": "1.0",
+	  "style": "valorant",
+	  "trigger":["valorant style"],
+	  "homepage": "https://huggingface.co/ItsJayQz/Valorant_Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/valorant-diffusion.ckpt",
+			"md5sum": "7d5087fc1144057bf65cdcae079dd3d8"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "valorant-diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ItsJayQz/Valorant_Diffusion/resolve/main/Valorant_Diffusion_valorant_style.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Hassanblend": {
+	  "name": "Hassanblend",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This model was for creating people",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/hassanblend/01_gigachad.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/hassanblend/02_bettername.webp"
+	  ],
+	  "version": "1.4",
+	  "style": "photorealism",
+	  "homepage": "https://huggingface.co/hassanblend/hassanblend1.4",
+	  "nsfw": true,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/hassanblend.ckpt",
+			"md5sum": "156bc7ac0ba3bdbc54ee6bc315c9c726"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "hassanblend.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/hassanblend/hassanblend1.4/resolve/main/HassanBlend1.4.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"ACertainThing": {
+	  "name": "ACertainThing",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "An improved version of Anything v3 made with ACertainThing, focusing on scenes rather than characters",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/acertainthing/01_juice.webp",
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/acertainthing/02_gigachad.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "anime",
+	  "homepage": "https://huggingface.co/JosephusCheung/ACertainThing",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/ACertainThing.ckpt",
+			"md5sum": "c7668ab28b54a52a86421785a17cef46"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "ACertainThing.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/JosephusCheung/ACertainThing/resolve/main/ACertainThing.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"GTA5 Artwork Diffusion": {
+	  "name": "GTA5 Artwork Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This model was trained on the loading screens, gta storymode, and gta online DLCs artworks. Which includes characters, background, chop, and some objects. The model can do people and portrait pretty easily, as well as cars, and houses. For some reasons, the model stills automatically include in some game footage, so landscapes tend to look a bit more game-like.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/gta5_artwork_diffusion/01_bettername.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "GTA5",
+	  "trigger":["gtav style"],
+	  "homepage": "https://huggingface.co/ItsJayQz/GTA5_Artwork_Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/GTA5_Artwork_Diffusion.ckpt",
+			"md5sum": "8a430fbd33526ab4d8fc0065deeef9b4"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "GTA5_Artwork_Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ItsJayQz/GTA5_Artwork_Diffusion/resolve/main/GTA5_Artwork_Diffusion_gtav_style.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Trinart Characters": {
+	  "name": "Trinart Characters",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Derrida (formerly TrinArt Characters v2) is a stable diffusion v1-based model that was further improved on the previous characters v1 model. While this is still a versatility and compositional variation anime/manga model like other TrinArt models, when compared to the v1 model, Derrida was focused on more anatomical stability and slightly less on variation due to further multi-epoch training and finetuning.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/trinart_characters/01_juice.webp"
+	  ],
+	  "version": "2.0",
+	  "style": "anime",
+	  "homepage": "https://huggingface.co/naclbit/trinart_derrida_characters_v2_stable_diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Trinart_Characters.ckpt",
+			"md5sum": "7111688d1ef1572c8b656a8d9299b42c"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Trinart_Characters.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/naclbit/trinart_derrida_characters_v2_stable_diffusion/resolve/main/derrida_final.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Smoke Diffusion": {
+	  "name": "Smoke Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This is the fine-tuned Stable Diffusion model trained on images of smoke",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/smoke_diffusion/01_voodoocode.webp"
+	  ],
+	  "version": "1.0",
+	  "style": "photo",
+	  "trigger":["ssmoky"],
+	  "homepage": "https://huggingface.co/guumaster/smoke-diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Smoke_Diffusion.ckpt",
+			"md5sum": "1ed41feadcf843a42f4d167b5a6350e7"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Smoke_Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/guumaster/smoke-diffusion/resolve/main/ssmoky1.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Supermarionation": {
+	  "name": "Supermarionation",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This is a fine-tuned Stable Diffusion model (based on v1.5) trained on screenshots from Gerry Anderson Supermarionation stop motion animation movie, basically from Thunderbirds tv series",
+	  "showcases": [
+		"https://huggingface.co/tuwonga/supermarionation/resolve/main/supermarionation_v2_prev1.jpg"
+	  ],
+	  "version": "2.0",
+	  "style": "supermarionation",
+	  "trigger":["supermarionation"],
+	  "homepage": "https://huggingface.co/tuwonga/supermarionation",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Supermarionation.ckpt",
+			"md5sum": "321c36eac4e9a8f4d3903a8112ebfeed"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Supermarionation.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/tuwonga/supermarionation/resolve/main/supermarionation_v2.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Dreamlike Photoreal": {
+	  "name": "Dreamlike Photoreal",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Dreamlike Photoreal 1.0 is a photorealistic Stable Diffusion 1.5 model fine tuned on high quality photos, made by dreamlike.art.",
+	  "showcases": [
+		"https://huggingface.co/dreamlike-art/dreamlike-photoreal-1.0/resolve/main/preview.jpg"
+	  ],
+	  "version": "1.0",
+	  "style": "photorealistic",
+	  "homepage": "https://huggingface.co/dreamlike-art/dreamlike-photoreal-1.0",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Dreamlike_Photoreal.ckpt",
+			"md5sum": "97c0379e6763633807e7a2dff6279f9f"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Dreamlike_Photoreal.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/dreamlike-art/dreamlike-photoreal-1.0/resolve/main/dreamlike-photoreal-1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	  "PortraitPlus": {
+	  "name": "PortraitPlus",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "This is a dreambooth model trained on a diverse set of close to medium range portraits of people.",
+	  "showcases": [
+		"https://huggingface.co/wavymulder/portraitplus/resolve/main/imgs/page1.jpg"
+	  ],
+	  "version": "1.0",
+	  "style": "photo",
+	  "trigger":["portrait+ style"],
+	  "homepage": "https://huggingface.co/wavymulder/portraitplus",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/PortraitPlus.ckpt",
+			"md5sum": "d25578c1fcb069c3f5613939d903ee84"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "PortraitPlus.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/wavymulder/portraitplus/resolve/main/portrait%2B1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Vintedois Diffusion": {
+	  "name": "Vintedois Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "Vintedois (22h) Diffusion model trained by Predogl and piEsposito with open weights, configs and prompts (as it should be).  This model was trained on a large amount of high quality images with simple prompts to generate beautiful images without a lot of prompt engineering.",
+	  "showcases": [
+		"https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/showcase/vintedois_diffusion/01_juice.webp"
+	  ],
+	  "version": "0.1",
+	  "style": "general",
+	  "trigger":["estilovintedois"],
+	  "homepage": "https://huggingface.co/22h/vintedois-diffusion-v0-1",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Vintedois_Diffusion.ckpt",
+			"md5sum": "8beebe273bb4f360849d31efdd29fe27"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Vintedois_Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/22h/vintedois-diffusion-v0-1/resolve/main/model.ckpt"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"Darkest Diffusion": {
+	  "name": "Darkest Diffusion",
+	  "baseline": "stable diffusion 1",
+	  "type": "ckpt",
+	  "description": "A free and open source Stable Diffusion model created by AI-Characters, trained on the artstyle of the game 'Darkest Dungeon'",
+	  "showcases": [
+		"https://huggingface.co/ai-characters/Darkest-Diffusion/resolve/main/gandr-collage.jpg"
+	  ],
+	  "version": "1.0",
+	  "style": "darkest dungeon",
+	  "trigger":["in the artstyle of dd"],
+	  "homepage": "https://huggingface.co/ai-characters/Darkest-Diffusion",
+	  "nsfw": false,
+	  "download_all": false,
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/custom/Darkest_Diffusion.ckpt",
+			"md5sum": "f67124451cf3ec0a3543a864e3008af7"
+		  },
+		  {
+			"path": "configs/stable-diffusion/v1-inference.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "Darkest_Diffusion.ckpt",
+			"file_path": "models/custom",
+			"file_url": "https://huggingface.co/ai-characters/Darkest-Diffusion/resolve/main/Darkest-Diffusion-v1.0.ckpt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"RealESRGAN_x4plus": {
-		"name": "RealESRGAN_x4plus",
-		"type": "realesrgan",
-		"description": "Upscaler.",
-		"version": "0.1.0",
-		"style": "generalist",
-		"config": {
-			"files": [
-				{
-					"path": "models/realesrgan/RealESRGAN_x4plus.pth"
-				}
-			],
-			"download": [
-				{
-					"file_name": "RealESRGAN_x4plus.pth",
-					"file_path": "models/realesrgan",
-					"file_url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
-				}
-			]
-		},
-		"available": false
+	  "name": "RealESRGAN_x4plus",
+	  "type": "realesrgan",
+	  "description": "Upscaler.",
+	  "version": "0.1.0",
+	  "style": "generalist",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/realesrgan/RealESRGAN_x4plus.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "RealESRGAN_x4plus.pth",
+			"file_path": "models/realesrgan",
+			"file_url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"RealESRGAN_x4plus_anime_6B": {
-		"name": "RealESRGAN_x4plus_anime_6B",
-		"type": "realesrgan",
-		"description": "Anime focused upscaler.",
-		"version": "0.2.2.4",
-		"style": "anime",
-		"config": {
-			"files": [
-				{
-					"path": "models/realesrgan/RealESRGAN_x4plus_anime_6B.pth"
-				}
-			],
-			"download": [
-				{
-					"file_name": "RealESRGAN_x4plus_anime_6B.pth",
-					"file_path": "models/realesrgan",
-					"file_url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth"
-				}
-			]
-		},
-		"available": false
+	  "name": "RealESRGAN_x4plus_anime_6B",
+	  "type": "realesrgan",
+	  "description": "Anime focused upscaler.",
+	  "version": "0.2.2.4",
+	  "style": "anime",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/realesrgan/RealESRGAN_x4plus_anime_6B.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "RealESRGAN_x4plus_anime_6B.pth",
+			"file_path": "models/realesrgan",
+			"file_url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"GFPGAN": {
-		"name": "GFPGAN",
-		"type": "gfpgan",
-		"description": "Face correction.",
-		"version": "1.4",
-		"style": "generalist",
-		"config": {
-			"files": [
-				{
-					"path": "models/gfpgan/GFPGANv1.4.pth"
-				},
-				{
-					"path": "gfpgan/weights/detection_Resnet50_Final.pth"
-				},
-				{
-					"path": "gfpgan/weights/parsing_parsenet.pth"
-				}
-			],
-			"download": [
-				{
-					"file_name": "GFPGANv1.4.pth",
-					"file_path": "models/gfpgan",
-					"file_url": "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth"
-				},
-				{
-					"file_name": "detection_Resnet50_Final.pth",
-					"file_path": "./gfpgan/weights",
-					"file_url": "https://github.com/xinntao/facexlib/releases/download/v0.1.0/detection_Resnet50_Final.pth"
-				},
-				{
-					"file_name": "parsing_parsenet.pth",
-					"file_path": "./gfpgan/weights",
-					"file_url": "https://github.com/xinntao/facexlib/releases/download/v0.2.2/parsing_parsenet.pth"
-				}
-			]
-		},
-		"available": false
+	  "name": "GFPGAN",
+	  "type": "gfpgan",
+	  "description": "Face correction.",
+	  "version": "1.4",
+	  "style": "generalist",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/gfpgan/GFPGANv1.4.pth"
+		  },
+		  {
+			"path": "gfpgan/weights/detection_Resnet50_Final.pth"
+		  },
+		  {
+			"path": "gfpgan/weights/parsing_parsenet.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "GFPGANv1.4.pth",
+			"file_path": "models/gfpgan",
+			"file_url": "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth"
+		  },
+		  {
+			"file_name": "detection_Resnet50_Final.pth",
+			"file_path": "./gfpgan/weights",
+			"file_url": "https://github.com/xinntao/facexlib/releases/download/v0.1.0/detection_Resnet50_Final.pth"
+		  },
+		  {
+			"file_name": "parsing_parsenet.pth",
+			"file_path": "./gfpgan/weights",
+			"file_url": "https://github.com/xinntao/facexlib/releases/download/v0.2.2/parsing_parsenet.pth"
+		  }
+		]
+	  },
+	  "available": false
+	},
+	"CodeFormers": {
+	  "name": "CodeFormers",
+	  "type": "CodeFormers",
+	  "description": "Upscaler.",
+	  "version": "0.1.0",
+	  "style": "generalist",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/codeformers/CodeFormers.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "CodeFormers.pth",
+			"file_path": "models/codeformers",
+			"file_url": "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"LDSR": {
-		"name": "LDSR",
-		"type": "ckpt",
-		"description": "Upscaler.",
-		"version": "1",
-		"style": "generalist",
-		"nsfw": false,
-		"download_all": true,
-		"config": {
-			"files": [
-				{
-					"path": "models/ldsr/model.ckpt"
-				},
-				{
-					"path": "models/ldsr/project.yaml"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model.ckpt",
-					"file_path": "models/ldsr",
-					"file_url": "https://heibox.uni-heidelberg.de/f/578df07c8fc04ffbadf3/?dl=1"
-				},
-				{
-					"file_name": "project.yaml",
-					"file_path": "models/ldsr",
-					"file_url": "https://heibox.uni-heidelberg.de/f/31a76b13ea27482981b4/?dl=1"
-				}
-			]
-		},
-		"available": false
+	  "name": "LDSR",
+	  "type": "ckpt",
+	  "description": "Upscaler.",
+	  "version": "1",
+	  "style": "generalist",
+	  "nsfw": false,
+	  "download_all": true,
+	  "config": {
+		"files": [
+		  {
+			"path": "models/ldsr/model.ckpt"
+		  },
+		  {
+			"path": "models/ldsr/project.yaml"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model.ckpt",
+			"file_path": "models/ldsr",
+			"file_url": "https://heibox.uni-heidelberg.de/f/578df07c8fc04ffbadf3/?dl=1"
+		  },
+		  {
+			"file_name": "project.yaml",
+			"file_path": "models/ldsr",
+			"file_url": "https://heibox.uni-heidelberg.de/f/31a76b13ea27482981b4/?dl=1"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"BLIP": {
-		"name": "BLIP",
-		"type": "blip",
-		"config": {
-			"files": [
-				{
-					"path": "models/blip/model__base_caption.pth"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model__base_caption.pth",
-					"file_path": "models/blip",
-					"file_url": "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model*_base_caption.pth"
-				}
-			]
-		},
-		"available": false
+	  "name": "BLIP",
+	  "type": "blip",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/blip/model__base_caption.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model__base_caption.pth",
+			"file_path": "models/blip",
+			"file_url": "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model*_base_caption.pth"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"BLIP_Large": {
-		"name": "BLIP_Large",
-		"type": "blip",
-		"config": {
-			"files": [
-				{
-					"path": "models/blip/model_large_caption.pth"
-				}
-			],
-			"download": [
-				{
-					"file_name": "model_large_caption.pth",
-					"file_path": "models/blip",
-					"file_url": "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"
-				}
-			]
-		},
-		"available": false
+	  "name": "BLIP_Large",
+	  "type": "blip",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/blip/model_large_caption.pth"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "model_large_caption.pth",
+			"file_path": "models/blip",
+			"file_url": "https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large_caption.pth"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"ViT-L/14": {
-		"name": "ViT-L/14",
-		"type": "clip",
-		"config": {
-			"files": [
-				{
-					"path": "models/clip/ViT-L-14.pt"
-				}
-			],
-			"download": [
-				{
-					"file_name": "ViT-L-14.pt",
-					"file_path": "./models/clip",
-					"file_url": "https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt"
-				}
-			]
-		},
-		"available": false
+	  "name": "ViT-L/14",
+	  "type": "clip",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/clip/ViT-L-14.pt"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "ViT-L-14.pt",
+			"file_path": "./models/clip",
+			"file_url": "https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"ViT-g-14": {
-		"name": "ViT-g-14",
-		"pretrained_name": "laion2b_s12b_b42k",
-		"type": "open_clip",
-		"config": {
-			"files": [
-				{
-					"path": "models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/"
-				}
-			],
-			"download": [
-				{
-					"file_name": "main",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/refs",
-					"file_content": "b36bdd32483debcf4ed2f918bdae1d4a46ee44b8"
-				},
-				{
-					"file_name": "6aac683f899159946bc4ca15228bb7016f3cbb1a2c51f365cba0b23923f344da",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/blobs",
-					"file_url": "https://huggingface.co/laion/CLIP-ViT-g-14-laion2B-s12B-b42K/resolve/main/open_clip_pytorch_model.bin"
-				},
-				{
-					"file_name": "open_clip_pytorch_model.bin",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/snapshots/b36bdd32483debcf4ed2f918bdae1d4a46ee44b8",
-					"symlink": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/blobs/6aac683f899159946bc4ca15228bb7016f3cbb1a2c51f365cba0b23923f344da"
-				}
-			]
-		},
-		"available": false
+	  "name": "ViT-g-14",
+	  "pretrained_name": "laion2b_s12b_b42k",
+	  "type": "open_clip",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "main",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/refs",
+			"file_content": "b36bdd32483debcf4ed2f918bdae1d4a46ee44b8"
+		  },
+		  {
+			"file_name": "6aac683f899159946bc4ca15228bb7016f3cbb1a2c51f365cba0b23923f344da",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/blobs",
+			"file_url": "https://huggingface.co/laion/CLIP-ViT-g-14-laion2B-s12B-b42K/resolve/main/open_clip_pytorch_model.bin"
+		  },
+		  {
+			"file_name": "open_clip_pytorch_model.bin",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/snapshots/b36bdd32483debcf4ed2f918bdae1d4a46ee44b8",
+			"symlink": "./models/clip/models--laion--CLIP-ViT-g-14-laion2B-s12B-b42K/blobs/6aac683f899159946bc4ca15228bb7016f3cbb1a2c51f365cba0b23923f344da"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"ViT-H-14": {
-		"name": "ViT-H-14",
-		"pretrained_name": "laion2b_s32b_b79k",
-		"type": "open_clip",
-		"config": {
-			"files": [
-				{
-					"path": "models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/"
-				}
-			],
-			"download": [
-				{
-					"file_name": "main",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/refs",
-					"file_content": "58a1e03a7acfacbe6b95ebc24ae0394eda6a14fc"
-				},
-				{
-					"file_name": "9a78ef8e8c73fd0df621682e7a8e8eb36c6916cb3c16b291a082ecd52ab79cc4",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/blobs",
-					"file_url": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/main/open_clip_pytorch_model.bin"
-				},
-				{
-					"file_name": "open_clip_pytorch_model.bin",
-					"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/snapshots/58a1e03a7acfacbe6b95ebc24ae0394eda6a14fc",
-					"symlink": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/blobs/9a78ef8e8c73fd0df621682e7a8e8eb36c6916cb3c16b291a082ecd52ab79cc4"
-				}
-			]
-		},
-		"available": false
+	  "name": "ViT-H-14",
+	  "pretrained_name": "laion2b_s32b_b79k",
+	  "type": "open_clip",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "main",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/refs",
+			"file_content": "58a1e03a7acfacbe6b95ebc24ae0394eda6a14fc"
+		  },
+		  {
+			"file_name": "9a78ef8e8c73fd0df621682e7a8e8eb36c6916cb3c16b291a082ecd52ab79cc4",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/blobs",
+			"file_url": "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/main/open_clip_pytorch_model.bin"
+		  },
+		  {
+			"file_name": "open_clip_pytorch_model.bin",
+			"file_path": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/snapshots/58a1e03a7acfacbe6b95ebc24ae0394eda6a14fc",
+			"symlink": "./models/clip/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/blobs/9a78ef8e8c73fd0df621682e7a8e8eb36c6916cb3c16b291a082ecd52ab79cc4"
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"diffusers_stable_diffusion": {
-		"name": "diffusers_stable_diffusion",
-		"type": "diffusers",
-		"requires": ["clip-vit-large-patch14"],
-		"config": {
-			"files": [
-				{
-					"path": "models/diffusers/"
-				}
-			],
-			"download": [
-				{
-					"file_name": "diffusers_stable_diffusion",
-					"file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v1-4.git",
-					"git": true,
-					"hf_auth": true,
-					"post_process": [
-						{
-							"delete": "models/diffusers/stable-diffusion-v1-4/.git"
-						}
-					]
-				}
+	  "name": "diffusers_stable_diffusion",
+	  "type": "diffusers",
+	  "requires": [
+		"clip-vit-large-patch14"
+	  ],
+	  "config": {
+		"files": [
+		  {
+			"path": "models/diffusers/"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "diffusers_stable_diffusion",
+			"file_url": "https://{username}:{password}@huggingface.co/CompVis/stable-diffusion-v1-4.git",
+			"git": true,
+			"hf_auth": true,
+			"post_process": [
+			  {
+				"delete": "models/diffusers/stable-diffusion-v1-4/.git"
+			  }
 			]
-		},
-		"available": false
+		  }
+		]
+	  },
+	  "available": false
 	},
 	"stable_diffusion_inpainting": {
-		"name": "stable_diffusion_inpainting",
-		"type": "diffusers",
-		"description": "Generalist model specialized for movifying areas of existing images",
-		"version": "1.5",
-		"style": "inpainting",
-		"hf_path": "runwayml/stable-diffusion-inpainting",
-		"hf_auth": true,
-		"available": false
+	  "name": "stable_diffusion_inpainting",
+	  "type": "diffusers",
+	  "description": "Generalist model specialized for modifying areas of existing images",
+	  "version": "1.5",
+	  "style": "inpainting",
+	  "hf_path": "runwayml/stable-diffusion-inpainting",
+	  "hf_auth": true,
+	  "available": false
 	},
 	"safety_checker": {
-		"name": "safety_checker",
-		"type": "safety_checker",
-		"description": "Safety checker",
-		"config": {
-			"files": [
-				{
-					"path": "models/safety_checker/pytorch_model.bin",
-					"md5sum": "dbbcb50d4df4572a720b104fae1e8187"
-				},
-				{
-					"path": "models/safety_checker/config.json"
-				},
-				{
-					"path": "models/safety_checker/preprocessor_config.json"
-				}
-			],
-			"download": [
-				{
-					"file_name": "pytorch_model.bin",
-					"file_path": "models/safety_checker",
-					"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/pytorch_model.bin"
-				},
-				{
-					"file_name": "config.json",
-					"file_path": "models/safety_checker",
-					"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/config.json"
-				},
-				{
-					"file_name": "preprocessor_config.json",
-					"file_path": "models/safety_checker",
-					"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/preprocessor_config.json"
-				}
-			]
-		}
+	  "name": "safety_checker",
+	  "type": "safety_checker",
+	  "description": "Safety checker",
+	  "config": {
+		"files": [
+		  {
+			"path": "models/safety_checker/pytorch_model.bin",
+			"md5sum": "dbbcb50d4df4572a720b104fae1e8187"
+		  },
+		  {
+			"path": "models/safety_checker/config.json"
+		  },
+		  {
+			"path": "models/safety_checker/preprocessor_config.json"
+		  }
+		],
+		"download": [
+		  {
+			"file_name": "pytorch_model.bin",
+			"file_path": "models/safety_checker",
+			"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/pytorch_model.bin"
+		  },
+		  {
+			"file_name": "config.json",
+			"file_path": "models/safety_checker",
+			"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/config.json"
+		  },
+		  {
+			"file_name": "preprocessor_config.json",
+			"file_path": "models/safety_checker",
+			"file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/preprocessor_config.json"
+		  }
+		]
+	  }
 	}
-}
+  }
+  

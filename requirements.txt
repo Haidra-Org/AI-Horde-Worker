@@ -50,9 +50,7 @@ realesrgan
 test-tube
 timm
 torch-fidelity
-#do not change transformers version
-transformers==4.21.3 # do not change
-#do not change transformers version
+git+https://github.com/huggingface/transformers
 wget
 
 # Optional packages commonly used with Stable Diffusion workflow
@@ -61,6 +59,8 @@ wget
 basicsr
 gfpgan
 realesrgan
+# we have to use the main branch due to depth2img
+# We'll pin once a released version supports it
 git+https://github.com/CompVis/latent-diffusion
 codeformer-perceptor  # required for CodeFormers
 

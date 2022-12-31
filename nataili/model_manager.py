@@ -11,7 +11,7 @@ import requests
 import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from codeformer import CodeFormer
-from diffusers import StableDiffusionInpaintPipeline
+from diffusers import StableDiffusionDepth2ImgPipeline, StableDiffusionInpaintPipeline
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from gfpgan import GFPGANer
 from omegaconf import OmegaConf
@@ -420,12 +420,21 @@ class ModelManager:
         model_path = self.models[model_name]["hf_path"]
         device = torch.device(f"cuda:{gpu_id}")
 
-        pipe = StableDiffusionInpaintPipeline.from_pretrained(
-            model_path,
-            revision="fp16" if precision == "half" else None,
-            torch_dtype=torch.float16 if precision == "half" else None,
-            use_auth_token=self.models[model_name]["hf_auth"],
-        )
+        if model_name == "Stable Diffusion 2 Depth":
+            pipe = StableDiffusionDepth2ImgPipeline.from_pretrained(
+                model_path,
+                revision="fp16" if precision == "half" else None,
+                torch_dtype=torch.float16 if precision == "half" else None,
+                use_auth_token=self.models[model_name]["hf_auth"],
+            )
+        else:
+            pipe = StableDiffusionInpaintPipeline.from_pretrained(
+                model_path,
+                revision="fp16" if precision == "half" else None,
+                torch_dtype=torch.float16 if precision == "half" else None,
+                use_auth_token=self.models[model_name]["hf_auth"],
+            )
+
         pipe.enable_attention_slicing()
 
         if not self.disable_voodoo:
