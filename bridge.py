@@ -148,12 +148,18 @@ def bridge(this_model_manager, this_bridge_data):
                                     logger.error("Job failed with exception, {}", job_thread.exception())
                                     logger.exception(job_thread.exception())
                                     if consecutive_executor_restarts > 0:
-                                        logger.critical("Worker keeps crashing after thread executor restart. Cannot be salvaged. Aborting!")
+                                        logger.critical(
+                                            "Worker keeps crashing after thread executor restart. "
+                                            "Cannot be salvaged. Aborting!"
+                                        )
                                         should_stop = True
                                         break
                                     consecutive_failed_jobs += 1
                                     if consecutive_failed_jobs >= 5:
-                                        logger.critical("Too many consecutive jobs have failed. Restarting thread executor and hope we recover...")
+                                        logger.critical(
+                                            "Too many consecutive jobs have failed. "
+                                            "Restarting thread executor and hope we recover..."
+                                        )
                                         executor.shutdown(wait=False)
                                         should_restart = True
                                         consecutive_executor_restarts += 1
