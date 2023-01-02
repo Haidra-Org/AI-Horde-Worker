@@ -31,8 +31,10 @@ def bridge(this_model_manager, this_bridge_data):
     reload_data(this_bridge_data)
     try:
         should_stop = False
+        consecutive_executor_restarts = 0
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             should_restart = False
+            consecutive_failed_jobs = 0
             with ThreadPoolExecutor(max_workers=this_bridge_data.max_threads) as executor:
                 while True:
                     if should_restart:
@@ -145,6 +147,20 @@ def bridge(this_model_manager, this_bridge_data):
                                 if job_thread.exception(timeout=1):
                                     logger.error("Job failed with exception, {}", job_thread.exception())
                                     logger.exception(job_thread.exception())
+                                    if consecutive_executor_restarts > 0:
+                                        logger.critical("Worker keeps crashing after thread executor restart. Cannot be salvaged. Aborting!")
+                                        should_stop = True
+                                        break
+                                    consecutive_failed_jobs += 1
+                                    if consecutive_failed_jobs >= 5:
+                                        logger.critical("Too many consecutive jobs have failed. Restarting thread executor and hope we recover...")
+                                        executor.shutdown(wait=False)
+                                        should_restart = True
+                                        consecutive_executor_restarts += 1
+                                        break
+                                else:
+                                    consecutive_failed_jobs = 0
+                                    consecutive_executor_restarts = 0
                                 run_count += 1
                                 logger.debug(
                                     f"Job finished successfully in {runtime:.3f}s (Total Completed: {run_count})"
