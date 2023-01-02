@@ -138,7 +138,7 @@ class HordeJob:
             else:
                 self.skipped_info = ""
             logger.info(
-                f"Server {self.bridge_data.horde_url} has no valid generations to do for us.{self.skipped_info}"
+                f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}"
             )
             time.sleep(self.retry_interval)
             self.status = JobStatus.FAULTED
