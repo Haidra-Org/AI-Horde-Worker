@@ -15,19 +15,19 @@ class InterrogationHordeJob(HordeJobFramework):
         super().__init__(mm, bd, pop)
         self.current_form = self.pop["form"]
         self.current_id = self.pop["id"]
-        self.current_payload = self.pop["payload"]
+        self.current_payload = self.pop.get("payload", {})
         self.image = self.pop["image"]
-        # We allow a generation a plentiful 5 seconds per form before we consider it stale
-        self.stale_time = time.time() + (len(self.current_forms) * 5)
+        # We allow a generation a plentiful 10 seconds per form before we consider it stale
         self.result = None
 
     @logger.catch(reraise=True)
     def start_job(self):
         """Starts a Stable Diffusion job from a pop request"""
-        logger.debug("Starting job in threadpool for model: {}", self.current_model)
+        logger.debug("Starting job in threadpool for model: {}", self.current_form)
         super().start_job()
         if self.status == JobStatus.FAULTED:
             return
+        self.stale_time = time.time() + 10
         interrogator = None
         payload_kwargs = {}
         if self.current_form == "caption":
@@ -43,9 +43,9 @@ class InterrogationHordeJob(HordeJobFramework):
                 "repetition_penalty": self.current_payload.get("repetition_penalty", 1.2),
             }
         try:
-            logger.debug("Starting interrogation...")
+            logger.debug(f"Starting interrogation {self.current_id}")
             self.result = interrogator(self.image, **payload_kwargs)
-            logger.debug("Finished interrogation...")
+            logger.info(f"Finished interrogation {self.current_id}")
         except RuntimeError as err:
             logger.error(
                 "Something went wrong when processing request. "

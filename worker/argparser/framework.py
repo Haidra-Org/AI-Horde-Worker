@@ -124,6 +124,12 @@ arg_parser.add_argument(
     required=False,
     help="Specify this argument to autodownload all missing models defined in your bridgeData.py",
 )
+arg_parser.add_argument(
+    "--skip_md5",
+    action="store_true",
+    default=False,
+    help="If specified will not check the downloaded model md5sum.",
+)
 
 # This args must be parsed in the extended class
 # args = arg_parser.parse_args()

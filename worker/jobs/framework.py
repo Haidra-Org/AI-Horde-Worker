@@ -45,6 +45,9 @@ class HordeJobFramework:
             return True
         if not self.stale_time:
             return False
+        # Jobs which haven't started yet are not considered stale.
+        if self.status != JobStatus.WORKING:
+            return False
         return time.time() > self.stale_time
 
     @logger.catch(reraise=True)

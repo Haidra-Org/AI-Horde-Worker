@@ -2,7 +2,7 @@
 import os
 
 from nataili.util import logger
-from worker.argparser import args
+from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
 
 

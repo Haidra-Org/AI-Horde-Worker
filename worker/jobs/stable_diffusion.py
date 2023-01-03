@@ -32,7 +32,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_model = self.pop.get("model", self.available_models[0])
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
-        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         self.r2_upload = self.pop.get("r2_upload", False)
 
     @logger.catch(reraise=True)
@@ -42,6 +41,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         super().start_job()
         if self.status == JobStatus.FAULTED:
             return
+        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image

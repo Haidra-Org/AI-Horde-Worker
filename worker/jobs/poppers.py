@@ -116,12 +116,16 @@ class InterrogationPopper(JobPopper):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/interrogate/pop"
         available_forms = []
+        self.available_models = self.model_manager.get_loaded_models_names()
+        for util_model in ["LDSR", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]:
+            if util_model in self.available_models:
+                self.available_models.remove(util_model)
         if "BLIP_Large" in self.available_models:
             available_forms.append("caption")
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "forms": available_forms,
-            "amount": self.bridge_data.amount,
+            "amount": self.bridge_data.queue_size,
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,
             "bridge_version": self.BRIDGE_VERSION,
@@ -139,5 +143,6 @@ class InterrogationPopper(JobPopper):
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
                 img_data = requests.get(current_image_url).content
-                form["image"] = Image.open(BytesIO(img_data))
+            form["image"] = Image.open(BytesIO(img_data))
+        logger.debug(f"Popped {len(self.pop['forms'])} interrogation forms")
         return self.pop["forms"]

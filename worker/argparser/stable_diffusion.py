@@ -52,12 +52,6 @@ arg_parser.add_argument(
     help="Which model to run on this horde.",
 )
 arg_parser.add_argument(
-    "--skip_md5",
-    action="store_true",
-    default=False,
-    help="If specified will not check the downloaded model md5sum.",
-)
-arg_parser.add_argument(
     "--disable_dynamic_models",
     action="store_true",
     default=False,
