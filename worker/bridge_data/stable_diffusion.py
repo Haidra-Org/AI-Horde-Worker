@@ -4,7 +4,7 @@ import os
 from PIL import Image
 
 from nataili.util import logger
-from worker.argparser import args
+from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 
 
@@ -12,7 +12,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(args)
         self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.censor_nsfw = os.environ.get("HORDE_CENSOR", "false") == "true"
@@ -38,7 +38,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
-        super().reload_data()
+        previous_url = self.horde_url
+        bd = super().reload_data()
         try:
             try:
                 self.max_power = bd.max_power

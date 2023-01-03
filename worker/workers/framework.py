@@ -84,7 +84,6 @@ class WorkerFramework:
         jobs = self.pop_job()
         if jobs:
             self.waiting_jobs.extend(jobs)
-        return job
 
     def pop_job(self):
         '''Polls the AI Horde for new jobs and creates as many Job classes needed

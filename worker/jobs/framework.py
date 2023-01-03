@@ -24,8 +24,8 @@ class HordeJobFramework:
         self.status = JobStatus.INIT
         self.start_time = time.time()
         self.stale_time = None
-        self.pop = None
         self.submit_dict = {}
+        self.headers = {"apikey": self.bridge_data.api_key}
 
 
     def is_finished(self):

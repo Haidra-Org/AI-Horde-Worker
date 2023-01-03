@@ -55,6 +55,12 @@ arg_parser.add_argument(
     help="Set to true if you want this worker worker to allow img2img requests from unsafe IPs.",
 )
 arg_parser.add_argument(
+    "--max_threads",
+    type=int,
+    required=False,
+    help="How many threads to use. Min: 1",
+)
+arg_parser.add_argument(
     "-v",
     "--verbosity",
     action="count",

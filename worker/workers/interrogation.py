@@ -5,11 +5,18 @@ import traceback
 import requests
 
 from nataili.util import logger
+from worker.jobs.poppers import InterrogationPopper
 from worker.jobs.stable_diffusion import InterrogationHordeJob
 from worker.stats import bridge_stats
 from worker.workers.framework import WorkerFramework
 
 class InterrogationWorker(WorkerFramework):
+
+    def __init__(self, this_model_manager, this_bridge_data):
+        super().__init__(this_model_manager, this_bridge_data)
+        self.PopperClass = InterrogationPopper
+        self.JobClass = InterrogationHordeJob
+
 
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
@@ -23,7 +30,7 @@ class InterrogationWorker(WorkerFramework):
 
 
     def pop_job(self):
-        return super().pop_job(InterrogationHordeJob)
+        return super().pop_job()
 
 
     def reload_data(self):

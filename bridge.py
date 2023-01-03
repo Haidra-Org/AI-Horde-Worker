@@ -1,8 +1,8 @@
 """This is the bridge, It connects the horde with the ML processing"""
 from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
-from worker.argparser import args
-from worker.workers.prompt import StableDiffusionWorker
+from worker.argparser.stable_diffusion import args
+from worker.workers.stable_diffusion import StableDiffusionWorker
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     model_manager = ModelManager(disable_voodoo=bridge_data.disable_voodoo.active)
     model_manager.init()
     try:
-        worker = PromptWorker(model_manager, bridge_data)
+        worker = StableDiffusionWorker(model_manager, bridge_data)
         worker.start()
     except KeyboardInterrupt:
         logger.info("Keyboard Interrupt Received. Ending Process")

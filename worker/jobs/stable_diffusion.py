@@ -27,11 +27,13 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.seed = None
         self.image = None
         self.r2_upload = None
+        self.available_models = self.model_manager.get_loaded_models_names()
         self.current_model = self.pop.get("model", self.available_models[0])
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         self.r2_upload = self.pop.get("r2_upload", False)
+        
 
     @logger.catch(reraise=True)
     def start_job(self):

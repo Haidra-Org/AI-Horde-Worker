@@ -10,7 +10,7 @@ class InterrogationBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(args)
         self.forms = os.environ.get("HORDE_INTERROGATION_FORMS", "caption").split(",")
         self.model_names = []
 
@@ -18,7 +18,8 @@ class InterrogationBridgeData(BridgeDataTemplate):
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
-        super().reload_data()
+        previous_url = self.horde_url
+        bd = super().reload_data()
         try:
             try:
                 self.forms = bd.forms

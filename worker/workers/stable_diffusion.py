@@ -12,6 +12,12 @@ from worker.workers.framework import WorkerFramework
 
 class StableDiffusionWorker(WorkerFramework):
 
+    def __init__(self, this_model_manager, this_bridge_data):
+        super().__init__(this_model_manager, this_bridge_data)
+        self.PopperClass = StableDiffusionPopper
+        self.JobClass = StableDiffusionHordeJob
+
+
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
         can_do = len(self.model_manager.get_loaded_models_names()) > 0
@@ -33,7 +39,7 @@ class StableDiffusionWorker(WorkerFramework):
                 self.bridge_data.model_names.append(job.current_model)
 
     def pop_job(self):
-        return super().pop_job(StableDiffusionHordeJob)
+        return super().pop_job()
 
 
     def get_running_models(self):

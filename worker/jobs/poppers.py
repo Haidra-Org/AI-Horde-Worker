@@ -1,6 +1,7 @@
 
 import requests
 import time
+import copy
 
 from nataili.util import logger
 

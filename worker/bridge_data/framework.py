@@ -10,14 +10,16 @@ import requests
 
 from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
 from nataili.util import logger
-from worker.argparser import args
 
 
 class BridgeDataTemplate:
     """Configuration object"""
 
-    def __init__(self):
+    def __init__(self, args):
         random.seed()
+        # I have to pass the args from the extended class, as the framework class doesn't
+        # know what kind of polymorphism this worker is using
+        self.args = args
         self.horde_url = os.environ.get("HORDE_URL", "https://stablehorde.net")
         # Give a cool name to your instance
         self.worker_name = os.environ.get(
@@ -38,9 +40,9 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
 
-        disable_xformers.toggle(args.disable_xformers)
-        disable_local_ray_temp.toggle(args.disable_local_ray_temp)
-        disable_voodoo.toggle(args.disable_voodoo)
+        disable_xformers.toggle(self.args.disable_xformers)
+        disable_local_ray_temp.toggle(self.args.disable_local_ray_temp)
+        disable_voodoo.toggle(self.args.disable_voodoo)
         if disable_voodoo.active:
             disable_local_ray_temp.activate()
 
@@ -50,7 +52,6 @@ class BridgeDataTemplate:
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
-        previous_url = self.horde_url
         previous_api_key = self.api_key
         try:
             # TODO - move this to a yaml file
@@ -78,20 +79,20 @@ class BridgeDataTemplate:
                 pass
         except (ImportError, AttributeError) as err:
             logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
-        if args.api_key:
-            self.api_key = args.api_key
-        if args.worker_name:
-            self.worker_name = args.worker_name
-        if args.horde_url:
-            self.horde_url = args.horde_url
-        if args.priority_usernames:
-            self.priority_usernames = args.priority_usernames
-        if args.max_threads:
-            self.max_threads = args.max_threads
-        if args.queue_size:
-            self.queue_size = args.queue_size
-        if args.allow_unsafe_ip:
-            self.allow_unsafe_ip = args.allow_unsafe_ip
+        if self.args.api_key:
+            self.api_key = self.args.api_key
+        if self.args.worker_name:
+            self.worker_name = self.args.worker_name
+        if self.args.horde_url:
+            self.horde_url = self.args.horde_url
+        if self.args.priority_usernames:
+            self.priority_usernames = self.args.priority_usernames
+        if self.args.max_threads:
+            self.max_threads = self.args.max_threads
+        if self.args.queue_size:
+            self.queue_size = self.args.queue_size
+        if self.args.allow_unsafe_ip:
+            self.allow_unsafe_ip = self.args.allow_unsafe_ip
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
@@ -106,6 +107,7 @@ class BridgeDataTemplate:
             except Exception:
                 logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
                 self.username = "N/A"
+        return bd
 
     @logger.catch(reraise=True)
     def check_models(self, model_manager):
@@ -127,7 +129,7 @@ class BridgeDataTemplate:
                 continue
             if model in model_manager.get_loaded_models_names():
                 continue
-            if not model_manager.validate_model(model, skip_checksum=args.skip_md5):
+            if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
                 if (
                     model_manager.count_available_models_by_types() + len(not_found_models)
                     < self.max_models_to_download
@@ -138,7 +140,7 @@ class BridgeDataTemplate:
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
                 check_mm_auth(model_manager)
         if not models_exist:
-            if args.yes or self.dynamic_models:
+            if self.args.yes or self.dynamic_models:
                 choice = "y"
             else:
                 choice = input(
@@ -225,8 +227,8 @@ def check_mm_auth(model_manager):
     """Checks for hugging face authentication for model manager"""
     if model_manager.has_authentication():
         return
-    if args.hf_token:
-        hf_auth = {"username": "USER", "password": args.hf_token}
+    if self.args.hf_token:
+        hf_auth = {"username": "USER", "password": self.args.hf_token}
         model_manager.set_authentication(hf_auth=hf_auth)
         return
     try:
