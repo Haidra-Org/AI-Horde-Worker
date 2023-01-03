@@ -2,10 +2,12 @@
 import time
 import traceback
 import numpy as np
+from transformers import CLIPFeatureExtractor
 
 from nataili.blip.caption import Caption
+from nataili.clip.interrogate import Interrogator
+
 from nataili.util import logger
-from transformers import CLIPFeatureExtractor
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 
@@ -33,19 +35,36 @@ class InterrogationHordeJob(HordeJobFramework):
         interrogator = None
         payload_kwargs = {}
         logger.debug(f"Starting interrogation {self.current_id}")
-        if self.current_form == "caption":
-            interrogator = Caption(
-                self.model_manager.loaded_models["BLIP_Large"]["model"],
-                self.model_manager.loaded_models["BLIP_Large"]["device"],
+        if self.current_form == "nsfw":
+            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
+            feature_extractor = CLIPFeatureExtractor()
+            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
+            _, has_nsfw_concept = safety_checker(
+                clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
             )
-            payload_kwargs = {
-                "sample": True,
-                "num_beams": self.current_payload.get("num_beams", 7),
-                "min_length": self.current_payload.get("min_length", 20),
-                "max_length": self.current_payload.get("max_length", self.current_payload.get("min_length", 20) + 30),
-                "top_p": self.current_payload.get("top_p", 0.9),
-                "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
-            }
+            self.result = (has_nsfw_concept and True in has_nsfw_concept)
+        else:
+            if self.current_form == "caption":
+                interrogator = Caption(
+                    self.model_manager.loaded_models["BLIP_Large"]["model"],
+                    self.model_manager.loaded_models["BLIP_Large"]["device"],
+                )
+                payload_kwargs = {
+                    "sample": True,
+                    "num_beams": self.current_payload.get("num_beams", 7),
+                    "min_length": self.current_payload.get("min_length", 20),
+                    "max_length": self.current_payload.get("max_length", self.current_payload.get("min_length", 20) + 30),
+                    "top_p": self.current_payload.get("top_p", 0.9),
+                    "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
+                }
+            if self.current_form == "interrogation":
+                interrogator = Interrogator(
+                    self.model_manager.loaded_models["ViT-L/14"]["model"],
+                    self.model_manager.loaded_models["ViT-L/14"]["preprocess"],
+                    self.model_manager.loaded_models["ViT-L/14"]["data_lists"],
+                    self.model_manager.loaded_models["ViT-L/14"]["device"],
+                    batch_size=100,
+                )
             try:
                 self.result = interrogator(self.image, **payload_kwargs)
             except RuntimeError as err:
@@ -59,14 +78,6 @@ class InterrogationHordeJob(HordeJobFramework):
                 logger.trace(trace)
                 self.status = JobStatus.FAULTED
                 return
-        if self.current_form == "nsfw":
-            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
-            feature_extractor = CLIPFeatureExtractor()
-            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
-            _, has_nsfw_concept = safety_checker(
-                clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
-            )
-            self.result = (has_nsfw_concept and True in has_nsfw_concept)
         logger.info(f"Finished interrogation {self.current_id}")
         interrogator = None
         self.start_submit_thread()
@@ -82,4 +93,6 @@ class InterrogationHordeJob(HordeJobFramework):
             self.submit_dict["result"] = {"caption": self.result}
         if self.current_form == "nsfw":
             self.submit_dict["result"] = {"nsfw": self.result}
+        if self.current_form == "interrogation":
+            self.submit_dict["result"] = {"interrogation": self.result}
         logger.debug(self.submit_dict)
