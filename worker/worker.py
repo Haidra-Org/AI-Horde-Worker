@@ -5,10 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from nataili.model_manager import ModelManager
-from nataili.util import logger, quiesce_logger, set_logger_verbosity
+from nataili.util import logger
 from worker.argparser import args
-from worker.bridge_data import BridgeData
 from worker.job import HordeJob
 from worker.stats import bridge_stats
 
@@ -59,13 +57,13 @@ class Worker:
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
         self.bridge_data.reload_data()
-        self.bridge_data.check_models(model_manager)
-        self.bridge_data.reload_models(model_manager)
+        self.bridge_data.check_models(self.model_manager)
+        self.bridge_data.reload_models(self.model_manager)
 
     def process_jobs(self):
         if time.time() - self.last_config_reload > 60:
             self.reload_bridge_data()
-        if self.can_process_jobs():
+        if not self.can_process_jobs():
             time.sleep(5)
             return
         # Add job to queue if we have space
@@ -77,7 +75,7 @@ class Worker:
                 break
         # Check if any jobs are done
         for (job_thread, start_time, job) in self.running_jobs:
-            self.check_running_jobs_status(job_thread, start_time, job)
+            self.check_running_job_status(job_thread, start_time, job)
             if self.should_restart or self.should_stop:
                 break
         # Give the CPU a break
@@ -202,7 +200,7 @@ class Worker:
 
     def calculate_dynamic_models(self):
         all_models_data = requests.get(
-            bridge_data.horde_url + "/api/v2/status/models", timeout=10
+            self.bridge_data.horde_url + "/api/v2/status/models", timeout=10
         ).json()
         # We remove models with no queue from our list of models to load dynamically
         models_data = [md for md in all_models_data if md["queued"] > 0]
@@ -211,7 +209,7 @@ class Worker:
         logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
         total_models = self.bridge_data.predefined_models.copy()
         new_dynamic_models = []
-        running_models = self.get_running_models(self.running_jobs)
+        running_models = self.get_running_models()
         # Sometimes a dynamic model is wwaiting in the queue,
         # and we do not wan to unload it
         # However we also don't want to keep it loaded

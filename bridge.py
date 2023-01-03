@@ -3,6 +3,7 @@ from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
 from worker.argparser import args
 from worker.worker import Worker
+from worker.bridge_data import BridgeData
 
 
 
