@@ -1,16 +1,10 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
 import time
-import traceback
 from concurrent.futures import ThreadPoolExecutor
 
-import requests
-
 from nataili.util import logger
-from worker.argparser import args
-from worker.job import HordeJob
-from worker.stats import bridge_stats
 
-class Worker:
+class WorkerFramework:
 
     def __init__(self, this_model_manager, this_bridge_data):
         self.model_manager = this_model_manager
@@ -27,6 +21,7 @@ class Worker:
         self.reload_data()
         logger.stats("Starting new stats session")
 
+    @logger.catch(reraise=True)
     def start(self):
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
@@ -54,12 +49,6 @@ class Worker:
                 logger.init_ok("Worker", status="Shut Down")
                 break
 
-    def reload_data(self):
-        """This is just a utility function to reload the configuration"""
-        self.bridge_data.reload_data()
-        self.bridge_data.check_models(self.model_manager)
-        self.bridge_data.reload_models(self.model_manager)
-
     def process_jobs(self):
         if time.time() - self.last_config_reload > 60:
             self.reload_bridge_data()
@@ -81,40 +70,36 @@ class Worker:
         # Give the CPU a break
         time.sleep(0.02)  
 
-    # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
-        can_do = len(self.model_manager.get_loaded_models_names()) > 0
-        if not can_do:
-            logger.info(
-                "No models loaded. Waiting for the first model to be up before polling the horde"
-            )
-        return can_do
+        '''This function returns true when this worker can start polling for jobs from the AI Horde
+        This function MUST be overriden, according to the logic for this worker type'''
+        return False
 
-    # We want this to be extendable as well
     def add_job_to_queue(self):
-        '''Picks up a job from the horde and adds it to the local queue'''
+        '''Picks up a job from the horde and adds it to the local queue
+        Returns the job object created, if any'''
         job = self.pop_job()
         if job:
             self.waiting_jobs.append((job))
-            # The job sends the current models loaded in the MM to
-            # the horde. That model might end up unloaded if it's dynamic
-            # so we need to ensure it will be there next iteration.
-            if job.current_model not in self.bridge_data.model_names:
-                self.bridge_data.model_names.append(job.current_model)
+        return job
 
-    def pop_job(self):
-        new_job = HordeJob(self.model_manager, self.bridge_data)
+    def pop_job(self, JobClass):
+        '''Polls the AI Horde for new jobs and creates a Job class
+        The Job class to create should be sent in the args'''
+        new_job = JobClass(self.model_manager, self.bridge_data)
         pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
         if pop:
-            logger.debug("Got a new job from the horde for model: {}", new_job.current_model)
             return new_job
         return None
 
     def start_job(self):
+        '''Starts a job previously picked up from the horde
+        Returns True to continue starting jobs until queue is full
+        Returns False to break out of the loop and poll the horde again'''
         job = None
         # Queue disabled
         if self.bridge_data.queue_size == 0:
-            job = pop_job(self.model_manager, self.bridge_data)
+            job = self.pop_job(self.model_manager, self.bridge_data)
         # Queue enabled
         elif len(self.waiting_jobs) > 0:
             job = self.waiting_jobs.pop(0)
@@ -123,15 +108,15 @@ class Worker:
             return False
         # Run the job
         if job:
-            job_model = job.current_model
-            logger.debug("Starting job for model: {}", job_model)
             self.running_jobs.append((self.executor.submit(job.start_job), time.monotonic(), job))
-            logger.debug("job submitted")
+            logger.debug("New job processing")
         else:
-            logger.debug("No job to start")
+            logger.debug("No new job to start")
         return True    
 
+
     def check_running_job_status(self, job_thread, start_time, job):
+        '''Polls the AI Horde for new jobs and creates a Job class'''
         runtime = time.monotonic() - start_time
         if job_thread.done():
             if job_thread.exception(timeout=1):
@@ -176,74 +161,14 @@ class Worker:
             self.should_restart = True
             return
 
-    def get_running_models(self):
-        running_models = []
-        for (job_thread, start_time, job) in self.running_jobs:
-            running_models.append(job.current_model)
-        # logger.debug(running_models)
-        return running_models
+
+    def reload_data(self):
+        """This is just a utility function to reload the configuration"""
+        self.bridge_data.reload_data()
+
 
     def reload_bridge_data(self):
         self.model_manager.download_model_reference()
         self.reload_data()
         self.executor._max_workers = self.bridge_data.max_threads
-        logger.stats(f"Stats this session:\n{bridge_stats.get_pretty_stats()}")
-        if self.bridge_data.dynamic_models:
-            try:
-                self.calculate_dynamic_models()
-            # pylint: disable=broad-except
-            except Exception as err:
-                logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
-                trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
-                logger.trace(trace)
         self.last_config_reload = time.time()        
-
-    def calculate_dynamic_models(self):
-        all_models_data = requests.get(
-            self.bridge_data.horde_url + "/api/v2/status/models", timeout=10
-        ).json()
-        # We remove models with no queue from our list of models to load dynamically
-        models_data = [md for md in all_models_data if md["queued"] > 0]
-        models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
-        top_5 = [x["name"] for x in models_data[:5]]
-        logger.stats(f"Top 5 models by load: {', '.join(top_5)}")
-        total_models = self.bridge_data.predefined_models.copy()
-        new_dynamic_models = []
-        running_models = self.get_running_models()
-        # Sometimes a dynamic model is wwaiting in the queue,
-        # and we do not wan to unload it
-        # However we also don't want to keep it loaded
-        # + the full amount of dynamic models
-        # as we may run out of RAM/VRAM.
-        # So we reduce the amount of dynamic models
-        # based on how many previous dynamic models we need to keep loaded
-        needed_previous_dynamic_models = 0
-        for model_name in running_models:
-            if model_name not in self.bridge_data.predefined_models:
-                needed_previous_dynamic_models += 1
-        for model in models_data:
-            if model["name"] in self.bridge_data.models_to_skip:
-                continue
-            if model["name"] in total_models:
-                continue
-            if (
-                len(new_dynamic_models) + needed_previous_dynamic_models
-                >= self.bridge_data.number_of_dynamic_models
-            ):
-                break
-            # If we've limited the amount of models to download,
-            # then we skip models which are not already downloaded
-            if (
-                self.model_manager.count_available_models_by_types()
-                >= self.bridge_data.max_models_to_download
-                and model["name"] not in self.model_manager.get_available_models()
-            ):
-                continue
-            total_models.append(model["name"])
-            new_dynamic_models.append(model["name"])
-        logger.info(
-            "Dynamically loading new models to attack the relevant queue: {}",
-            new_dynamic_models,
-        )
-        # Ensure we don't unload currently queued models
-        self.bridge_data.model_names = list(set(total_models + running_models))

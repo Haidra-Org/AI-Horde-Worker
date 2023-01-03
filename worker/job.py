@@ -144,11 +144,12 @@ class HordeJob:
             self.status = JobStatus.FAULTED
             return None
         self.current_model = self.pop.get("model", self.available_models[0])
+        logger.debug("Got a new job from the horde for model: {}", self.current_model)
         return self.pop
 
     @logger.catch(reraise=True)
     def start_job(self):
-        logger.debug("Starting job in threadpool")
+        logger.debug("Starting job in threadpool for model: {}", self.current_model)
         """Starts a job from a pop request"""
         # Pop new request from the Horde
         if self.pop is None:
