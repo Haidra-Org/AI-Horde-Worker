@@ -1,9 +1,5 @@
 """Get and process a job from the horde"""
 import base64
-import copy
-import json
-import sys
-import threading
 import time
 import traceback
 from base64 import binascii
@@ -19,36 +15,23 @@ from nataili.util import logger
 from worker.enums import JobStatus
 from worker.post_process import post_process
 from worker.stats import bridge_stats
+from worker.jobs.framework import HordeJobFramework
 
-
-class HordeJob:
-    """Get and process a job from the horde"""
-
-    retry_interval = 1
+class StableDiffusionHordeJob(HordeJobFramework):
+    """Get and process a stable diffusion job from the horde"""
 
     def __init__(self, mm, bd):
-        self.model_manager = mm
-        self.bridge_data = copy.deepcopy(bd)
-        self.current_id = None
-        self.current_payload = None
+        super().__init__(mm,bd)
         self.current_model = None
-        self.loop_retry = 0
-        self.status = JobStatus.INIT
-        self.skipped_info = None
         self.upload_quality = 95
-        self.start_time = time.time()
-        self.stale_time = None
         self.seed = None
         self.image = None
         self.r2_upload = None
-        self.pop = None
-        self.submit_dict = {}
-        self.headers = {"apikey": self.bridge_data.api_key}
         self.available_models = self.model_manager.get_loaded_models_names()
         for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
-        self.gen_dict = {
+        self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "max_pixels": self.bridge_data.max_pixels,
             "priority_usernames": self.bridge_data.priority_usernames,
@@ -64,110 +47,26 @@ class HordeJob:
             "bridge_version": 9,
         }
 
-    def is_finished(self):
-        """Check if the job is finished"""
-        return self.status not in [JobStatus.WORKING, JobStatus.POLLING, JobStatus.INIT]
-
-    def is_polling(self):
-        """Check if the job is polling"""
-        return self.status in [JobStatus.POLLING]
-
-    def is_finalizing(self):
-        """True if generation has finished even if upload is still remaining"""
-        return self.status in [JobStatus.FINALIZING]
-
-    def is_stale(self):
-        """Check if the job is stale"""
-        if time.time() - self.start_time > 1200:
-            return True
-        if not self.stale_time:
-            return False
-        return time.time() > self.stale_time
-
-    def get_job_from_server(self):
+    def get_job_from_server(self, endpoint = "/api/v2/generate/pop"):
         """Get a job from the horde"""
-        self.status = JobStatus.POLLING
-        try:
-            pop_req = requests.post(
-                self.bridge_data.horde_url + "/api/v2/generate/pop",
-                json=self.gen_dict,
-                headers=self.headers,
-                timeout=20,
-            )
-            logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
-        except requests.exceptions.ConnectionError:
-            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
-            time.sleep(10)
-            self.status = JobStatus.FAULTED
-        except TypeError:
-            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
-            time.sleep(2)
-            self.status = JobStatus.FAULTED
-        except requests.exceptions.ReadTimeout:
-            logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
-            time.sleep(2)
-            self.status = JobStatus.FAULTED
-
-        if self.status == JobStatus.FAULTED:
-            return None
-        try:
-            self.pop = pop_req.json()  # I'll use it properly later
-        except json.decoder.JSONDecodeError:
-            logger.error(
-                f"Could not decode response from {self.bridge_data.horde_url} as json. "
-                "Please inform its administrator!"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return None
-        if not pop_req.ok:
-            logger.warning(
-                f"During gen pop, server {self.bridge_data.horde_url} "
-                f"responded with status code {pop_req.status_code}: "
-                f"{self.pop['message']}. Waiting for 10 seconds..."
-            )
-            if "errors" in self.pop:
-                logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
-            time.sleep(10)
-            self.status = JobStatus.FAULTED
-            return None
-        if not self.pop.get("id"):
-            job_skipped_info = self.pop.get("skipped")
-            if job_skipped_info and len(job_skipped_info):
-                self.skipped_info = f" Skipped Info: {job_skipped_info}."
-            else:
-                self.skipped_info = ""
-            logger.info(
-                f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return None
+        pop_result = super().get_job_from_server(endpoint = endpoint)
         self.current_model = self.pop.get("model", self.available_models[0])
         logger.debug("Got a new job from the horde for model: {}", self.current_model)
-        return self.pop
+        return pop_result
 
     @logger.catch(reraise=True)
     def start_job(self):
+        """Starts a Stable Diffusion job from a pop request"""
         logger.debug("Starting job in threadpool for model: {}", self.current_model)
-        """Starts a job from a pop request"""
-        # Pop new request from the Horde
-        if self.pop is None:
-            self.pop = self.get_job_from_server()
-
-        if self.pop is None:
-            logger.error(
-                f"Something has gone wrong with {self.bridge_data.horde_url}. Please inform its administrator!"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
+        super().start_job()
+        if self.status == JobStatus.FAULTED:
             return
+        # Here starts the Stable Diffusion Specific Logic
+        # We allow a generation a plentiful 3 seconds per step before we consider it stale
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
-        # We allow a generation a plentiful 3 seconds per step before we consider it stale
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         self.r2_upload = self.pop.get("r2_upload", False)
-        self.status = JobStatus.WORKING
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
         use_nsfw_censor = False
@@ -422,15 +321,15 @@ class HordeJob:
                 else:
                     self.upload_quality = 75
         logger.debug("post-processing done...")
-        # Not a daemon, so that it can survive after this class is garbage collected
-        submit_thread = threading.Thread(target=self.submit_job, args=())
-        submit_thread.start()
-        logger.debug("Finished job in threadpool")
+        self.start_submit_thread()
+    
 
-    def submit_job(self):
+    def submit_job(self, endpoint = "/api/v2/generate/submit"):
         """Submits the job to the server to earn our kudos."""
-        self.status = JobStatus.FINALIZING
-        # Submit back to horde
+        super().submit_job(endpoint = endpoint)
+
+
+    def prepare_submit_payload(self):
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
@@ -448,65 +347,7 @@ class HordeJob:
             "seed": self.seed,
             "max_pixels": self.bridge_data.max_pixels,
         }
-        while self.is_finalizing():
-            if self.loop_retry > 10:
-                logger.error(
-                    f"Exceeded retry count {self.loop_retry} for generation id {self.current_id}. Aborting generation!"
-                )
-                self.status = JobStatus.FAULTED
-                break
-            self.loop_retry += 1
-            try:
-                logger.debug(
-                    f"posting payload with size of {round(sys.getsizeof(json.dumps(self.submit_dict)) / 1024,1)} kb"
-                )
-                submit_req = requests.post(
-                    self.bridge_data.horde_url + "/api/v2/generate/submit",
-                    json=self.submit_dict,
-                    headers=self.headers,
-                    timeout=60,
-                )
-                logger.debug(f"Upload completed in {submit_req.elapsed.total_seconds()}")
-                try:
-                    submit = submit_req.json()
-                except json.decoder.JSONDecodeError:
-                    logger.error(
-                        f"Something has gone wrong with {self.bridge_data.horde_url} during submit. "
-                        f"Please inform its administrator!  (Retry {self.loop_retry}/10)"
-                    )
-                    time.sleep(self.retry_interval)
-                    continue
-                if submit_req.status_code == 404:
-                    logger.warning("The generation we were working on got stale. Aborting!")
-                    self.status = JobStatus.FAULTED
-                    break
-                if not submit_req.ok:
-                    logger.warning(
-                        f"During gen submit, server {self.bridge_data.horde_url} "
-                        f"responded with status code {submit_req.status_code}: "
-                        f"{submit['message']}. Waiting for 10 seconds...  (Retry {self.loop_retry}/10)"
-                    )
-                    if "errors" in submit:
-                        logger.warning(f"Detailed Request Errors: {submit['errors']}")
-                    time.sleep(10)
-                    continue
-                logger.debug(
-                    f'Submitted generation with id {self.current_id} and contributed for {submit_req.json()["reward"]}'
-                )
-                bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
-                self.status = JobStatus.DONE
-                break
-            except requests.exceptions.ConnectionError:
-                logger.warning(
-                    f"Server {self.bridge_data.horde_url} unavailable during submit. "
-                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
-                )
-                time.sleep(10)
-                continue
-            except requests.exceptions.ReadTimeout:
-                logger.warning(
-                    f"Server {self.bridge_data.horde_url} timed out during submit. "
-                    f"Waiting 10 seconds...  (Retry {self.loop_retry}/10)"
-                )
-                time.sleep(10)
-                continue
+
+
+    def post_submit_tasks(self, submit_req):
+        bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])

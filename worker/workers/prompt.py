@@ -5,9 +5,9 @@ import traceback
 import requests
 
 from nataili.util import logger
-from worker.job import HordeJob
+from worker.jobs.stable_diffusion import StableDiffusionHordeJob
 from worker.stats import bridge_stats
-from worker.worker_framework import WorkerFramework
+from worker.workers.framework import WorkerFramework
 
 class PromptWorker(WorkerFramework):
 
@@ -32,7 +32,7 @@ class PromptWorker(WorkerFramework):
                 self.bridge_data.model_names.append(job.current_model)
 
     def pop_job(self):
-        return super().pop_job(HordeJob)
+        return super().pop_job(StableDiffusionHordeJob)
 
 
     def get_running_models(self):

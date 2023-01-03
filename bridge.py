@@ -2,7 +2,7 @@
 from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
 from worker.argparser import args
-from worker.prompt_worker import PromptWorker
+from worker.workers.prompt import PromptWorker
 from worker.bridge_data import BridgeData
 
 
