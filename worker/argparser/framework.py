@@ -9,7 +9,7 @@ arg_parser.add_argument(
     required=False,
     type=int,
     default=1,
-    help="The amount of seconds with which to check if there's new prompts to generate",
+    help="The amount of seconds with which to check if there's new job to pop",
 )
 arg_parser.add_argument(
     "-a",
@@ -43,53 +43,10 @@ arg_parser.add_argument(
     help="Usernames which get priority use in this horde instance. The owner's username is always in this list.",
 )
 arg_parser.add_argument(
-    "-p",
-    "--max_power",
-    type=int,
-    required=False,
-    help="How much power this instance has to generate pictures. Min: 2",
-)
-arg_parser.add_argument(
     "--queue_size",
     type=int,
     required=False,
     help="How many requests to keep in the queue. Min: 0",
-)
-arg_parser.add_argument(
-    "--sfw",
-    action="store_true",
-    required=False,
-    help="Set to true if you do not want this worker generating NSFW images.",
-)
-arg_parser.add_argument(
-    "--blacklist",
-    nargs="+",
-    required=False,
-    help="List the words that you want to blacklist.",
-)
-arg_parser.add_argument(
-    "--censorlist",
-    nargs="+",
-    required=False,
-    help="List the words that you want to censor.",
-)
-arg_parser.add_argument(
-    "--censor_nsfw",
-    action="store_true",
-    required=False,
-    help="Set to true if you want this worker worker to censor NSFW images.",
-)
-arg_parser.add_argument(
-    "--allow_img2img",
-    action="store_true",
-    required=False,
-    help="Set to true if you want this worker worker to allow img2img request.",
-)
-arg_parser.add_argument(
-    "--allow_painting",
-    action="store_true",
-    required=False,
-    help="Set to true if you want this worker worker to allow inpainting/outpainting requests.",
 )
 arg_parser.add_argument(
     "--allow_unsafe_ip",
@@ -97,14 +54,6 @@ arg_parser.add_argument(
     required=False,
     help="Set to true if you want this worker worker to allow img2img requests from unsafe IPs.",
 )
-arg_parser.add_argument(
-    "-m",
-    "--model",
-    action="store",
-    required=False,
-    help="Which model to run on this horde.",
-)
-arg_parser.add_argument("--debug", action="store_true", default=False, help="Show debugging messages.")
 arg_parser.add_argument(
     "-v",
     "--verbosity",
@@ -130,12 +79,6 @@ arg_parser.add_argument(
     action="store_true",
     default=False,
     help="If specified will dump the log to the specified file",
-)
-arg_parser.add_argument(
-    "--skip_md5",
-    action="store_true",
-    default=False,
-    help="If specified will not check the downloaded model md5sum.",
 )
 arg_parser.add_argument(
     "--disable_voodoo",
@@ -175,17 +118,6 @@ arg_parser.add_argument(
     required=False,
     help="Specify this argument to autodownload all missing models defined in your bridgeData.py",
 )
-arg_parser.add_argument(
-    "--disable_dynamic_models",
-    action="store_true",
-    default=False,
-    help=("If specified this worker will not use dynamic models."),
-)
-arg_parser.add_argument(
-    "--disable_post_processing",
-    action="store_true",
-    default=False,
-    help=("If specified this worker will not load post-processors."),
-)
 
-args = arg_parser.parse_args()
+# This args must be parsed in the extended class
+# args = arg_parser.parse_args()

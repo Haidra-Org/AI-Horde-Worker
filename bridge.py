@@ -2,8 +2,8 @@
 from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
 from worker.argparser import args
-from worker.workers.prompt import PromptWorker
-from worker.bridge_data import BridgeData
+from worker.workers.prompt import StableDiffusionWorker
+from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 
 
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     logger.add("logs/worker.log", retention="1 days", level=10)
 
-    bridge_data = BridgeData()
+    bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(disable_voodoo=bridge_data.disable_voodoo.active)
     model_manager.init()
     try:

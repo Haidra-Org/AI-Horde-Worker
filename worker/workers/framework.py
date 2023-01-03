@@ -20,6 +20,9 @@ class WorkerFramework:
         self.executor = None
         self.reload_data()
         logger.stats("Starting new stats session")
+        # These two should be filled in by the extending classes
+        self.PopperClass = None
+        self.JobClass = None
 
     @logger.catch(reraise=True)
     def start(self):
@@ -78,19 +81,23 @@ class WorkerFramework:
     def add_job_to_queue(self):
         '''Picks up a job from the horde and adds it to the local queue
         Returns the job object created, if any'''
-        job = self.pop_job()
-        if job:
-            self.waiting_jobs.append((job))
+        jobs = self.pop_job()
+        if jobs:
+            self.waiting_jobs.extend(jobs)
         return job
 
-    def pop_job(self, JobClass):
-        '''Polls the AI Horde for new jobs and creates a Job class
-        The Job class to create should be sent in the args'''
-        new_job = JobClass(self.model_manager, self.bridge_data)
-        pop = new_job.get_job_from_server()  # This sleeps itself, so no need for extra
-        if pop:
-            return new_job
-        return None
+    def pop_job(self):
+        '''Polls the AI Horde for new jobs and creates as many Job classes needed
+        As the amount of jobs returned'''
+        job_popper = self.PopperClass(self.model_manager, self.bridge_data)
+        pops = job_popper.horde_pop()
+        if not pops:
+            return None
+        new_jobs = []
+        for pop in pops:
+            new_job = self.JobClass(self.model_manager, self.bridge_data, pop)
+            new_jobs.append(new_job)
+        return new_jobs
 
     def start_job(self):
         '''Starts a job previously picked up from the horde

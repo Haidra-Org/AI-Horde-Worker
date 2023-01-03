@@ -5,11 +5,12 @@ import traceback
 import requests
 
 from nataili.util import logger
+from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
 from worker.stats import bridge_stats
 from worker.workers.framework import WorkerFramework
 
-class PromptWorker(WorkerFramework):
+class StableDiffusionWorker(WorkerFramework):
 
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):

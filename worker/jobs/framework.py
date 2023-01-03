@@ -16,19 +16,16 @@ class HordeJobFramework:
 
     retry_interval = 1
 
-    def __init__(self, mm, bd):
+    def __init__(self, mm, bd, pop):
         self.model_manager = mm
         self.bridge_data = copy.deepcopy(bd)
-        self.current_id = None
-        self.current_payload = None
+        self.pop = pop
         self.loop_retry = 0
         self.status = JobStatus.INIT
-        self.skipped_info = None
         self.start_time = time.time()
         self.stale_time = None
         self.pop = None
         self.submit_dict = {}
-        self.headers = {"apikey": self.bridge_data.api_key}
 
 
     def is_finished(self):
@@ -51,67 +48,67 @@ class HordeJobFramework:
             return False
         return time.time() > self.stale_time
 
-    def get_job_from_server(self, endpoint):
-        """Get a job from the horde
-        This class must be extended and it MUST provide the AI Horde endpoint"""
-        self.status = JobStatus.POLLING
-        try:
-            pop_req = requests.post(
-                self.bridge_data.horde_url + endpoint,
-                json=self.pop_payload,
-                headers=self.headers,
-                timeout=20,
-            )
-            logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
-        except requests.exceptions.ConnectionError:
-            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
-            time.sleep(10)
-            self.status = JobStatus.FAULTED
-        except TypeError:
-            logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
-            time.sleep(2)
-            self.status = JobStatus.FAULTED
-        except requests.exceptions.ReadTimeout:
-            logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
-            time.sleep(2)
-            self.status = JobStatus.FAULTED
+    # def get_job_from_server(self, endpoint):
+    #     """Get a job from the horde
+    #     This class must be extended and it MUST provide the AI Horde endpoint"""
+    #     self.status = JobStatus.POLLING
+    #     try:
+    #         pop_req = requests.post(
+    #             self.bridge_data.horde_url + endpoint,
+    #             json=self.pop_payload,
+    #             headers=self.headers,
+    #             timeout=20,
+    #         )
+    #         logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
+    #     except requests.exceptions.ConnectionError:
+    #         logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
+    #         time.sleep(10)
+    #         self.status = JobStatus.FAULTED
+    #     except TypeError:
+    #         logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
+    #         time.sleep(2)
+    #         self.status = JobStatus.FAULTED
+    #     except requests.exceptions.ReadTimeout:
+    #         logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
+    #         time.sleep(2)
+    #         self.status = JobStatus.FAULTED
 
-        if self.status == JobStatus.FAULTED:
-            return None
-        try:
-            self.pop = pop_req.json()  # I'll use it properly later
-        except json.decoder.JSONDecodeError:
-            logger.error(
-                f"Could not decode response from {self.bridge_data.horde_url} as json. "
-                "Please inform its administrator!"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return None
-        if not pop_req.ok:
-            logger.warning(
-                f"During gen pop, server {self.bridge_data.horde_url} "
-                f"responded with status code {pop_req.status_code}: "
-                f"{self.pop['message']}. Waiting for 10 seconds..."
-            )
-            if "errors" in self.pop:
-                logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
-            time.sleep(10)
-            self.status = JobStatus.FAULTED
-            return None
-        if not self.pop.get("id"):
-            job_skipped_info = self.pop.get("skipped")
-            if job_skipped_info and len(job_skipped_info):
-                self.skipped_info = f" Skipped Info: {job_skipped_info}."
-            else:
-                self.skipped_info = ""
-            logger.info(
-                f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}"
-            )
-            time.sleep(self.retry_interval)
-            self.status = JobStatus.FAULTED
-            return None
-        return self.pop
+    #     if self.status == JobStatus.FAULTED:
+    #         return None
+    #     try:
+    #         self.pop = pop_req.json()  # I'll use it properly later
+    #     except json.decoder.JSONDecodeError:
+    #         logger.error(
+    #             f"Could not decode response from {self.bridge_data.horde_url} as json. "
+    #             "Please inform its administrator!"
+    #         )
+    #         time.sleep(self.retry_interval)
+    #         self.status = JobStatus.FAULTED
+    #         return None
+    #     if not pop_req.ok:
+    #         logger.warning(
+    #             f"During gen pop, server {self.bridge_data.horde_url} "
+    #             f"responded with status code {pop_req.status_code}: "
+    #             f"{self.pop['message']}. Waiting for 10 seconds..."
+    #         )
+    #         if "errors" in self.pop:
+    #             logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
+    #         time.sleep(10)
+    #         self.status = JobStatus.FAULTED
+    #         return None
+    #     if not self.pop.get("id"):
+    #         job_skipped_info = self.pop.get("skipped")
+    #         if job_skipped_info and len(job_skipped_info):
+    #             self.skipped_info = f" Skipped Info: {job_skipped_info}."
+    #         else:
+    #             self.skipped_info = ""
+    #         logger.info(
+    #             f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}"
+    #         )
+    #         time.sleep(self.retry_interval)
+    #         self.status = JobStatus.FAULTED
+    #         return None
+    #     return self.pop
 
     @logger.catch(reraise=True)
     def start_job(self):

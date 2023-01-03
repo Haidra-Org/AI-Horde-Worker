@@ -20,39 +20,18 @@ from worker.jobs.framework import HordeJobFramework
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
 
-    def __init__(self, mm, bd):
-        super().__init__(mm,bd)
+    def __init__(self, mm, bd, pop):
+        super().__init__(mm, bd, pop)
         self.current_model = None
         self.upload_quality = 95
         self.seed = None
         self.image = None
         self.r2_upload = None
-        self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]:
-            if util_model in self.available_models:
-                self.available_models.remove(util_model)
-        self.pop_payload = {
-            "name": self.bridge_data.worker_name,
-            "max_pixels": self.bridge_data.max_pixels,
-            "priority_usernames": self.bridge_data.priority_usernames,
-            "nsfw": self.bridge_data.nsfw,
-            "blacklist": self.bridge_data.blacklist,
-            "models": self.available_models,
-            "allow_img2img": self.bridge_data.allow_img2img,
-            "allow_painting": self.bridge_data.allow_painting,
-            "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
-            "threads": self.bridge_data.max_threads,
-            "allow_post_processing": self.bridge_data.allow_post_processing,
-            "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
-            "bridge_version": 9,
-        }
-
-    def get_job_from_server(self, endpoint = "/api/v2/generate/pop"):
-        """Get a job from the horde"""
-        pop_result = super().get_job_from_server(endpoint = endpoint)
         self.current_model = self.pop.get("model", self.available_models[0])
-        logger.debug("Got a new job from the horde for model: {}", self.current_model)
-        return pop_result
+        self.current_id = self.pop["id"]
+        self.current_payload = self.pop["payload"]
+        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
+        self.r2_upload = self.pop.get("r2_upload", False)
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -63,10 +42,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
-        self.current_id = self.pop["id"]
-        self.current_payload = self.pop["payload"]
-        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
-        self.r2_upload = self.pop.get("r2_upload", False)
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
         use_nsfw_censor = False
