@@ -1,9 +1,13 @@
+import copy
+import json
+import time
+from io import BytesIO
 
 import requests
-import time
-import copy
+from PIL import Image
 
 from nataili.util import logger
+
 
 class JobPopper:
 
@@ -62,21 +66,17 @@ class JobPopper:
             return
         return [self.pop]
 
-
     def report_skipped_info(self):
         job_skipped_info = self.pop.get("skipped")
         if job_skipped_info and len(job_skipped_info):
             self.skipped_info = f" Skipped Info: {job_skipped_info}."
         else:
             self.skipped_info = ""
-        logger.info(
-            f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}"
-        )
+        logger.info(f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}")
         time.sleep(self.retry_interval)
 
+
 class StableDiffusionPopper(JobPopper):
-
-
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
@@ -110,17 +110,17 @@ class StableDiffusionPopper(JobPopper):
         # In the stable diffusion popper, the whole return is always a single payload, so we return it as a list
         return [self.pop]
 
-class InterrogationPopper(JobPopper):
 
+class InterrogationPopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/interrogate/pop"
         available_forms = []
-        if 'BLIP_Large' in self.available_models:
-            available_interrogators.append("caption")
+        if "BLIP_Large" in self.available_models:
+            available_forms.append("caption")
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
-            "forms": self.available_forms,
+            "forms": available_forms,
             "amount": self.bridge_data.amount,
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,

@@ -48,7 +48,6 @@ class BridgeDataTemplate:
 
         self.disable_voodoo = disable_voodoo
 
-
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
@@ -56,6 +55,7 @@ class BridgeDataTemplate:
         try:
             # TODO - move this to a yaml file
             import bridgeData as bd
+
             importlib.reload(bd)
             self.api_key = bd.api_key
             self.worker_name = bd.worker_name
@@ -138,7 +138,7 @@ class BridgeDataTemplate:
                     not_found_models.append(model)
             # Diffusers library uses its own internal download mechanism
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
-                check_mm_auth(model_manager)
+                check_mm_auth(model_manager, self.args)
         if not models_exist:
             if self.args.yes or self.dynamic_models:
                 choice = "y"
@@ -163,7 +163,7 @@ class BridgeDataTemplate:
             if choice in ["all", "a"]:
                 needs_hf = True
             if needs_hf:
-                check_mm_auth(model_manager)
+                check_mm_auth(model_manager, self.args)
             model_manager.init()
             model_manager.taint_models(not_found_models)
             if choice in ["all", "a"]:
@@ -223,12 +223,12 @@ class BridgeDataTemplate:
         self.models_reloading = False
 
 
-def check_mm_auth(model_manager):
+def check_mm_auth(model_manager, args):
     """Checks for hugging face authentication for model manager"""
     if model_manager.has_authentication():
         return
-    if self.args.hf_token:
-        hf_auth = {"username": "USER", "password": self.args.hf_token}
+    if args.hf_token:
+        hf_auth = {"username": "USER", "password": args.hf_token}
         model_manager.set_authentication(hf_auth=hf_auth)
         return
     try:

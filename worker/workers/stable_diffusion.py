@@ -1,5 +1,4 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-import time
 import traceback
 
 import requests
@@ -7,26 +6,21 @@ import requests
 from nataili.util import logger
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
-from worker.stats import bridge_stats
 from worker.workers.framework import WorkerFramework
 
-class StableDiffusionWorker(WorkerFramework):
 
+class StableDiffusionWorker(WorkerFramework):
     def __init__(self, this_model_manager, this_bridge_data):
         super().__init__(this_model_manager, this_bridge_data)
         self.PopperClass = StableDiffusionPopper
         self.JobClass = StableDiffusionHordeJob
 
-
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
         can_do = len(self.model_manager.get_loaded_models_names()) > 0
         if not can_do:
-            logger.info(
-                "No models loaded. Waiting for the first model to be up before polling the horde"
-            )
+            logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
         return can_do
-
 
     # We want this to be extendable as well
     def add_job_to_queue(self):
@@ -41,7 +35,6 @@ class StableDiffusionWorker(WorkerFramework):
     def pop_job(self):
         return super().pop_job()
 
-
     def get_running_models(self):
         running_models = []
         for (job_thread, start_time, job) in self.running_jobs:
@@ -49,11 +42,8 @@ class StableDiffusionWorker(WorkerFramework):
         # logger.debug(running_models)
         return running_models
 
-
     def calculate_dynamic_models(self):
-        all_models_data = requests.get(
-            self.bridge_data.horde_url + "/api/v2/status/models", timeout=10
-        ).json()
+        all_models_data = requests.get(self.bridge_data.horde_url + "/api/v2/status/models", timeout=10).json()
         # We remove models with no queue from our list of models to load dynamically
         models_data = [md for md in all_models_data if md["queued"] > 0]
         models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
@@ -78,16 +68,12 @@ class StableDiffusionWorker(WorkerFramework):
                 continue
             if model["name"] in total_models:
                 continue
-            if (
-                len(new_dynamic_models) + needed_previous_dynamic_models
-                >= self.bridge_data.number_of_dynamic_models
-            ):
+            if len(new_dynamic_models) + needed_previous_dynamic_models >= self.bridge_data.number_of_dynamic_models:
                 break
             # If we've limited the amount of models to download,
             # then we skip models which are not already downloaded
             if (
-                self.model_manager.count_available_models_by_types()
-                >= self.bridge_data.max_models_to_download
+                self.model_manager.count_available_models_by_types() >= self.bridge_data.max_models_to_download
                 and model["name"] not in self.model_manager.get_available_models()
             ):
                 continue
@@ -105,7 +91,6 @@ class StableDiffusionWorker(WorkerFramework):
         super().reload_data()
         self.bridge_data.check_models(self.model_manager)
         self.bridge_data.reload_models(self.model_manager)
-
 
     def reload_bridge_data(self):
         super().reload_bridge_data()

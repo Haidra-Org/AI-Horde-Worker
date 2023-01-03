@@ -13,9 +13,10 @@ from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
 from worker.enums import JobStatus
+from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
 from worker.stats import bridge_stats
-from worker.jobs.framework import HordeJobFramework
+
 
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
@@ -33,7 +34,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_payload = self.pop["payload"]
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         self.r2_upload = self.pop.get("r2_upload", False)
-        
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -299,12 +299,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     self.upload_quality = 75
         logger.debug("post-processing done...")
         self.start_submit_thread()
-    
 
-    def submit_job(self, endpoint = "/api/v2/generate/submit"):
+    def submit_job(self, endpoint="/api/v2/generate/submit"):
         """Submits the job to the server to earn our kudos."""
-        super().submit_job(endpoint = endpoint)
-
+        super().submit_job(endpoint=endpoint)
 
     def prepare_submit_payload(self):
         # images, seed, info, stats = txt2img(**self.current_payload)
@@ -324,7 +322,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "seed": self.seed,
             "max_pixels": self.bridge_data.max_pixels,
         }
-
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])

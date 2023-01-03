@@ -2,10 +2,8 @@
 from nataili.model_manager import ModelManager
 from nataili.util import logger, quiesce_logger, set_logger_verbosity
 from worker.argparser.stable_diffusion import args
-from worker.workers.stable_diffusion import StableDiffusionWorker
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-
-
+from worker.workers.stable_diffusion import StableDiffusionWorker
 
 if __name__ == "__main__":
     set_logger_verbosity(args.verbosity)

@@ -4,8 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util import logger
 
-class WorkerFramework:
 
+class WorkerFramework:
     def __init__(self, this_model_manager, this_bridge_data):
         self.model_manager = this_model_manager
         self.bridge_data = this_bridge_data
@@ -71,23 +71,23 @@ class WorkerFramework:
             if self.should_restart or self.should_stop:
                 break
         # Give the CPU a break
-        time.sleep(0.02)  
+        time.sleep(0.02)
 
     def can_process_jobs(self):
-        '''This function returns true when this worker can start polling for jobs from the AI Horde
-        This function MUST be overriden, according to the logic for this worker type'''
+        """This function returns true when this worker can start polling for jobs from the AI Horde
+        This function MUST be overriden, according to the logic for this worker type"""
         return False
 
     def add_job_to_queue(self):
-        '''Picks up a job from the horde and adds it to the local queue
-        Returns the job object created, if any'''
+        """Picks up a job from the horde and adds it to the local queue
+        Returns the job object created, if any"""
         jobs = self.pop_job()
         if jobs:
             self.waiting_jobs.extend(jobs)
 
     def pop_job(self):
-        '''Polls the AI Horde for new jobs and creates as many Job classes needed
-        As the amount of jobs returned'''
+        """Polls the AI Horde for new jobs and creates as many Job classes needed
+        As the amount of jobs returned"""
         job_popper = self.PopperClass(self.model_manager, self.bridge_data)
         pops = job_popper.horde_pop()
         if not pops:
@@ -99,9 +99,9 @@ class WorkerFramework:
         return new_jobs
 
     def start_job(self):
-        '''Starts a job previously picked up from the horde
+        """Starts a job previously picked up from the horde
         Returns True to continue starting jobs until queue is full
-        Returns False to break out of the loop and poll the horde again'''
+        Returns False to break out of the loop and poll the horde again"""
         job = None
         # Queue disabled
         if self.bridge_data.queue_size == 0:
@@ -118,11 +118,10 @@ class WorkerFramework:
             logger.debug("New job processing")
         else:
             logger.debug("No new job to start")
-        return True    
-
+        return True
 
     def check_running_job_status(self, job_thread, start_time, job):
-        '''Polls the AI Horde for new jobs and creates a Job class'''
+        """Polls the AI Horde for new jobs and creates a Job class"""
         runtime = time.monotonic() - start_time
         if job_thread.done():
             if job_thread.exception(timeout=1):
@@ -130,16 +129,14 @@ class WorkerFramework:
                 logger.exception(job_thread.exception())
                 if self.consecutive_executor_restarts > 0:
                     logger.critical(
-                        "Worker keeps crashing after thread executor restart. "
-                        "Cannot be salvaged. Aborting!"
+                        "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!"
                     )
                     self.should_stop = True
                     return
                 self.consecutive_failed_jobs += 1
                 if self.consecutive_failed_jobs >= 5:
                     logger.critical(
-                        "Too many consecutive jobs have failed. "
-                        "Restarting thread executor and hope we recover..."
+                        "Too many consecutive jobs have failed. " "Restarting thread executor and hope we recover..."
                     )
                     self.should_restart = True
                     self.consecutive_executor_restarts += 1
@@ -148,9 +145,7 @@ class WorkerFramework:
                 self.consecutive_failed_jobs = 0
                 self.consecutive_executor_restarts = 0
             self.run_count += 1
-            logger.debug(
-                f"Job finished successfully in {runtime:.3f}s (Total Completed: {self.run_count})"
-            )
+            logger.debug(f"Job finished successfully in {runtime:.3f}s (Total Completed: {self.run_count})")
             self.running_jobs.remove((job_thread, start_time, job))
             return
 
@@ -167,14 +162,12 @@ class WorkerFramework:
             self.should_restart = True
             return
 
-
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
         self.bridge_data.reload_data()
-
 
     def reload_bridge_data(self):
         self.model_manager.download_model_reference()
         self.reload_data()
         self.executor._max_workers = self.bridge_data.max_threads
-        self.last_config_reload = time.time()        
+        self.last_config_reload = time.time()

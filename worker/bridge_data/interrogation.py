@@ -14,7 +14,6 @@ class InterrogationBridgeData(BridgeDataTemplate):
         self.forms = os.environ.get("HORDE_INTERROGATION_FORMS", "caption").split(",")
         self.model_names = []
 
-
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
@@ -29,11 +28,11 @@ class InterrogationBridgeData(BridgeDataTemplate):
             logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.forms:
             self.forms = args.forms
-        if 'nsfw' in self.forms:
+        if "nsfw" in self.forms:
             self.model_names.append("safety_checker")
-        if 'caption' in self.forms:
+        if "caption" in self.forms:
             self.model_names.append("BLIP_Large")
-        if 'interrogation' in self.forms:
+        if "interrogation" in self.forms:
             self.model_names.append("ViT-L/14")
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(

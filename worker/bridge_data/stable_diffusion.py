@@ -34,7 +34,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = []
 
-
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
