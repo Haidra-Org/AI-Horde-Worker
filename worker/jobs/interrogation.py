@@ -1,9 +1,11 @@
 """Get and process a job from the horde"""
 import time
 import traceback
+import numpy as np
 
 from nataili.blip.caption import Caption
 from nataili.util import logger
+from transformers import CLIPFeatureExtractor
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 
@@ -30,33 +32,42 @@ class InterrogationHordeJob(HordeJobFramework):
         self.stale_time = time.time() + 10
         interrogator = None
         payload_kwargs = {}
+        logger.debug(f"Starting interrogation {self.current_id}")
         if self.current_form == "caption":
             interrogator = Caption(
                 self.model_manager.loaded_models["BLIP_Large"]["model"],
                 self.model_manager.loaded_models["BLIP_Large"]["device"],
             )
             payload_kwargs = {
+                "sample": True,
                 "num_beams": self.current_payload.get("num_beams", 7),
-                "min_length": self.current_payload.get("min_length", 10),
-                "max_length": self.current_payload.get("max_length", self.current_payload.get("min_length", 10) + 20),
+                "min_length": self.current_payload.get("min_length", 20),
+                "max_length": self.current_payload.get("max_length", self.current_payload.get("min_length", 20) + 30),
                 "top_p": self.current_payload.get("top_p", 0.9),
-                "repetition_penalty": self.current_payload.get("repetition_penalty", 1.2),
+                "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
             }
-        try:
-            logger.debug(f"Starting interrogation {self.current_id}")
-            self.result = interrogator(self.image, **payload_kwargs)
-            logger.info(f"Finished interrogation {self.current_id}")
-        except RuntimeError as err:
-            logger.error(
-                "Something went wrong when processing request. "
-                "Please check your trace.log file for the full stack trace. "
-                f"Form: {self.current_form}"
-                f"Payload: {payload_kwargs}"
+            try:
+                self.result = interrogator(self.image, **payload_kwargs)
+            except RuntimeError as err:
+                logger.error(
+                    "Something went wrong when processing request. "
+                    "Please check your trace.log file for the full stack trace. "
+                    f"Form: {self.current_form}"
+                    f"Payload: {payload_kwargs}"
+                )
+                trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+                logger.trace(trace)
+                self.status = JobStatus.FAULTED
+                return
+        if self.current_form == "nsfw":
+            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
+            feature_extractor = CLIPFeatureExtractor()
+            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
+            _, has_nsfw_concept = safety_checker(
+                clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
             )
-            trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
-            logger.trace(trace)
-            self.status = JobStatus.FAULTED
-            return
+            self.result = (has_nsfw_concept and True in has_nsfw_concept)
+        logger.info(f"Finished interrogation {self.current_id}")
         interrogator = None
         self.start_submit_thread()
 
@@ -69,4 +80,6 @@ class InterrogationHordeJob(HordeJobFramework):
         self.submit_dict = {"id": self.current_id}
         if self.current_form == "caption":
             self.submit_dict["result"] = {"caption": self.result}
+        if self.current_form == "nsfw":
+            self.submit_dict["result"] = {"nsfw": self.result}
         logger.debug(self.submit_dict)

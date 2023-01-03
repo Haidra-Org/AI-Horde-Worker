@@ -122,6 +122,10 @@ class InterrogationPopper(JobPopper):
                 self.available_models.remove(util_model)
         if "BLIP_Large" in self.available_models:
             available_forms.append("caption")
+        if "safety_checker" in self.available_models:
+            available_forms.append("nsfw")
+        if "ViT-L/14" in self.available_models:
+            available_forms.append("interrogation")
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "forms": available_forms,
