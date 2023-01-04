@@ -4,7 +4,7 @@ import time
 from io import BytesIO
 
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from nataili.util import logger
 
@@ -147,6 +147,9 @@ class InterrogationPopper(JobPopper):
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
                 img_data = requests.get(current_image_url).content
-            form["image"] = Image.open(BytesIO(img_data))
+            try:
+                form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
+            except UnidentifiedImageError as e:
+                logger.error(f"Error when creating image: {e}. Url {current_image_url}, img_data: {img_data}")
         logger.debug(f"Popped {len(self.pop['forms'])} interrogation forms")
         return self.pop["forms"]
