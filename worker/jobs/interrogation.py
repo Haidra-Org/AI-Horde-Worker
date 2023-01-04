@@ -1,12 +1,12 @@
 """Get and process a job from the horde"""
 import time
 import traceback
+
 import numpy as np
 from transformers import CLIPFeatureExtractor
 
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
-
 from nataili.util import logger
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -42,7 +42,7 @@ class InterrogationHordeJob(HordeJobFramework):
             _, has_nsfw_concept = safety_checker(
                 clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
             )
-            self.result = (has_nsfw_concept and True in has_nsfw_concept)
+            self.result = has_nsfw_concept and True in has_nsfw_concept
         else:
             if self.current_form == "caption":
                 interrogator = Caption(
@@ -53,7 +53,9 @@ class InterrogationHordeJob(HordeJobFramework):
                     "sample": True,
                     "num_beams": self.current_payload.get("num_beams", 7),
                     "min_length": self.current_payload.get("min_length", 20),
-                    "max_length": self.current_payload.get("max_length", self.current_payload.get("min_length", 20) + 30),
+                    "max_length": self.current_payload.get(
+                        "max_length", self.current_payload.get("min_length", 20) + 30
+                    ),
                     "top_p": self.current_payload.get("top_p", 0.9),
                     "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
                 }

@@ -8,7 +8,7 @@ import skimage
 import torch
 from einops import rearrange
 from slugify import slugify
-from transformers import CLIPFeatureExtractor 
+from transformers import CLIPFeatureExtractor
 
 from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
 from ldm.models.diffusion.ddim import DDIMSampler
