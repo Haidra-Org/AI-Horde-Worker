@@ -1,3 +1,5 @@
+## Common for all worker Types
+
 # The horde url
 horde_url = "https://stablehorde.net"
 # Give a cool name to your instance
@@ -8,11 +10,6 @@ api_key = "0000000000"
 # Put other users whose prompts you want to prioritize.
 # The owner's username is always included so you don't need to add it here,
 priority_usernames = []
-# The amount of power your system can handle
-# 8 means 512*512. Each increase increases the possible resoluion by 64 pixes
-# So if you put this to 2 (the minimum, your SD can only generate 64x64 pixels
-# If you put this to 32, it is equivalent to 1024x1024 pixels
-max_power = 8
 # The amount of parallel jobs to pick up for the horde. Each running job will consume the amount of RAM needed to run each model, and will also affect the speed of other running jobs
 # so make sure you have enough VRAM to load models in parallel, and that the speed of fulfilling requests is not too slow
 # Expected limit per VRAM size: <6 VMAM: 1, <=8 VRAM: 2, <=12 VRAM:3, <=14 VRAM: 4
@@ -21,6 +18,20 @@ max_threads = 1
 # We will keep this many requests in the queue so we can start working as soon as a thread is available
 # Recommended to keep no higher than 1
 queue_size = 0
+# If set to True, this worker will not only pick up jobs where the user has the required kudos upfront. 
+# Effectively this will exclude all anonymous accounts, and registered accounts who haven't contributed.
+# Users in priority_usernames and trusted users will bypass this restriction
+require_upfront_kudos = False
+# If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
+# Note this ultimately overrides the models_to_load list
+
+## Stable Diffusion Worker
+
+# The amount of power your system can handle
+# 8 means 512*512. Each increase increases the possible resoluion by 64 pixes
+# So if you put this to 2 (the minimum, your SD can only generate 64x64 pixels
+# If you put this to 32, it is equivalent to 1024x1024 pixels
+max_power = 8
 # Set this to false, if you do not want your worker to receive requests for NSFW generations
 nsfw = True
 # Set this to True if you want your worker to censor NSFW generations. This will only be active is horde_nsfw == False
@@ -38,12 +49,7 @@ allow_unsafe_ip = True
 # If set to False, this worker will not load post-processors like Codeformers and will not pick up jobs which require post-processing 
 # In the future this will be adjusted so that post-processing can be split from image generation
 allow_post_processing = True
-# If set to True, this worker will not only pick up jobs where the user has the required kudos upfront. 
-# Effectively this will exclude all anonymous accounts, and registered accounts who haven't contributed.
-# Users in priority_usernames and trusted users will bypass this restriction
-require_upfront_kudos = False
-# If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
-# Note this ultimately overrides the models_to_load list
+# Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
 dynamic_models = True
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
 number_of_dynamic_models = 3
@@ -87,4 +93,12 @@ models_to_skip = [
     ## Popular NSFW models:
     # "Zeipher Female Model",
     # "Hentai Diffusion",
+]
+## Interrogation Worker
+
+# The interrogation forms this worker can serve.
+forms = [
+    "caption",
+    "nsfw", # uses CPU
+    # "interrogation", # Heavier than the others, but rewards more kudos
 ]

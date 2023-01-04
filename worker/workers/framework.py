@@ -1,0 +1,173 @@
+"""This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+from nataili.util import logger
+
+
+class WorkerFramework:
+    def __init__(self, this_model_manager, this_bridge_data):
+        self.model_manager = this_model_manager
+        self.bridge_data = this_bridge_data
+        self.running_jobs = []
+        self.waiting_jobs = []
+        self.run_count = 0
+        self.last_config_reload = 0
+        self.should_stop = False
+        self.should_restart = False
+        self.consecutive_executor_restarts = 0
+        self.consecutive_failed_jobs = 0
+        self.executor = None
+        self.reload_data()
+        logger.stats("Starting new stats session")
+        # These two should be filled in by the extending classes
+        self.PopperClass = None
+        self.JobClass = None
+
+    @logger.catch(reraise=True)
+    def start(self):
+        while True:  # This is just to allow it to loop through this and handle shutdowns correctly
+            self.should_restart = False
+            self.consecutive_failed_jobs = 0
+            with ThreadPoolExecutor(max_workers=self.bridge_data.max_threads) as self.executor:
+                while True:
+                    if self.should_restart:
+                        self.executor.shutdown(wait=False)
+                        break
+                    try:
+                        self.process_jobs()
+                    except KeyboardInterrupt:
+                        self.should_stop = True
+                    break
+            if self.should_stop:
+                logger.init("Worker", status="Shutting Down")
+                try:
+                    for job in self.running_jobs:
+                        job.cancel()
+                    self.executor.shutdown(wait=False)
+                # In case it's already shut-down
+                except Exception as e:
+                    logger.init_err(f"Worker Exception: {e}", status="Shut Down")
+                    pass
+                logger.init_ok("Worker", status="Shut Down")
+                break
+
+    def process_jobs(self):
+        if time.time() - self.last_config_reload > 60:
+            self.reload_bridge_data()
+        if not self.can_process_jobs():
+            time.sleep(5)
+            return
+        # Add job to queue if we have space
+        if len(self.waiting_jobs) < self.bridge_data.queue_size:
+            self.add_job_to_queue()
+        # Start new jobs
+        while len(self.running_jobs) < self.bridge_data.max_threads:
+            if not self.start_job():
+                break
+        # Check if any jobs are done
+        for (job_thread, start_time, job) in self.running_jobs:
+            self.check_running_job_status(job_thread, start_time, job)
+            if self.should_restart or self.should_stop:
+                break
+        # Give the CPU a break
+        time.sleep(0.02)
+
+    def can_process_jobs(self):
+        """This function returns true when this worker can start polling for jobs from the AI Horde
+        This function MUST be overriden, according to the logic for this worker type"""
+        return False
+
+    def add_job_to_queue(self):
+        """Picks up a job from the horde and adds it to the local queue
+        Returns the job object created, if any"""
+        jobs = self.pop_job()
+        if jobs:
+            self.waiting_jobs.extend(jobs)
+
+    def pop_job(self):
+        """Polls the AI Horde for new jobs and creates as many Job classes needed
+        As the amount of jobs returned"""
+        job_popper = self.PopperClass(self.model_manager, self.bridge_data)
+        pops = job_popper.horde_pop()
+        if not pops:
+            return None
+        new_jobs = []
+        for pop in pops:
+            new_job = self.JobClass(self.model_manager, self.bridge_data, pop)
+            new_jobs.append(new_job)
+        return new_jobs
+
+    def start_job(self):
+        """Starts a job previously picked up from the horde
+        Returns True to continue starting jobs until queue is full
+        Returns False to break out of the loop and poll the horde again"""
+        job = None
+        # Queue disabled
+        if self.bridge_data.queue_size == 0:
+            job = self.pop_job()
+        # Queue enabled
+        elif len(self.waiting_jobs) > 0:
+            job = self.waiting_jobs.pop(0)
+        else:
+            #  This causes a break on the main loop outside
+            return False
+        # Run the job
+        if job:
+            self.running_jobs.append((self.executor.submit(job.start_job), time.monotonic(), job))
+            logger.debug("New job processing")
+        else:
+            logger.debug("No new job to start")
+        return True
+
+    def check_running_job_status(self, job_thread, start_time, job):
+        """Polls the AI Horde for new jobs and creates a Job class"""
+        runtime = time.monotonic() - start_time
+        if job_thread.done():
+            if job_thread.exception(timeout=1):
+                logger.error("Job failed with exception, {}", job_thread.exception())
+                logger.exception(job_thread.exception())
+                if self.consecutive_executor_restarts > 0:
+                    logger.critical(
+                        "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!"
+                    )
+                    self.should_stop = True
+                    return
+                self.consecutive_failed_jobs += 1
+                if self.consecutive_failed_jobs >= 5:
+                    logger.critical(
+                        "Too many consecutive jobs have failed. " "Restarting thread executor and hope we recover..."
+                    )
+                    self.should_restart = True
+                    self.consecutive_executor_restarts += 1
+                    return
+            else:
+                self.consecutive_failed_jobs = 0
+                self.consecutive_executor_restarts = 0
+            self.run_count += 1
+            logger.debug(f"Job finished successfully in {runtime:.3f}s (Total Completed: {self.run_count})")
+            self.running_jobs.remove((job_thread, start_time, job))
+            return
+
+        # check if any job has run for more than 180 seconds
+        if job_thread.running() and job.is_stale():
+            logger.warning("Restarting all jobs, as a job is stale " f": {runtime:.3f}s")
+            for (
+                inner_job_thread,
+                inner_start_time,
+                inner_job,
+            ) in self.running_jobs:  # Sometimes it's already removed
+                self.running_jobs.remove((inner_job_thread, inner_start_time, inner_job))
+                job_thread.cancel()
+            self.should_restart = True
+            return
+
+    def reload_data(self):
+        """This is just a utility function to reload the configuration"""
+        self.bridge_data.reload_data()
+
+    def reload_bridge_data(self):
+        self.model_manager.download_model_reference()
+        self.reload_data()
+        self.executor._max_workers = self.bridge_data.max_threads
+        self.last_config_reload = time.time()
