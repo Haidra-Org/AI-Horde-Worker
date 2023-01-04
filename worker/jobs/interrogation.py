@@ -73,8 +73,9 @@ class InterrogationHordeJob(HordeJobFramework):
                 logger.error(
                     "Something went wrong when processing request. "
                     "Please check your trace.log file for the full stack trace. "
-                    f"Form: {self.current_form}"
-                    f"Payload: {payload_kwargs}"
+                    f"Form: {self.current_form}. "
+                    f"Payload: {payload_kwargs}."
+                    f"URL: {self.pop['source_image']}."
                 )
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
