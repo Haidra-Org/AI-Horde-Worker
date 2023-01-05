@@ -28,6 +28,8 @@ class InterrogationBridgeData(BridgeDataTemplate):
             logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.forms:
             self.forms = args.forms
+        # Ensure no duplicates
+        self.forms = list(set(self.forms))
         if "nsfw" in self.forms:
             self.model_names.append("safety_checker")
         if "caption" in self.forms:

@@ -1,7 +1,9 @@
 import gradio as gr
 import requests
 
-from worker.bridge_data import BridgeData
+from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
+from worker.bridge_data.interrogation import InterrogationBridgeData
+from nataili.util import logger
 
 
 def Process_Input_List(list):
@@ -110,13 +112,17 @@ def load_models():
     return model_list
 
 
-def Start_WebUI(bridgeData):
-    bridgeData.reload_data()
+def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
+    stable_diffusion_bridge_data.reload_data()
+    interrogation_bridge_data.reload_data()
 
     model_list = load_models()
-
+    current_model_list = stable_diffusion_bridge_data.model_names
+    if stable_diffusion_bridge_data.dynamic_models:
+        current_model_list = stable_diffusion_bridge_data.predefined_models
+    current_model_list = list(set(current_model_list))
     existing_priority_usernames = ""
-    for item in bridgeData.priority_usernames:
+    for item in stable_diffusion_bridge_data.priority_usernames:
         existing_priority_usernames += item
         existing_priority_usernames += ","
     if len(existing_priority_usernames) > 0:
@@ -124,7 +130,7 @@ def Start_WebUI(bridgeData):
             existing_priority_usernames = existing_priority_usernames[:-1]
 
     existing_blacklist = ""
-    for item in bridgeData.blacklist:
+    for item in stable_diffusion_bridge_data.blacklist:
         existing_blacklist += item
         existing_blacklist += ","
     if len(existing_blacklist) > 0:
@@ -132,7 +138,7 @@ def Start_WebUI(bridgeData):
             existing_blacklist = existing_blacklist[:-1]
 
     existing_censorlist = ""
-    for item in bridgeData.censorlist:
+    for item in stable_diffusion_bridge_data.censorlist:
         existing_censorlist += item
         existing_censorlist += ","
     if len(existing_censorlist) > 0:
@@ -143,31 +149,31 @@ def Start_WebUI(bridgeData):
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
         gr.Markdown("## Welcome to the Stable Horde Bridge Configurator")
         with gr.Column():
-            worker_name = gr.Textbox(label="Worker Name", value=bridgeData.worker_name)
-            api_key = gr.Textbox(label="API Key", value=bridgeData.api_key)
+            worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name)
+            api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key)
             priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
-                max_threads = gr.Slider(1, 4, step=1, label="Number of Threads", value=bridgeData.max_threads)
-                queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=bridgeData.queue_size)
+                max_threads = gr.Slider(1, 4, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads)
+                queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size)
                 allow_unsafe_ip = gr.Checkbox(
-                    label="Allow Requests From Suspicious IP Addresses", value=bridgeData.allow_unsafe_ip
+                    label="Allow Requests From Suspicious IP Addresses", value=stable_diffusion_bridge_data.allow_unsafe_ip
                 )
                 require_upfront_kudos = gr.Checkbox(
-                    label="Require Users To Have Kudos Before Processing", value=bridgeData.require_upfront_kudos
+                    label="Require Users To Have Kudos Before Processing", value=stable_diffusion_bridge_data.require_upfront_kudos
                 )
         with gr.Tab("Image Generation"):
             with gr.Tab("Image Generation"):
                 with gr.Row():
-                    max_power = gr.Slider(2, 288, step=2, label="Max Power", value=bridgeData.max_power)
-                    allow_img2img = gr.Checkbox(label="Allow img2img Requests", value=bridgeData.allow_img2img)
-                    allow_painting = gr.Checkbox(label="Allow Inpainting Requests", value=bridgeData.allow_painting)
+                    max_power = gr.Slider(2, 288, step=2, label="Max Power", value=stable_diffusion_bridge_data.max_power)
+                    allow_img2img = gr.Checkbox(label="Allow img2img Requests", value=stable_diffusion_bridge_data.allow_img2img)
+                    allow_painting = gr.Checkbox(label="Allow Inpainting Requests", value=stable_diffusion_bridge_data.allow_painting)
                     allow_post_processing = gr.Checkbox(
-                        label="Allow Requests Requiring Post-Processing", value=bridgeData.allow_post_processing
+                        label="Allow Requests Requiring Post-Processing", value=stable_diffusion_bridge_data.allow_post_processing
                     )
             with gr.Tab("NSFW"):
                 with gr.Row():
-                    nsfw = gr.Checkbox(label="Enable NSFW", value=bridgeData.nsfw)
-                    censor_nsfw = gr.Checkbox(label="Censor NSFW Images", value=bridgeData.censor_nsfw)
+                    nsfw = gr.Checkbox(label="Enable NSFW", value=stable_diffusion_bridge_data.nsfw)
+                    censor_nsfw = gr.Checkbox(label="Censor NSFW Images", value=stable_diffusion_bridge_data.censor_nsfw)
                 blacklist = gr.Textbox(
                     label="Blacklisted Words or Phrases - Seperate with commas", value=existing_blacklist
                 )
@@ -176,27 +182,27 @@ def Start_WebUI(bridgeData):
                 )
             with gr.Tab("Model Manager"):
                 with gr.Row():
-                    dynamic_models = gr.Checkbox(label="Enable Dynamic Models", value=bridgeData.dynamic_models)
+                    dynamic_models = gr.Checkbox(label="Enable Dynamic Models", value=stable_diffusion_bridge_data.dynamic_models)
                     number_of_dynamic_models = gr.Number(
                         label="Number of Models To Be Dynamically Loading",
-                        value=bridgeData.number_of_dynamic_models,
+                        value=stable_diffusion_bridge_data.number_of_dynamic_models,
                         precision=0,
                     )
                     max_models_to_download = gr.Number(
                         label="Maximum Number of Models To Download",
-                        value=bridgeData.max_models_to_download,
+                        value=stable_diffusion_bridge_data.max_models_to_download,
                         precision=0,
                     )
                 models_to_load = gr.CheckboxGroup(
                     choices=model_list,
                     label="Models To Load (Not affected by dynamic models)",
-                    value=bridgeData.model_names,
+                    value=current_model_list,
                 )
                 models_to_skip = gr.CheckboxGroup(
-                    choices=model_list, label="Models To Skip", value=bridgeData.models_to_skip
+                    choices=model_list, label="Models To Skip", value=stable_diffusion_bridge_data.models_to_skip
                 )
         with gr.Tab("Image Interrogation"):
-            forms = gr.CheckboxGroup(label="Interrogation Modes", choices=["caption", "nsfw", "interrogation"])
+            forms = gr.CheckboxGroup(label="Interrogation Modes", choices=["caption", "nsfw", "interrogation"], value=interrogation_bridge_data.forms)
         gr.Button(value="Update Bridge", variant="Primary").click(
             Update_Bridge,
             inputs=[
@@ -229,5 +235,6 @@ def Start_WebUI(bridgeData):
 
 
 if __name__ == "__main__":
-    currentConfig = BridgeData()
-    Start_WebUI(currentConfig)
+    stable_diffusion_bridge_data = StableDiffusionBridgeData()
+    interrogation_bridge_data = InterrogationBridgeData()
+    Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data)
