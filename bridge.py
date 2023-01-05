@@ -233,7 +233,7 @@ if __name__ == "__main__":
     bridge_data = BridgeData()
     model_manager = ModelManager(disable_voodoo=bridge_data.disable_voodoo.active)
     model_manager.init()
-    webui.Start_WebUI(bridge_data, model_manager.models)
+    webui.Start_WebUI(bridge_data)
     try:
         bridge(model_manager, bridge_data)
     except KeyboardInterrupt:
