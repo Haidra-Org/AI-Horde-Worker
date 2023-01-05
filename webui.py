@@ -1,6 +1,6 @@
 import gradio as gr
-import requests
 import regex as re
+import requests
 
 from nataili.util import logger
 from worker.bridge_data.interrogation import InterrogationBridgeData
@@ -73,7 +73,7 @@ forms = {forms}"""
         output = "Bridge Data Updated Successfully\n"
     except Exception as e:
         output = f"Failed to update: {e}"
-    data = re.sub(r'api_key.*', 'api_key = "**********"', data)
+    data = re.sub(r"api_key.*", 'api_key = "**********"', data)
     output += data
     return output
 
