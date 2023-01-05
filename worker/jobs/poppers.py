@@ -147,17 +147,18 @@ class InterrogationPopper(JobPopper):
         for form in self.pop["forms"]:
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
-                try:
-                    size = requests.head(current_image_url).headers.get('Content-Length')
-                except Exception as err:
-                    logger.error(f"Something went wrong when retreiving image url.: {err}")
-                    continue
-                if not size:
-                    logger.error("Source image URL must provide a Content-Length header")
-                    continue
-                if int(size) > 5000000:
-                    logger.error("Provided image cannot be larger than 5Mb")
-                    continue
+                if "https://a223539ccf6caa2d76459c9727d276e6.r2.cloudflarestorage.com/stable-horde-source-images" not in current_image_url:
+                    try:
+                        size = requests.head(current_image_url).headers.get('Content-Length')
+                    except Exception as err:
+                        logger.error(f"Something went wrong when retreiving image url ({current_image_url}).: {err}")
+                        continue
+                    if not size:
+                        logger.error(f"Source image URL ({current_image_url}) must provide a Content-Length header")
+                        continue
+                    if int(size) > 5000000:
+                        logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
+                        continue
                 img_data = requests.get(current_image_url).content
             try:
                 form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
