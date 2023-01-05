@@ -39,6 +39,7 @@ class BridgeDataTemplate:
         self.initialized = False
         self.username = None
         self.models_reloading = False
+        self.max_models_to_download = 10
 
         disable_xformers.toggle(self.args.disable_xformers)
         disable_local_ray_temp.toggle(self.args.disable_local_ray_temp)
@@ -75,6 +76,10 @@ class BridgeDataTemplate:
                 pass
             try:
                 self.require_upfront_kudos = bd.require_upfront_kudos
+            except AttributeError:
+                pass
+            try:
+                self.max_models_to_download = bd.max_models_to_download
             except AttributeError:
                 pass
         except (ImportError, AttributeError) as err:

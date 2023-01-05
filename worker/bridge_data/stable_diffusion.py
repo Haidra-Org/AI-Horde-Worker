@@ -30,7 +30,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.model = None
         self.dynamic_models = True
         self.number_of_dynamic_models = 3
-        self.max_models_to_download = 10
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = []
 
@@ -74,10 +73,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 pass
             try:
                 self.number_of_dynamic_models = bd.number_of_dynamic_models
-            except AttributeError:
-                pass
-            try:
-                self.max_models_to_download = bd.max_models_to_download
             except AttributeError:
                 pass
             try:
