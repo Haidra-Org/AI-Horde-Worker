@@ -28,7 +28,7 @@ This option is recommended as it will make keeping your repository up to date mu
 1. In the target directory, browse to any folder you want to put the horde worker folder.
 1. Press `Clone`
 1. In the new window that opens up, on the top menu, go to `Repository > Git Bash`. A new terminal window will open.
-1. continue with the common install instructions
+1. continue with the [Run](#run) instructions
 
 #### Without git
 
@@ -36,7 +36,7 @@ Use these instructions if you do not have git for windows and do not want to ins
 
 1. Download [the zipped version](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract it to any folder of your choice
-1. continue with the common install instructions
+1. continue with the [Run](#run) instructions
 
 ### Linux
 
@@ -55,7 +55,7 @@ This will take care of the setup for this environment and then automatically sta
 For more information, see: https://github.com/db0/AI-Horde/blob/main/README_StableHorde.md#joining-the-horde
 
 
-#### Common run instructions
+#### Run
 
 The below instructions refer to running scripts `horde-bridge` or `update-runtime`. Depending on your OS, append `.cmd` for windows, or `.sh` for linux.
 
@@ -96,7 +96,7 @@ Use this approach if you cloned the original repository using `git clone`
 1. Open a or `bash`, `git bash`, `cmd`, or `powershell` terminal depending on your OS
 1. Navigate to the folder you have the nataili repository installed if you're not already there.
 1. run `git pull`
-1. continue with common run instructions above
+1. continue with [Run](#run) instructions above
 
 Afterwards run the `horde-bridge` script for your OS as usual.
 
@@ -108,7 +108,7 @@ Use this approach if you downloaded the git repository as a zip file and extract
 1. delete the `worker/` directory from your folder
 1. Download the [repository from github as a zip file](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract its contents into the same the folder you have the AI Horde Worker repository installed, overwriting any existing files
-1. continue with common run instructions above
+1. continue with [Run](#run) instructions above
 
 ## Model Usage
 Many models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
