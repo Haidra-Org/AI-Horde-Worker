@@ -46,8 +46,7 @@ Open a bash terminal and run these commands (just copy-paste them all together)
 
 ```bash
 git clone https://github.com/db0/AI-Horde-Worker.git
-cd nataili
-update-runtime.sh
+cd AI-Horde-Worker
 ```
 
 This will take care of the setup for this environment and then automatically start the bridge.
