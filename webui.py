@@ -64,7 +64,13 @@ models_to_load = {models_to_load}
 models_to_skip = {models_to_skip}
 forms = {forms}"""
     toExec = """text_file = open("bridgeData.py", "w+"); text_file.write(data); text_file.close()"""
-    exec(toExec)
+    try:
+        exec(toExec)
+        output = "Updated Successfully"
+    except Exception as e:
+        output = "Failed to update: " + e
+    return output
+
 
 
 def download_models(model_location):
@@ -207,6 +213,7 @@ def Start_WebUI(bridgeData):
                 models_to_skip,
                 forms,
             ],
+            outputs=gr.TextArea(label="System Messages")
         )
     WebUI.launch(share=True)
 
