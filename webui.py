@@ -1,9 +1,9 @@
 import gradio as gr
 import requests
 
-from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-from worker.bridge_data.interrogation import InterrogationBridgeData
 from nataili.util import logger
+from worker.bridge_data.interrogation import InterrogationBridgeData
+from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 
 
 def Process_Input_List(list):
@@ -153,27 +153,40 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
             api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key)
             priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
-                max_threads = gr.Slider(1, 4, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads)
+                max_threads = gr.Slider(
+                    1, 4, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
+                )
                 queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size)
                 allow_unsafe_ip = gr.Checkbox(
-                    label="Allow Requests From Suspicious IP Addresses", value=stable_diffusion_bridge_data.allow_unsafe_ip
+                    label="Allow Requests From Suspicious IP Addresses",
+                    value=stable_diffusion_bridge_data.allow_unsafe_ip,
                 )
                 require_upfront_kudos = gr.Checkbox(
-                    label="Require Users To Have Kudos Before Processing", value=stable_diffusion_bridge_data.require_upfront_kudos
+                    label="Require Users To Have Kudos Before Processing",
+                    value=stable_diffusion_bridge_data.require_upfront_kudos,
                 )
         with gr.Tab("Image Generation"):
             with gr.Tab("Image Generation"):
                 with gr.Row():
-                    max_power = gr.Slider(2, 288, step=2, label="Max Power", value=stable_diffusion_bridge_data.max_power)
-                    allow_img2img = gr.Checkbox(label="Allow img2img Requests", value=stable_diffusion_bridge_data.allow_img2img)
-                    allow_painting = gr.Checkbox(label="Allow Inpainting Requests", value=stable_diffusion_bridge_data.allow_painting)
+                    max_power = gr.Slider(
+                        2, 288, step=2, label="Max Power", value=stable_diffusion_bridge_data.max_power
+                    )
+                    allow_img2img = gr.Checkbox(
+                        label="Allow img2img Requests", value=stable_diffusion_bridge_data.allow_img2img
+                    )
+                    allow_painting = gr.Checkbox(
+                        label="Allow Inpainting Requests", value=stable_diffusion_bridge_data.allow_painting
+                    )
                     allow_post_processing = gr.Checkbox(
-                        label="Allow Requests Requiring Post-Processing", value=stable_diffusion_bridge_data.allow_post_processing
+                        label="Allow Requests Requiring Post-Processing",
+                        value=stable_diffusion_bridge_data.allow_post_processing,
                     )
             with gr.Tab("NSFW"):
                 with gr.Row():
                     nsfw = gr.Checkbox(label="Enable NSFW", value=stable_diffusion_bridge_data.nsfw)
-                    censor_nsfw = gr.Checkbox(label="Censor NSFW Images", value=stable_diffusion_bridge_data.censor_nsfw)
+                    censor_nsfw = gr.Checkbox(
+                        label="Censor NSFW Images", value=stable_diffusion_bridge_data.censor_nsfw
+                    )
                 blacklist = gr.Textbox(
                     label="Blacklisted Words or Phrases - Seperate with commas", value=existing_blacklist
                 )
@@ -182,7 +195,9 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                 )
             with gr.Tab("Model Manager"):
                 with gr.Row():
-                    dynamic_models = gr.Checkbox(label="Enable Dynamic Models", value=stable_diffusion_bridge_data.dynamic_models)
+                    dynamic_models = gr.Checkbox(
+                        label="Enable Dynamic Models", value=stable_diffusion_bridge_data.dynamic_models
+                    )
                     number_of_dynamic_models = gr.Number(
                         label="Number of Models To Be Dynamically Loading",
                         value=stable_diffusion_bridge_data.number_of_dynamic_models,
@@ -202,7 +217,11 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                     choices=model_list, label="Models To Skip", value=stable_diffusion_bridge_data.models_to_skip
                 )
         with gr.Tab("Image Interrogation"):
-            forms = gr.CheckboxGroup(label="Interrogation Modes", choices=["caption", "nsfw", "interrogation"], value=interrogation_bridge_data.forms)
+            forms = gr.CheckboxGroup(
+                label="Interrogation Modes",
+                choices=["caption", "nsfw", "interrogation"],
+                value=interrogation_bridge_data.forms,
+            )
         gr.Button(value="Update Bridge", variant="Primary").click(
             Update_Bridge,
             inputs=[
@@ -235,6 +254,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
 
 
 if __name__ == "__main__":
+    logger.init("Bridge WebUI", status="Initializing")
     stable_diffusion_bridge_data = StableDiffusionBridgeData()
     interrogation_bridge_data = InterrogationBridgeData()
     Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data)

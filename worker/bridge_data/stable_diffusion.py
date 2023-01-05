@@ -134,6 +134,5 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 status="Joining Horde",
             )
 
-
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models

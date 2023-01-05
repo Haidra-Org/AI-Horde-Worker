@@ -202,7 +202,7 @@ class BridgeDataTemplate:
             sys.exit(2)
 
     def check_extra_conditions_for_download_choice(self):
-        '''Extend if any condition on the specifics for this bridge_data will force a 'y' result'''
+        """Extend if any condition on the specifics for this bridge_data will force a 'y' result"""
         return False
 
     def reload_models(self, model_manager):
