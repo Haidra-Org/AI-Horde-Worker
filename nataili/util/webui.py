@@ -67,9 +67,23 @@ forms = {forms}"""
     exec(toExec)
 
 
-def Start_WebUI(bridgeData, models):
+def download_models(model_location):
+    models = None
+    try:
+        r = requests.get(model_location)
+        models = r.json()
+        print("Models downloaded successfully")
+    except Exception:
+        print("Failed to load models")
+    return models
+
+
+def load_models():
+    remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json"
+    latest_models = download_models(remote_models)
+
     available_models = []
-    for model in models:
+    for model in latest_models:
         if model not in [
             "RealESRGAN_x4plus",
             "RealESRGAN_x4plus_anime_6B",
@@ -86,6 +100,13 @@ def Start_WebUI(bridgeData, models):
         ]:
             available_models.append(model)
     model_list = sorted(available_models, key=str.casefold)
+    return model_list
+
+
+def Start_WebUI(bridgeData):
+    bridgeData.reload_data()
+
+    model_list = load_models()
 
     existing_priority_usernames = ""
     for item in bridgeData.priority_usernames:
@@ -190,21 +211,6 @@ def Start_WebUI(bridgeData, models):
     WebUI.launch(share=True)
 
 
-def download_models(model_location):
-    models = None
-    try:
-        r = requests.get(model_location)
-        models = r.json()
-        print("Models downloaded successfully")
-    except Exception:
-        print("Failed to load models")
-    return models
-
-
 if __name__ == "__main__":
-    currentBridgeData = BridgeData()
-
-    remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db.json"
-    latest_models = download_models(remote_models)
-
-    Start_WebUI(currentBridgeData, latest_models)
+    currentConfig = BridgeData()
+    Start_WebUI(currentConfig)
