@@ -118,16 +118,25 @@ def Start_WebUI(bridgeData):
     for item in bridgeData.priority_usernames:
         existing_priority_usernames += item
         existing_priority_usernames += ","
+    if len(existing_priority_usernames) > 0:
+        if existing_priority_usernames[-1] == ",":
+            existing_priority_usernames = existing_priority_usernames[:-1]
 
     existing_blacklist = ""
     for item in bridgeData.blacklist:
         existing_blacklist += item
         existing_blacklist += ","
+    if len(existing_blacklist) > 0:    
+        if existing_blacklist[-1] == ",":
+            existing_blacklist = existing_blacklist[:-1]
 
     existing_censorlist = ""
     for item in bridgeData.censorlist:
         existing_censorlist += item
         existing_censorlist += ","
+    if len(existing_censorlist) > 0:
+        if existing_censorlist[-1] == ",":
+            existing_censorlist = existing_censorlist[:-1]
 
     with gr.Blocks() as WebUI:
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
