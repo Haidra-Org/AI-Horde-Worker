@@ -1,5 +1,6 @@
 import gradio as gr
 import requests
+import regex as re
 
 from nataili.util import logger
 from worker.bridge_data.interrogation import InterrogationBridgeData
@@ -69,9 +70,10 @@ forms = {forms}"""
     toExec = """text_file = open("bridgeData.py", "w+"); text_file.write(data); text_file.close()"""
     try:
         exec(toExec)
-        output = "Updated Successfully"
+        output = "Bridge Data Updated Successfully\n"
     except Exception as e:
-        output = "Failed to update: " + e
+        output = f"Failed to update: {e}"
+    data = re.sub(r'api_key.*', 'api_key = "**********"', data)
     output += data
     return output
 
@@ -150,7 +152,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
         gr.Markdown("## Welcome to the Stable Horde Bridge Configurator")
         with gr.Column():
             worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name)
-            api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key)
+            api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key, type="password")
             priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
                 max_threads = gr.Slider(
