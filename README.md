@@ -58,18 +58,18 @@ For more information, see: https://github.com/db0/AI-Horde/blob/main/README_Stab
 
 The below instructions refer to running scripts `horde-bridge` or `update-runtime`. Depending on your OS, append `.cmd` for windows, or `.sh` for linux.
 
+You can double click the provided script files below from a file explorer or run it from a terminal like `bash`, `git bash` or `cmd` depending on your OS. 
+The latter option will allow you to see errors in case of a crash, so it's recommended.
+
 ##### Update runtime
 
-If you have just installed or updated your worker code, follow one of the two options below:
+If you have just installed or updated your worker code run the `update-runtime` script. This will ensure the dependencies needed for your worker to run are up to date
 
-* (Recommended) open a `bash` , `git bash` or a `cmd` terminal depending on your OS. Type `update-runtime.cmd` and pres enter. This approach will allow you to better see any errors
-* Run `update-runtime.cmd` by double-clicking on it from your file explorer.
-
-Wait until `update-runtime` is finished. This will take approximately 10-15 mins.
+This script can take 10-15 minutes to complete.
 
 ##### Startup
 
-Start your worker, depending on which type your want. You can double click the provided script files below from a file explorer or run it from a terminal like `bash`, `git bash` or `cmd`. The latter option will allow you to see errors in case of a crash, so it's recommended.
+Start your worker, depending on which type your want. 
 
 * If you want to generate Stable Diffusion images for others, run `horde-bridge`.
     **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 32G or RAM, append `--disable-voodoo` to your startup command above!
