@@ -93,7 +93,7 @@ First step: Shut down your worker by putting it into maintenance, and then press
 Use this approach if you cloned the original repository using `git clone`
 
 1. Open a or `bash`, `git bash`, `cmd`, or `powershell` terminal depending on your OS
-1. Navigate to the folder you have the nataili repository installed if you're not already there.
+1. Navigate to the folder you have the AI Horde Worker repository installed if you're not already there.
 1. run `git pull`
 1. continue with [Run](#run) instructions above
 
