@@ -70,7 +70,7 @@ forms = {forms}"""
         output = "Updated Successfully"
     except Exception as e:
         output = "Failed to update: " + e
-    output += data
+    output += "\n" + data
     return output
 
 
@@ -110,6 +110,51 @@ def load_models():
     return model_list
 
 
+def load_workerID(worker_name):
+    workerID = ""
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            workerID = item["id"]
+    return workerID
+
+
+def load_worker_mode(worker_name):
+    worker_mode = False
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            worker_mode = item["maintenance_mode"]
+    return worker_mode
+
+
+def load_worker_stats(worker_name):
+    worker_stats = ""
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            worker_stats += "Current MPS:  " + str(item["performance"]).split()[0] + " MPS\n"
+            worker_stats += "Total Kudos Earned:  " + str(item["kudos_rewards"]) + "\n"
+            worker_stats += "Total Jobs Completed:  " + str(item["requests_fulfilled"])
+    return worker_stats
+
+
+def update_worker_mode(worker_name, worker_id, current_mode, apikey):
+    header = {"apikey": apikey}
+    payload = {"maintenance": False, "name": worker_name}
+    if current_mode == "False":
+        payload = {"maintenance": True, "name": worker_name}
+    worker_URL = f"https://stablehorde.net/api/v2/workers/{worker_id}"
+    r = requests.put(worker_URL, json=payload, headers=header)
+    return r.json()
+
+
 def Start_WebUI(bridgeData):
     bridgeData.reload_data()
 
@@ -143,12 +188,34 @@ def Start_WebUI(bridgeData):
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
         gr.Markdown("## Welcome to the Stable Horde Bridge Configurator")
         with gr.Column():
-            worker_name = gr.Textbox(label="Worker Name", value=bridgeData.worker_name)
-            api_key = gr.Textbox(label="API Key", value=bridgeData.api_key)
-            priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
-                max_threads = gr.Slider(1, 4, step=1, label="Number of Threads", value=bridgeData.max_threads)
-                queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=bridgeData.queue_size)
+                worker_ID = gr.TextArea(label="Worker ID", lines=1, interactive=False)
+                maintenance_mode = gr.TextArea(label="Current Maintenance Mode Status", lines=1, interactive=False)
+                worker_stats = gr.TextArea(label="Worker Statistics", lines=3, interactive=False)
+            with gr.Row():
+                worker_name = gr.Textbox(
+                    label="Worker Name - Choose a unique name for your worker", value=bridgeData.worker_name
+                )
+                api_key = gr.Textbox(label="API Key", value=bridgeData.api_key)
+                priority_usernames = gr.Textbox(
+                    label="Priority Usernames (Seperate with commas in the format username#userid)",
+                    value=existing_priority_usernames,
+                )
+            with gr.Row():
+                max_threads = gr.Slider(
+                    1,
+                    4,
+                    step=1,
+                    label="Number of Threads - The number of jobs to process simultaneously",
+                    value=bridgeData.max_threads,
+                )
+                queue_size = gr.Slider(
+                    0,
+                    2,
+                    step=1,
+                    label="Queue Size - Number of jobs to store in cache, recommended = 1",
+                    value=bridgeData.queue_size,
+                )
                 allow_unsafe_ip = gr.Checkbox(
                     label="Allow Requests From Suspicious IP Addresses", value=bridgeData.allow_unsafe_ip
                 )
@@ -156,9 +223,15 @@ def Start_WebUI(bridgeData):
                     label="Require Users To Have Kudos Before Processing", value=bridgeData.require_upfront_kudos
                 )
         with gr.Tab("Image Generation"):
-            with gr.Tab("Image Generation"):
+            with gr.Tab("Generation Settings"):
                 with gr.Row():
-                    max_power = gr.Slider(2, 288, step=2, label="Max Power", value=bridgeData.max_power)
+                    max_power = gr.Slider(
+                        2,
+                        288,
+                        step=2,
+                        label="Max Power - 2 is 256x256, 8 is 512x512, 32 is 1024x1024",
+                        value=bridgeData.max_power,
+                    )
                     allow_img2img = gr.Checkbox(label="Allow img2img Requests", value=bridgeData.allow_img2img)
                     allow_painting = gr.Checkbox(label="Allow Inpainting Requests", value=bridgeData.allow_painting)
                     allow_post_processing = gr.Checkbox(
@@ -166,7 +239,7 @@ def Start_WebUI(bridgeData):
                     )
             with gr.Tab("NSFW"):
                 with gr.Row():
-                    nsfw = gr.Checkbox(label="Enable NSFW", value=bridgeData.nsfw)
+                    nsfw = gr.Checkbox(label="Allow NSFW Jobs", value=bridgeData.nsfw)
                     censor_nsfw = gr.Checkbox(label="Censor NSFW Images", value=bridgeData.censor_nsfw)
                 blacklist = gr.Textbox(
                     label="Blacklisted Words or Phrases - Seperate with commas", value=existing_blacklist
@@ -178,7 +251,7 @@ def Start_WebUI(bridgeData):
                 with gr.Row():
                     dynamic_models = gr.Checkbox(label="Enable Dynamic Models", value=bridgeData.dynamic_models)
                     number_of_dynamic_models = gr.Number(
-                        label="Number of Models To Be Dynamically Loading",
+                        label="Number of Models To Be Dynamically Loaded",
                         value=bridgeData.number_of_dynamic_models,
                         precision=0,
                     )
@@ -197,35 +270,48 @@ def Start_WebUI(bridgeData):
                 )
         with gr.Tab("Image Interrogation"):
             forms = gr.CheckboxGroup(label="Interrogation Modes", choices=["caption", "nsfw", "interrogation"])
-        gr.Button(value="Update Bridge", variant="Primary").click(
-            Update_Bridge,
-            inputs=[
-                horde_url,
-                worker_name,
-                api_key,
-                priority_usernames,
-                max_power,
-                queue_size,
-                max_threads,
-                nsfw,
-                censor_nsfw,
-                blacklist,
-                censorlist,
-                allow_img2img,
-                allow_painting,
-                allow_unsafe_ip,
-                allow_post_processing,
-                require_upfront_kudos,
-                dynamic_models,
-                number_of_dynamic_models,
-                max_models_to_download,
-                models_to_load,
-                models_to_skip,
-                forms,
-            ],
-            outputs=gr.TextArea(label="System Messages"),
-        )
-    WebUI.launch(share=True)
+        with gr.Row():
+            system = gr.TextArea(label="System Messages", lines=1, interactive=False)
+        with gr.Row():
+            gr.Button(value="Toggle Maintenance Mode", variant="primary").click(
+                update_worker_mode, inputs=[worker_name, worker_ID, maintenance_mode, api_key], outputs=system
+            )
+            gr.Button(value="Update Bridge", variant="primary").click(
+                Update_Bridge,
+                inputs=[
+                    horde_url,
+                    worker_name,
+                    api_key,
+                    priority_usernames,
+                    max_power,
+                    queue_size,
+                    max_threads,
+                    nsfw,
+                    censor_nsfw,
+                    blacklist,
+                    censorlist,
+                    allow_img2img,
+                    allow_painting,
+                    allow_unsafe_ip,
+                    allow_post_processing,
+                    require_upfront_kudos,
+                    dynamic_models,
+                    number_of_dynamic_models,
+                    max_models_to_download,
+                    models_to_load,
+                    models_to_skip,
+                    forms,
+                ],
+                outputs=system,
+            )
+        WebUI.queue()
+        WebUI.load(load_workerID, inputs=worker_name, outputs=worker_ID, every=15)
+        WebUI.load(load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+        WebUI.load(load_worker_stats, inputs=worker_name, outputs=worker_stats, every=15)
+    try:
+        WebUI.launch(share=True)
+    except KeyboardInterrupt:
+        print("CTRL+C Pressed --> Shutdown Server")
 
 
 if __name__ == "__main__":
