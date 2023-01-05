@@ -1,12 +1,18 @@
 This repository allows you to set up a Stable Horde Worker to generate or interrogate images for others
 
-# Stable Horde Bridge
+# Stable Horde Worker
 
-This repo contains the latest implementation for the [Stable Horde](https://stablehorde.net) Bridge. This will turn your graphics card(s) into a worker for the Stable Horde and you will receive in turn kudos which will give you priority for your own generations.
+This repo contains the latest implementation for the [Stable Horde](https://stablehorde.net) Worker. This will turn your graphics card(s) into a worker for the Stable Horde and you will receive in turn kudos which will give you priority for your own generations.
+
+Alternatively you can become an interrogation worker which is much more lightweight and can even run on CPU (i.e. without a GPU)
 
 To run the bridge, simply follow the instructions for your own OS
 
 ## Initial Setup
+
+If you haven't already, go to [stable horde and register an account](https://stablehorde.net/register), then store your API key somewhere secure. You will need it later in these instructions. 
+
+This will allow your worker to gather kudos for your account.
 
 ### Windows
 
@@ -25,9 +31,12 @@ This option is recommended as it will make keeping your repository up to date mu
 1. continue with the common windows instructions
 
 #### Without git
+
+Use these instructions if you do not have git for windows and do not want to install it. These instructions make updating the worker a bit more difficult down the line.
+
 1. Download [the zipped version](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract it to any folder of your choice
-1. continue with the common instructions
+1. continue with the common windows instructions
 
 #### Common windows instructions
 
