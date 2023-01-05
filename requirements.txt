@@ -52,6 +52,7 @@ timm
 torch-fidelity
 git+https://github.com/huggingface/transformers
 wget
+gradio
 
 # Optional packages commonly used with Stable Diffusion workflow
 
