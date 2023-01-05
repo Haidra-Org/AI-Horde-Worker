@@ -1,5 +1,6 @@
 import gradio as gr
 import requests
+
 from worker.bridge_data import BridgeData
 
 
@@ -69,8 +70,8 @@ forms = {forms}"""
         output = "Updated Successfully"
     except Exception as e:
         output = "Failed to update: " + e
+    output += data
     return output
-
 
 
 def download_models(model_location):
@@ -126,7 +127,7 @@ def Start_WebUI(bridgeData):
     for item in bridgeData.blacklist:
         existing_blacklist += item
         existing_blacklist += ","
-    if len(existing_blacklist) > 0:    
+    if len(existing_blacklist) > 0:
         if existing_blacklist[-1] == ",":
             existing_blacklist = existing_blacklist[:-1]
 
@@ -222,7 +223,7 @@ def Start_WebUI(bridgeData):
                 models_to_skip,
                 forms,
             ],
-            outputs=gr.TextArea(label="System Messages")
+            outputs=gr.TextArea(label="System Messages"),
         )
     WebUI.launch(share=True)
 
