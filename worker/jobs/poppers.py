@@ -143,13 +143,28 @@ class InterrogationPopper(JobPopper):
             return
         # In the interrogation popper, the forms key contains an array of payloads to execute
         current_image_url = None
+        non_faulted_forms = []
         for form in self.pop["forms"]:
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
+                try:
+                    size = requests.head(source_image).headers.get('Content-Length')
+                except Exception as err:
+                    logger.error(f"Something went wrong when retreiving image url.: {err}")
+                    continue
+                if not size:
+                    logger.error("Source image URL must provide a Content-Length header")
+                    continue
+                if int(size) > 5000000:
+                    logger.error("Provided image cannot be larger than 5Mb")
+                    continue
                 img_data = requests.get(current_image_url).content
             try:
                 form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
+                non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
                 logger.error(f"Error when creating image: {e}. Url {current_image_url}, img_data: {img_data}")
-        logger.debug(f"Popped {len(self.pop['forms'])} interrogation forms")
-        return self.pop["forms"]
+                continue
+        logger.debug(f"Popped {len(non_faulted_forms)} interrogation forms")
+        # TODO: Report back to the horde with faulted images
+        return non_faulted_forms
