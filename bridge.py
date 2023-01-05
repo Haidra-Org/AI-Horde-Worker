@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 from nataili.model_manager import ModelManager
-from nataili.util import logger, quiesce_logger, set_logger_verbosity
+from nataili.util import logger, quiesce_logger, set_logger_verbosity, webui
 from worker.argparser import args
 from worker.bridge_data import BridgeData
 from worker.job import HordeJob
@@ -233,6 +233,7 @@ if __name__ == "__main__":
     bridge_data = BridgeData()
     model_manager = ModelManager(disable_voodoo=bridge_data.disable_voodoo.active)
     model_manager.init()
+    webui.Start_WebUI(bridge_data, model_manager.models)
     try:
         bridge(model_manager, bridge_data)
     except KeyboardInterrupt:
