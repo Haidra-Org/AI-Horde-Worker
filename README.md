@@ -1,32 +1,4 @@
-This repository provides python libraries for running Stable Diffusion
-
-Sample use:
-
-```python
-from nataili.model_manager import ModelManager
-from nataili.inference.compvis import CompVis
-from nataili.util.cache import torch_gc
-
-# The model manager loads and unloads the SD models and has features to download them or find their location
-model_manager = ModelManager()
-model_manager.init()
-# The model to use for the generation.
-model = "stable_diffusion"
-success = model_manager.load_model(model)
-if success:
-    print(f'{model} loaded')
-else:
-    print(f'{model} load error')
-# Other classes exist like img2img
-generator = CompVis(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'output_dir')
-generator.generate('a donkey with a hat')
-torch_gc()
-# The image key in the generator contains a PIL image of the generation
-image = generator.images[0]["image"]
-image.save('a_donkey_with_a_hat.png', format="Png")
-```
-
-You can find more complete scripts in `test.py`
+This repository allows you to set up a Stable Horde Worker to generate or interrogate images for others
 
 # Stable Horde Bridge
 
@@ -42,8 +14,6 @@ This will take care of the setup for this environment and then automatically sta
 For more information, see: https://github.com/db0/AI-Horde/blob/main/README_StableHorde.md#joining-the-horde
 
 ## Experimental
-
-The bridge has experimental inpainting support via Diffusers library. This **can** work in parallel with the compvis/ckpt implementation, but it is not suggested unless you have plenty of VRAM to spare.
 
 **run `update-runtime.cmd` or `update-runtime.sh` as dependencies have been updated**
 
