@@ -33,6 +33,7 @@ tensorboard
 retry
 python-slugify
 piexif
+gradio
 
 accelerate
 albumentations
