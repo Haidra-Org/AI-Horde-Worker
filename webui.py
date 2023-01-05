@@ -1,5 +1,6 @@
 import gradio as gr
 import requests
+
 from worker.bridge_data import BridgeData
 
 
@@ -69,6 +70,7 @@ forms = {forms}"""
         output = "Updated Successfully"
     except Exception as e:
         output = "Failed to update: " + e
+    output += data
     return output
 
 
