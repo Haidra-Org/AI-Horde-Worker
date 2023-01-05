@@ -8,15 +8,15 @@ Alternatively you can become an interrogation worker which is much more lightwei
 
 To run the bridge, simply follow the instructions for your own OS
 
-## Installing
+# Installing
 
 If you haven't already, go to [stable horde and register an account](https://stablehorde.net/register), then store your API key somewhere secure. You will need it later in these instructions. 
 
 This will allow your worker to gather kudos for your account.
 
-### Windows
+## Windows
 
-#### Using git (recommended)
+### Using git (recommended)
 
 Use these instructions if you have installed [git for windows](https://gitforwindows.org/).
 
@@ -28,17 +28,17 @@ This option is recommended as it will make keeping your repository up to date mu
 1. In the target directory, browse to any folder you want to put the horde worker folder.
 1. Press `Clone`
 1. In the new window that opens up, on the top menu, go to `Repository > Git Bash`. A new terminal window will open.
-1. continue with the [Run](#run) instructions
+1. continue with the [Running](#running) instructions
 
-#### Without git
+### Without git
 
 Use these instructions if you do not have git for windows and do not want to install it. These instructions make updating the worker a bit more difficult down the line.
 
 1. Download [the zipped version](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract it to any folder of your choice
-1. continue with the [Run](#run) instructions
+1. continue with the [Running](#running) instructions
 
-### Linux
+## Linux
 
 This assumes you have git installed
 
@@ -54,20 +54,20 @@ This will take care of the setup for this environment and then automatically sta
 For more information, see: https://github.com/db0/AI-Horde/blob/main/README_StableHorde.md#joining-the-horde
 
 
-#### Run
+# Running
 
 The below instructions refer to running scripts `horde-bridge` or `update-runtime`. Depending on your OS, append `.cmd` for windows, or `.sh` for linux.
 
 You can double click the provided script files below from a file explorer or run it from a terminal like `bash`, `git bash` or `cmd` depending on your OS. 
 The latter option will allow you to see errors in case of a crash, so it's recommended.
 
-##### Update runtime
+## Update runtime
 
 If you have just installed or updated your worker code run the `update-runtime` script. This will ensure the dependencies needed for your worker to run are up to date
 
 This script can take 10-15 minutes to complete.
 
-##### Startup
+## Startup
 
 Start your worker, depending on which type your want. 
 
@@ -78,30 +78,30 @@ Start your worker, depending on which type your want.
 
     **Warning:** This currently the interrogation worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
 
-##### bridgeData.py
+## bridgeData.py
 
 Your first run will instruct you to create a bridgeData.py. If you did, it will abort the run and allow you to edit the properties of the file. If this file wasn't created automatically, you can create it now by copying `BridgeData_template.py` to `BridgeData.py`.
 
 Open bridgeData and edit it properties according to the comments inside. Once done, simply run the commands from [Startup](#startup) above.
 
-## Updating
+# Updating
 
 The stable horde workers are under constant improvement. In case there is more recent code to use follow these steps to update
 
 First step: Shut down your worker by putting it into maintenance, and then pressing ctrl+c
 
-### git
+## git
 
 Use this approach if you cloned the original repository using `git clone`
 
 1. Open a or `bash`, `git bash`, `cmd`, or `powershell` terminal depending on your OS
 1. Navigate to the folder you have the AI Horde Worker repository installed if you're not already there.
 1. run `git pull`
-1. continue with [Run](#run) instructions above
+1. continue with [Running](#running) instructions above
 
 Afterwards run the `horde-bridge` script for your OS as usual.
 
-### zip
+## zip
 
 Use this approach if you downloaded the git repository as a zip file and extracted it somewhere.
 
@@ -109,7 +109,7 @@ Use this approach if you downloaded the git repository as a zip file and extract
 1. delete the `worker/` directory from your folder
 1. Download the [repository from github as a zip file](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract its contents into the same the folder you have the AI Horde Worker repository installed, overwriting any existing files
-1. continue with [Run](#run) instructions above
+1. continue with [Running](#running) instructions above
 
-## Model Usage
+# Model Usage
 Many models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
