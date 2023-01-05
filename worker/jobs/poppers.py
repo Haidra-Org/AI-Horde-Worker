@@ -148,7 +148,7 @@ class InterrogationPopper(JobPopper):
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
                 try:
-                    size = requests.head(source_image).headers.get('Content-Length')
+                    size = requests.head(current_image_url).headers.get('Content-Length')
                 except Exception as err:
                     logger.error(f"Something went wrong when retreiving image url.: {err}")
                     continue
