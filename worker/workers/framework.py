@@ -105,7 +105,9 @@ class WorkerFramework:
         job = None
         # Queue disabled
         if self.bridge_data.queue_size == 0:
-            job = self.pop_job()[0]
+            jobs = self.pop_job()
+            if jobs:
+                job = jobs[0]
         # Queue enabled
         elif len(self.waiting_jobs) > 0:
             job = self.waiting_jobs.pop(0)
