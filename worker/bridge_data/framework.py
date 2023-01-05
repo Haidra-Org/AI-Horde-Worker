@@ -145,7 +145,7 @@ class BridgeDataTemplate:
             if model_info["type"] == "diffusers" and model_info["hf_auth"]:
                 check_mm_auth(model_manager, self.args)
         if not models_exist:
-            if self.args.yes or self.dynamic_models:
+            if self.args.yes or self.check_extra_conditions_for_download_choice():
                 choice = "y"
             else:
                 choice = input(
@@ -200,6 +200,10 @@ class BridgeDataTemplate:
                 "Please edit bridgeData.py with your setup and restart the worker"
             )
             sys.exit(2)
+
+    def check_extra_conditions_for_download_choice(self):
+        '''Extend if any condition on the specifics for this bridge_data will force a 'y' result'''
+        return False
 
     def reload_models(self, model_manager):
         """Reloads models - Note this is IN A THREAD"""
