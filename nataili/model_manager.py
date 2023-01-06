@@ -21,17 +21,13 @@ from transformers import logging
 
 from ldm.models.blip import blip_decoder
 from ldm.util import instantiate_from_config
+from nataili import disable_voodoo
 from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
-
-try:
-    from nataili.util.voodoo import init_ait_module, push_diffusers_pipeline_to_plasma, push_model_to_plasma
-except ModuleNotFoundError as e:
-    from nataili import disable_voodoo
-
-    if not disable_voodoo.active:
-        raise e
-
 from nataili.util import logger
+
+if not disable_voodoo.active:
+    from nataili.util.voodoo import init_ait_module, push_diffusers_pipeline_to_plasma, push_model_to_plasma
+
 from nataili.util.cache import torch_gc
 from nataili.util.load_list import load_list
 

@@ -8,7 +8,7 @@ import threading
 
 import requests
 
-from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
+from nataili import disable_voodoo
 from nataili.util import logger
 
 
@@ -40,12 +40,6 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
         self.max_models_to_download = 10
-
-        disable_xformers.toggle(self.args.disable_xformers)
-        disable_local_ray_temp.toggle(self.args.disable_local_ray_temp)
-        disable_voodoo.toggle(self.args.disable_voodoo)
-        if disable_voodoo.active:
-            disable_local_ray_temp.activate()
 
         self.disable_voodoo = disable_voodoo
 
