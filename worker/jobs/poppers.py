@@ -126,10 +126,14 @@ class InterrogationPopper(JobPopper):
             available_forms.append("nsfw")
         if "ViT-L/14" in self.available_models:
             available_forms.append("interrogation")
+        # Avoid div/0
+        amount = 1
+        if self.bridge_data.queue_size > 1:
+            amount = self.bridge_data.queue_size
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "forms": available_forms,
-            "amount": self.bridge_data.queue_size,
+            "amount": amount,
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,
             "bridge_version": self.BRIDGE_VERSION,
