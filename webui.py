@@ -156,7 +156,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
             priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
                 max_threads = gr.Slider(
-                    1, 4, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
+                    1, 10, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
                 )
                 queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size)
                 allow_unsafe_ip = gr.Checkbox(
