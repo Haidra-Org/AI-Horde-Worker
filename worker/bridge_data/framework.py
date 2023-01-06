@@ -78,6 +78,7 @@ class BridgeDataTemplate:
                 pass
         except (ImportError, AttributeError) as err:
             logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
+            bd = None
         if self.args.api_key:
             self.api_key = self.args.api_key
         if self.args.worker_name:

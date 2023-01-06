@@ -31,14 +31,14 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.dynamic_models = True
         self.number_of_dynamic_models = 3
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
-        self.predefined_models = []
+        self.predefined_models = self.model_names.copy()
 
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
         previous_url = self.horde_url
         bd = super().reload_data()
-        try:
+        if bd:
             try:
                 self.max_power = bd.max_power
             except AttributeError:
@@ -87,8 +87,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 self.allow_post_processing = bd.allow_post_processing
             except AttributeError:
                 pass
-        except (ImportError, AttributeError) as err:
-            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.max_power:
             self.max_power = args.max_power
         if args.model:

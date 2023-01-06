@@ -19,13 +19,11 @@ class InterrogationBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         bd = super().reload_data()
-        try:
+        if bd:
             try:
                 self.forms = bd.forms
             except AttributeError:
                 pass
-        except (ImportError, AttributeError) as err:
-            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         if args.forms:
             self.forms = args.forms
         # Ensure no duplicates
