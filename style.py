@@ -56,8 +56,8 @@ else:
 
 lint_processes = [
     black_args,
-    flake8_args,
     isort_args,
+    flake8_args,
 ]
 
 for process_args in lint_processes:

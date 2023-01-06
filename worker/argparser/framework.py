@@ -131,5 +131,6 @@ arg_parser.add_argument(
     help="If specified will not check the downloaded model md5sum.",
 )
 
+
 # This args must be parsed in the extended class
 # args = arg_parser.parse_args()
