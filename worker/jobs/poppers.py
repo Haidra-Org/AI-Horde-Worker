@@ -151,9 +151,12 @@ class InterrogationPopper(JobPopper):
         for form in self.pop["forms"]:
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
-                if "https://a223539ccf6caa2d76459c9727d276e6.r2.cloudflarestorage.com/stable-horde-source-images" not in current_image_url:
+                if (
+                    "https://a223539ccf6caa2d76459c9727d276e6.r2.cloudflarestorage.com/stable-horde-source-images"
+                    not in current_image_url
+                ):
                     try:
-                        size = requests.head(current_image_url).headers.get('Content-Length')
+                        size = requests.head(current_image_url).headers.get("Content-Length")
                     except Exception as err:
                         logger.error(f"Something went wrong when retreiving image url ({current_image_url}).: {err}")
                         continue
