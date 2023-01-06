@@ -285,7 +285,7 @@ class ModelManager:
         pl_sd = torch.load(model_path, map_location=map_location)
         if "global_step" in pl_sd:
             logger.info(f"Global Step: {pl_sd['global_step']}")
-        sd = pl_sd["state_dict"]
+        sd = pl_sd["state_dict"] if "state_dict" in pl_sd else pl_sd
         model = instantiate_from_config(config.model)
         m, u = model.load_state_dict(sd, strict=False)
         model = model.eval()
