@@ -124,7 +124,7 @@ class ModelManager:
             if self.check_available(self.get_model_files(model)):
                 models_available.append(model)
         self.available_models = models_available
-        if self.cuda_devices != None:
+        if self.cuda_devices is not None:
             logger.info("Starting Model Manager in GPU Mode")
             logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
             logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
@@ -380,7 +380,7 @@ class ModelManager:
         # vit = 'base' or 'large'
         vit = "base" if model_name == "BLIP" else "large"
         model_path = self.get_model_files(model_name)[0]["path"]
-        if self.cuda_devices != None:
+        if self.cuda_devices is not None:
             device = torch.device(f"cuda:{gpu_id}")
         else:
             device = torch.device("cpu")
@@ -488,7 +488,7 @@ class ModelManager:
             self.loaded_models[model_name] = self.load_codeformers(model_name, gpu_id)
             return True
         elif self.models[model_name]["type"] == "blip":
-            if self.cuda_devices != None:
+            if self.cuda_devices is not None:
                 self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512)
             else:
                 self.loaded_models[model_name] = self.load_blip(model_name, "full", gpu_id, 512)
