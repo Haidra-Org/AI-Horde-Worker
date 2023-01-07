@@ -151,27 +151,37 @@ class InterrogationPopper(JobPopper):
         for form in self.pop["forms"]:
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
-                if (
-                    "https://a223539ccf6caa2d76459c9727d276e6.r2.cloudflarestorage.com/stable-horde-source-images"
-                    not in current_image_url
-                ):
-                    try:
-                        size = requests.head(current_image_url).headers.get("Content-Length")
-                    except Exception as err:
-                        logger.error(f"Something went wrong when retreiving image url ({current_image_url}).: {err}")
-                        continue
-                    if not size:
-                        logger.error(f"Source image URL ({current_image_url}) must provide a Content-Length header")
-                        continue
-                    if int(size) > 5000000:
-                        logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
-                        continue
-                img_data = requests.get(current_image_url).content
+                try:
+                    with requests.get(current_image_url, stream = True, timeout = 2) as r:
+                        size = r.headers.get('Content-Length', 0)
+                        if int(size) / 1024 > 5000:
+                            logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
+                            current_image_url = None
+                            continue
+                        mbs = 0
+                        for chunk in r.iter_content(chunk_size=1024 * 1024):
+                            if chunk:
+                                if mbs == 0:
+                                    img_data = chunk
+                                else:
+                                    img_data += chunk
+                                mbs += 1
+                                if mbs > 5:
+                                    logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
+                                    current_image_url = None
+                                    continue
+                except Exception as err:
+                    logger.error(err)
+                    current_image_url = None
+                    continue
             try:
                 form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
                 non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
                 logger.error(f"Error when creating image: {e}. Url {current_image_url}, img_data: {img_data}")
+                continue
+            except UnboundLocalError as e:
+                logger.error(f"Error when creating image: {e}. Url {current_image_url}")
                 continue
         logger.debug(f"Popped {len(non_faulted_forms)} interrogation forms")
         # TODO: Report back to the horde with faulted images
