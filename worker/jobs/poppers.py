@@ -152,8 +152,8 @@ class InterrogationPopper(JobPopper):
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
                 try:
-                    with requests.get(current_image_url, stream = True, timeout = 2) as r:
-                        size = r.headers.get('Content-Length', 0)
+                    with requests.get(current_image_url, stream=True, timeout=2) as r:
+                        size = r.headers.get("Content-Length", 0)
                         if int(size) / 1024 > 5000:
                             logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
                             current_image_url = None
