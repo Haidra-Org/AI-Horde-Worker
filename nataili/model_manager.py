@@ -94,7 +94,7 @@ class ModelManager:
             recommended_gpu = [x for x in cuda_arch if x["sm"] == cuda_arch[0]["sm"]]
             return cuda_arch, recommended_gpu
         else:
-            return None
+            return None, None
 
     def get_ait_workdir(self, cuda_arch, model_name="stable_diffusion"):
         if cuda_arch == 89:
@@ -121,22 +121,28 @@ class ModelManager:
                 models_available.append(model)
         self.available_models = models_available
 
-        logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
-        logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
-        logger.info(f"Recommended GPU: {self.recommended_gpu}")
-        sm = self.recommended_gpu[0]["sm"]
-        logger.info(f"Using sm_{sm} for AITemplate")
-        aitemplate_available = []
-        for aitemplate in self.aitemplates:
-            logger.info(f"{aitemplate}")
-            ait_files = self.get_aitemplate_files(sm)
-            if len(ait_files) > 0 and self.check_available(ait_files):
-                aitemplate_available.append(aitemplate)
-        self.available_aitemplates = aitemplate_available
-        if len(self.available_aitemplates) == 0:
-            logger.debug("No AITemplate available")
+        if self.cuda_devices is not None:
+            logger.info("Starting Model Manager in GPU Mode")
+            logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
+            logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
+            logger.info(f"Recommended GPU: {self.recommended_gpu}")
+            sm = self.recommended_gpu[0]["sm"]
+            logger.info(f"Using sm_{sm} for AITemplate")
+            sm = self.recommended_gpu[0]["sm"]
+            logger.info(f"Using sm_{sm} for AITemplate")
+            aitemplate_available = []
+            for aitemplate in self.aitemplates:
+                logger.info(f"{aitemplate}")
+                ait_files = self.get_aitemplate_files(sm)
+                if len(ait_files) > 0 and self.check_available(ait_files):
+                    aitemplate_available.append(aitemplate)
+            self.available_aitemplates = aitemplate_available
+            if len(self.available_aitemplates) == 0:
+                logger.debug("No AITemplate available")
+            else:
+                self.ait_workdir = self.get_ait_workdir(sm)
         else:
-            self.ait_workdir = self.get_ait_workdir(sm)
+            logger.info("Starting Model Manager in CPU Mode")
 
         if self.hf_auth is not None:
             if "username" not in self.hf_auth and "password" not in self.hf_auth:
@@ -371,7 +377,10 @@ class ModelManager:
         # vit = 'base' or 'large'
         vit = "base" if model_name == "BLIP" else "large"
         model_path = self.get_model_files(model_name)[0]["path"]
-        device = torch.device(f"cuda:{gpu_id}")
+        if self.cuda_devices is not None:
+            device = torch.device(f"cuda:{gpu_id}")
+        else:
+            device = torch.device("cpu")
         model = blip_decoder(
             pretrained=model_path,
             med_config="configs/blip/med_config.json",
@@ -476,7 +485,10 @@ class ModelManager:
             self.loaded_models[model_name] = self.load_codeformers(model_name, gpu_id)
             return True
         elif self.models[model_name]["type"] == "blip":
-            self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512)
+            if self.cuda_devices is not None:
+                self.loaded_models[model_name] = self.load_blip(model_name, precision, gpu_id, 512)
+            else:
+                self.loaded_models[model_name] = self.load_blip(model_name, "full", gpu_id, 512)
             return True
         elif self.models[model_name]["type"] == "open_clip":
             self.loaded_models[model_name] = self.load_open_clip(model_name, precision, gpu_id, data_path)
