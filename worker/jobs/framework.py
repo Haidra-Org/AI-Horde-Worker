@@ -119,11 +119,11 @@ class HordeJobFramework:
                     logger.warning(
                         f"During gen submit, server {self.bridge_data.horde_url} "
                         f"responded with status code {submit_req.status_code}: "
-                        f"{submit['message']}. Waiting for 10 seconds...  (Retry {self.loop_retry}/10)"
+                        f"{submit['message']}. Waiting for 2 seconds...  (Retry {self.loop_retry}/10)"
                     )
                     if "errors" in submit:
                         logger.warning(f"Detailed Request Errors: {submit['errors']}")
-                    time.sleep(10)
+                    time.sleep(2)
                     continue
                 logger.debug(
                     f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}'

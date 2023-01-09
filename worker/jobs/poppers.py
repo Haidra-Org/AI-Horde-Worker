@@ -58,11 +58,11 @@ class JobPopper:
             logger.warning(
                 f"During gen pop, server {self.bridge_data.horde_url} "
                 f"responded with status code {pop_req.status_code}: "
-                f"{self.pop['message']}. Waiting for 10 seconds..."
+                f"{self.pop['message']}. Waiting for 2 seconds..."
             )
             if "errors" in self.pop:
                 logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
-            time.sleep(10)
+            time.sleep(2)
             return
         return [self.pop]
 
