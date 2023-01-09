@@ -28,6 +28,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.seed = None
         self.image = None
         self.r2_upload = None
+        self.censored = False
         self.available_models = self.model_manager.get_loaded_models_names()
         self.current_model = self.pop.get("model", self.available_models[0])
         self.current_id = self.pop["id"]
@@ -277,6 +278,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if generator.images[0].get("censored", False):
             logger.debug(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
+            self.censored = True
         logger.debug("censor done...")
         # We unload the generator from RAM
         generator = None
@@ -318,9 +320,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.submit_dict = {
             "id": self.current_id,
             "generation": generation,
-            "api_key": self.bridge_data.api_key,
             "seed": self.seed,
-            "max_pixels": self.bridge_data.max_pixels,
+            "censored": self.censored,
         }
 
     def post_submit_tasks(self, submit_req):
