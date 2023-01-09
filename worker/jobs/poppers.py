@@ -29,7 +29,7 @@ class JobPopper:
                 self.bridge_data.horde_url + self.endpoint,
                 json=self.pop_payload,
                 headers=self.headers,
-                timeout=20,
+                timeout=40,
             )
             logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
         except requests.exceptions.ConnectionError:
