@@ -178,7 +178,7 @@ class InterrogationPopper(JobPopper):
                 form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
                 non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
-                logger.error(f"Error when creating image: {e}. Url {current_image_url}, img_data: {img_data}")
+                logger.error(f"Error when creating image: {e}. Url {current_image_url}")
                 continue
             except UnboundLocalError as e:
                 logger.error(f"Error when creating image: {e}. Url {current_image_url}")
