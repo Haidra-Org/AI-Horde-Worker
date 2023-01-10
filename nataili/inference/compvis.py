@@ -22,9 +22,10 @@ from nataili.util.img2img import find_noise_for_image, get_matched_noise, proces
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+from nataili.util.performance import performance
 
 try:
-    from nataili.util.voodoo import load_from_plasma, performance
+    from nataili.util.voodoo import load_from_plasma
 except ModuleNotFoundError as e:
     from nataili import disable_voodoo
 

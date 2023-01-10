@@ -2,7 +2,7 @@ import torch
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 
-from nataili.util.voodoo import performance
+from nataili.util.performance import performance
 
 
 class Caption:

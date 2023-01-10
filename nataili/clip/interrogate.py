@@ -2,7 +2,7 @@ import clip
 import torch
 
 from nataili.util import logger
-from nataili.util.voodoo import performance
+from nataili.util.performance import performance
 
 
 class Interrogator:

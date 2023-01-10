@@ -2,7 +2,6 @@ import contextlib
 import copy
 import os
 import shutil
-from functools import wraps
 from typing import Dict, List, Tuple, TypeVar
 
 import ray
@@ -12,8 +11,6 @@ from nataili import disable_local_ray_temp
 from nataili.inference.aitemplate.model import Model
 from nataili.util import logger
 
-T = TypeVar("T")
-
 if not disable_local_ray_temp.active:
     ray_temp_dir = os.path.abspath("./ray")
     shutil.rmtree(ray_temp_dir, ignore_errors=True)
@@ -22,14 +19,6 @@ if not disable_local_ray_temp.active:
     logger.init(f"Ray temp dir '{ray_temp_dir}'", status="Prepared")
 else:
     logger.init_warn("Ray temp dir'", status="OS Default")
-
-
-def performance(f: T) -> T:
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        return torch.cuda.amp.autocast()(torch.no_grad()(f))(*args, **kwargs)
-
-    return wrapper
 
 
 def extract_tensors(m: torch.nn.Module) -> Tuple[torch.nn.Module, List[Dict]]:

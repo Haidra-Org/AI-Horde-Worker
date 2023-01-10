@@ -2,7 +2,7 @@ import k_diffusion as K
 import torch
 import torch.nn as nn
 
-from nataili.util.voodoo import performance
+from nataili.util.performance import performance
 
 
 class KDiffusionSampler:
