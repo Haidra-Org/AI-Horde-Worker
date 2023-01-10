@@ -19,10 +19,10 @@ from nataili.util.cache import torch_gc
 from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
 from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
+from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from nataili.util.performance import performance
 
 try:
     from nataili.util.voodoo import load_from_plasma

@@ -2,7 +2,7 @@ import contextlib
 import copy
 import os
 import shutil
-from typing import Dict, List, Tuple, TypeVar
+from typing import Dict, List, Tuple
 
 import ray
 import torch

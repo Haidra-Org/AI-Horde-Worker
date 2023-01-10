@@ -503,7 +503,10 @@ class ModelManager:
             self.loaded_models[model_name] = self.load_safety_checker(model_name, gpu_id)
             return True
         else:
-            logger.warning(f"Model name '{model_name}' with type '{self.models[model_name]['type']}' could not be matched to a loader.")
+            logger.warning(
+                f"Model name '{model_name}' with type '{self.models[model_name]['type']}' "
+                "could not be matched to a loader."
+            )
             return False
 
     def load_safety_checker(self, model_name="", gpu_id=0):

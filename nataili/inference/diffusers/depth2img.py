@@ -10,9 +10,9 @@ from slugify import slugify
 from nataili import disable_voodoo
 from nataili.util.cache import torch_gc
 from nataili.util.get_next_sequence_number import get_next_sequence_number
+from nataili.util.performance import performance
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from nataili.util.performance import performance
 
 try:
     from nataili.util.voodoo import load_diffusers_pipeline_from_plasma
