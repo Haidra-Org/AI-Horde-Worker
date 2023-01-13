@@ -49,10 +49,7 @@ git clone https://github.com/db0/AI-Horde-Worker.git
 cd AI-Horde-Worker
 ```
 
-This will take care of the setup for this environment and then automatically start the bridge.
-
-For more information, see: https://github.com/db0/AI-Horde/blob/main/README_StableHorde.md#joining-the-horde
-
+Continue with the [Running](#running) instructions
 
 # Running
 
