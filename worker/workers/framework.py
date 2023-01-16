@@ -170,6 +170,7 @@ class WorkerFramework:
 
     def reload_bridge_data(self):
         self.model_manager.download_model_reference()
+        self.model_manager.init()
         self.reload_data()
         self.executor._max_workers = self.bridge_data.max_threads
         self.last_config_reload = time.time()
