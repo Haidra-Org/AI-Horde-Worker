@@ -1,6 +1,6 @@
 -e .
 
-ray==2.1
+ray
 
 # See: https://github.com/CompVis/taming-transformers/issues/176
 # do not uncomment -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
