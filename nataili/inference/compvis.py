@@ -6,7 +6,6 @@ import numpy as np
 import PIL
 import skimage
 import torch
-from . import prompt_weights
 from einops import rearrange
 from slugify import slugify
 from transformers import CLIPFeatureExtractor
@@ -24,6 +23,8 @@ from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
+
+from . import prompt_weights
 
 try:
     from nataili.util.voodoo import load_from_plasma
@@ -354,8 +355,12 @@ class CompVis:
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
 
-                        c = torch.cat([prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, model)
-                                      for prompt in prompts])
+                        c = torch.cat(
+                            [
+                                prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, model)
+                                for prompt in prompts
+                            ]
+                        )
 
                         opt_C = 4
                         opt_f = 8
@@ -456,8 +461,12 @@ class CompVis:
                     if isinstance(prompts, tuple):
                         prompts = list(prompts)
 
-                    c = torch.cat([prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
-                                  for prompt in prompts])
+                    c = torch.cat(
+                        [
+                            prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
+                            for prompt in prompts
+                        ]
+                    )
 
                     opt_C = 4
                     opt_f = 8
