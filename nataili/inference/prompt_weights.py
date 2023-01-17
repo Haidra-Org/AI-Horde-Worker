@@ -5,6 +5,7 @@ from nataili.util import logger
 # When using prompt weights, use this to recover the original non-weighted prompt
 prompt_filter_regex = r"[\(\)]|:\d+(\.\d+)?"
 
+
 # We subtract the conditioning of the full prompt without the subprompt, from the conditioning of the full prompt
 # The remainder is exactly what the subprompt 'adds' to the embedding vector in the context of the full prompt
 # Then, we use this value to update the current embedding vector according to the desired weight of the subprompt
