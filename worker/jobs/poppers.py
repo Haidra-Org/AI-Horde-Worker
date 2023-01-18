@@ -44,6 +44,10 @@ class JobPopper:
             logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
             time.sleep(2)
             return
+        except requests.exceptions.InvalidHeader:
+            logger.warning(f"Server {self.bridge_data.horde_url} Something is wrong with the API key you are sending. Please check your bridgeData api_key variable. Waiting 10 seconds...")
+            time.sleep(10)           
+            return
 
         try:
             self.pop = pop_req.json()  # I'll use it properly later

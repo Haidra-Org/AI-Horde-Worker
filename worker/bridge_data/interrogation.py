@@ -28,11 +28,11 @@ class InterrogationBridgeData(BridgeDataTemplate):
             self.forms = args.forms
         # Ensure no duplicates
         self.forms = list(set(self.forms))
-        if "nsfw" in self.forms:
+        if "nsfw" in self.forms and "safety_checker" not in self.model_names:
             self.model_names.append("safety_checker")
-        if "caption" in self.forms:
+        if "caption" in self.forms and "BLIP_Large" not in self.model_names:
             self.model_names.append("BLIP_Large")
-        if "interrogation" in self.forms:
+        if "interrogation" in self.forms and "ViT-L/14" not in self.model_names:
             self.model_names.append("ViT-L/14")
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
