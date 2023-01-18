@@ -260,7 +260,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.debug("Starting generation...")
             generator.generate(**gen_payload)
             logger.debug("Finished generation...")
-        except (RuntimeError,ValueError) as err:
+        except (RuntimeError,ValueError,AttributeError) as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
             stack_payload["model"] = self.current_model
