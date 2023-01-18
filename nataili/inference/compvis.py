@@ -24,6 +24,8 @@ from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 
+from . import prompt_weights
+
 try:
     from nataili.util.voodoo import load_from_plasma
 except ModuleNotFoundError as e:
@@ -353,7 +355,12 @@ class CompVis:
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
 
-                        c = model.get_learned_conditioning(prompts)
+                        c = torch.cat(
+                            [
+                                prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, model)
+                                for prompt in prompts
+                            ]
+                        )
 
                         opt_C = 4
                         opt_f = 8
@@ -454,7 +461,12 @@ class CompVis:
                     if isinstance(prompts, tuple):
                         prompts = list(prompts)
 
-                    c = self.model.get_learned_conditioning(prompts)
+                    c = torch.cat(
+                        [
+                            prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
+                            for prompt in prompts
+                        ]
+                    )
 
                     opt_C = 4
                     opt_f = 8
