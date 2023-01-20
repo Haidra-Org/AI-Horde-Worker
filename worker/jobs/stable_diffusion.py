@@ -77,7 +77,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "height": self.current_payload["height"],
                 "width": self.current_payload["width"],
                 "seed": self.current_payload["seed"],
-                "tiling": False, #self.current_payload["tiling"],
+                "tiling": self.current_payload["tiling"],
                 "n_iter": 1,
                 "batch_size": 1,
                 "save_individual_images": False,
