@@ -74,7 +74,7 @@ forms = {forms}"""
     except Exception as e:
         output = f"Failed to update: {e}"
     data = re.sub(r"api_key.*", 'api_key = "**********"', data)
-    output += data
+    output += "\n" + data
     return output
 
 
@@ -114,6 +114,51 @@ def load_models():
     return model_list
 
 
+def load_workerID(worker_name):
+    workerID = ""
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            workerID = item["id"]
+    return workerID
+
+
+def load_worker_mode(worker_name):
+    worker_mode = False
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            worker_mode = item["maintenance_mode"]
+    return worker_mode
+
+
+def load_worker_stats(worker_name):
+    worker_stats = ""
+    workers_URL = "https://stablehorde.net/api/v2/workers"
+    r = requests.get(workers_URL)
+    worker_json = r.json()
+    for item in worker_json:
+        if item["name"] == worker_name:
+            worker_stats += "Current MPS:  " + str(item["performance"]).split()[0] + " MPS\n"
+            worker_stats += "Total Kudos Earned:  " + str(item["kudos_rewards"]) + "\n"
+            worker_stats += "Total Jobs Completed:  " + str(item["requests_fulfilled"])
+    return worker_stats
+
+
+def update_worker_mode(worker_name, worker_id, current_mode, apikey):
+    header = {"apikey": apikey}
+    payload = {"maintenance": False, "name": worker_name}
+    if current_mode == "False":
+        payload = {"maintenance": True, "name": worker_name}
+    worker_URL = f"https://stablehorde.net/api/v2/workers/{worker_id}"
+    r = requests.put(worker_URL, json=payload, headers=header)
+    return r.json()
+
+
 def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
     stable_diffusion_bridge_data.reload_data()
     interrogation_bridge_data.reload_data()
@@ -149,14 +194,19 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
 
     with gr.Blocks() as WebUI:
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
-        gr.Markdown("## Welcome to the Stable Horde Bridge Configurator")
+        gr.Markdown("# Welcome to the Stable Horde Bridge Configurator")
         with gr.Column():
-            worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name)
-            api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key, type="password")
-            priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
+            with gr.Row():
+                worker_ID = gr.TextArea(label="Worker ID", lines=1, interactive=False)
+                maintenance_mode = gr.TextArea(label="Current Maintenance Mode Status", lines=1, interactive=False)
+                worker_stats = gr.TextArea(label="Worker Statistics", lines=3, interactive=False)
+            with gr.Row():
+                worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name)
+                api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key, type="password")
+                priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
             with gr.Row():
                 max_threads = gr.Slider(
-                    1, 10, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
+                    1, 20, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
                 )
                 queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size)
                 allow_unsafe_ip = gr.Checkbox(
@@ -224,35 +274,100 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                 choices=["caption", "nsfw", "interrogation"],
                 value=interrogation_bridge_data.forms,
             )
-        gr.Button(value="Update Bridge", variant="Primary").click(
-            Update_Bridge,
-            inputs=[
-                horde_url,
-                worker_name,
-                api_key,
-                priority_usernames,
-                max_power,
-                queue_size,
-                max_threads,
-                nsfw,
-                censor_nsfw,
-                blacklist,
-                censorlist,
-                allow_img2img,
-                allow_painting,
-                allow_unsafe_ip,
-                allow_post_processing,
-                require_upfront_kudos,
-                dynamic_models,
-                number_of_dynamic_models,
-                max_models_to_download,
-                models_to_load,
-                models_to_skip,
-                forms,
-            ],
-            outputs=gr.TextArea(label="System Messages"),
+        with gr.Row():
+            system = gr.TextArea(label="System Messages", lines=1, interactive=False)
+        with gr.Row():
+            gr.Button(value="Toggle Maintenance Mode", variant="primary").click(
+                update_worker_mode, inputs=[worker_name, worker_ID, maintenance_mode, api_key], outputs=system
+            )
+            gr.Button(value="Update Bridge", variant="Primary").click(
+                Update_Bridge,
+                inputs=[
+                    horde_url,
+                    worker_name,
+                    api_key,
+                    priority_usernames,
+                    max_power,
+                    queue_size,
+                    max_threads,
+                    nsfw,
+                    censor_nsfw,
+                    blacklist,
+                    censorlist,
+                    allow_img2img,
+                    allow_painting,
+                    allow_unsafe_ip,
+                    allow_post_processing,
+                    require_upfront_kudos,
+                    dynamic_models,
+                    number_of_dynamic_models,
+                    max_models_to_download,
+                    models_to_load,
+                    models_to_skip,
+                    forms,
+                ],
+                outputs=system,
+            )
+        gr.Markdown(
+            """
+## Definitions
+
+### Worker Name
+This is a the name of your worker.  It needs to be unique to the whole horde
+NOTE: You cannot run a interrogation and a stable diffusion worker with the same name
+
+### API Key
+This is your Stable Horde API Key
+
+### Priority Usernames
+These users (in format username#id e.g. residentchiefnz#3966) will be prioritized over all other workers.
+Note: You do not need to add your own name to this list
+
+### Max Power
+This number derives the maximum image size your worker can generate.
+Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)
+
+### Queue Size
+This number determines the number of extra jobs that are collected.
+When the worker requests jobs it will request 1 job per thread plus this number
+
+### Max Threads
+This determines how many jobs will be processed simultaneously.
+Each job requires extra VRAM and will slow the speed of generations.
+This should be set to provide generations at a minumum of 0.6 megapixels per second
+Expected limit per VRAM size: 6Gb = 1 thread, 6-8Gb = 2 threads, 8-12Gb = 3 threads, 12Gb - 24Gb = 4 threads
+
+### Censor NSFW
+If this is true and Enable NSFW is false, the worker will accept NSFW requests, but send back a censored image
+
+### Blacklist
+Any words in here that match a prompt will result in that job not being picked up by this worker
+
+### Censorlist
+Any words in here that match a prompt will always result in a censored image being returned
+
+### Enable Dynamic Models
+In addition to the models in "Models to Load" being loaded, the worker will also load models that in high demand
+
+### Max Models To Download
+This number is the maximum number of models that the worker will download and run.
+Having a high number here will fill up your hard drive.  NOTE: This includes the safety checker and the post-processors
+
+### Models To Skip
+These models will never be downloaded to the worker, even if Enable Dynamic Models is selected
+
+### Models To Load
+This determines which models to always have available from this worker. Each model takes between 2 and 8Gb of VRAM
+"""
         )
-    WebUI.launch(share=True)
+        WebUI.queue()
+        WebUI.load(load_workerID, inputs=worker_name, outputs=worker_ID, every=15)
+        WebUI.load(load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+        WebUI.load(load_worker_stats, inputs=worker_name, outputs=worker_stats, every=15)
+    try:
+        WebUI.launch(share=True)
+    except KeyboardInterrupt:
+        print("CTRL+C Pressed --> Shutdown Server")
 
 
 if __name__ == "__main__":
