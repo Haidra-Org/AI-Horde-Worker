@@ -77,6 +77,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "height": self.current_payload["height"],
                 "width": self.current_payload["width"],
                 "seed": self.current_payload["seed"],
+                "tiling": True, #self.current_payload["tiling"],
                 "n_iter": 1,
                 "batch_size": 1,
                 "save_individual_images": False,
@@ -228,7 +229,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
-                    tiling=True,  # self.current_payload["tiling"]
                 )
         else:
             # These variables do not exist in the outpainting implementation
