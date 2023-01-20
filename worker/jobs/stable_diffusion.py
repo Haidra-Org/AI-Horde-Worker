@@ -228,6 +228,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
+                    tiling=True,  # self.current_payload["tiling"]
                 )
         else:
             # These variables do not exist in the outpainting implementation

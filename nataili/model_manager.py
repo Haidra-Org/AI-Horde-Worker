@@ -16,6 +16,7 @@ from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionS
 from gfpgan import GFPGANer
 from omegaconf import OmegaConf
 from realesrgan import RealESRGANer
+from torch import nn
 from tqdm import tqdm
 from transformers import logging
 
@@ -291,6 +292,9 @@ class ModelManager:
         model = instantiate_from_config(config.model)
         m, u = model.load_state_dict(sd, strict=False)
         model = model.eval()
+        for x in model.modules():
+            if isinstance(x, (nn.Conv2d, nn.ConvTranspose2d)):
+                x._orig_padding_mode = x.padding_mode
         del pl_sd, sd, m, u
         return model
 
