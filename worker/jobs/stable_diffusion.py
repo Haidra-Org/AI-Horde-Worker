@@ -12,6 +12,7 @@ from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
+from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
@@ -121,8 +122,17 @@ class StableDiffusionHordeJob(HordeJobFramework):
         ]:
             # Try to find any other model to do text2img or img2img
             for available_model in self.available_models:
-                if available_model != "stable_diffusion_inpainting":
+                if (
+                    available_model != "stable_diffusion_inpainting"
+                    and available_model not in StableDiffusionBridgeData.POSTPROCESSORS
+                ):
                     self.current_model = available_model
+                    logger.warning(
+                        "Model stable_diffusion_inpainting chosen for txt2img or img2img gen, "
+                        + f"switching to {self.current_model} instead."
+                    )
+                    break
+
             # if the model persists as inpainting for text2img or img2img, we abort.
             if self.current_model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
