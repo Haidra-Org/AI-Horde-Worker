@@ -11,6 +11,8 @@ from worker.bridge_data.framework import BridgeDataTemplate
 class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
+    POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]
+
     def __init__(self):
         super().__init__(args)
         self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
@@ -119,9 +121,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
         self.model_names.append("safety_checker")
         if self.allow_post_processing:
-            self.model_names.append("GFPGAN")
-            self.model_names.append("RealESRGAN_x4plus")
-            self.model_names.append("CodeFormers")
+            self.model_names += self.POSTPROCESSORS
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
