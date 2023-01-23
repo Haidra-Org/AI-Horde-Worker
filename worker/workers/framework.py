@@ -38,7 +38,7 @@ class WorkerFramework:
                         self.process_jobs()
                     except KeyboardInterrupt:
                         self.should_stop = True
-                    break
+                        break
             if self.should_stop:
                 logger.init("Worker", status="Shutting Down")
                 try:
