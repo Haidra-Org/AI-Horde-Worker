@@ -8,6 +8,7 @@ import skimage
 import torch
 from einops import rearrange
 from slugify import slugify
+from torch import nn
 from transformers import CLIPFeatureExtractor
 
 from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
@@ -95,6 +96,7 @@ class CompVis:
         save_grid: bool = True,
         ddim_eta: float = 0.0,
         sigma_override: dict = None,
+        tiling: bool = False,
     ):
         if init_img:
             init_img = resize_image(resize_mode, init_img, width, height)
@@ -305,6 +307,9 @@ class CompVis:
 
         if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
+                for m in model.modules():
+                    if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
+                        m.padding_mode = "circular" if tiling else m._orig_padding_mode
                 if self.model_name.startswith("stable_diffusion_2"):
                     sampler = DPMSolverSampler(model)
                     sampler_name = "dpmsolver"
@@ -411,6 +416,9 @@ class CompVis:
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
 
         else:
+            for m in self.model.modules():
+                if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
+                    m.padding_mode = "circular" if tiling else m._orig_padding_mode
             if sampler_name == "PLMS":
                 sampler = PLMSSampler(self.model)
             elif sampler_name == "DDIM":
