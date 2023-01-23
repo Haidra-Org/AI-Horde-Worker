@@ -12,7 +12,9 @@ from nataili.util import logger
 class JobPopper:
 
     retry_interval = 1
-    BRIDGE_VERSION = 10
+    BRIDGE_VERSION = 11
+    BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
+
 
     def __init__(self, mm, bd):
         self.model_manager = mm
@@ -105,6 +107,7 @@ class StableDiffusionPopper(JobPopper):
             "allow_post_processing": self.bridge_data.allow_post_processing,
             "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": self.BRIDGE_VERSION,
+            "bridge_agent": self.BRIDGE_AGENT,
         }
 
     def horde_pop(self):
@@ -144,6 +147,7 @@ class InterrogationPopper(JobPopper):
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,
             "bridge_version": self.BRIDGE_VERSION,
+            "bridge_agent": self.BRIDGE_AGENT,
         }
 
     def horde_pop(self):
