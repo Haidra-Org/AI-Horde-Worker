@@ -15,7 +15,6 @@ class JobPopper:
     BRIDGE_VERSION = 11
     BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
-
     def __init__(self, mm, bd):
         self.model_manager = mm
         self.bridge_data = copy.deepcopy(bd)
