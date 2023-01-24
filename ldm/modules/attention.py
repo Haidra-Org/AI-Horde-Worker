@@ -28,7 +28,7 @@ logger.init("xformers optimizations", status="Checking")
 if disable_xformers.active:
     xformers = None
     logger.init_err("xformers optimizations", status="Disabled")
-elif (7, 0) <= torch.cuda.get_device_capability(device) <= (9, 0):
+elif (6, 1) <= torch.cuda.get_device_capability(device) <= (9, 0):
     xformers_available = importlib.util.find_spec("xformers") is not None
     try:
         importlib_metadata.version("xformers")
