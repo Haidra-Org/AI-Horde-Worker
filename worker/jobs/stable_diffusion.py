@@ -219,6 +219,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del gen_payload["sampler_name"]
                 if "init_mask" in gen_payload:
                     del gen_payload["init_mask"]
+                if "tiling" in gen_payload:
+                    del gen_payload["tiling"]
                 generator = Depth2Img(
                     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -248,6 +250,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["sampler_name"]
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
+            if "tiling" in gen_payload:
+                del gen_payload["tiling"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
