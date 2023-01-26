@@ -168,7 +168,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # We remove the base64 from the prompt to avoid flooding the output on the error
             if len(self.pop.get("source_image", "")) > 10:
                 self.pop["source_image"] = len(self.pop.get("source_image", ""))
-            if len(self.pop.get("source_mask", "")) > 10:
+            if self.pop["source_mask"] != None and len(self.pop.get("source_mask", "")) > 10:
                 self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
                 "Received an tiling request for SD2Depth model or for inpainting. This shouldn't happen. "
