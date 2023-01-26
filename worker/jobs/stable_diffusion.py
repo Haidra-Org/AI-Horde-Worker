@@ -161,6 +161,21 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             self.status = JobStatus.FAULTED
             return
+        # Reject jobs for tiling if SD2 Depth or Inpainting
+        if self.current_payload["tiling"] and (
+            self.current_model == "Stable Diffusion 2 Depth" or source_processing == "inpainting"
+        ):
+            # We remove the base64 from the prompt to avoid flooding the output on the error
+            if len(self.pop.get("source_image", "")) > 10:
+                self.pop["source_image"] = len(self.pop.get("source_image", ""))
+            if len(self.pop.get("source_mask", "")) > 10:
+                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            logger.error(
+                "Received an tiling request for SD2Depth model or for inpainting. This shouldn't happen. "
+                f"Inform the developer. Current payload {self.pop}"
+            )
+            self.status = JobStatus.FAULTED
+            return
         if self.current_model != "stable_diffusion_inpainting" and req_type == "inpainting":
             # Try to use inpainting model if available
             if "stable_diffusion_inpainting" in self.available_models:
