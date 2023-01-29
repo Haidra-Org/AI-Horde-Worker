@@ -476,7 +476,7 @@ class ModelManager:
     def load_model(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         if model_name not in self.available_models:
             return False
-        if self.models[model_name]["type"] == "ckpt":
+        if self.models[model_name]["type"] in ["ckpt", "pix2pix"]:
             self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id)
             return True
         elif self.models[model_name]["type"] == "realesrgan":
