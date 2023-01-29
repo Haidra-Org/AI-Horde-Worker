@@ -337,6 +337,8 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
                 elif sampler_name == "k_dpmpp_2m":
                     sampler = KDiffusionSampler(model, "dpmpp_2m")
+                elif sampler_name == "k_dpmpp_sde":
+                    sampler = KDiffusionSampler(model, "dpmpp_sde")
                 elif sampler_name == "dpmsolver":
                     sampler = DPMSolverSampler(model)
                 else:
@@ -443,6 +445,8 @@ class CompVis:
                 sampler = KDiffusionSampler(self.model, "dpmpp_2s_ancestral")
             elif sampler_name == "k_dpmpp_2m":
                 sampler = KDiffusionSampler(self.model, "dpmpp_2m")
+            elif sampler_name == "k_dpmpp_sde":
+                sampler = KDiffusionSampler(self.model, "dpmpp_sde")
             elif sampler_name == "dpmsolver":
                 sampler = DPMSolverSampler(self.model)
             else:
