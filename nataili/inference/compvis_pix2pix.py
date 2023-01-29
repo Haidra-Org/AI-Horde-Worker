@@ -212,21 +212,21 @@ class CompVisPix2Pix:
                 all_prompts = batch_size * n_iter * [prompt]
                 all_seeds = [seed + x for x in range(len(all_prompts))]
 
-                model_wrap = K.external.CompVisDenoiser(self.model)
+                model_wrap = K.external.CompVisDenoiser(model)
                 model_wrap_cfg = CFGDenoiser(model_wrap)
-                null_token = self.model.get_learned_conditioning([""])
+                null_token = model.get_learned_conditioning([""])
 
-                with torch.no_grad(), autocast("cuda"), self.model.ema_scope():
+                with torch.no_grad(), autocast("cuda"), model.ema_scope():
                     for n in range(n_iter):
                         print(f"Iteration: {n+1}/{n_iter}")
                         prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
                         cond = {}
-                        cond["c_crossattn"] = [self.model.get_learned_conditioning([prompts])]
+                        cond["c_crossattn"] = [model.get_learned_conditioning([prompts])]
                         input_image = 2 * torch.tensor(np.array(input_image)).float() / 255 - 1
-                        input_image = rearrange(input_image, "h w c -> 1 c h w").to(self.model.device)
-                        cond["c_concat"] = [self.model.encode_first_stage(input_image).mode()]
+                        input_image = rearrange(input_image, "h w c -> 1 c h w").to(model.device)
+                        cond["c_concat"] = [model.encode_first_stage(input_image).mode()]
 
                         uncond = {}
                         uncond["c_crossattn"] = [null_token]
@@ -322,7 +322,7 @@ class CompVisPix2Pix:
                     torch.manual_seed(seed)
                     z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
                     z = sampler.sample(model_wrap_cfg, z, sigmas, extra_args=extra_args)
-                    x = model.decode_first_stage(z)
+                    x = self.model.decode_first_stage(z)
                     x = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
                     x = 255.0 * rearrange(x, "1 c h w -> h w c")
                     x_samples_ddim = Image.fromarray(x.type(torch.uint8).cpu().numpy())
