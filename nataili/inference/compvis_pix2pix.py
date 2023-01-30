@@ -215,8 +215,6 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
-                        sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
@@ -224,7 +222,7 @@ class CompVisPix2Pix:
                             "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
-                        z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
+                        z = torch.randn_like(cond["c_concat"][0])
                         samples_ddim, _ = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
@@ -299,8 +297,6 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
-                        sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
@@ -308,7 +304,7 @@ class CompVisPix2Pix:
                             "image_cfg_scale": denoising_strength * 2.,
                         }
                         torch.manual_seed(seed)
-                        z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
+                        z = torch.randn_like(cond["c_concat"][0])
                         samples_ddim, _ = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
