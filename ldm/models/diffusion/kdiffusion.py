@@ -24,9 +24,6 @@ class KDiffusionSampler:
                 raise ValueError("sigma_override must have a 'max' key")
             if 'rho' not in sigma_override:
                 raise ValueError("sigma_override must have a 'rho' key")
-        if extra_args is None:
-            extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
-    
         sigma_min=self.model_wrap.sigmas[0] if sigma_override is None else sigma_override['min']
         sigma_max=self.model_wrap.sigmas[-1] if sigma_override is None else sigma_override['max']
         sigmas = None
@@ -49,6 +46,10 @@ class KDiffusionSampler:
             model_wrap_cfg = CFGDenoiser(self.model_wrap)
         else:
             model_wrap_cfg = CFGPix2PixDenoiser(self.model_wrap)
+            
+        if extra_args is None:
+            extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
+    
         samples_ddim = None
         if self.schedule == "dpm_fast":
             samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](model_wrap_cfg, x, sigma_min, sigma_max, S, extra_args=extra_args, disable=False, callback=self.generation_callback)
