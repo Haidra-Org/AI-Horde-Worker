@@ -157,7 +157,7 @@ class CompVisPix2Pix:
 
         image_dict = {"seed": seed}
 
-        input_image = ImageOps.fit(input_image, (width, height), method=Image.Resampling.LANCZOS)
+        init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS)
         os.makedirs(self.output_dir, exist_ok=True)
 
         sample_path = os.path.join(self.output_dir, "samples")
@@ -224,9 +224,9 @@ class CompVisPix2Pix:
 
                         cond = {}
                         cond["c_crossattn"] = [model.get_learned_conditioning([prompts])]
-                        input_image = 2 * torch.tensor(np.array(input_image)).float() / 255 - 1
-                        input_image = rearrange(input_image, "h w c -> 1 c h w").to(model.device)
-                        cond["c_concat"] = [model.encode_first_stage(input_image).mode()]
+                        init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                        init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
+                        cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
 
                         uncond = {}
                         uncond["c_crossattn"] = [null_token]
@@ -303,9 +303,9 @@ class CompVisPix2Pix:
 
                     cond = {}
                     cond["c_crossattn"] = [self.model.get_learned_conditioning([prompts])]
-                    input_image = 2 * torch.tensor(np.array(input_image)).float() / 255 - 1
-                    input_image = rearrange(input_image, "h w c -> 1 c h w").to(self.model.device)
-                    cond["c_concat"] = [self.model.encode_first_stage(input_image).mode()]
+                    init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                    init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
+                    cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
 
                     uncond = {}
                     uncond["c_crossattn"] = [null_token]
