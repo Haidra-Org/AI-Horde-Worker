@@ -216,7 +216,7 @@ class CompVisPix2Pix:
                 model_wrap_cfg = CFGDenoiser(model_wrap)
                 null_token = model.get_learned_conditioning([""])
 
-                with torch.no_grad(), autocast("cuda"), model.ema_scope():
+                with torch.no_grad():
                     for n in range(n_iter):
                         print(f"Iteration: {n+1}/{n_iter}")
                         prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
@@ -295,7 +295,7 @@ class CompVisPix2Pix:
             model_wrap_cfg = CFGDenoiser(model_wrap)
             null_token = self.model.get_learned_conditioning([""])
 
-            with torch.no_grad(), autocast("cuda"), self.model.ema_scope():
+            with torch.no_grad():
                 for n in range(n_iter):
                     print(f"Iteration: {n+1}/{n_iter}")
                     prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
