@@ -244,7 +244,7 @@ class CompVisPix2Pix:
                         samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
-                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                            unconditional_guidance_scale=extra_args["cond_scale"],
                             unconditional_conditioning=extra_args["uncond"],
                             x_T=z,
                             karras=karras,
@@ -328,7 +328,7 @@ class CompVisPix2Pix:
                         samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
-                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                            unconditional_guidance_scale=extra_args["cond_scale"],
                             unconditional_conditioning=extra_args["uncond"],
                             x_T=z,
                             karras=karras,
