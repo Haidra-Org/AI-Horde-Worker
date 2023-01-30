@@ -225,7 +225,6 @@ class CompVisPix2Pix:
                         cond = {}
                         cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
                         init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                        init_image = init_image[:2]
                         init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
                         cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
 
@@ -303,7 +302,6 @@ class CompVisPix2Pix:
                     cond = {}
                     cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
                     init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                    init_image = init_image[:2]
                     init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
                     cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
 
