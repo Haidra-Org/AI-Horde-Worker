@@ -300,7 +300,7 @@ class CompVisPix2Pix:
                     print(f"Iteration: {n+1}/{n_iter}")
                     prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                     seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
-
+                    print (f"Prompt = {prompts} - Seed = {seeds}")
                     cond = {}
                     cond["c_crossattn"] = [self.model.get_learned_conditioning([prompts])]
                     init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
