@@ -116,7 +116,7 @@ class CompVisPix2Pix:
             init_img = resize_image(resize_mode, init_img, width, height)
         
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
-        denoising_strength = int(denoising_strength  * 2)
+        t_enc = int(denoising_strength * ddim_steps)
 
         def sample_pix2pix(
             init_data,
@@ -238,7 +238,7 @@ class CompVisPix2Pix:
                             "cond": cond,
                             "uncond": uncond,
                             "text_cfg_scale": cfg_scale,
-                            "image_cfg_scale": denoising_strength,
+                            "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
@@ -315,7 +315,7 @@ class CompVisPix2Pix:
                         "cond": cond,
                         "uncond": uncond,
                         "text_cfg_scale": cfg_scale,
-                        "image_cfg_scale": denoising_strength,
+                        "image_cfg_scale": denoising_strength * 2,
                     }
                     torch.manual_seed(seed)
                     z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
