@@ -306,17 +306,17 @@ class CompVisPix2Pix:
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
                         cond = {}
-                        cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
+                        cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
                         init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                        init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
-                        cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
+                        init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
+                        cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
 
                         uncond = {}
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
                         sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-                        
+
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
@@ -335,7 +335,7 @@ class CompVisPix2Pix:
                             sigma_override=sigma_override,
                             extra_args=extra_args
                         )
-                        x = model.decode_first_stage(samples_ddim)
+                        x = self.model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         for i, x_sample in enumerate(x_samples_ddim):
