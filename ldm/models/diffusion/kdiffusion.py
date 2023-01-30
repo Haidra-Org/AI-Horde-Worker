@@ -1,3 +1,4 @@
+import einops
 import k_diffusion as K
 import torch
 import torch.nn as nn
