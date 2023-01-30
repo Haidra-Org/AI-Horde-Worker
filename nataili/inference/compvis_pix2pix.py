@@ -318,6 +318,7 @@ class CompVisPix2Pix:
                         "image_cfg_scale": denoising_strength * 2,
                     }
                     torch.manual_seed(seed)
+                    print (f"Current img_cfg = {extra_args['image_cfg_scale']}")
                     z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
                     z = K.sampling.sample_euler_ancestral(model_wrap_cfg, z, sigmas, extra_args=extra_args)
                     x = self.model.decode_first_stage(z)
