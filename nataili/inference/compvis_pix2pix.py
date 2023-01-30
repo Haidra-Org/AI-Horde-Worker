@@ -302,7 +302,7 @@ class CompVisPix2Pix:
                     seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
                     print (f"Prompt = {prompts} - Seed = {seeds}")
                     cond = {}
-                    cond["c_crossattn"] = [self.model.get_learned_conditioning([prompts])]
+                    cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
                     init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
                     init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
                     cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
