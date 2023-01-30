@@ -231,7 +231,7 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
-                        sigmas = model_wrap.get_sigmas(ddim_steps)
+                        sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
 
                         extra_args = {
                             "cond": cond,
@@ -246,7 +246,7 @@ class CompVisPix2Pix:
                             conditioning=extra_args["cond"],
                             unconditional_guidance_scale=extra_args["text_cfg_scale"],
                             unconditional_conditioning=extra_args["uncond"],
-                            x_T=x,
+                            x_T=z,
                             karras=karras,
                             sigma_override=sigma_override,
                             extra_args=extra_args
@@ -297,7 +297,7 @@ class CompVisPix2Pix:
                 all_prompts = batch_size * n_iter * [prompt]
                 all_seeds = [seed + x for x in range(len(all_prompts))]
 
-                null_token = model.get_learned_conditioning([""])
+                null_token = self.model.get_learned_conditioning([""])
 
                 with torch.no_grad():
                     for n in range(n_iter):
@@ -315,8 +315,8 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
-                        sigmas = model_wrap.get_sigmas(ddim_steps)
-
+                        sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
+                        
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
@@ -330,7 +330,7 @@ class CompVisPix2Pix:
                             conditioning=extra_args["cond"],
                             unconditional_guidance_scale=extra_args["text_cfg_scale"],
                             unconditional_conditioning=extra_args["uncond"],
-                            x_T=x,
+                            x_T=z,
                             karras=karras,
                             sigma_override=sigma_override,
                             extra_args=extra_args
