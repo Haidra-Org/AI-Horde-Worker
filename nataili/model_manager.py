@@ -523,6 +523,7 @@ class ModelManager:
 
     def validate_model(self, model_name, skip_checksum=False):
         files = self.get_model_files(model_name)
+        print (f"files = {files}")
         for file_details in files:
             if not self.check_file_available(file_details["path"]):
                 return False
@@ -661,6 +662,7 @@ class ModelManager:
                 if not self.check_file_available(file_path) or model_name in self.tainted_models:
                     logger.debug(f"Downloading {download_url} to {file_path}")
                     self.download_file(download_url, file_path)
+        print("Debug - starting model validation")
         if not self.validate_model(model_name, skip_checksum=True):
             return False
         if model_name in self.tainted_models:
