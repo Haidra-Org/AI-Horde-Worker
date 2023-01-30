@@ -241,7 +241,7 @@ class CompVisPix2Pix:
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                        samples_ddim = sample_pix2pix(
+                        samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
                             unconditional_guidance_scale=extra_args["text_cfg_scale"],
@@ -325,7 +325,7 @@ class CompVisPix2Pix:
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                        samples_ddim = sample_pix2pix(
+                        samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
                             unconditional_guidance_scale=extra_args["text_cfg_scale"],
