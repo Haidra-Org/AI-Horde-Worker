@@ -323,9 +323,7 @@ class CompVisPix2Pix:
                     z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
                     z = K.sampling.sample_euler_ancestral(model_wrap_cfg, z, sigmas, extra_args=extra_args)
                     x = self.model.decode_first_stage(z)
-                    x = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
-                    x = 255.0 * rearrange(x, "1 c h w -> h w c")
-                    x_samples_ddim = Image.fromarray(x.type(torch.uint8).cpu().numpy())
+                    x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
