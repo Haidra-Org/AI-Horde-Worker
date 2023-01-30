@@ -45,7 +45,7 @@ class KDiffusionSampler:
         else:
             sigmas = self.model_wrap.get_sigmas(S)
         x = x_T * sigmas[0]
-        if extra_args is not None:
+        if extra_args is None:
             model_wrap_cfg = CFGDenoiser(self.model_wrap)
         else:
             model_wrap_cfg = CFGPix2PixDenoiser(self.model_wrap)
