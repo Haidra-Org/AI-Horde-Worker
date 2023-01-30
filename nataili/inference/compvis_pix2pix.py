@@ -36,22 +36,6 @@ except ModuleNotFoundError as e:
     if not disable_voodoo.active:
         raise e
 
-class CFGDenoiser(nn.Module):
-    def __init__(self, model):
-        super().__init__()
-        self.inner_model = model
-
-    def forward(self, z, sigma, cond, uncond, text_cfg_scale, image_cfg_scale):
-        cfg_z = einops.repeat(z, "1 ... -> n ...", n=3)
-        cfg_sigma = einops.repeat(sigma, "1 ... -> n ...", n=3)
-        cfg_cond = {
-            "c_crossattn": [torch.cat([cond["c_crossattn"][0], uncond["c_crossattn"][0], uncond["c_crossattn"][0]])],
-            "c_concat": [torch.cat([cond["c_concat"][0], cond["c_concat"][0], uncond["c_concat"][0]])],
-        }
-        out_cond, out_img_cond, out_uncond = self.inner_model(cfg_z, cfg_sigma, cond=cfg_cond).chunk(3)
-        return out_uncond + text_cfg_scale * (out_cond - out_img_cond) + image_cfg_scale * (out_img_cond - out_uncond)
-
-
 class CompVisPix2Pix:
     def __init__(
         self,
@@ -236,7 +220,7 @@ class CompVisPix2Pix:
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
-                            "cond_scale": cfg_scale,
+                            "text_cfg_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
@@ -244,7 +228,7 @@ class CompVisPix2Pix:
                         samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
-                            unconditional_guidance_scale=extra_args["cond_scale"],
+                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
                             unconditional_conditioning=extra_args["uncond"],
                             x_T=z,
                             karras=karras,
@@ -320,7 +304,7 @@ class CompVisPix2Pix:
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
-                            "cond_scale": cfg_scale,
+                            "text_cfg_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
@@ -328,7 +312,7 @@ class CompVisPix2Pix:
                         samples_ddim = sampler.sample(
                             S=ddim_steps,
                             conditioning=extra_args["cond"],
-                            unconditional_guidance_scale=extra_args["cond_scale"],
+                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
                             unconditional_conditioning=extra_args["uncond"],
                             x_T=z,
                             karras=karras,
