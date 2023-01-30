@@ -236,7 +236,7 @@ class CompVisPix2Pix:
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
-                            "text_cfg_scale": cfg_scale,
+                            "cond_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
@@ -320,7 +320,7 @@ class CompVisPix2Pix:
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
-                            "text_cfg_scale": cfg_scale,
+                            "cond_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                         }
                         torch.manual_seed(seed)
