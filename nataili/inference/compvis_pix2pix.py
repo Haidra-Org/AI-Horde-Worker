@@ -156,7 +156,7 @@ class CompVisPix2Pix:
         seed = seed_to_int(seed)
 
         image_dict = {"seed": seed}
-
+        init_image = init_img
         init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS)
         os.makedirs(self.output_dir, exist_ok=True)
 
