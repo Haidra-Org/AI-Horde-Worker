@@ -117,40 +117,41 @@ class CompVisPix2Pix:
         
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
         t_enc = int(denoising_strength * ddim_steps)
-
+        
         def sample_pix2pix(
             init_data,
+            model_wrap_cfg,
             x,
-            conditioning,
-            unconditional_conditioning,
-            sampler_name,
-            batch_size=1,
-            shape=None,
-            karras=False,
-            sigma_override: dict = None,
+            sigmas,
+            extra_args={}
         ):
-            if sampler_name == "dpmsolver":
-                samples_ddim, _ = sampler.sample(
-                    S=ddim_steps,
-                    conditioning=conditioning,
-                    unconditional_guidance_scale=cfg_scale,
-                    unconditional_conditioning=unconditional_conditioning,
-                    x_T=x,
-                    karras=karras,
-                    batch_size=batch_size,
-                    shape=shape,
-                    sigma_override=sigma_override,
-                )
-            else:
-                samples_ddim, _ = sampler.sample(
-                    S=ddim_steps,
-                    conditioning=conditioning,
-                    unconditional_guidance_scale=cfg_scale,
-                    unconditional_conditioning=unconditional_conditioning,
-                    x_T=x,
-                    karras=karras,
-                    sigma_override=sigma_override,
-                )
+            nonlocal sampler
+            t_enc_steps = t_enc
+            x0, z_mask = init_data
+            obliterate = False
+            if ddim_steps == t_enc_steps:
+                t_enc_steps = t_enc_steps - 1
+                obliterate = True
+
+            sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
+            noise = x * sigmas[ddim_steps - t_enc_steps - 1]
+
+            xi = x0 + noise
+
+            # Obliterate masked image
+            if z_mask is not None and obliterate:
+                xi = (z_mask * noise) + ((1 - z_mask) * xi)
+
+            noise = x * sigmas[ddim_steps - t_enc_steps - 1]
+
+            sigma_sched = sigmas[ddim_steps - t_enc_steps - 1 :]
+            samples_ddim = K.sampling.__dict__[f"sample_{sampler.get_sampler_name()}"](
+                model_wrap_cfg,
+                xi,
+                sigma_sched,
+                extra_args,
+                disable=False,
+            )
             return samples_ddim
 
         seed = seed_to_int(seed)
@@ -212,8 +213,6 @@ class CompVisPix2Pix:
                 all_prompts = batch_size * n_iter * [prompt]
                 all_seeds = [seed + x for x in range(len(all_prompts))]
 
-                model_wrap = K.external.CompVisDenoiser(model)
-                model_wrap_cfg = CFGDenoiser(model_wrap)
                 null_token = model.get_learned_conditioning([""])
 
                 with torch.no_grad():
@@ -242,8 +241,17 @@ class CompVisPix2Pix:
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                        z = sampler.samplePix2(model_wrap_cfg, z, sigmas, extra_args=extra_args)
-                        x = model.decode_first_stage(z)
+                        samples_ddim = sample_pix2pix(
+                            S=ddim_steps,
+                            conditioning=extra_args["cond"],
+                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                            unconditional_conditioning=extra_args["uncond"],
+                            x_T=x,
+                            karras=karras,
+                            sigma_override=sigma_override,
+                            extra_args=extra_args
+                        )
+                        x = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         else:
@@ -286,43 +294,49 @@ class CompVisPix2Pix:
                 if prompt_tokens:
                     process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
 
-            all_prompts = batch_size * n_iter * [prompt]
-            all_seeds = [seed + x for x in range(len(all_prompts))]
+                all_prompts = batch_size * n_iter * [prompt]
+                all_seeds = [seed + x for x in range(len(all_prompts))]
 
-            model_wrap = K.external.CompVisDenoiser(self.model)
-            model_wrap_cfg = CFGDenoiser(model_wrap)
-            null_token = self.model.get_learned_conditioning([""])
+                null_token = model.get_learned_conditioning([""])
 
-            with torch.no_grad():
-                for n in range(n_iter):
-                    print(f"Iteration: {n+1}/{n_iter}")
-                    prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
-                    seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
-                    
-                    cond = {}
-                    cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
-                    init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                    init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
-                    cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
+                with torch.no_grad():
+                    for n in range(n_iter):
+                        print(f"Iteration: {n+1}/{n_iter}")
+                        prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                        seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
-                    uncond = {}
-                    uncond["c_crossattn"] = [null_token]
-                    uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
+                        cond = {}
+                        cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
+                        init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                        init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
+                        cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
 
-                    sigmas = model_wrap.get_sigmas(ddim_steps)
+                        uncond = {}
+                        uncond["c_crossattn"] = [null_token]
+                        uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
-                    extra_args = {
-                        "cond": cond,
-                        "uncond": uncond,
-                        "text_cfg_scale": cfg_scale,
-                        "image_cfg_scale": denoising_strength * 2,
-                    }
-                    torch.manual_seed(seed)
-                    print (f"Current img_cfg = {extra_args['image_cfg_scale']}")
-                    z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                    z = K.sampling.sample_euler_ancestral(model_wrap_cfg, z, sigmas, extra_args=extra_args)
-                    x = self.model.decode_first_stage(z)
-                    x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+                        sigmas = model_wrap.get_sigmas(ddim_steps)
+
+                        extra_args = {
+                            "cond": cond,
+                            "uncond": uncond,
+                            "text_cfg_scale": cfg_scale,
+                            "image_cfg_scale": denoising_strength * 2,
+                        }
+                        torch.manual_seed(seed)
+                        z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
+                        samples_ddim = sample_pix2pix(
+                            S=ddim_steps,
+                            conditioning=extra_args["cond"],
+                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                            unconditional_conditioning=extra_args["uncond"],
+                            x_T=x,
+                            karras=karras,
+                            sigma_override=sigma_override,
+                            extra_args=extra_args
+                        )
+                        x = model.decode_first_stage(samples_ddim)
+                        x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])

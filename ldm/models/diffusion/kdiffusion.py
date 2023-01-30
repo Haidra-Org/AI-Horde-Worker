@@ -14,7 +14,7 @@ class KDiffusionSampler:
     def get_sampler_name(self):
         return self.schedule
     def sample(self, S, conditioning, unconditional_guidance_scale, unconditional_conditioning, x_T,
-              karras=False, sigma_override: dict = None
+              karras=False, sigma_override: dict = None, extra_args = None
         ):
         if sigma_override:
             if 'min' not in sigma_override:
@@ -23,7 +23,9 @@ class KDiffusionSampler:
                 raise ValueError("sigma_override must have a 'max' key")
             if 'rho' not in sigma_override:
                 raise ValueError("sigma_override must have a 'rho' key")
-        extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
+        if extra_args is None:
+            extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
+    
         sigma_min=self.model_wrap.sigmas[0] if sigma_override is None else sigma_override['min']
         sigma_max=self.model_wrap.sigmas[-1] if sigma_override is None else sigma_override['max']
         sigmas = None
