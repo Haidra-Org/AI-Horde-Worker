@@ -223,7 +223,7 @@ class CompVisPix2Pix:
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
                         cond = {}
-                        cond["c_crossattn"] = [model.get_learned_conditioning([prompts])]
+                        cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
                         init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
                         init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
                         cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
@@ -242,7 +242,7 @@ class CompVisPix2Pix:
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                        z = sampler.sample(model_wrap_cfg, z, sigmas, extra_args=extra_args)
+                        z = sampler.samplePix2(model_wrap_cfg, z, sigmas, extra_args=extra_args)
                         x = model.decode_first_stage(z)
                         x = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
                         x = 255.0 * rearrange(x, "1 c h w -> h w c")
@@ -321,7 +321,7 @@ class CompVisPix2Pix:
                     }
                     torch.manual_seed(seed)
                     z = torch.randn_like(cond["c_concat"][0]) * sigmas[0]
-                    z = sampler.sample(model_wrap_cfg, z, sigmas, extra_args=extra_args)
+                    z = K.sampling.sample_euler_ancestral(model_wrap_cfg, z, sigmas, extra_args=extra_args)
                     x = self.model.decode_first_stage(z)
                     x = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
                     x = 255.0 * rearrange(x, "1 c h w -> h w c")
