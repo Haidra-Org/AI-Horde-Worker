@@ -1,32 +1,27 @@
 import os
 import re
 
-import einops
-import k_diffusion as K
 import numpy as np
 import PIL
-import skimage
 import torch
 from einops import rearrange
+from PIL import Image, ImageOps
 from slugify import slugify
 from torch import nn
 from transformers import CLIPFeatureExtractor
 
 from ldm2.models.diffusion.dpm_solver import DPMSolverSampler
 from ldm.models.diffusion.ddim import DDIMSampler
-from ldm.models.diffusion.kdiffusion import CFGMaskedDenoiser, KDiffusionSampler
+from ldm.models.diffusion.kdiffusion import KDiffusionSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
-from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
+from nataili.util.img2img import resize_image
 from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from PIL import Image, ImageOps
-from torch import autocast
 
 try:
     from nataili.util.voodoo import load_from_plasma
@@ -35,6 +30,7 @@ except ModuleNotFoundError as e:
 
     if not disable_voodoo.active:
         raise e
+
 
 class CompVisPix2Pix:
     def __init__(
@@ -98,51 +94,14 @@ class CompVisPix2Pix:
     ):
         if init_img:
             init_img = resize_image(resize_mode, init_img, width, height)
-        
+
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
-        t_enc = int(denoising_strength * ddim_steps)
-        
-        def sample_pix2pix(
-            init_data,
-            model_wrap_cfg,
-            x,
-            sigmas,
-            extra_args={}
-        ):
-            nonlocal sampler
-            t_enc_steps = t_enc
-            x0, z_mask = init_data
-            obliterate = False
-            if ddim_steps == t_enc_steps:
-                t_enc_steps = t_enc_steps - 1
-                obliterate = True
-
-            sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-            noise = x * sigmas[ddim_steps - t_enc_steps - 1]
-
-            xi = x0 + noise
-
-            # Obliterate masked image
-            if z_mask is not None and obliterate:
-                xi = (z_mask * noise) + ((1 - z_mask) * xi)
-
-            noise = x * sigmas[ddim_steps - t_enc_steps - 1]
-
-            sigma_sched = sigmas[ddim_steps - t_enc_steps - 1 :]
-            samples_ddim = K.sampling.__dict__[f"sample_{sampler.get_sampler_name()}"](
-                model_wrap_cfg,
-                xi,
-                sigma_sched,
-                extra_args,
-                disable=False,
-            )
-            return samples_ddim
 
         seed = seed_to_int(seed)
 
         image_dict = {"seed": seed}
         init_image = init_img
-        init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert('RGB')
+        init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert("RGB")
         os.makedirs(self.output_dir, exist_ok=True)
 
         sample_path = os.path.join(self.output_dir, "samples")
@@ -231,7 +190,7 @@ class CompVisPix2Pix:
                             x_T=z,
                             karras=karras,
                             sigma_override=sigma_override,
-                            extra_args=extra_args
+                            extra_args=extra_args,
                         )
                         x = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
@@ -301,7 +260,7 @@ class CompVisPix2Pix:
                             "cond": cond,
                             "uncond": uncond,
                             "text_cfg_scale": cfg_scale,
-                            "image_cfg_scale": denoising_strength * 2.,
+                            "image_cfg_scale": denoising_strength * 2.0,
                         }
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0])
@@ -313,7 +272,7 @@ class CompVisPix2Pix:
                             x_T=z,
                             karras=karras,
                             sigma_override=sigma_override,
-                            extra_args=extra_args
+                            extra_args=extra_args,
                         )
                         x = self.model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
