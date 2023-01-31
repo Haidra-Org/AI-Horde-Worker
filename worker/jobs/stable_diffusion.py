@@ -232,8 +232,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                 )
             elif self.current_model == "pix2pix":
-                if "init_mask" in gen_payload:
-                    del gen_payload["init_mask"]
                 generator = CompVisPix2Pix(
                     model=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],

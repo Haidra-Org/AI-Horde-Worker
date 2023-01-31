@@ -97,7 +97,7 @@ class CFGPix2PixDenoiser(nn.Module):
         super().__init__()
         self.inner_model = model
 
-    def forward(self, z, sigma, cond, uncond, text_cfg_scale, image_cfg_scale):
+    def forward(self, z, sigma, cond, uncond, text_cfg_scale, image_cfg_scale, mask, x0):
         cfg_z = einops.repeat(z, "1 ... -> n ...", n=3)
         cfg_sigma = einops.repeat(sigma, "1 ... -> n ...", n=3)
         cfg_cond = {
@@ -105,4 +105,12 @@ class CFGPix2PixDenoiser(nn.Module):
             "c_concat": [torch.cat([cond["c_concat"][0], cond["c_concat"][0], uncond["c_concat"][0]])],
         }
         out_cond, out_img_cond, out_uncond = self.inner_model(cfg_z, cfg_sigma, cond=cfg_cond).chunk(3)
-        return out_uncond + text_cfg_scale * (out_cond - out_img_cond) + image_cfg_scale * (out_img_cond - out_uncond)
+        denoised = out_uncond + text_cfg_scale * (out_cond - out_img_cond) + image_cfg_scale * (out_img_cond - out_uncond)
+
+        if mask is not None:
+            assert x0 is not None
+            img_orig = x0
+            mask_inv = 1. - mask
+            denoised = (img_orig * mask_inv) + (mask * denoised)
+
+        return denoised

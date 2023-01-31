@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 import PIL
+import skimage
 import torch
 from einops import rearrange
 from PIL import Image, ImageOps
@@ -17,7 +18,7 @@ from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.img2img import resize_image
+from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
 from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
@@ -74,6 +75,7 @@ class CompVisPix2Pix:
         self,
         prompt: str,
         init_img=None,
+        init_mask=None,
         resize_mode="resize",
         noise_mode="seed",
         find_noise_steps=50,
@@ -96,6 +98,73 @@ class CompVisPix2Pix:
             init_img = resize_image(resize_mode, init_img, width, height)
 
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
+        if (
+            init_mask is not None
+            and (noise_mode == "matched" or noise_mode == "find_and_matched")
+            and init_img is not None
+        ):
+            noise_q = 0.99
+            color_variation = 0.0
+            mask_blend_factor = 1.0
+
+            np_init = (np.asarray(init_img.convert("RGB")) / 255.0).astype(
+                np.float64
+            )  # annoyingly complex mask fixing
+            np_mask_rgb = 1.0 - (np.asarray(PIL.ImageOps.invert(init_mask).convert("RGB")) / 255.0).astype(np.float64)
+            np_mask_rgb -= np.min(np_mask_rgb)
+            np_mask_rgb /= np.max(np_mask_rgb)
+            np_mask_rgb = 1.0 - np_mask_rgb
+            np_mask_rgb_hardened = 1.0 - (np_mask_rgb < 0.99).astype(np.float64)
+            blurred = skimage.filters.gaussian(np_mask_rgb_hardened[:], sigma=16.0, channel_axis=2, truncate=32.0)
+            blurred2 = skimage.filters.gaussian(np_mask_rgb_hardened[:], sigma=16.0, channel_axis=2, truncate=32.0)
+            # np_mask_rgb_dilated = np_mask_rgb + blurred  # fixup mask todo: derive magic constants
+            # np_mask_rgb = np_mask_rgb + blurred
+            np_mask_rgb_dilated = np.clip((np_mask_rgb + blurred2) * 0.7071, 0.0, 1.0)
+            np_mask_rgb = np.clip((np_mask_rgb + blurred) * 0.7071, 0.0, 1.0)
+
+            noise_rgb = get_matched_noise(np_init, np_mask_rgb, noise_q, color_variation)
+            blend_mask_rgb = np.clip(np_mask_rgb_dilated, 0.0, 1.0) ** (mask_blend_factor)
+            noised = noise_rgb[:]
+            blend_mask_rgb **= 2.0
+            noised = np_init[:] * (1.0 - blend_mask_rgb) + noised * blend_mask_rgb
+
+            np_mask_grey = np.sum(np_mask_rgb, axis=2) / 3.0
+            ref_mask = np_mask_grey < 1e-3
+
+            all_mask = np.ones((height, width), dtype=bool)
+            noised[all_mask, :] = skimage.exposure.match_histograms(
+                noised[all_mask, :] ** 1.0, noised[ref_mask, :], channel_axis=1
+            )
+
+            init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
+
+        def init(model, init_img):
+            image = init_img.convert("RGB")
+            image = np.array(image).astype(np.float32) / 255.0
+            image = image[None].transpose(0, 3, 1, 2)
+            image = torch.from_numpy(image)
+
+            mask_channel = None
+            if init_mask:
+                alpha = resize_image(resize_mode, init_mask, width // 8, height // 8)
+                mask_channel = alpha.split()[-1]
+
+            mask = None
+            if mask_channel is not None:
+                mask = np.array(mask_channel).astype(np.float32) / 255.0
+                mask = 1 - mask
+                mask = np.tile(mask, (4, 1, 1))
+                mask = mask[None].transpose(0, 1, 2, 3)
+                mask = torch.from_numpy(mask).to(model.device)
+
+            init_image = 2.0 * image - 1.0
+            init_image = init_image.to(model.device)
+            init_latent = model.get_first_stage_encoding(model.encode_first_stage(init_image))  # move to latent space
+
+            return (
+                init_latent,
+                mask,
+            )
 
         seed = seed_to_int(seed)
 
@@ -174,12 +243,18 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
+                        init_data = init(model, init_img) if init_img else None
+                        x0, z_mask = init_data
+
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
                             "text_cfg_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
+                            "mask": z_mask,
+                            "x0": x0
                         }
+
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0])
                         samples_ddim, _ = sampler.sample(
