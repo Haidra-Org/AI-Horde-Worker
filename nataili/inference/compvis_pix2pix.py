@@ -138,6 +138,7 @@ class CompVisPix2Pix:
 
             init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
 
+        # Loads mask
         def init(model, init_img):
             image = init_img.convert("RGB")
             image = np.array(image).astype(np.float32) / 255.0
