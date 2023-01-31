@@ -331,12 +331,18 @@ class CompVisPix2Pix:
                         uncond["c_crossattn"] = [null_token]
                         uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
 
+                        init_data = init(self.model, init_img) if init_img else None
+                        x0, z_mask = init_data
+
                         extra_args = {
                             "cond": cond,
                             "uncond": uncond,
                             "text_cfg_scale": cfg_scale,
-                            "image_cfg_scale": denoising_strength * 2.0,
+                            "image_cfg_scale": denoising_strength * 2,
+                            "mask": z_mask,
+                            "x0": x0
                         }
+
                         torch.manual_seed(seed)
                         z = torch.randn_like(cond["c_concat"][0])
                         samples_ddim, _ = sampler.sample(
