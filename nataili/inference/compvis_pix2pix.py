@@ -18,7 +18,7 @@ from ldm.models.diffusion.plms import PLMSSampler
 from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
+from nataili.util.img2img import get_matched_noise, resize_image
 from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
@@ -252,7 +252,7 @@ class CompVisPix2Pix:
                             "text_cfg_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                             "mask": z_mask,
-                            "x0": x0
+                            "x0": x0,
                         }
 
                         torch.manual_seed(seed)
@@ -340,7 +340,7 @@ class CompVisPix2Pix:
                             "text_cfg_scale": cfg_scale,
                             "image_cfg_scale": denoising_strength * 2,
                             "mask": z_mask,
-                            "x0": x0
+                            "x0": x0,
                         }
 
                         torch.manual_seed(seed)
