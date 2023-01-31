@@ -42,6 +42,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         logger.debug("Starting job in threadpool for model: {}", self.current_model)
         super().start_job()
         if self.status == JobStatus.FAULTED:
+            self.start_submit_thread()
             return
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
         # Here starts the Stable Diffusion Specific Logic
@@ -103,6 +104,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
+            self.start_submit_thread()
             return
         # logger.debug(gen_payload)
         req_type = "txt2img"
@@ -146,6 +148,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     f"Inform the developer. Current payload {self.pop}"
                 )
                 self.status = JobStatus.FAULTED
+                self.start_submit_thread()
                 return
                 # TODO: Send faulted
         # Reject jobs for SD2Depth if not img2img
@@ -160,6 +163,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"Inform the developer. Current payload {self.pop}"
             )
             self.status = JobStatus.FAULTED
+            self.start_submit_thread()
             return
         if self.current_model != "stable_diffusion_inpainting" and req_type == "inpainting":
             # Try to use inpainting model if available
@@ -192,6 +196,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     img_mask = img_mask.resize(img_source.size)
         except KeyError:
             self.status = JobStatus.FAULTED
+            self.start_submit_thread()
             return
         # If the received image is unreadable, we continue as text2img
         except UnidentifiedImageError:
@@ -259,8 +264,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 except ValueError:
                     logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
                     self.status = JobStatus.FAULTED
+                    self.start_submit_thread()
                     return
-                    # TODO: Send faulted
             gen_payload["inpaint_img"] = img_source
             if img_mask:
                 gen_payload["inpaint_mask"] = img_mask
@@ -287,6 +292,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
             self.status = JobStatus.FAULTED
+            self.start_submit_thread()
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
@@ -336,8 +342,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "id": self.current_id,
             "generation": generation,
             "seed": self.seed,
-            "censored": self.censored,
         }
-
+        if self.censored:
+            self.submit_dict["state"] = "censored"
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
