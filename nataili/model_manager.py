@@ -130,9 +130,11 @@ class ModelManager:
                 logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
                 logger.info(f"Recommended GPU: {self.recommended_gpu}")
             sm = self.recommended_gpu[0]["sm"]
-            if self.fist_init: logger.info(f"Using sm_{sm} for AITemplate")
+            if self.fist_init:
+                logger.info(f"Using sm_{sm} for AITemplate")
             sm = self.recommended_gpu[0]["sm"]
-            if self.fist_init: logger.info(f"Using sm_{sm} for AITemplate")
+            if self.fist_init:
+                logger.info(f"Using sm_{sm} for AITemplate")
             aitemplate_available = []
             for aitemplate in self.aitemplates:
                 logger.info(f"{aitemplate}")

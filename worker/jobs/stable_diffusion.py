@@ -358,5 +358,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         }
         if self.censored:
             self.submit_dict["state"] = "censored"
+
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
