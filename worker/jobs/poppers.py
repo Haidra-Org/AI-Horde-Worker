@@ -13,6 +13,7 @@ from worker.consts import BRIDGE_VERSION
 class JobPopper:
 
     retry_interval = 1
+    BRIDGE_VERSION = 11
     BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
     def __init__(self, mm, bd):

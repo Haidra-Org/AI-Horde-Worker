@@ -82,9 +82,18 @@ class HordeJobFramework:
         """Submits the job to the server to earn our kudos.
         This method MUST be extended with the specific logic for this worker
         At the end it MUST set the job state to DONE"""
+        if self.status == JobStatus.FAULTED:
+            self.submit_dict = {
+                "id": self.current_id,
+                "state": "faulted",
+                "generation": "faulted",
+                "seed": -1,
+            }
+        else:
+            self.status = JobStatus.FINALIZING
+            self.prepare_submit_payload()
         self.status = JobStatus.FINALIZING
         # Submit back to horde
-        self.prepare_submit_payload()
         while self.is_finalizing():
             if self.loop_retry > 10:
                 logger.error(f"Exceeded retry count {self.loop_retry} for job id {self.current_id}. Aborting job!")
