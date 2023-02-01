@@ -1,3 +1,4 @@
+import einops
 import k_diffusion as K
 import torch
 import torch.nn as nn
@@ -14,7 +15,7 @@ class KDiffusionSampler:
     def get_sampler_name(self):
         return self.schedule
     def sample(self, S, conditioning, unconditional_guidance_scale, unconditional_conditioning, x_T,
-              karras=False, sigma_override: dict = None
+              karras=False, sigma_override: dict = None, extra_args = None
         ):
         if sigma_override:
             if 'min' not in sigma_override:
@@ -23,7 +24,6 @@ class KDiffusionSampler:
                 raise ValueError("sigma_override must have a 'max' key")
             if 'rho' not in sigma_override:
                 raise ValueError("sigma_override must have a 'rho' key")
-        extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
         sigma_min=self.model_wrap.sigmas[0] if sigma_override is None else sigma_override['min']
         sigma_max=self.model_wrap.sigmas[-1] if sigma_override is None else sigma_override['max']
         sigmas = None
@@ -42,7 +42,14 @@ class KDiffusionSampler:
         else:
             sigmas = self.model_wrap.get_sigmas(S)
         x = x_T * sigmas[0]
-        model_wrap_cfg = CFGDenoiser(self.model_wrap)
+        if extra_args is None:
+            model_wrap_cfg = CFGDenoiser(self.model_wrap)
+        else:
+            model_wrap_cfg = CFGPix2PixDenoiser(self.model_wrap)
+            
+        if extra_args is None:
+            extra_args={'cond': conditioning, 'uncond': unconditional_conditioning,'cond_scale': unconditional_guidance_scale}
+    
         samples_ddim = None
         if self.schedule == "dpm_fast":
             samples_ddim = K.sampling.__dict__[f'sample_{self.schedule}'](model_wrap_cfg, x, sigma_min, sigma_max, S, extra_args=extra_args, disable=False, callback=self.generation_callback)
@@ -84,3 +91,26 @@ class CFGDenoiser(nn.Module):
         cond_in = torch.cat([uncond, cond])
         uncond, cond = self.inner_model(x_in, sigma_in, cond=cond_in).chunk(2)
         return uncond + (cond - uncond) * cond_scale
+    
+class CFGPix2PixDenoiser(nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.inner_model = model
+
+    def forward(self, z, sigma, cond, uncond, text_cfg_scale, image_cfg_scale, mask, x0):
+        cfg_z = einops.repeat(z, "1 ... -> n ...", n=3)
+        cfg_sigma = einops.repeat(sigma, "1 ... -> n ...", n=3)
+        cfg_cond = {
+            "c_crossattn": [torch.cat([cond["c_crossattn"][0], uncond["c_crossattn"][0], uncond["c_crossattn"][0]])],
+            "c_concat": [torch.cat([cond["c_concat"][0], cond["c_concat"][0], uncond["c_concat"][0]])],
+        }
+        out_cond, out_img_cond, out_uncond = self.inner_model(cfg_z, cfg_sigma, cond=cfg_cond).chunk(3)
+        denoised = out_uncond + text_cfg_scale * (out_cond - out_img_cond) + image_cfg_scale * (out_img_cond - out_uncond)
+
+        if mask is not None:
+            assert x0 is not None
+            img_orig = x0
+            mask_inv = 1. - mask
+            denoised = (img_orig * mask_inv) + (mask * denoised)
+
+        return denoised

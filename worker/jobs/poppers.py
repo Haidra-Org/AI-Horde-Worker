@@ -7,12 +7,12 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from nataili.util import logger
+from worker.consts import BRIDGE_VERSION
 
 
 class JobPopper:
 
     retry_interval = 1
-    BRIDGE_VERSION = 12
     BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
     def __init__(self, mm, bd):
@@ -32,6 +32,7 @@ class JobPopper:
                 headers=self.headers,
                 timeout=40,
             )
+            # logger.debug(self.pop_payload)
             logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
@@ -105,7 +106,7 @@ class StableDiffusionPopper(JobPopper):
             "threads": self.bridge_data.max_threads,
             "allow_post_processing": self.bridge_data.allow_post_processing,
             "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
-            "bridge_version": self.BRIDGE_VERSION,
+            "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
 
@@ -145,7 +146,7 @@ class InterrogationPopper(JobPopper):
             "amount": amount,
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,
-            "bridge_version": self.BRIDGE_VERSION,
+            "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
 

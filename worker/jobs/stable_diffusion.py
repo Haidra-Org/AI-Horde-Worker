@@ -9,6 +9,7 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from nataili.inference.compvis import CompVis
+from nataili.inference.compvis_pix2pix import CompVisPix2Pix
 from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -151,8 +152,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.start_submit_thread()
                 return
                 # TODO: Send faulted
-        # Reject jobs for SD2Depth if not img2img
-        if self.current_model == "Stable Diffusion 2 Depth" and req_type != "img2img":
+        # Reject jobs for SD2Depth/pix2pix if not img2img
+        if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
             # We remove the base64 from the prompt to avoid flooding the output on the error
             if len(self.pop.get("source_image", "")) > 10:
                 self.pop["source_image"] = len(self.pop.get("source_image", ""))
@@ -232,6 +233,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
+                    filter_nsfw=use_nsfw_censor,
+                    disable_voodoo=self.bridge_data.disable_voodoo.active,
+                )
+            elif self.current_model == "pix2pix":
+                generator = CompVisPix2Pix(
+                    model=self.model_manager.loaded_models[self.current_model]["model"],
+                    device=self.model_manager.loaded_models[self.current_model]["device"],
+                    model_name=self.current_model,
+                    output_dir="bridge_generations",
+                    load_concepts=True,
+                    concepts_dir="models/custom/sd-concepts-library",
+                    safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                 )
@@ -345,5 +358,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         }
         if self.censored:
             self.submit_dict["state"] = "censored"
+
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
