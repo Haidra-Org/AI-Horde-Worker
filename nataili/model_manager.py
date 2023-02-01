@@ -59,6 +59,7 @@ class ModelManager:
         self.disable_voodoo = disable_voodoo
         self.cuda_devices, self.recommended_gpu = self.detect_available_cuda_arch()
         self.ait_workdir = "./"
+        self.fist_init = True
 
     def download_model_reference(self):
         try:
@@ -123,14 +124,15 @@ class ModelManager:
         self.available_models = models_available
 
         if self.cuda_devices is not None:
-            logger.info("Starting Model Manager in GPU Mode")
-            logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
-            logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
-            logger.info(f"Recommended GPU: {self.recommended_gpu}")
+            if self.fist_init:
+                logger.init("Model manager in GPU Mode", status="Starting")
+                logger.info(f"Highest CUDA Compute Capability: {self.cuda_devices[0]['sm']}")
+                logger.debug(f"Available CUDA Devices: {self.cuda_devices}")
+                logger.info(f"Recommended GPU: {self.recommended_gpu}")
             sm = self.recommended_gpu[0]["sm"]
-            logger.info(f"Using sm_{sm} for AITemplate")
+            if self.fist_init: logger.info(f"Using sm_{sm} for AITemplate")
             sm = self.recommended_gpu[0]["sm"]
-            logger.info(f"Using sm_{sm} for AITemplate")
+            if self.fist_init: logger.info(f"Using sm_{sm} for AITemplate")
             aitemplate_available = []
             for aitemplate in self.aitemplates:
                 logger.info(f"{aitemplate}")
@@ -143,8 +145,8 @@ class ModelManager:
             else:
                 self.ait_workdir = self.get_ait_workdir(sm)
         else:
-            logger.info("Starting Model Manager in CPU Mode")
-
+            logger.init("Model Manager in CPU Mode", status="Starting")
+        self.fist_init = False
         if self.hf_auth is not None:
             if "username" not in self.hf_auth and "password" not in self.hf_auth:
                 raise ValueError("hf_auth must contain username and password")
@@ -476,7 +478,7 @@ class ModelManager:
     def load_model(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         if model_name not in self.available_models:
             return False
-        if self.models[model_name]["type"] in ["ckpt", "pix2pix"]:
+        if self.models[model_name]["type"] in ["ckpt"]:
             self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id)
             return True
         elif self.models[model_name]["type"] == "realesrgan":
