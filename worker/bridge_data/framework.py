@@ -10,6 +10,7 @@ import requests
 
 from nataili import disable_voodoo
 from nataili.util import logger
+from worker.consts import BRIDGE_VERSION
 
 
 class BridgeDataTemplate:
@@ -118,13 +119,20 @@ class BridgeDataTemplate:
             logger.init("Models", status="Checking")
         models_exist = True
         not_found_models = []
-        for model in self.model_names:
+        for model in self.model_names.copy():
             logger.debug(f"Checking: {model}")
             model_info = model_manager.get_model(model)
             if not model_info:
                 logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
                     "Please check your configuration. Aborting!"
+                )
+                self.model_names.remove(model)
+                continue
+            if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
+                logger.warning(
+                    f"Model reuested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
+                    "Please upgrade your bridge. Skipping."
                 )
                 self.model_names.remove(model)
                 continue
