@@ -7,7 +7,6 @@ import PIL
 import skimage
 import torch
 from einops import rearrange
-from PIL import Image, ImageOps
 from slugify import slugify
 from torch import nn
 from transformers import CLIPFeatureExtractor
@@ -286,7 +285,7 @@ class CompVis:
                     sigma_override=sigma_override,
                 )
             return samples_ddim
-        
+
         def create_sampler_by_sampler_name(model, sampler_name):
             if self.model_name.startswith("stable_diffusion_2"):
                 sampler = DPMSolverSampler(model)
@@ -433,9 +432,9 @@ class CompVis:
 
                             cond = {}
                             cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
-                            init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                            init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
-                            cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
+                            init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
+                            init_img = rearrange(init_img, "h w c -> 1 c h w").to(model.device)
+                            cond["c_concat"] = [model.encode_first_stage(init_img).mode()]
 
                             uncond = {}
                             uncond["c_crossattn"] = [null_token]
@@ -467,7 +466,7 @@ class CompVis:
                             )
                             x = model.decode_first_stage(samples_ddim)
                             x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
-        
+
         else:
             for m in self.model.modules():
                 if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
@@ -557,9 +556,9 @@ class CompVis:
 
                             cond = {}
                             cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
-                            init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
-                            init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
-                            cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
+                            init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
+                            init_img = rearrange(init_img, "h w c -> 1 c h w").to(self.model.device)
+                            cond["c_concat"] = [self.model.encode_first_stage(init_img).mode()]
 
                             uncond = {}
                             uncond["c_crossattn"] = [null_token]
@@ -591,7 +590,7 @@ class CompVis:
                             )
                             x = self.model.decode_first_stage(samples_ddim)
                             x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
-        
+
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
             full_path = os.path.join(os.getcwd(), sample_path)
