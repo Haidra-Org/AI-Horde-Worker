@@ -470,123 +470,123 @@ class CompVis:
             for m in self.model.modules():
                 if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
                     m.padding_mode = "circular" if tiling else m._orig_padding_mode
-                sampler = create_sampler_by_sampler_name(self.model, sampler_name=sampler_name)
-                if self.load_concepts and self.concepts_dir is not None:
-                    prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
-                    if prompt_tokens:
-                        process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
+            sampler = create_sampler_by_sampler_name(self.model, sampler_name=sampler_name)
+            if self.load_concepts and self.concepts_dir is not None:
+                prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
+                if prompt_tokens:
+                    process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
 
-                all_prompts = batch_size * n_iter * [prompt]
-                all_seeds = [seed + x for x in range(len(all_prompts))]
+            all_prompts = batch_size * n_iter * [prompt]
+            all_seeds = [seed + x for x in range(len(all_prompts))]
 
-                if self.model_name != "pix2pix":
-                    with torch.no_grad():
-                        for n in range(n_iter):
-                            print(f"Iteration: {n+1}/{n_iter}")
-                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
-                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
+            if self.model_name != "pix2pix":
+                with torch.no_grad():
+                    for n in range(n_iter):
+                        print(f"Iteration: {n+1}/{n_iter}")
+                        prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                        seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
-                            uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
+                        uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
 
-                            if isinstance(prompts, tuple):
-                                prompts = list(prompts)
+                        if isinstance(prompts, tuple):
+                            prompts = list(prompts)
 
-                            c = torch.cat(
-                                [
-                                    prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
-                                    for prompt in prompts
-                                ]
+                        c = torch.cat(
+                            [
+                                prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
+                                for prompt in prompts
+                            ]
+                        )
+
+                        opt_C = 4
+                        opt_f = 8
+                        shape = [opt_C, height // opt_f, width // opt_f]
+                        if noise_mode in ["find", "find_and_matched"]:
+                            x = torch.cat(
+                                batch_size
+                                * [
+                                    find_noise_for_image(
+                                        self.model,
+                                        self.device,
+                                        init_img.convert("RGB"),
+                                        "",
+                                        find_noise_steps,
+                                        0.0,
+                                        normalize=True,
+                                    )
+                                ],
+                                dim=0,
                             )
+                        else:
+                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                        init_data = init(self.model, init_img) if init_img else None
 
-                            opt_C = 4
-                            opt_f = 8
-                            shape = [opt_C, height // opt_f, width // opt_f]
-                            if noise_mode in ["find", "find_and_matched"]:
-                                x = torch.cat(
-                                    batch_size
-                                    * [
-                                        find_noise_for_image(
-                                            self.model,
-                                            self.device,
-                                            init_img.convert("RGB"),
-                                            "",
-                                            find_noise_steps,
-                                            0.0,
-                                            normalize=True,
-                                        )
-                                    ],
-                                    dim=0,
-                                )
-                            else:
-                                x = create_random_tensors(shape, seeds=seeds, device=self.device)
-                            init_data = init(self.model, init_img) if init_img else None
-
-                            samples_ddim = (
-                                sample_img2img(
-                                    init_data=init_data,
-                                    x=x,
-                                    conditioning=c,
-                                    unconditional_conditioning=uc,
-                                    sampler_name=sampler_name,
-                                )
-                                if init_img
-                                else sample(
-                                    init_data=init_data,
-                                    x=x,
-                                    conditioning=c,
-                                    unconditional_conditioning=uc,
-                                    sampler_name=sampler_name,
-                                    karras=karras,
-                                    batch_size=batch_size,
-                                    shape=shape,
-                                    sigma_override=sigma_override,
-                                )
+                        samples_ddim = (
+                            sample_img2img(
+                                init_data=init_data,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
                             )
-                else:
-                    null_token = model.get_learned_conditioning([""])
-                    with torch.no_grad():
-                        for n in range(n_iter):
-                            print(f"Iteration: {n+1}/{n_iter}")
-                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
-                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
-
-                            cond = {}
-                            cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
-                            init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
-                            init_img = rearrange(init_img, "h w c -> 1 c h w").to(self.model.device)
-                            cond["c_concat"] = [self.model.encode_first_stage(init_img).mode()]
-
-                            uncond = {}
-                            uncond["c_crossattn"] = [null_token]
-                            uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
-
-                            init_data = init(self.model, init_img) if init_img else None
-                            x0, z_mask = init_data
-
-                            extra_args = {
-                                "cond": cond,
-                                "uncond": uncond,
-                                "text_cfg_scale": cfg_scale,
-                                "image_cfg_scale": denoising_strength * 2,
-                                "mask": z_mask,
-                                "x0": x0,
-                            }
-
-                            torch.manual_seed(seed)
-                            z = torch.randn_like(cond["c_concat"][0])
-                            samples_ddim, _ = sampler.sample(
-                                S=ddim_steps,
-                                conditioning=extra_args["cond"],
-                                unconditional_guidance_scale=extra_args["text_cfg_scale"],
-                                unconditional_conditioning=extra_args["uncond"],
-                                x_T=z,
+                            if init_img
+                            else sample(
+                                init_data=init_data,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
                                 karras=karras,
+                                batch_size=batch_size,
+                                shape=shape,
                                 sigma_override=sigma_override,
-                                extra_args=extra_args,
                             )
-                
-                x = self.model.decode_first_stage(samples_ddim)
-                x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+                        )
+            else:
+                null_token = model.get_learned_conditioning([""])
+                with torch.no_grad():
+                    for n in range(n_iter):
+                        print(f"Iteration: {n+1}/{n_iter}")
+                        prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                        seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
+
+                        cond = {}
+                        cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
+                        init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
+                        init_img = rearrange(init_img, "h w c -> 1 c h w").to(self.model.device)
+                        cond["c_concat"] = [self.model.encode_first_stage(init_img).mode()]
+
+                        uncond = {}
+                        uncond["c_crossattn"] = [null_token]
+                        uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
+
+                        init_data = init(self.model, init_img) if init_img else None
+                        x0, z_mask = init_data
+
+                        extra_args = {
+                            "cond": cond,
+                            "uncond": uncond,
+                            "text_cfg_scale": cfg_scale,
+                            "image_cfg_scale": denoising_strength * 2,
+                            "mask": z_mask,
+                            "x0": x0,
+                        }
+
+                        torch.manual_seed(seed)
+                        z = torch.randn_like(cond["c_concat"][0])
+                        samples_ddim, _ = sampler.sample(
+                            S=ddim_steps,
+                            conditioning=extra_args["cond"],
+                            unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                            unconditional_conditioning=extra_args["uncond"],
+                            x_T=z,
+                            karras=karras,
+                            sigma_override=sigma_override,
+                            extra_args=extra_args,
+                        )
+            
+            x = self.model.decode_first_stage(samples_ddim)
+            x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
