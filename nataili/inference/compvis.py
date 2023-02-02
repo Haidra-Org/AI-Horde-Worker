@@ -7,6 +7,7 @@ import PIL
 import skimage
 import torch
 from einops import rearrange
+from PIL import Image, ImageOps
 from slugify import slugify
 from torch import nn
 from transformers import CLIPFeatureExtractor
@@ -421,6 +422,8 @@ class CompVis:
                             )
 
                 else:
+                    init_image = init_img
+                    init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert("RGB")
                     null_token = model.get_learned_conditioning([""])
                     with torch.no_grad():
                         for n in range(n_iter):
@@ -430,9 +433,9 @@ class CompVis:
 
                             cond = {}
                             cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
-                            init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
-                            init_img = rearrange(init_img, "h w c -> 1 c h w").to(model.device)
-                            cond["c_concat"] = [model.encode_first_stage(init_img).mode()]
+                            init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                            init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
+                            cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
 
                             uncond = {}
                             uncond["c_crossattn"] = [null_token]
@@ -543,6 +546,8 @@ class CompVis:
                             )
                         )
             else:
+                init_image = init_img
+                init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert("RGB")
                 null_token = self.model.get_learned_conditioning([""])
                 with torch.no_grad():
                     for n in range(n_iter):
@@ -552,9 +557,9 @@ class CompVis:
 
                         cond = {}
                         cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
-                        init_img = 2 * torch.tensor(np.array(init_img)).float() / 255 - 1
-                        init_img = rearrange(init_img, "h w c -> 1 c h w").to(self.model.device)
-                        cond["c_concat"] = [self.model.encode_first_stage(init_img).mode()]
+                        init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                        init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
+                        cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
 
                         uncond = {}
                         uncond["c_crossattn"] = [null_token]
