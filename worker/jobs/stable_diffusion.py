@@ -154,12 +154,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # Reject jobs for SD2Depth/pix2pix if not img2img
         if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
             # We remove the base64 from the prompt to avoid flooding the output on the error
-            if len(self.pop.get("source_image", "")) > 10:
-                self.pop["source_image"] = len(self.pop.get("source_image", ""))
-            if len(self.pop.get("source_mask", "")) > 10:
-                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            if source_image is not None:
+                if len(self.pop.get("source_image", "")) > 10:
+                    self.pop["source_image"] = len(self.pop.get("source_image", ""))
+            if source_mask is not None:
+                if len(self.pop.get("source_mask", "")) > 10:
+                    self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
-                "Received an non-img2img request for SD2Depth model. This shouldn't happen. "
+                "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
                 f"Inform the developer. Current payload {self.pop}"
             )
             self.status = JobStatus.FAULTED
