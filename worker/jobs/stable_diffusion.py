@@ -9,7 +9,6 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from nataili.inference.compvis import CompVis
-from nataili.inference.compvis_pix2pix import CompVisPix2Pix
 from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -155,12 +154,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # Reject jobs for SD2Depth/pix2pix if not img2img
         if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
             # We remove the base64 from the prompt to avoid flooding the output on the error
-            if len(self.pop.get("source_image", "")) > 10:
-                self.pop["source_image"] = len(self.pop.get("source_image", ""))
-            if len(self.pop.get("source_mask", "")) > 10:
-                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            if source_image is not None:
+                if len(self.pop.get("source_image", "")) > 10:
+                    self.pop["source_image"] = len(self.pop.get("source_image", ""))
+            if source_mask is not None:
+                if len(self.pop.get("source_mask", "")) > 10:
+                    self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
-                "Received an non-img2img request for SD2Depth model. This shouldn't happen. "
+                "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
                 f"Inform the developer. Current payload {self.pop}"
             )
             self.status = JobStatus.FAULTED
@@ -233,18 +234,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo.active,
-                )
-            elif self.current_model == "pix2pix":
-                generator = CompVisPix2Pix(
-                    model=self.model_manager.loaded_models[self.current_model]["model"],
-                    device=self.model_manager.loaded_models[self.current_model]["device"],
-                    model_name=self.current_model,
-                    output_dir="bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                 )
