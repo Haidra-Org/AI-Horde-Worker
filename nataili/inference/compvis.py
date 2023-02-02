@@ -423,7 +423,9 @@ class CompVis:
 
                 else:
                     init_image = init_img
-                    init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert("RGB")
+                    init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert(
+                        "RGB"
+                    )
                     null_token = model.get_learned_conditioning([""])
                     with torch.no_grad():
                         for n in range(n_iter):
@@ -589,7 +591,7 @@ class CompVis:
                             sigma_override=sigma_override,
                             extra_args=extra_args,
                         )
-            
+
             x = self.model.decode_first_stage(samples_ddim)
             x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
