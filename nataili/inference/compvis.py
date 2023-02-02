@@ -543,7 +543,7 @@ class CompVis:
                             )
                         )
             else:
-                null_token = model.get_learned_conditioning([""])
+                null_token = self.model.get_learned_conditioning([""])
                 with torch.no_grad():
                     for n in range(n_iter):
                         print(f"Iteration: {n+1}/{n_iter}")
