@@ -9,7 +9,6 @@ import requests
 from PIL import Image, UnidentifiedImageError
 
 from nataili.inference.compvis import CompVis
-from nataili.inference.compvis_pix2pix import CompVisPix2Pix
 from nataili.inference.diffusers.depth2img import Depth2Img
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -233,18 +232,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo.active,
-                )
-            elif self.current_model == "pix2pix":
-                generator = CompVisPix2Pix(
-                    model=self.model_manager.loaded_models[self.current_model]["model"],
-                    device=self.model_manager.loaded_models[self.current_model]["device"],
-                    model_name=self.current_model,
-                    output_dir="bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                 )

@@ -7,6 +7,7 @@ import PIL
 import skimage
 import torch
 from einops import rearrange
+from PIL import Image, ImageOps
 from slugify import slugify
 from torch import nn
 from transformers import CLIPFeatureExtractor
@@ -285,6 +286,43 @@ class CompVis:
                     sigma_override=sigma_override,
                 )
             return samples_ddim
+        
+        def create_sampler_by_sampler_name(model, sampler_name):
+            if self.model_name.startswith("stable_diffusion_2"):
+                sampler = DPMSolverSampler(model)
+                sampler_name = "dpmsolver"
+            elif sampler_name == "PLMS":
+                sampler = PLMSSampler(model)
+            elif sampler_name == "DDIM":
+                sampler = DDIMSampler(model)
+            elif sampler_name == "k_dpm_2_a":
+                sampler = KDiffusionSampler(model, "dpm_2_ancestral")
+            elif sampler_name == "k_dpm_2":
+                sampler = KDiffusionSampler(model, "dpm_2")
+            elif sampler_name == "k_euler_a":
+                sampler = KDiffusionSampler(model, "euler_ancestral")
+            elif sampler_name == "k_euler":
+                sampler = KDiffusionSampler(model, "euler")
+            elif sampler_name == "k_heun":
+                sampler = KDiffusionSampler(model, "heun")
+            elif sampler_name == "k_lms":
+                sampler = KDiffusionSampler(model, "lms")
+            elif sampler_name == "k_dpm_fast":
+                sampler = KDiffusionSampler(model, "dpm_fast")
+            elif sampler_name == "k_dpm_adaptive":
+                sampler = KDiffusionSampler(model, "dpm_adaptive")
+            elif sampler_name == "k_dpmpp_2s_a":
+                sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
+            elif sampler_name == "k_dpmpp_2m":
+                sampler = KDiffusionSampler(model, "dpmpp_2m")
+            elif sampler_name == "k_dpmpp_sde":
+                sampler = KDiffusionSampler(model, "dpmpp_sde")
+            elif sampler_name == "dpmsolver":
+                sampler = DPMSolverSampler(model)
+            else:
+                logger.info("Unknown sampler: " + sampler_name)
+
+            return sampler
 
         seed = seed_to_int(seed)
 
@@ -310,39 +348,7 @@ class CompVis:
                 for m in model.modules():
                     if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
                         m.padding_mode = "circular" if tiling else m._orig_padding_mode
-                if self.model_name.startswith("stable_diffusion_2"):
-                    sampler = DPMSolverSampler(model)
-                    sampler_name = "dpmsolver"
-                elif sampler_name == "PLMS":
-                    sampler = PLMSSampler(model)
-                elif sampler_name == "DDIM":
-                    sampler = DDIMSampler(model)
-                elif sampler_name == "k_dpm_2_a":
-                    sampler = KDiffusionSampler(model, "dpm_2_ancestral")
-                elif sampler_name == "k_dpm_2":
-                    sampler = KDiffusionSampler(model, "dpm_2")
-                elif sampler_name == "k_euler_a":
-                    sampler = KDiffusionSampler(model, "euler_ancestral")
-                elif sampler_name == "k_euler":
-                    sampler = KDiffusionSampler(model, "euler")
-                elif sampler_name == "k_heun":
-                    sampler = KDiffusionSampler(model, "heun")
-                elif sampler_name == "k_lms":
-                    sampler = KDiffusionSampler(model, "lms")
-                elif sampler_name == "k_dpm_fast":
-                    sampler = KDiffusionSampler(model, "dpm_fast")
-                elif sampler_name == "k_dpm_adaptive":
-                    sampler = KDiffusionSampler(model, "dpm_adaptive")
-                elif sampler_name == "k_dpmpp_2s_a":
-                    sampler = KDiffusionSampler(model, "dpmpp_2s_ancestral")
-                elif sampler_name == "k_dpmpp_2m":
-                    sampler = KDiffusionSampler(model, "dpmpp_2m")
-                elif sampler_name == "k_dpmpp_sde":
-                    sampler = KDiffusionSampler(model, "dpmpp_sde")
-                elif sampler_name == "dpmsolver":
-                    sampler = DPMSolverSampler(model)
-                else:
-                    logger.info("Unknown sampler: " + sampler_name)
+                sampler = create_sampler_by_sampler_name(model, sampler_name=sampler_name)
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
@@ -351,183 +357,241 @@ class CompVis:
                 all_prompts = batch_size * n_iter * [prompt]
                 all_seeds = [seed + x for x in range(len(all_prompts))]
 
-                with torch.no_grad():
-                    for n in range(n_iter):
-                        print(f"Iteration: {n+1}/{n_iter}")
-                        prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
-                        seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
+                if self.model_name != "pix2pix":
+                    with torch.no_grad():
+                        for n in range(n_iter):
+                            print(f"Iteration: {n+1}/{n_iter}")
+                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
-                        uc = model.get_learned_conditioning(len(prompts) * [negprompt])
+                            uc = model.get_learned_conditioning(len(prompts) * [negprompt])
 
-                        if isinstance(prompts, tuple):
-                            prompts = list(prompts)
+                            if isinstance(prompts, tuple):
+                                prompts = list(prompts)
 
-                        c = torch.cat(
-                            [
-                                prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, model)
-                                for prompt in prompts
-                            ]
-                        )
-
-                        opt_C = 4
-                        opt_f = 8
-                        shape = [opt_C, height // opt_f, width // opt_f]
-                        if noise_mode in ["find", "find_and_matched"]:
-                            x = torch.cat(
-                                batch_size
-                                * [
-                                    find_noise_for_image(
-                                        model,
-                                        self.device,
-                                        init_img.convert("RGB"),
-                                        "",
-                                        find_noise_steps,
-                                        0.0,
-                                        normalize=True,
-                                    )
-                                ],
-                                dim=0,
+                            c = torch.cat(
+                                [
+                                    prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, model)
+                                    for prompt in prompts
+                                ]
                             )
-                        else:
-                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
-                        init_data = init(model, init_img) if init_img else None
 
-                        samples_ddim = (
-                            sample_img2img(
-                                init_data=init_data,
-                                x=x,
-                                conditioning=c,
-                                unconditional_conditioning=uc,
-                                sampler_name=sampler_name,
+                            opt_C = 4
+                            opt_f = 8
+                            shape = [opt_C, height // opt_f, width // opt_f]
+                            if noise_mode in ["find", "find_and_matched"]:
+                                x = torch.cat(
+                                    batch_size
+                                    * [
+                                        find_noise_for_image(
+                                            model,
+                                            self.device,
+                                            init_img.convert("RGB"),
+                                            "",
+                                            find_noise_steps,
+                                            0.0,
+                                            normalize=True,
+                                        )
+                                    ],
+                                    dim=0,
+                                )
+                            else:
+                                x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            init_data = init(model, init_img) if init_img else None
+
+                            samples_ddim = (
+                                sample_img2img(
+                                    init_data=init_data,
+                                    x=x,
+                                    conditioning=c,
+                                    unconditional_conditioning=uc,
+                                    sampler_name=sampler_name,
+                                )
+                                if init_img
+                                else sample(
+                                    init_data=init_data,
+                                    x=x,
+                                    conditioning=c,
+                                    unconditional_conditioning=uc,
+                                    sampler_name=sampler_name,
+                                    karras=karras,
+                                    batch_size=batch_size,
+                                    shape=shape,
+                                    sigma_override=sigma_override,
+                                )
                             )
-                            if init_img
-                            else sample(
-                                init_data=init_data,
-                                x=x,
-                                conditioning=c,
-                                unconditional_conditioning=uc,
-                                sampler_name=sampler_name,
+
+                            x_samples_ddim = model.decode_first_stage(samples_ddim)
+                            x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                else:
+                    null_token = model.get_learned_conditioning([""])
+                    with torch.no_grad():
+                        for n in range(n_iter):
+                            print(f"Iteration: {n+1}/{n_iter}")
+                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
+
+                            cond = {}
+                            cond["c_crossattn"] = [model.get_learned_conditioning(prompts)]
+                            init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                            init_image = rearrange(init_image, "h w c -> 1 c h w").to(model.device)
+                            cond["c_concat"] = [model.encode_first_stage(init_image).mode()]
+
+                            uncond = {}
+                            uncond["c_crossattn"] = [null_token]
+                            uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
+
+                            init_data = init(model, init_img) if init_img else None
+                            x0, z_mask = init_data
+
+                            extra_args = {
+                                "cond": cond,
+                                "uncond": uncond,
+                                "text_cfg_scale": cfg_scale,
+                                "image_cfg_scale": denoising_strength * 2,
+                                "mask": z_mask,
+                                "x0": x0,
+                            }
+
+                            torch.manual_seed(seed)
+                            z = torch.randn_like(cond["c_concat"][0])
+                            samples_ddim, _ = sampler.sample(
+                                S=ddim_steps,
+                                conditioning=extra_args["cond"],
+                                unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                                unconditional_conditioning=extra_args["uncond"],
+                                x_T=z,
                                 karras=karras,
-                                batch_size=batch_size,
-                                shape=shape,
                                 sigma_override=sigma_override,
+                                extra_args=extra_args,
                             )
-                        )
-
-                        x_samples_ddim = model.decode_first_stage(samples_ddim)
-                        x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-
+                            x = model.decode_first_stage(samples_ddim)
+                            x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+        
         else:
             for m in self.model.modules():
                 if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
                     m.padding_mode = "circular" if tiling else m._orig_padding_mode
-            if sampler_name == "PLMS":
-                sampler = PLMSSampler(self.model)
-            elif sampler_name == "DDIM":
-                sampler = DDIMSampler(self.model)
-            elif sampler_name == "k_dpm_2_a":
-                sampler = KDiffusionSampler(self.model, "dpm_2_ancestral")
-            elif sampler_name == "k_dpm_2":
-                sampler = KDiffusionSampler(self.model, "dpm_2")
-            elif sampler_name == "k_euler_a":
-                sampler = KDiffusionSampler(self.model, "euler_ancestral")
-            elif sampler_name == "k_euler":
-                sampler = KDiffusionSampler(self.model, "euler")
-            elif sampler_name == "k_heun":
-                sampler = KDiffusionSampler(self.model, "heun")
-            elif sampler_name == "k_lms":
-                sampler = KDiffusionSampler(self.model, "lms")
-            elif sampler_name == "k_dpm_fast":
-                sampler = KDiffusionSampler(self.model, "dpm_fast")
-            elif sampler_name == "k_dpm_adaptive":
-                sampler = KDiffusionSampler(self.model, "dpm_adaptive")
-            elif sampler_name == "k_dpmpp_2s_a":
-                sampler = KDiffusionSampler(self.model, "dpmpp_2s_ancestral")
-            elif sampler_name == "k_dpmpp_2m":
-                sampler = KDiffusionSampler(self.model, "dpmpp_2m")
-            elif sampler_name == "k_dpmpp_sde":
-                sampler = KDiffusionSampler(self.model, "dpmpp_sde")
-            elif sampler_name == "dpmsolver":
-                sampler = DPMSolverSampler(self.model)
-            else:
-                logger.info("Unknown sampler: " + sampler_name)
-            if self.model_name == "stable_diffusion_2.0":
-                sampler = DPMSolverSampler(self.model)
-                sampler_name = "dpmsolver"
-            if self.load_concepts and self.concepts_dir is not None:
-                prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
-                if prompt_tokens:
-                    process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
+                sampler = create_sampler_by_sampler_name(self.model, sampler_name=sampler_name)
+                if self.load_concepts and self.concepts_dir is not None:
+                    prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
+                    if prompt_tokens:
+                        process_prompt_tokens(prompt_tokens, self.model, self.concepts_dir)
 
-            all_prompts = batch_size * n_iter * [prompt]
-            all_seeds = [seed + x for x in range(len(all_prompts))]
+                all_prompts = batch_size * n_iter * [prompt]
+                all_seeds = [seed + x for x in range(len(all_prompts))]
 
-            with torch.no_grad():
-                for n in range(n_iter):
-                    print(f"Iteration: {n+1}/{n_iter}")
-                    prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
-                    seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
+                if self.model_name != "pix2pix":
+                    with torch.no_grad():
+                        for n in range(n_iter):
+                            print(f"Iteration: {n+1}/{n_iter}")
+                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
-                    uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
+                            uc = self.model.get_learned_conditioning(len(prompts) * [negprompt])
 
-                    if isinstance(prompts, tuple):
-                        prompts = list(prompts)
+                            if isinstance(prompts, tuple):
+                                prompts = list(prompts)
 
-                    c = torch.cat(
-                        [
-                            prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
-                            for prompt in prompts
-                        ]
-                    )
+                            c = torch.cat(
+                                [
+                                    prompt_weights.get_learned_conditioning_with_prompt_weights(prompt, self.model)
+                                    for prompt in prompts
+                                ]
+                            )
 
-                    opt_C = 4
-                    opt_f = 8
-                    shape = [opt_C, height // opt_f, width // opt_f]
-                    if noise_mode in ["find", "find_and_matched"]:
-                        x = torch.cat(
-                            batch_size
-                            * [
-                                find_noise_for_image(
-                                    self.model,
-                                    self.device,
-                                    init_img.convert("RGB"),
-                                    "",
-                                    find_noise_steps,
-                                    0.0,
-                                    normalize=True,
+                            opt_C = 4
+                            opt_f = 8
+                            shape = [opt_C, height // opt_f, width // opt_f]
+                            if noise_mode in ["find", "find_and_matched"]:
+                                x = torch.cat(
+                                    batch_size
+                                    * [
+                                        find_noise_for_image(
+                                            self.model,
+                                            self.device,
+                                            init_img.convert("RGB"),
+                                            "",
+                                            find_noise_steps,
+                                            0.0,
+                                            normalize=True,
+                                        )
+                                    ],
+                                    dim=0,
                                 )
-                            ],
-                            dim=0,
-                        )
-                    else:
-                        x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            else:
+                                x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            init_data = init(self.model, init_img) if init_img else None
 
-                    init_data = init(self.model, init_img) if init_img else None
-                    samples_ddim = (
-                        sample_img2img(
-                            init_data=init_data,
-                            x=x,
-                            conditioning=c,
-                            unconditional_conditioning=uc,
-                            sampler_name=sampler_name,
-                        )
-                        if init_img
-                        else sample(
-                            init_data=init_data,
-                            x=x,
-                            conditioning=c,
-                            unconditional_conditioning=uc,
-                            sampler_name=sampler_name,
-                            karras=karras,
-                            batch_size=batch_size,
-                            shape=shape,
-                            sigma_override=sigma_override,
-                        )
-                    )
+                            samples_ddim = (
+                                sample_img2img(
+                                    init_data=init_data,
+                                    x=x,
+                                    conditioning=c,
+                                    unconditional_conditioning=uc,
+                                    sampler_name=sampler_name,
+                                )
+                                if init_img
+                                else sample(
+                                    init_data=init_data,
+                                    x=x,
+                                    conditioning=c,
+                                    unconditional_conditioning=uc,
+                                    sampler_name=sampler_name,
+                                    karras=karras,
+                                    batch_size=batch_size,
+                                    shape=shape,
+                                    sigma_override=sigma_override,
+                                )
+                            )
 
-                    x_samples_ddim = self.model.decode_first_stage(samples_ddim)
-                    x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                            x_samples_ddim = self.model.decode_first_stage(samples_ddim)
+                            x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                else:
+                    null_token = model.get_learned_conditioning([""])
+                    with torch.no_grad():
+                        for n in range(n_iter):
+                            print(f"Iteration: {n+1}/{n_iter}")
+                            prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
+                            seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
+                            cond = {}
+                            cond["c_crossattn"] = [self.model.get_learned_conditioning(prompts)]
+                            init_image = 2 * torch.tensor(np.array(init_image)).float() / 255 - 1
+                            init_image = rearrange(init_image, "h w c -> 1 c h w").to(self.model.device)
+                            cond["c_concat"] = [self.model.encode_first_stage(init_image).mode()]
+
+                            uncond = {}
+                            uncond["c_crossattn"] = [null_token]
+                            uncond["c_concat"] = [torch.zeros_like(cond["c_concat"][0])]
+
+                            init_data = init(self.model, init_img) if init_img else None
+                            x0, z_mask = init_data
+
+                            extra_args = {
+                                "cond": cond,
+                                "uncond": uncond,
+                                "text_cfg_scale": cfg_scale,
+                                "image_cfg_scale": denoising_strength * 2,
+                                "mask": z_mask,
+                                "x0": x0,
+                            }
+
+                            torch.manual_seed(seed)
+                            z = torch.randn_like(cond["c_concat"][0])
+                            samples_ddim, _ = sampler.sample(
+                                S=ddim_steps,
+                                conditioning=extra_args["cond"],
+                                unconditional_guidance_scale=extra_args["text_cfg_scale"],
+                                unconditional_conditioning=extra_args["uncond"],
+                                x_T=z,
+                                karras=karras,
+                                sigma_override=sigma_override,
+                                extra_args=extra_args,
+                            )
+                            x = self.model.decode_first_stage(samples_ddim)
+                            x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+        
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
             full_path = os.path.join(os.getcwd(), sample_path)
