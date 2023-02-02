@@ -420,8 +420,6 @@ class CompVis:
                                 )
                             )
 
-                            x_samples_ddim = model.decode_first_stage(samples_ddim)
-                            x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
                 else:
                     null_token = model.get_learned_conditioning([""])
                     with torch.no_grad():
@@ -464,8 +462,9 @@ class CompVis:
                                 sigma_override=sigma_override,
                                 extra_args=extra_args,
                             )
-                            x = model.decode_first_stage(samples_ddim)
-                            x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+
+                x = model.decode_first_stage(samples_ddim)
+                x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         else:
             for m in self.model.modules():
@@ -543,9 +542,6 @@ class CompVis:
                                     sigma_override=sigma_override,
                                 )
                             )
-
-                        x_samples_ddim = self.model.decode_first_stage(samples_ddim)
-                        x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
                 else:
                     null_token = model.get_learned_conditioning([""])
                     with torch.no_grad():
@@ -588,8 +584,9 @@ class CompVis:
                                 sigma_override=sigma_override,
                                 extra_args=extra_args,
                             )
-                        x = self.model.decode_first_stage(samples_ddim)
-                        x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
+                
+                x = self.model.decode_first_stage(samples_ddim)
+                x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
