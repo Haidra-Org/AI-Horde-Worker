@@ -57,6 +57,7 @@ class ModelManager:
         self.hf_auth = None
         self.set_authentication(hf_auth)
         self.disable_voodoo = disable_voodoo
+        self.cuda_available = torch.cuda.is_available()
         self.cuda_devices, self.recommended_gpu = self.detect_available_cuda_arch()
         self.ait_workdir = "./"
         self.fist_init = True
@@ -410,6 +411,30 @@ class ModelManager:
         data_lists["tags"] = load_list(os.path.join(data_path, "tags.txt"))
         return data_lists
 
+    def load_coca(self, model_name, precision="half", gpu_id=0, cpu_only=False):
+        if cpu_only:
+            device = torch.device("cpu")
+            precision = "full"
+        else:
+            device = torch.device(f"cuda:{gpu_id}" if self.cuda_available else "cpu")
+        model, _, transform = open_clip.create_model_and_transforms(
+            "coca_ViT-L-14",
+            pretrained="laion2B-s13B-b90k-mscoco-2014.pt",
+            device=device,
+        )
+        model = model.eval()
+        model.to(device)
+        if precision == "half":
+            model = model.half()
+        return {
+            "model": model,
+            "device": device,
+            "transform": transform,
+            "half_precision": True if precision == "half" else False,
+            "cache_name": model_name.replace("/", "_"),
+        }
+
+
     def load_open_clip(self, model_name="", precision="half", gpu_id=0, data_path="data/img2txt"):
         pretrained = self.get_model(model_name)["pretrained_name"]
         device = torch.device(f"cuda:{gpu_id}")
@@ -503,6 +528,9 @@ class ModelManager:
             return True
         elif self.models[model_name]["type"] == "clip":
             self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id, data_path)
+            return True
+        elif self.models[model_name]["type"] == "coca":
+            self.loaded_models[model_name] = self.load_coca(model_name, precision, gpu_id)
             return True
         elif self.models[model_name]["type"] == "diffusers":
             self.loaded_models[model_name] = self.load_diffuser(model_name)
