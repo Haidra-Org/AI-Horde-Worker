@@ -599,8 +599,8 @@ class CompVis:
                         )
 
                         # Create some more noise
-                        #shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                        #x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                        shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                        x = torch.nn.functional.interpolate(x, size=shape, mode="bilinear")
 
                         # Re-initialise the image
                         init_data_temp = (samples_ddim, None)
