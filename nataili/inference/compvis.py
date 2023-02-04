@@ -223,7 +223,7 @@ class CompVis:
                         "x0": x0,
                         "xi": xi,
                     },
-                    disable=False,
+                    disable=True,
                 )
             else:
 
@@ -360,7 +360,10 @@ class CompVis:
                 if self.model_name != "pix2pix":
                     with torch.no_grad():
                         for n in range(n_iter):
-                            print(f"Iteration: {n+1}/{n_iter}")
+                            logger.info(
+                                f"[{self.model_name}] ({width}x{height}) {sampler_name} "
+                                f"{ddim_steps} steps ({n+1}/{n_iter})"
+                            )
                             prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                             seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
@@ -429,7 +432,10 @@ class CompVis:
                     null_token = model.get_learned_conditioning([""])
                     with torch.no_grad():
                         for n in range(n_iter):
-                            print(f"Iteration: {n+1}/{n_iter}")
+                            logger.info(
+                                f"[{self.model_name}] ({width}x{height}) "
+                                f"{sampler_name} {ddim_steps} steps ({n+1}/{n_iter})"
+                            )
                             prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                             seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
@@ -487,7 +493,10 @@ class CompVis:
             if self.model_name != "pix2pix":
                 with torch.no_grad():
                     for n in range(n_iter):
-                        print(f"Iteration: {n+1}/{n_iter}")
+                        logger.info(
+                            f"[{self.model_name}] ({width}x{height}) {sampler_name} "
+                            f"{ddim_steps} steps ({n+1}/{n_iter})"
+                        )
                         prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
@@ -553,7 +562,10 @@ class CompVis:
                 null_token = self.model.get_learned_conditioning([""])
                 with torch.no_grad():
                     for n in range(n_iter):
-                        print(f"Iteration: {n+1}/{n_iter}")
+                        logger.info(
+                            f"[{self.model_name}] ({width}x{height}) {sampler_name} "
+                            f"{ddim_steps} steps ({n+1}/{n_iter})"
+                        )
                         prompts = all_prompts[n * batch_size : (n + 1) * batch_size]
                         seeds = all_seeds[n * batch_size : (n + 1) * batch_size]
 
