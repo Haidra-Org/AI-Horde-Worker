@@ -44,6 +44,7 @@ class CompVis:
         device,
         output_dir,
         model_name=None,
+        model_baseline=None,
         save_extension="jpg",
         output_file_path=False,
         load_concepts=False,
@@ -56,6 +57,7 @@ class CompVis:
     ):
         self.model = model
         self.model_name = model_name
+        self.model_baseline = model.baseline
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
@@ -99,8 +101,24 @@ class CompVis:
         sigma_override: dict = None,
         tiling: bool = False,
     ):
-        if init_img:
+        if init_img is not None:
             init_img = resize_image(resize_mode, init_img, width, height)
+            hi_res_fix = False
+        else:
+            if self.model_baseline != "stable diffusion 2" and hi_res_fix and width > 512 and height > 512:
+                logger.debug("HiRes Fix Requested")
+                final_width = width
+                final_height = height
+                if self.model_baseline == "stable diffusion 2":
+                    first_pass_ratio = min(final_height / 768, final_width / 768)
+                else:
+                    first_pass_ratio = min(final_height / 512, final_width / 512)
+                width = (int(final_width / first_pass_ratio) // 64) * 64
+                height = (int(final_height / first_pass_ratio) // 64) * 64
+                logger.debug(f"First pass image will be processed at width={width}; height={height}")
+            else:
+                hi_res_fix = False 
+
         if mask_mode == "mask":
             if init_mask:
                 init_mask = process_init_mask(init_mask)
@@ -467,7 +485,28 @@ class CompVis:
                                 sigma_override=sigma_override,
                                 extra_args=extra_args,
                             )
+                        if hi_res_fix:
+                            # Resize Image to final dimensions
+                            samples_ddim = torch.nn.functional.interpolate(
+                                samples_ddim, size=(final_height // opt_f, final_width // opt_f), mode="bilinear"
+                            )
 
+                            # Create some more noise
+                            shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
+
+                            # Re-initialise the image
+                            init_data_temp = (samples_ddim, None)
+
+                            # Send image for img2img processing
+                            print("Hi-Res Fix Pass")
+                            samples_ddim = sample_img2img(
+                                init_data=init_data_temp,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
+                            )
                 x = model.decode_first_stage(samples_ddim)
                 x_samples_ddim = torch.clamp((x + 1.0) / 2.0, min=0.0, max=1.0)
 
@@ -546,6 +585,28 @@ class CompVis:
                                 shape=shape,
                                 sigma_override=sigma_override,
                             )
+                        )
+                    if hi_res_fix:
+                        # Resize Image to final dimensions
+                        samples_ddim = torch.nn.functional.interpolate(
+                            samples_ddim, size=(final_height // opt_f, final_width // opt_f), mode="bilinear"
+                        )
+
+                        # Create some more noise
+                        shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                        x = create_random_tensors(shape, seeds=seeds, device=self.device)
+
+                        # Re-initialise the image
+                        init_data_temp = (samples_ddim, None)
+
+                        # Send image for img2img processing
+                        print("Hi-Res Fix Pass")
+                        samples_ddim = sample_img2img(
+                            init_data=init_data_temp,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
                         )
             else:
                 init_image = init_img
