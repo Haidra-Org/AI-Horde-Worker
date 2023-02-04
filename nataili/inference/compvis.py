@@ -57,7 +57,7 @@ class CompVis:
     ):
         self.model = model
         self.model_name = model_name
-        self.model_baseline = self.model_baseline
+        self.model_baseline = model_baseline
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
