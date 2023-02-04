@@ -279,9 +279,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 disable_voodoo=self.bridge_data.disable_voodoo.active,
             )
         try:
-            logger.debug("Starting generation...")
+            logger.info("Starting generation...")
             generator.generate(**gen_payload)
-            logger.debug("Finished generation...")
+            logger.info("Finished generation...")
         except (RuntimeError, ValueError, AttributeError) as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -299,10 +299,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
         if generator.images[0].get("censored", False):
-            logger.debug(f"Image censored with reason: {censor_reason}")
+            logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
-        logger.debug("censor done...")
+        logger.info("censor done...")
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):

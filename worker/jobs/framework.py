@@ -134,7 +134,7 @@ class HordeJobFramework:
                         logger.warning(f"Detailed Request Errors: {submit['errors']}")
                     time.sleep(2)
                     continue
-                logger.debug(
+                logger.info(
                     f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}'
                 )
                 self.post_submit_tasks(submit_req)
