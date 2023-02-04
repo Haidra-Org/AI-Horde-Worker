@@ -219,6 +219,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["init_img"] = img_source
                 if img_mask:
                     gen_payload["init_mask"] = img_mask
+                if "hires_fix" in gen_payload:
+                    del gen_payload["hires_fix"]
             if self.current_model == "Stable Diffusion 2 Depth":
                 if "save_grid" in gen_payload:
                     del gen_payload["save_grid"]
@@ -259,6 +261,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["denoising_strength"]
             if "tiling" in gen_payload:
                 del gen_payload["tiling"]
+            if "hires_fix" in gen_payload:
+                del gen_payload["hires_fix"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
