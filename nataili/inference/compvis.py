@@ -213,7 +213,7 @@ class CompVis:
             nonlocal sampler
             if hires_fix:
                 ddim_steps = 50
-                t_enc_steps = int(0.5 * ddim_steps)
+                t_enc_steps = int(0.1 * ddim_steps)
             else:
                 t_enc_steps = t_enc
             obliterate = False
@@ -452,8 +452,8 @@ class CompVis:
                             )
 
                             # Create some more noise
-                            shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            #shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                            #x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                             # Re-initialise the image
                             init_data_temp = (samples_ddim, None)
@@ -599,8 +599,8 @@ class CompVis:
                         )
 
                         # Create some more noise
-                        shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                        x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                        #shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                        #x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                         # Re-initialise the image
                         init_data_temp = (samples_ddim, None)
