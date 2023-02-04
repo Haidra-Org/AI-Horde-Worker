@@ -212,8 +212,8 @@ class CompVis:
         def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
             nonlocal sampler
             if hires_fix:
-                ddim_steps = 500
-                t_enc_steps = int(0.05 * ddim_steps)
+                ddim_steps = 100
+                t_enc_steps = int(0.3 * ddim_steps)
             else:
                 t_enc_steps = t_enc
             obliterate = False
