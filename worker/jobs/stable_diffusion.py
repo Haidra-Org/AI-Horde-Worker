@@ -101,6 +101,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
             if self.current_payload.get("karras", False):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+            if "hires_fix" in self.current_payload and not source_image:
+                gen_payload["hires_fix"] = self.current_payload["hires_fix"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -219,8 +221,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["init_img"] = img_source
                 if img_mask:
                     gen_payload["init_mask"] = img_mask
-                if "hires_fix" in gen_payload:
-                    del gen_payload["hires_fix"]
             if self.current_model == "Stable Diffusion 2 Depth":
                 if "save_grid" in gen_payload:
                     del gen_payload["save_grid"]
@@ -262,8 +262,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["denoising_strength"]
             if "tiling" in gen_payload:
                 del gen_payload["tiling"]
-            if "hires_fix" in gen_payload:
-                del gen_payload["hires_fix"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:

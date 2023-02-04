@@ -161,7 +161,8 @@ config = {
             "level": "DEBUG",
             "colorize": False,
             "filter": is_not_stats_log,
-            "retention": "3 days",
+            "retention": "2 days",
+            "rotation": "3 hours",
         },
         {
             "sink": "logs/stats.log",
@@ -170,6 +171,7 @@ config = {
             "colorize": False,
             "filter": is_stats_log,
             "retention": "7 days",
+            "rotation": "1 days",
         },
         {
             "sink": "logs/trace.log",
@@ -178,6 +180,7 @@ config = {
             "colorize": False,
             "filter": is_trace_log,
             "retention": "3 days",
+            "rotation": "1 days",
             "backtrace": True,
             "diagnose": True,
         },
