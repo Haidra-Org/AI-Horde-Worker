@@ -64,9 +64,7 @@ class JobPopper:
             time.sleep(2)
             return
         if not pop_req.ok:
-            logger.warning(
-                f"{self.pop['message']} ({pop_req.status_code})"
-            )
+            logger.warning(f"{self.pop['message']} ({pop_req.status_code})")
             if "errors" in self.pop:
                 logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
             time.sleep(2)
