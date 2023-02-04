@@ -20,7 +20,7 @@ from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
+from nataili.util.img2img import find_noise_for_image, find_noise_for_image_hiresfix, get_matched_noise, process_init_mask, resize_image
 from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
@@ -454,7 +454,21 @@ class CompVis:
 
                             # Create some more noise
                             #shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                            #x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            x = torch.cat(
+                                    batch_size
+                                    * [
+                                        find_noise_for_image_hiresfix(
+                                            model,
+                                            self.device,
+                                            samples_ddim.convert("RGB"),
+                                            "",
+                                            find_noise_steps,
+                                            0.0,
+                                            normalize=True,
+                                        )
+                                    ],
+                                    dim=0,
+                                )
 
                             # Re-initialise the image
                             init_data_temp = (samples_ddim, None)
@@ -600,18 +614,31 @@ class CompVis:
                         )
 
                         # Create some more noise
-                        #shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                        #x = torch.nn.functional.interpolate(x, size=shape, mode="bilinear")
+                        shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                        x = torch.cat(
+                                    batch_size
+                                    * [
+                                        find_noise_for_image_hiresfix(
+                                            model,
+                                            self.device,
+                                            samples_ddim,
+                                            "",
+                                            find_noise_steps,
+                                            0.0,
+                                            normalize=True,
+                                        )
+                                    ],
+                                    dim=0,
+                                )
 
                         # Re-initialise the image
                         init_data_temp = (samples_ddim, None)
-                        x0, z_mask = init_data_temp
 
                         # Send image for img2img processing
                         print("Hi-Res Fix Pass")
                         samples_ddim = sample_img2img(
                             init_data=init_data_temp,
-                            x=x0,
+                            x=x,
                             conditioning=c,
                             unconditional_conditioning=uc,
                             sampler_name=sampler_name,
