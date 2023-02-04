@@ -100,7 +100,7 @@ class CompVis:
         ddim_eta: float = 0.0,
         sigma_override: dict = None,
         tiling: bool = False,
-        hires_fix: bool = False,
+        hires_fix: bool = True,
     ):
         if init_img is not None:
             init_img = resize_image(resize_mode, init_img, width, height)
