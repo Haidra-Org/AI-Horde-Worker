@@ -100,7 +100,7 @@ class CompVis:
         ddim_eta: float = 0.0,
         sigma_override: dict = None,
         tiling: bool = False,
-        hires_fix: bool = True,
+        hires_fix: bool = False,
     ):
         if init_img is not None:
             init_img = resize_image(resize_mode, init_img, width, height)
@@ -110,10 +110,12 @@ class CompVis:
                 logger.debug("HiRes Fix Requested")
                 final_width = width
                 final_height = height
-                if self.model_baseline == "stable diffusion 2":
-                    first_pass_ratio = min(final_height / 768, final_width / 768)
-                else:
-                    first_pass_ratio = min(final_height / 512, final_width / 512)
+                ### Commented out until sd2 img2img is available
+                #if self.model_baseline == "stable diffusion 2":
+                #    first_pass_ratio = min(final_height / 768, final_width / 768)
+                #else:
+                #    first_pass_ratio = min(final_height / 512, final_width / 512)  
+                first_pass_ratio = min(final_height / 512, final_width / 512)  
                 width = (int(final_width / first_pass_ratio) // 64) * 64
                 height = (int(final_height / first_pass_ratio) // 64) * 64
                 logger.debug(f"First pass image will be processed at width={width}; height={height}")
