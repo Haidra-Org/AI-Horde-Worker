@@ -100,12 +100,13 @@ class CompVis:
         ddim_eta: float = 0.0,
         sigma_override: dict = None,
         tiling: bool = False,
+        hires_fix: bool = True,
     ):
         if init_img is not None:
             init_img = resize_image(resize_mode, init_img, width, height)
-            hi_res_fix = False
+            hires_fix = False
         else:
-            if self.model_baseline != "stable diffusion 2" and hi_res_fix and width > 512 and height > 512:
+            if self.model_baseline != "stable diffusion 2" and hires_fix and width > 512 and height > 512:
                 logger.debug("HiRes Fix Requested")
                 final_width = width
                 final_height = height
@@ -117,7 +118,7 @@ class CompVis:
                 height = (int(final_height / first_pass_ratio) // 64) * 64
                 logger.debug(f"First pass image will be processed at width={width}; height={height}")
             else:
-                hi_res_fix = False 
+                hires_fix = False 
 
         if mask_mode == "mask":
             if init_mask:
@@ -485,7 +486,7 @@ class CompVis:
                                 sigma_override=sigma_override,
                                 extra_args=extra_args,
                             )
-                        if hi_res_fix:
+                        if hires_fix:
                             # Resize Image to final dimensions
                             samples_ddim = torch.nn.functional.interpolate(
                                 samples_ddim, size=(final_height // opt_f, final_width // opt_f), mode="bilinear"
@@ -586,7 +587,7 @@ class CompVis:
                                 sigma_override=sigma_override,
                             )
                         )
-                    if hi_res_fix:
+                    if hires_fix:
                         # Resize Image to final dimensions
                         samples_ddim = torch.nn.functional.interpolate(
                             samples_ddim, size=(final_height // opt_f, final_width // opt_f), mode="bilinear"
