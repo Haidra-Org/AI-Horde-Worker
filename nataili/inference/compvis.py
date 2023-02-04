@@ -110,17 +110,17 @@ class CompVis:
                 logger.debug("HiRes Fix Requested")
                 final_width = width
                 final_height = height
-                ### Commented out until sd2 img2img is available
-                #if self.model_baseline == "stable diffusion 2":
+                # Commented out until sd2 img2img is available
+                # if self.model_baseline == "stable diffusion 2":
                 #    first_pass_ratio = min(final_height / 768, final_width / 768)
-                #else:
-                #    first_pass_ratio = min(final_height / 512, final_width / 512)  
-                first_pass_ratio = min(final_height / 512, final_width / 512)  
+                # else:
+                #    first_pass_ratio = min(final_height / 512, final_width / 512)
+                first_pass_ratio = min(final_height / 512, final_width / 512)
                 width = (int(final_width / first_pass_ratio) // 64) * 64
                 height = (int(final_height / first_pass_ratio) // 64) * 64
                 logger.debug(f"First pass image will be processed at width={width}; height={height}")
             else:
-                hires_fix = False 
+                hires_fix = False
 
         if mask_mode == "mask":
             if init_mask:

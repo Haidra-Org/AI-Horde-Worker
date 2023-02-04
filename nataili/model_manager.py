@@ -172,7 +172,7 @@ class ModelManager:
 
     def get_model(self, model_name):
         return self.models.get(model_name)
-    
+
     def get_model_baseline(self, model_name):
         return self.models[model_name]["baseline"]
 
