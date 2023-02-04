@@ -619,7 +619,7 @@ class CompVis:
                                     batch_size
                                     * [
                                         find_noise_for_image_hiresfix(
-                                            model,
+                                            self.model,
                                             self.device,
                                             samples_ddim,
                                             "",
