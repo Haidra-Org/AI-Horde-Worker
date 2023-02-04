@@ -244,6 +244,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     model=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
                     model_name=self.current_model,
+                    model_baseline=self.model_manager.get_model_baseline(self.current_model),
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
