@@ -225,14 +225,15 @@ class CompVis:
                 x0, z_mask = init_data
 
                 sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-                noise = x * sigmas[ddim_steps - t_enc_steps - 1]
-
-                xi = x0 + noise
-
-                # Obliterate masked image
-                if z_mask is not None and obliterate:
-                    random = torch.randn(z_mask.shape, device=xi.device)
-                    xi = (z_mask * noise) + ((1 - z_mask) * xi)
+                if not hires_fix:
+                    noise = x * sigmas[ddim_steps - t_enc_steps - 1]
+                    xi = x0 + noise
+                    # Obliterate masked image
+                    if z_mask is not None and obliterate:
+                        random = torch.randn(z_mask.shape, device=xi.device)
+                        xi = (z_mask * noise) + ((1 - z_mask) * xi)
+                else:
+                    xi = x0
 
                 sigma_sched = sigmas[ddim_steps - t_enc_steps - 1 :]
                 model_wrap_cfg = CFGMaskedDenoiser(sampler.model_wrap)
