@@ -12,21 +12,33 @@ from tqdm import tqdm
 # Location of stable horde worker bridge log
 LOG_FILE = "logs/bridge.log"
 
-# Today's date in log format
-TODAY = datetime.datetime.now().strftime("%Y-%m-%d")
-# Today's month in log format
-THIS_MONTH = datetime.datetime.now().strftime("%Y-%m-")
+# TIME PERIODS
+PERIOD_ALL = 0
+PERIOD_TODAY = 1
+PERIOD_YESTERDAY = 2
 
 # regex to identify model lines
 REGEX = re.compile(r".*([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]).*\[([a-zA-Z].*)\] ")
 
 
 class LogStats:
-    def __init__(self, today=False, logfile=LOG_FILE):
+    def __init__(self, period=PERIOD_ALL, logfile=LOG_FILE):
         self.used_models = {}
         self.unused_models = {}
         self.logfile = logfile
-        self.today_only = today
+        self.period = period
+
+    def get_date(self):
+        # Dates in log format for filtering
+        if self.period == PERIOD_TODAY:
+            adate = datetime.datetime.now()
+        elif self.period == PERIOD_YESTERDAY:
+            adate = datetime.datetime.now() - datetime.timedelta(1)
+        else:
+            adate = None
+        if adate:
+            adate = adate.strftime("%Y-%m-%d")
+        return adate
 
     def get_num_lines(self, file_path):
         fp = open(file_path, "r+")
@@ -52,7 +64,7 @@ class LogStats:
                 # Grab the lines we're interested in
                 regex = REGEX.match(line)
                 if regex:
-                    if self.today_only and regex.group(1) != TODAY:
+                    if self.period and regex.group(1) != self.get_date():
                         continue
                     # Extract model name
                     model = regex.group(2)
@@ -99,7 +111,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Generate local worker model usage statistics")
     parser.add_argument("-t", "--today", help="Statistics for today only", action="store_true")
+    parser.add_argument("-y", "--yesterday", help="Statistics for yesterday only", action="store_true")
     args = vars(parser.parse_args())
 
-    logs = LogStats(args["today"])
+    period = PERIOD_ALL
+    if args["today"]:
+        period = PERIOD_TODAY
+    elif args["yesterday"]:
+        period = PERIOD_YESTERDAY
+
+    logs = LogStats(period)
     logs.print_stats()
