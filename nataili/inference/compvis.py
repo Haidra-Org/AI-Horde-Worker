@@ -452,21 +452,21 @@ class CompVis:
                             )
 
                             # Create some more noise
-                            shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            #shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                            #x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                             # Re-initialise the image
-                            init_data_temp = (samples_ddim, None)
+                            #init_data_temp = (samples_ddim, None)
 
                             # Send image for img2img processing
-                            logger.debug("Hi-Res Fix Pass")
-                            samples_ddim = sample_img2img(
-                                init_data=init_data_temp,
-                                x=x,
-                                conditioning=c,
-                                unconditional_conditioning=uc,
-                                sampler_name=sampler_name,
-                            )
+                            #logger.debug("Hi-Res Fix Pass")
+                            #samples_ddim = sample_img2img(
+                            #    init_data=init_data_temp,
+                            #    x=x,
+                            #    conditioning=c,
+                            #    unconditional_conditioning=uc,
+                            #    sampler_name=sampler_name,
+                            #)
                 else:
                     init_image = init_img
                     init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert(
