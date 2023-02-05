@@ -1,12 +1,13 @@
 # model-stats.py
 # Calculate some basic model usage statistics from the local worker log file.
 # Usage: model-stats.py [--today]
-import re
-import mmap
-from tqdm import tqdm
-import datetime
 import argparse
+import datetime
+import mmap
+import re
+
 from bridgeData import models_to_load
+from tqdm import tqdm
 
 # Location of stable horde worker bridge log
 LOG_FILE = "logs/bridge.log"
@@ -17,11 +18,10 @@ TODAY = datetime.datetime.now().strftime("%Y-%m-%d")
 THIS_MONTH = datetime.datetime.now().strftime("%Y-%m-")
 
 # regex to identify model lines
-REGEX = re.compile(r'.*([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]).*\[([a-zA-Z].*)\] ')
+REGEX = re.compile(r".*([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]).*\[([a-zA-Z].*)\] ")
 
 
-class LogStats():
-
+class LogStats:
     def __init__(self, today=False, logfile=LOG_FILE):
         self.used_models = {}
         self.unused_models = {}
@@ -42,11 +42,13 @@ class LogStats():
         # Grab any statically loaded models
         self.unused_models = models_to_load[:]
         # Models to exclude
-        if 'safety_checker' in self.unused_models:
-            self.unused_models.remove('safety_checker')
+        if "safety_checker" in self.unused_models:
+            self.unused_models.remove("safety_checker")
 
         with open(LOG_FILE, "rt") as infile:
-            for line in tqdm(infile, total=self.get_num_lines(self.logfile), leave=True, unit=" lines", unit_scale=True):
+            for line in tqdm(
+                infile, total=self.get_num_lines(self.logfile), leave=True, unit=" lines", unit_scale=True
+            ):
                 # Grab the lines we're interested in
                 regex = REGEX.match(line)
                 if regex:
@@ -73,16 +75,14 @@ class LogStats():
         # Whats our longest model name?
         max_len = max([len(x) for x in self.used_models])
 
-        scores = sorted(
-            ((self.used_models[model], model) for model in self.used_models),
-            reverse=True)
+        scores = sorted(((self.used_models[model], model) for model in self.used_models), reverse=True)
         total = 0
         for count, name in scores:
             total += count
 
         j = 1
         for count, name in scores:
-            perc = round((count/total)*100, 1)
+            perc = round((count / total) * 100, 1)
             print(f"{j:>2}. {name:<{max_len}} {perc}% ({count})")
             j += 1
 
@@ -95,13 +95,11 @@ class LogStats():
             print("There were no unused models.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(
-        description='Generate local worker model usage statistics')
-    parser.add_argument(
-        '-t', '--today', help='Statistics for today only', action='store_true')
+    parser = argparse.ArgumentParser(description="Generate local worker model usage statistics")
+    parser.add_argument("-t", "--today", help="Statistics for today only", action="store_true")
     args = vars(parser.parse_args())
 
-    logs = LogStats(args['today'])
+    logs = LogStats(args["today"])
     logs.print_stats()
