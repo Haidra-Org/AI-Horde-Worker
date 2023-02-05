@@ -446,27 +446,35 @@ class CompVis:
                                 )
                             )
                         if hires_fix:
+                            # Put the image back together
+                            temp_x = model.decode_first_stage(samples_ddim)
+                            temp_x_samples_ddim = torch.clamp((temp_x + 1.0) / 2.0, min=0.0, max=1.0)
+                            for i, x_sample in enumerate(temp_x_samples_ddim):
+                                x_sample = 255.0 * rearrange(x_sample.cpu().numpy(), "c h w -> h w c")
+                                x_sample = x_sample.astype(np.uint8)
+                                temp_image = PIL.Image.fromarray(x_sample)
+
                             # Resize Image to final dimensions
-                            samples_ddim = torch.nn.functional.interpolate(
-                                samples_ddim, size=(final_height // opt_f, final_width // opt_f), mode="bilinear"
+                            temp_image = ImageOps.fit(
+                                temp_image, (final_width, final_height), method=Image.Resampling.LANCZOS
                             )
 
                             # Create some more noise
-                            # shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                            # x = create_random_tensors(shape, seeds=seeds, device=self.device)
+                            shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                             # Re-initialise the image
-                            # init_data_temp = (samples_ddim, None)
+                            init_data_temp = init(model, temp_image)
 
                             # Send image for img2img processing
-                            # logger.debug("Hi-Res Fix Pass")
-                            # samples_ddim = sample_img2img(
-                            #    init_data=init_data_temp,
-                            #    x=x,
-                            #    conditioning=c,
-                            #    unconditional_conditioning=uc,
-                            #    sampler_name=sampler_name,
-                            # )
+                            print("Hi-Res Fix Pass")
+                            samples_ddim = sample_img2img(
+                                init_data=init_data_temp,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
+                            )
                 else:
                     init_image = init_img
                     init_image = ImageOps.fit(init_image, (width, height), method=Image.Resampling.LANCZOS).convert(
