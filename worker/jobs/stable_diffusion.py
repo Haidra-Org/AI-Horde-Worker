@@ -302,7 +302,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
-        logger.info("censor done...")
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
