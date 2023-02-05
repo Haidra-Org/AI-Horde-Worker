@@ -20,7 +20,7 @@ from nataili.util import logger
 from nataili.util.cache import torch_gc
 from nataili.util.create_random_tensors import create_random_tensors
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.img2img import find_noise_for_image, find_noise_for_image_hiresfix, get_matched_noise, process_init_mask, resize_image
+from nataili.util.img2img import find_noise_for_image, get_matched_noise, process_init_mask, resize_image
 from nataili.util.performance import performance
 from nataili.util.process_prompt_tokens import process_prompt_tokens
 from nataili.util.save_sample import save_sample
@@ -212,8 +212,8 @@ class CompVis:
         def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
             nonlocal sampler
             if hires_fix:
-                ddim_steps = 50
-                t_enc_steps = int(0.1 * ddim_steps)
+                ddim_steps = 40
+                t_enc_steps = int(0.6 * ddim_steps)
             else:
                 t_enc_steps = t_enc
             obliterate = False
@@ -225,15 +225,14 @@ class CompVis:
                 x0, z_mask = init_data
 
                 sigmas = sampler.model_wrap.get_sigmas(ddim_steps)
-                if not hires_fix:
-                    noise = x * sigmas[ddim_steps - t_enc_steps - 1]
-                    xi = x0 + noise
-                    # Obliterate masked image
-                    if z_mask is not None and obliterate:
-                        random = torch.randn(z_mask.shape, device=xi.device)
-                        xi = (z_mask * noise) + ((1 - z_mask) * xi)
-                else:
-                    xi = x0
+                noise = x * sigmas[ddim_steps - t_enc_steps - 1]
+
+                xi = x0 + noise
+
+                # Obliterate masked image
+                if z_mask is not None and obliterate:
+                    random = torch.randn(z_mask.shape, device=xi.device)
+                    xi = (z_mask * noise) + ((1 - z_mask) * xi)
 
                 sigma_sched = sigmas[ddim_steps - t_enc_steps - 1 :]
                 model_wrap_cfg = CFGMaskedDenoiser(sampler.model_wrap)
@@ -453,22 +452,8 @@ class CompVis:
                             )
 
                             # Create some more noise
-                            #shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                            x = torch.cat(
-                                    batch_size
-                                    * [
-                                        find_noise_for_image_hiresfix(
-                                            model,
-                                            self.device,
-                                            samples_ddim.convert("RGB"),
-                                            "",
-                                            find_noise_steps,
-                                            0.0,
-                                            normalize=True,
-                                        )
-                                    ],
-                                    dim=0,
-                                )
+                            shape = [opt_C, final_height // opt_f, final_width // opt_f]
+                            x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                             # Re-initialise the image
                             init_data_temp = (samples_ddim, None)
@@ -615,21 +600,7 @@ class CompVis:
 
                         # Create some more noise
                         shape = [opt_C, final_height // opt_f, final_width // opt_f]
-                        x = torch.cat(
-                                    batch_size
-                                    * [
-                                        find_noise_for_image_hiresfix(
-                                            self.model,
-                                            self.device,
-                                            samples_ddim,
-                                            "",
-                                            find_noise_steps,
-                                            0.0,
-                                            normalize=True,
-                                        )
-                                    ],
-                                    dim=0,
-                                )
+                        x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                         # Re-initialise the image
                         init_data_temp = (samples_ddim, None)
