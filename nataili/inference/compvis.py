@@ -100,7 +100,7 @@ class CompVis:
         ddim_eta: float = 0.0,
         sigma_override: dict = None,
         tiling: bool = False,
-        hires_fix: bool = False,
+        hires_fix: bool = True,
     ):
         if init_img is not None:
             init_img = resize_image(resize_mode, init_img, width, height)
@@ -209,7 +209,7 @@ class CompVis:
                 mask,
             )
 
-        def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+        def sample_img2img(init_data, ddim_steps, x, conditioning, unconditional_conditioning, sampler_name):
             nonlocal sampler
             if hires_fix:
                 ddim_steps = 20
@@ -427,6 +427,7 @@ class CompVis:
                             samples_ddim = (
                                 sample_img2img(
                                     init_data=init_data,
+                                    ddim_steps=ddim_steps,
                                     x=x,
                                     conditioning=c,
                                     unconditional_conditioning=uc,
@@ -470,6 +471,7 @@ class CompVis:
                             print("Hi-Res Fix Pass")
                             samples_ddim = sample_img2img(
                                 init_data=init_data_temp,
+                                ddim_steps=ddim_steps,
                                 x=x,
                                 conditioning=c,
                                 unconditional_conditioning=uc,
@@ -582,6 +584,7 @@ class CompVis:
                         samples_ddim = (
                             sample_img2img(
                                 init_data=init_data,
+                                ddim_steps=ddim_steps,
                                 x=x,
                                 conditioning=c,
                                 unconditional_conditioning=uc,
@@ -625,6 +628,7 @@ class CompVis:
                         print("Hi-Res Fix Pass")
                         samples_ddim = sample_img2img(
                             init_data=init_data_temp,
+                            ddim_steps=ddim_steps,
                             x=x,
                             conditioning=c,
                             unconditional_conditioning=uc,
