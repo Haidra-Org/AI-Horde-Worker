@@ -213,7 +213,7 @@ class CompVis:
             nonlocal sampler
             if hires_fix:
                 ddim_steps = 40
-                t_enc_steps = int(0.6 * ddim_steps)
+                t_enc_steps = int(0.7 * ddim_steps)
             else:
                 t_enc_steps = t_enc
             obliterate = False
