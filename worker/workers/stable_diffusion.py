@@ -2,8 +2,8 @@
 import traceback
 
 import requests
-
 from nataili.util.logger import logger
+
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
 from worker.workers.framework import WorkerFramework
@@ -37,7 +37,7 @@ class StableDiffusionWorker(WorkerFramework):
 
     def get_running_models(self):
         running_models = []
-        for (job_thread, start_time, job) in self.running_jobs:
+        for job_thread, start_time, job in self.running_jobs:
             running_models.append(job.current_model)
         # logger.debug(running_models)
         return running_models

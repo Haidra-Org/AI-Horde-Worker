@@ -3,11 +3,11 @@ import time
 import traceback
 
 import numpy as np
-from transformers import CLIPFeatureExtractor
-
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
+from transformers import CLIPFeatureExtractor
+
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 

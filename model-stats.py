@@ -49,7 +49,6 @@ class LogStats:
         return lines
 
     def parse_log(self):
-
         self.used_models = {}
         # Grab any statically loaded models
         self.unused_models = models_to_load[:]
@@ -108,7 +107,6 @@ class LogStats:
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Generate local worker model usage statistics")
     parser.add_argument("-t", "--today", help="Statistics for today only", action="store_true")
     parser.add_argument("-y", "--yesterday", help="Statistics for yesterday only", action="store_true")

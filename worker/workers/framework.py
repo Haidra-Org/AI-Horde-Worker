@@ -66,7 +66,7 @@ class WorkerFramework:
             if not self.start_job():
                 break
         # Check if any jobs are done
-        for (job_thread, start_time, job) in self.running_jobs:
+        for job_thread, start_time, job in self.running_jobs:
             self.check_running_job_status(job_thread, start_time, job)
             if self.should_restart or self.should_stop:
                 break

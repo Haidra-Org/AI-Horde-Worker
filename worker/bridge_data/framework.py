@@ -1,5 +1,4 @@
 """The configuration of the bridge"""
-import getpass
 import importlib
 import os
 import random
@@ -7,9 +6,9 @@ import sys
 import threading
 
 import requests
-
 from nataili import disable_voodoo
 from nataili.util.logger import logger
+
 from worker.consts import BRIDGE_VERSION
 
 

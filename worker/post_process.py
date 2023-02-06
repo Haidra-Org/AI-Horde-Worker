@@ -1,7 +1,7 @@
 """Post process images"""
 from nataili.codeformers import codeformers
-from nataili.gfpgan import gfpgan
 from nataili.esrgan import esrgan
+from nataili.gfpgan import gfpgan
 from nataili.util.logger import logger
 
 KNOWN_POST_PROCESSORS = {"GFPGAN": gfpgan, "RealESRGAN_x4plus": esrgan, "CodeFormers": codeformers}
