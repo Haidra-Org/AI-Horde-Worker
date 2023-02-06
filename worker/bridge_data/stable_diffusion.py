@@ -3,7 +3,7 @@ import os
 
 from PIL import Image
 
-from nataili.util import logger
+from nataili.util.logger import logger
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 

@@ -8,10 +8,10 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from nataili.inference.compvis import CompVis
-from nataili.inference.diffusers.depth2img import Depth2Img
-from nataili.inference.diffusers.inpainting import inpainting
-from nataili.util import logger
+from nataili.stable_diffusion.compvis import CompVis
+from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
+from nataili.stable_diffusion.diffusers.inpainting import inpainting
+from nataili.util.logger import logger
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -91,7 +91,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "sampler_name" in self.current_payload:
                 # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                if self.model_manager.get_model(self.current_model).get("baseline") == "stable diffusion 2":
+                if self.model_manager.models[self.current_model].get("baseline") == "stable diffusion 2":
                     gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
@@ -109,7 +109,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         # TODO: Fix img2img for SD2
-        if source_image and self.model_manager.get_model(self.current_model).get("baseline") != "stable diffusion 2":
+        if source_image and self.model_manager.models[self.current_model].get("baseline") != "stable diffusion 2":
             img_source = None
             img_mask = None
             if source_processing == "img2img":
@@ -239,8 +239,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 )
             else:
                 generator = CompVis(
-                    model=self.model_manager.loaded_models[self.current_model]["model"],
-                    device=self.model_manager.loaded_models[self.current_model]["device"],
+                    model=self.model_manager.loaded_models[self.current_model],
                     model_name=self.current_model,
                     output_dir="bridge_generations",
                     load_concepts=True,

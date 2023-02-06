@@ -12,3 +12,39 @@ max-line-length=500
 
 [tool.ruff]
 line-length = 500
+
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "horde_bridge"
+version = "0.0.1"
+authors = [
+    { name="db0", email="mail@dbzer0.com" },
+]
+description = "Stable Horde bridge"
+readme = "README.md"
+license = { file="LICENSE" }
+dynamic = ["dependencies"]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/db0/AI-Horde-Worker"
+"Bug Tracker" = "https://github.com/db0/AI-Horde-Worker"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages]
+find = {}
+
+[project.scripts]
+horde_bridge = "bridge_stable_diffusion:main"
+horde_bridge_interrogate = "bridge_interrogation:main"
+horde_bridge_webui = "webui:main"

@@ -9,7 +9,7 @@ import threading
 import requests
 
 from nataili import disable_voodoo
-from nataili.util import logger
+from nataili.util.logger import logger
 from worker.consts import BRIDGE_VERSION
 
 
@@ -121,7 +121,7 @@ class BridgeDataTemplate:
         not_found_models = []
         for model in self.model_names.copy():
             logger.info(f"Checking: {model}")
-            model_info = model_manager.get_model(model)
+            model_info = model_manager.models.get(model, None)
             if not model_info:
                 logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
@@ -139,15 +139,14 @@ class BridgeDataTemplate:
             if model in model_manager.get_loaded_models_names():
                 continue
             if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
+                logger.debug(f"Model {model} not valid")
                 if (
                     model_manager.count_available_models_by_types() + len(not_found_models)
                     < self.max_models_to_download
                 ):
+                    logger.debug(f"Model {model} not found")
                     models_exist = False
                     not_found_models.append(model)
-            # Diffusers library uses its own internal download mechanism
-            if model_info["type"] == "diffusers" and model_info["hf_auth"]:
-                check_mm_auth(model_manager, self.args)
         if not models_exist:
             if self.args.yes or self.check_extra_conditions_for_download_choice():
                 choice = "y"
@@ -163,17 +162,6 @@ class BridgeDataTemplate:
                 )
             if choice not in ["y", "Y", "", "yes", "all", "a"]:
                 sys.exit(1)
-            needs_hf = False
-            for model in not_found_models:
-                models_to_download = model_manager.get_model_download(model)
-                for download_model in models_to_download:
-                    if download_model.get("hf_auth", False):
-                        needs_hf = True
-            if choice in ["all", "a"]:
-                needs_hf = True
-            if needs_hf:
-                check_mm_auth(model_manager, self.args)
-            model_manager.init()
             model_manager.taint_models(not_found_models)
             if choice in ["all", "a"]:
                 model_manager.download_all()
@@ -227,27 +215,10 @@ class BridgeDataTemplate:
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
                 logger.init(f"{model}", status="Loading")
-                success = model_manager.load_model(model)
+                success = model_manager.load(model, voodoo=False if self.disable_voodoo.active else True)
                 if success:
                     logger.init_ok(f"{model}", status="Loaded")
                 else:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True
         self.models_reloading = False
-
-
-def check_mm_auth(model_manager, args):
-    """Checks for hugging face authentication for model manager"""
-    if model_manager.has_authentication():
-        return
-    if args.hf_token:
-        hf_auth = {"username": "USER", "password": args.hf_token}
-        model_manager.set_authentication(hf_auth=hf_auth)
-        return
-    try:
-        from creds import hf_password, hf_username
-    except ImportError:
-        hf_username = input("Please type your huggingface.co username: ")
-        hf_password = getpass.getpass("Please type your huggingface.co Access Token or password: ")
-    hf_auth = {"username": hf_username, "password": hf_password}
-    model_manager.set_authentication(hf_auth=hf_auth)

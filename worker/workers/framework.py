@@ -2,7 +2,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from nataili.util import logger
+from nataili.util.logger import logger
 
 
 class WorkerFramework:
@@ -169,8 +169,6 @@ class WorkerFramework:
         self.bridge_data.reload_data()
 
     def reload_bridge_data(self):
-        self.model_manager.download_model_reference()
-        self.model_manager.init()
         self.reload_data()
         self.executor._max_workers = self.bridge_data.max_threads
         self.last_config_reload = time.time()

@@ -7,7 +7,7 @@ from transformers import CLIPFeatureExtractor
 
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
-from nataili.util import logger
+from nataili.util.logger import logger
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 

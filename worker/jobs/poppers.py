@@ -6,7 +6,7 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from nataili.util import logger
+from nataili.util.logger import logger
 from worker.consts import BRIDGE_VERSION
 
 
