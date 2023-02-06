@@ -10,7 +10,7 @@ To run the bridge, simply follow the instructions for your own OS
 
 # Installing
 
-If you haven't already, go to [stable horde and register an account](https://stablehorde.net/register), then store your API key somewhere secure. You will need it later in these instructions. 
+If you haven't already, go to [stable horde and register an account](https://stablehorde.net/register), then store your API key somewhere secure. You will need it later in these instructions.
 
 This will allow your worker to gather kudos for your account.
 
@@ -23,7 +23,7 @@ Use these instructions if you have installed [git for windows](https://gitforwin
 This option is recommended as it will make keeping your repository up to date much easier.
 
 1. Use your start menu to open `git GUI`
-1. Select "Clone Existing Repository". 
+1. Select "Clone Existing Repository".
 1. In the Source location put `https://github.com/db0/AI-Horde-Worker.git`
 1. In the target directory, browse to any folder you want to put the horde worker folder.
 1. Press `Clone`
@@ -55,7 +55,7 @@ Continue with the [Running](#running) instructions
 
 The below instructions refer to running scripts `horde-bridge` or `update-runtime`. Depending on your OS, append `.cmd` for windows, or `.sh` for linux.
 
-You can double click the provided script files below from a file explorer or run it from a terminal like `bash`, `git bash` or `cmd` depending on your OS. 
+You can double click the provided script files below from a file explorer or run it from a terminal like `bash`, `git bash` or `cmd` depending on your OS.
 The latter option will allow you to see errors in case of a crash, so it's recommended.
 
 ## Update runtime
@@ -80,13 +80,13 @@ You can also edit this file using a text editor. We also provide a `bridgeData_t
 
 ## Startup
 
-Start your worker, depending on which type your want. 
+Start your worker, depending on which type your want.
 
 * If you want to generate Stable Diffusion images for others, run `horde-bridge`.
 
     **Note:** In order for your worker to work, it needs to download a stable diffusion model. To do that, you will need to register a free account at https://huggingface.co. You will need to put your username and password for it when prompted. You will also need to accept the license of the model you're about to download, so after logging in to huggingface, visit https://huggingface.co/runwayml/stable-diffusion-v1-5 and accept the license presented within.
 
-    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 20G or RAM, append `--disable-voodoo` to your startup command above! If you do not have at least 6Gb of swap, also `--disable_voodoo`!
+    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 20G or RAM, append `--disable_voodoo` to your startup command above! If you do not have at least 6Gb of swap, also `--disable_voodoo`!
 * If you want to interrogate images for other, run `horde-interrogation_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
 
     **Warning:** This currently the interrogation worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
