@@ -1,4 +1,5 @@
 """This is the bridge, It connects the horde with the ML processing"""
+import os
 from worker.argparser.stable_diffusion import args
 from nataili.model_manager.super import ModelManager
 from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
@@ -6,10 +7,33 @@ from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.workers.stable_diffusion import StableDiffusionWorker
 
 
+def check_for_old_dir():
+    models_folder = "models/custom"
+    compvis_folder = "nataili/compvis"
+    if os.path.exists(models_folder):
+        print(f"{models_folder} folder exists.")
+        answer = input(f"Do you want to move its contents to {compvis_folder} [Y/N]? ")
+        if answer.lower() == "y":
+            if not os.path.exists(compvis_folder):
+                os.makedirs(compvis_folder)
+            import shutil
+            contents = os.listdir(models_folder)
+            for item in contents:
+                shutil.move(os.path.join(models_folder, item), compvis_folder)
+            print(f"Contents of {models_folder} have been moved to {compvis_folder}.")
+            answer = input(f"Do you want to delete the models/ folder [Y/N]? ")
+            if answer.lower() == "y":
+                shutil.rmtree("models/")
+                print(f"models/ folder has been deleted.")
+            else:
+                print("old models/ folder left intact.")
+        else:
+            print("Existing custom models left in their previous location.")
+
 def main():
     set_logger_verbosity(args.verbosity)
     quiesce_logger(args.quiet)
-
+    
     bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(
         compvis=True,
@@ -28,4 +52,5 @@ def main():
 
 
 if __name__ == "__main__":
+    check_for_old_dir()
     main()
