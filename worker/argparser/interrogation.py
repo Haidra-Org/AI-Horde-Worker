@@ -1,5 +1,5 @@
 """Arg parsing for the main script."""
-from nataili import disable_local_ray_temp, disable_voodoo, disable_xformers
+from nataili import enable_local_ray_temp, disable_voodoo, disable_xformers
 
 from worker.argparser.framework import arg_parser
 
@@ -16,5 +16,5 @@ arg_parser.add_argument(
 args = arg_parser.parse_args()
 
 disable_xformers.activate()
-disable_local_ray_temp.activate()
+enable_local_ray_temp.disable()
 disable_voodoo.activate()
