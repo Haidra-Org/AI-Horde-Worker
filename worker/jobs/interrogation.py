@@ -46,8 +46,7 @@ class InterrogationHordeJob(HordeJobFramework):
         else:
             if self.current_form == "caption":
                 interrogator = Caption(
-                    self.model_manager.loaded_models["BLIP_Large"]["model"],
-                    self.model_manager.loaded_models["BLIP_Large"]["device"],
+                    self.model_manager.loaded_models["BLIP_Large"]
                 )
                 payload_kwargs = {
                     "sample": True,
@@ -61,11 +60,7 @@ class InterrogationHordeJob(HordeJobFramework):
                 }
             if self.current_form == "interrogation":
                 interrogator = Interrogator(
-                    self.model_manager.loaded_models["ViT-L/14"]["model"],
-                    self.model_manager.loaded_models["ViT-L/14"]["preprocess"],
-                    self.model_manager.loaded_models["ViT-L/14"]["data_lists"],
-                    self.model_manager.loaded_models["ViT-L/14"]["device"],
-                    batch_size=100,
+                    self.model_manager.loaded_models["ViT-L/14"]
                 )
             try:
                 self.result = interrogator(self.image, **payload_kwargs)
