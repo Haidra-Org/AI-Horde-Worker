@@ -62,6 +62,11 @@ class InterrogationHordeJob(HordeJobFramework):
                 interrogator = Interrogator(
                     self.model_manager.loaded_models["ViT-L/14"],
                 )
+                payload_kwargs = {
+                    "rank": self.current_payload.get("rank", True), # TODO: Change after payload onboards rank/similarity
+                    "similarity": self.current_payload.get("similarity", False),
+                    "top_count": self.current_payload.get("top_count", 5), # TODO: Add to payload
+                }
             try:
                 self.result = interrogator(self.image, **payload_kwargs)
             except RuntimeError as err:
