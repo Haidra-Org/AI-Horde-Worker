@@ -72,6 +72,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         source_processing = self.pop.get("source_processing")
         source_image = self.pop.get("source_image")
         source_mask = self.pop.get("source_mask")
+        model_baseline = self.model_manager.models[self.current_model].get("baseline")
         # These params will always exist in the payload from the horde
         try:
             gen_payload = {
@@ -91,7 +92,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "sampler_name" in self.current_payload:
                 # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                if self.model_manager.models[self.current_model].get("baseline") == "stable diffusion 2":
+                if model_baseline == "stable diffusion 2":
                     gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
@@ -241,6 +242,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 generator = CompVis(
                     model=self.model_manager.loaded_models[self.current_model],
                     model_name=self.current_model,
+                    model_baseline=model_baseline,
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
