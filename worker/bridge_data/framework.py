@@ -168,7 +168,7 @@ class BridgeDataTemplate:
                 model_manager.download_all()
             elif choice in ["y", "Y", "", "yes"]:
                 for model in not_found_models:
-                    logger.init(f"Model: {model}", status="Downloading")
+                    # logger.init(f"Model: {model}", status="Downloading")
                     if not model_manager.download_model(model):
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
@@ -215,11 +215,8 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                logger.init(f"{model}", status="Loading")
                 success = model_manager.load(model, voodoo=False if self.disable_voodoo.active else True)
-                if success:
-                    logger.init_ok(f"{model}", status="Loaded")
-                else:
+                if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True
         self.models_reloading = False

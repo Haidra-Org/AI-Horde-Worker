@@ -217,6 +217,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
             req_type = "txt2img"
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
+        if self.current_model not in self.model_manager.loaded_models:
+            logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
+            self.status = JobStatus.FAULTED
+            self.start_submit_thread()
+            return            
         if req_type in ["img2img", "txt2img"]:
             if req_type == "img2img":
                 gen_payload["init_img"] = img_source
