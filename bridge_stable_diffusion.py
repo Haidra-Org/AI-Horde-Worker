@@ -1,6 +1,11 @@
 """This is the bridge, It connects the horde with the ML processing"""
 import os
+
+# isort: off
+# We need to import the argparser first, as it sets the necessry Switches
 from worker.argparser.stable_diffusion import args
+
+# isort: on
 
 from nataili.model_manager.super import ModelManager
 from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
@@ -24,10 +29,10 @@ def check_for_old_dir():
             for item in contents:
                 shutil.move(os.path.join(models_folder, item), compvis_folder)
             print(f"Contents of {models_folder} have been moved to {compvis_folder}.")
-            answer = input(f"Do you want to delete the models/ folder [Y/N]? ")
+            answer = input("Do you want to delete the models/ folder [Y/N]? ")
             if answer.lower() == "y":
                 shutil.rmtree("models/")
-                print(f"models/ folder has been deleted.")
+                print("models/ folder has been deleted.")
             else:
                 print("old models/ folder left intact.")
         else:

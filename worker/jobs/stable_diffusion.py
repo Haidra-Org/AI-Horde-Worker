@@ -296,7 +296,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
         try:
             logger.info(
-                f"Starting generation: {self.current_model} @ {self.current_payload['width']}x{self.current_payload['height']}..."
+                f"Starting generation: {self.current_model} @ "
+                f"{self.current_payload['width']}x{self.current_payload['height']}..."
             )
             generator.generate(**gen_payload)
             logger.info("Generation finished successfully.")
