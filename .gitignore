@@ -161,6 +161,13 @@ models/**/*.json
 models/**/*.bin
 models/**/*.txt
 models/**/*.yaml
+nataili/**/*.ckpt
+nataili/**/*.pth
+nataili/**/*.pt
+nataili/**/*.json
+nataili/**/*.bin
+nataili/**/*.txt
+nataili/**/*.yaml
 /outputs/
 /temp/
 /gfpgan/

@@ -3,11 +3,11 @@ import time
 import traceback
 
 import numpy as np
-from transformers import CLIPFeatureExtractor
-
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
-from nataili.util import logger
+from nataili.util.logger import logger
+from transformers import CLIPFeatureExtractor
+
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 
@@ -46,8 +46,7 @@ class InterrogationHordeJob(HordeJobFramework):
         else:
             if self.current_form == "caption":
                 interrogator = Caption(
-                    self.model_manager.loaded_models["BLIP_Large"]["model"],
-                    self.model_manager.loaded_models["BLIP_Large"]["device"],
+                    self.model_manager.loaded_models["BLIP_Large"],
                 )
                 payload_kwargs = {
                     "sample": True,
@@ -61,12 +60,15 @@ class InterrogationHordeJob(HordeJobFramework):
                 }
             if self.current_form == "interrogation":
                 interrogator = Interrogator(
-                    self.model_manager.loaded_models["ViT-L/14"]["model"],
-                    self.model_manager.loaded_models["ViT-L/14"]["preprocess"],
-                    self.model_manager.loaded_models["ViT-L/14"]["data_lists"],
-                    self.model_manager.loaded_models["ViT-L/14"]["device"],
-                    batch_size=100,
+                    self.model_manager.loaded_models["ViT-L/14"],
                 )
+                payload_kwargs = {
+                    "rank": self.current_payload.get(
+                        "rank", True
+                    ),  # TODO: Change after payload onboards rank/similarity
+                    "similarity": self.current_payload.get("similarity", False),
+                    "top_count": self.current_payload.get("top_count", 5),  # TODO: Add to payload
+                }
             try:
                 self.result = interrogator(self.image, **payload_kwargs)
             except RuntimeError as err:

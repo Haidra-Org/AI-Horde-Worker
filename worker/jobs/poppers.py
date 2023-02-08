@@ -4,14 +4,13 @@ import time
 from io import BytesIO
 
 import requests
+from nataili.util.logger import logger
 from PIL import Image, UnidentifiedImageError
 
-from nataili.util import logger
 from worker.consts import BRIDGE_VERSION
 
 
 class JobPopper:
-
     retry_interval = 1
     BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
@@ -107,7 +106,6 @@ class StableDiffusionPopper(JobPopper):
         }
 
     def horde_pop(self):
-
         if not super().horde_pop():
             return
         if not self.pop.get("id"):

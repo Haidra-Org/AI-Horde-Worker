@@ -1,8 +1,8 @@
 import gradio as gr
 import regex as re
 import requests
+from nataili.util.logger import logger
 
-from nataili.util import logger
 from worker.bridge_data.interrogation import InterrogationBridgeData
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 

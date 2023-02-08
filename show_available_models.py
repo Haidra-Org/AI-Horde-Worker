@@ -1,7 +1,7 @@
 """Utility script to show available models."""
 
 # test_download_models
-from nataili.model_manager import ModelManager
+from nataili.model_manager.compvis import CompVisModelManager as ModelManager
 
 if __name__ == "__main__":
     # TODO: huggingface_hub or some way to use token instead of username/password

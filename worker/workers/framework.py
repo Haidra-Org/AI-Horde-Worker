@@ -2,7 +2,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from nataili.util import logger
+from nataili.util.logger import logger
 
 
 class WorkerFramework:
@@ -66,7 +66,7 @@ class WorkerFramework:
             if not self.start_job():
                 break
         # Check if any jobs are done
-        for (job_thread, start_time, job) in self.running_jobs:
+        for job_thread, start_time, job in self.running_jobs:
             self.check_running_job_status(job_thread, start_time, job)
             if self.should_restart or self.should_stop:
                 break
@@ -169,8 +169,6 @@ class WorkerFramework:
         self.bridge_data.reload_data()
 
     def reload_bridge_data(self):
-        self.model_manager.download_model_reference()
-        self.model_manager.init()
         self.reload_data()
         self.executor._max_workers = self.bridge_data.max_threads
         self.last_config_reload = time.time()

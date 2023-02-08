@@ -1,9 +1,9 @@
 """The configuration of the bridge"""
 import os
 
+from nataili.util.logger import logger
 from PIL import Image
 
-from nataili.util import logger
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 

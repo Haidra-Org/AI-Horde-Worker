@@ -1,7 +1,8 @@
 """The configuration of the bridge"""
 import os
 
-from nataili.util import logger
+from nataili.util.logger import logger
+
 from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
 

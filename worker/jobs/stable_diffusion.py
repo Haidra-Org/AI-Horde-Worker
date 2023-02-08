@@ -6,12 +6,12 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
+from nataili.stable_diffusion.compvis import CompVis
+from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
+from nataili.stable_diffusion.diffusers.inpainting import inpainting
+from nataili.util.logger import logger
 from PIL import Image, UnidentifiedImageError
 
-from nataili.inference.compvis import CompVis
-from nataili.inference.diffusers.depth2img import Depth2Img
-from nataili.inference.diffusers.inpainting import inpainting
-from nataili.util import logger
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -72,6 +72,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         source_processing = self.pop.get("source_processing")
         source_image = self.pop.get("source_image")
         source_mask = self.pop.get("source_mask")
+        model_baseline = self.model_manager.models[self.current_model].get("baseline")
         # These params will always exist in the payload from the horde
         try:
             gen_payload = {
@@ -91,7 +92,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "sampler_name" in self.current_payload:
                 # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                if self.model_manager.get_model(self.current_model).get("baseline") == "stable diffusion 2":
+                if model_baseline == "stable diffusion 2":
                     gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
@@ -101,6 +102,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
             if self.current_payload.get("karras", False):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
+            if "hires_fix" in self.current_payload and not source_image:
+                gen_payload["hires_fix"] = self.current_payload["hires_fix"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -109,7 +112,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         # TODO: Fix img2img for SD2
-        if source_image and self.model_manager.get_model(self.current_model).get("baseline") != "stable diffusion 2":
+        if source_image and self.model_manager.models[self.current_model].get("baseline") != "stable diffusion 2":
             img_source = None
             img_mask = None
             if source_processing == "img2img":
@@ -129,6 +132,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     available_model != "stable_diffusion_inpainting"
                     and available_model not in StableDiffusionBridgeData.POSTPROCESSORS
                 ):
+                    logger.debug(
+                        [
+                            self.current_model,
+                            self.model_manager.models[self.current_model].get("baseline"),
+                            source_processing,
+                            req_type,
+                        ]
+                    )
                     self.current_model = available_model
                     logger.warning(
                         "Model stable_diffusion_inpainting chosen for txt2img or img2img gen, "
@@ -214,6 +225,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
             req_type = "txt2img"
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
+        if self.current_model not in self.model_manager.loaded_models:
+            logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
+            self.status = JobStatus.FAULTED
+            self.start_submit_thread()
+            return
         if req_type in ["img2img", "txt2img"]:
             if req_type == "img2img":
                 gen_payload["init_img"] = img_source
@@ -239,9 +255,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 )
             else:
                 generator = CompVis(
-                    model=self.model_manager.loaded_models[self.current_model]["model"],
-                    device=self.model_manager.loaded_models[self.current_model]["device"],
+                    model=self.model_manager.loaded_models[self.current_model],
                     model_name=self.current_model,
+                    model_baseline=model_baseline,
                     output_dir="bridge_generations",
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
@@ -279,9 +295,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 disable_voodoo=self.bridge_data.disable_voodoo.active,
             )
         try:
-            logger.info("Starting generation...")
+            logger.info(
+                f"Starting generation: {self.current_model} @ "
+                f"{self.current_payload['width']}x{self.current_payload['height']}..."
+            )
             generator.generate(**gen_payload)
-            logger.info("Finished generation...")
+            logger.info("Generation finished successfully.")
         except (RuntimeError, ValueError, AttributeError) as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
