@@ -132,6 +132,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     available_model != "stable_diffusion_inpainting"
                     and available_model not in StableDiffusionBridgeData.POSTPROCESSORS
                 ):
+                    logger.debug([self.current_model,self.model_manager.models[self.current_model].get("baseline"),source_processing,req_type])
                     self.current_model = available_model
                     logger.warning(
                         "Model stable_diffusion_inpainting chosen for txt2img or img2img gen, "
@@ -287,9 +288,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 disable_voodoo=self.bridge_data.disable_voodoo.active,
             )
         try:
-            logger.info("Starting generation...")
+            logger.info(f"Starting generation: {self.current_model} @ {self.current_payload['width']}x{self.current_payload['height']}...")
             generator.generate(**gen_payload)
-            logger.info("Finished generation...")
+            logger.info("Generation finished successfully.")
         except (RuntimeError, ValueError, AttributeError) as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
