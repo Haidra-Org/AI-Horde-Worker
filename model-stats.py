@@ -1,6 +1,6 @@
 # model-stats.py
 # Calculate some basic model usage statistics from the local worker log file.
-# Usage: model-stats.py [--today]
+# Usage: model-stats.py [-h] [--today] [--yesterday]
 import argparse
 import datetime
 import mmap
@@ -18,7 +18,7 @@ PERIOD_TODAY = 1
 PERIOD_YESTERDAY = 2
 
 # regex to identify model lines
-REGEX = re.compile(r".*([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]).*\[([a-zA-Z].*)\] ")
+REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d).*Starting generation: (.*) @")
 
 
 class LogStats:
