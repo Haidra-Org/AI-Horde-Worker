@@ -6,9 +6,9 @@ import sys
 import threading
 
 import requests
-from nataili import disable_voodoo
 from nataili.util.logger import logger
 
+from nataili import disable_voodoo
 from worker.consts import BRIDGE_VERSION
 
 
