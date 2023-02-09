@@ -11,7 +11,7 @@ from bridgeData import models_to_load
 from tqdm import tqdm
 
 # Location of stable horde worker bridge log
-LOG_FILE = "logs/bridge.*.log"
+LOG_FILE = "logs/bridge*.log"
 
 # TIME PERIODS
 PERIOD_ALL = 0
