@@ -168,6 +168,7 @@ nataili/**/*.json
 nataili/**/*.bin
 nataili/**/*.txt
 nataili/**/*.yaml
+nataili/**/*.md5
 /outputs/
 /temp/
 /gfpgan/
