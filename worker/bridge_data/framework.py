@@ -119,7 +119,7 @@ class BridgeDataTemplate:
         models_exist = True
         not_found_models = []
         for model in self.model_names.copy():
-            logger.info(f"Checking: {model}")
+            # logger.info(f"Checking: {model}")
             model_info = model_manager.models.get(model, None)
             if not model_info:
                 logger.warning(
