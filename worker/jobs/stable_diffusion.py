@@ -313,6 +313,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
             self.status = JobStatus.FAULTED
+            generator = None
             self.start_submit_thread()
             return
         self.image = generator.images[0]["image"]
