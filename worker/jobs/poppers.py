@@ -32,7 +32,7 @@ class JobPopper:
                 timeout=40,
             )
             # logger.debug(self.pop_payload)
-            logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()}")
+            logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()} (node: {pop_req.headers['horde-node']})")
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)
