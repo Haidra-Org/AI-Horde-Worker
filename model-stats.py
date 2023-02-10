@@ -3,6 +3,7 @@
 # Usage: model-stats.py [-h] [--today] [--yesterday]
 import argparse
 import datetime
+import glob
 import mmap
 import re
 
@@ -10,7 +11,7 @@ from bridgeData import models_to_load
 from tqdm import tqdm
 
 # Location of stable horde worker bridge log
-LOG_FILE = "logs/bridge.log"
+LOG_FILE = "logs/bridge*.log"
 
 # TIME PERIODS
 PERIOD_ALL = 0
@@ -56,27 +57,34 @@ class LogStats:
         if "safety_checker" in self.unused_models:
             self.unused_models.remove("safety_checker")
 
-        with open(LOG_FILE, "rt") as infile:
-            for line in tqdm(
-                infile, total=self.get_num_lines(self.logfile), leave=True, unit=" lines", unit_scale=True
-            ):
-                # Grab the lines we're interested in
-                regex = REGEX.match(line)
-                if regex:
-                    if self.period and regex.group(1) != self.get_date():
-                        continue
-                    # Extract model name
-                    model = regex.group(2)
+        # Identify all log files and total number of log lines
+        total_log_lines = 0
+        for logfile in glob.glob(self.logfile):
+            total_log_lines += self.get_num_lines(logfile)
 
-                    # Remember we used this model
-                    if model in self.unused_models:
-                        self.unused_models.remove(model)
+        progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
+        for logfile in glob.glob(self.logfile):
+            with open(logfile, "rt") as infile:
+                for line in infile:
+                    # Grab the lines we're interested in
+                    regex = REGEX.match(line)
+                    if regex:
+                        if self.period and regex.group(1) != self.get_date():
+                            continue
+                        # Extract model name
+                        model = regex.group(2)
 
-                    # Keep count of how many times we used a model
-                    if model in self.used_models:
-                        self.used_models[model] += 1
-                    else:
-                        self.used_models[model] = 1
+                        # Remember we used this model
+                        if model in self.unused_models:
+                            self.unused_models.remove(model)
+
+                        # Keep count of how many times we used a model
+                        if model in self.used_models:
+                            self.used_models[model] += 1
+                        else:
+                            self.used_models[model] = 1
+
+                    progress.update()
 
     def print_stats(self):
         # Parse our log file if we haven't done that yet
