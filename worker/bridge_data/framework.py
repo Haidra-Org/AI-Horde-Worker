@@ -122,12 +122,16 @@ class BridgeDataTemplate:
             # logger.info(f"Checking: {model}")
             model_info = model_manager.models.get(model, None)
             if not model_info:
-                logger.warning(
-                    f"Model name requested {model} in bridgeData is unknown to us. "
-                    "Please check your configuration. Aborting!"
-                )
-                self.model_names.remove(model)
-                continue
+                # Try to refresh the model database in case it's been updated
+                self.model_manager.download_model_reference()
+                model_info = model_manager.models.get(model, None)
+                if not model_info:
+                    logger.warning(
+                        f"Model name requested {model} in bridgeData is unknown to us. "
+                        "Please check your configuration. Aborting!"
+                    )
+                    self.model_names.remove(model)
+                    continue
             if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
                 logger.warning(
                     f"Model reuested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
