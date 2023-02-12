@@ -123,7 +123,7 @@ class BridgeDataTemplate:
             model_info = model_manager.models.get(model, None)
             if not model_info:
                 # Try to refresh the model database in case it's been updated
-                self.model_manager.download_model_reference()
+                model_manager.download_model_reference()
                 model_info = model_manager.models.get(model, None)
                 if not model_info:
                     logger.warning(
