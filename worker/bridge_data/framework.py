@@ -130,7 +130,7 @@ class BridgeDataTemplate:
                 continue
             if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
                 logger.warning(
-                    f"Model reuested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
+                    f"Model requested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
                     "Please upgrade your bridge. Skipping."
                 )
                 self.model_names.remove(model)
