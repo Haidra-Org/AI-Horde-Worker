@@ -1,11 +1,13 @@
 # model-stats.py
 # Calculate some basic model usage statistics from the local worker log file.
-# Usage: model-stats.py [-h] [--today] [--yesterday]
+# Or optionally use the central horde stats.
+# Usage: model-stats.py [-h] [--horde] [--today] [--yesterday]
 import argparse
 import datetime
 import glob
 import mmap
 import re
+import requests
 
 from bridgeData import models_to_load
 from tqdm import tqdm
@@ -17,6 +19,8 @@ LOG_FILE = "logs/bridge*.log"
 PERIOD_ALL = 0
 PERIOD_TODAY = 1
 PERIOD_YESTERDAY = 2
+PERIOD_HORDE_DAY = 3
+PERIOD_HORDE_MONTH = 4
 
 # regex to identify model lines
 REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d).*Starting generation: (.*) @")
@@ -49,6 +53,12 @@ class LogStats:
             lines += 1
         return lines
 
+    def download_stats(self, period):
+        self.unused_models = []  # not relevant 
+
+        req = requests.get("https://stablehorde.net/api/v2/stats/img/models")
+        self.used_models = req.json()[period] if req.ok else {}
+        
     def parse_log(self):
         self.used_models = {}
         # Grab any statically loaded models
@@ -56,6 +66,14 @@ class LogStats:
         # Models to exclude
         if "safety_checker" in self.unused_models:
             self.unused_models.remove("safety_checker")
+
+        # If using the horde central db, skip local logs
+        if self.period == PERIOD_HORDE_DAY:
+            self.download_stats("day")
+            return
+        elif self.period == PERIOD_HORDE_MONTH:
+            self.download_stats("month")
+            return
 
         # Identify all log files and total number of log lines
         total_log_lines = 0
@@ -115,9 +133,11 @@ class LogStats:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate local worker model usage statistics")
-    parser.add_argument("-t", "--today", help="Statistics for today only", action="store_true")
-    parser.add_argument("-y", "--yesterday", help="Statistics for yesterday only", action="store_true")
+    parser = argparse.ArgumentParser(description="Generate local worker or horde model usage statistics")
+    parser.add_argument("-t", "--today", help="Local statistics for today only", action="store_true")
+    parser.add_argument("-y", "--yesterday", help="Local statistics for yesterday only", action="store_true")
+    parser.add_argument("-d", "--horde", help="Show statistics for the entire horde for the day", action="store_true")
+    parser.add_argument("-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true")
     args = vars(parser.parse_args())
 
     period = PERIOD_ALL
@@ -125,6 +145,10 @@ if __name__ == "__main__":
         period = PERIOD_TODAY
     elif args["yesterday"]:
         period = PERIOD_YESTERDAY
+    elif args["horde"]:
+        period = PERIOD_HORDE_DAY
+    elif args["hordemonth"]:
+        period = PERIOD_HORDE_MONTH
 
     logs = LogStats(period)
     logs.print_stats()
