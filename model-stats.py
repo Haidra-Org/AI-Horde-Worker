@@ -7,8 +7,8 @@ import datetime
 import glob
 import mmap
 import re
-import requests
 
+import requests
 from bridgeData import models_to_load
 from tqdm import tqdm
 
@@ -54,11 +54,11 @@ class LogStats:
         return lines
 
     def download_stats(self, period):
-        self.unused_models = []  # not relevant 
+        self.unused_models = []  # not relevant
 
         req = requests.get("https://stablehorde.net/api/v2/stats/img/models")
         self.used_models = req.json()[period] if req.ok else {}
-        
+
     def parse_log(self):
         self.used_models = {}
         # Grab any statically loaded models
@@ -137,7 +137,9 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--today", help="Local statistics for today only", action="store_true")
     parser.add_argument("-y", "--yesterday", help="Local statistics for yesterday only", action="store_true")
     parser.add_argument("-d", "--horde", help="Show statistics for the entire horde for the day", action="store_true")
-    parser.add_argument("-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true")
+    parser.add_argument(
+        "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
+    )
     args = vars(parser.parse_args())
 
     period = PERIOD_ALL
