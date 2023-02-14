@@ -4,7 +4,6 @@ import os
 import random
 import sys
 import threading
-import time
 
 import requests
 from nataili import disable_voodoo
@@ -41,8 +40,7 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
         self.max_models_to_download = 10
-        self.last_model_database_download = 0
-        self.failed_models_to_ignore = []
+
         self.disable_voodoo = disable_voodoo
 
     @logger.catch(reraise=True)
@@ -123,21 +121,6 @@ class BridgeDataTemplate:
         for model in self.model_names.copy():
             # logger.info(f"Checking: {model}")
             model_info = model_manager.models.get(model, None)
-            # Try to refresh the model database if we haven't done that recently
-            if (
-                not model_info
-                and time.time() - self.last_model_database_download > 60
-                and model not in self.failed_models_to_ignore
-            ):
-                logger.info(f"Downloading model database trying to find model {model}")
-                self.last_model_database_download = time.time()
-                if model_manager.compvis:
-                    model_manager.compvis.download_model_reference()
-                model_info = model_manager.models.get(model, None)
-                # If we still don't find a model after a database refresh, just ignore it
-                if not model_info:
-                    self.failed_models_to_ignore.append(model)
-
             if not model_info:
                 logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
@@ -147,7 +130,7 @@ class BridgeDataTemplate:
                 continue
             if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
                 logger.warning(
-                    f"Model requested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
+                    f"Model reuested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
                     "Please upgrade your bridge. Skipping."
                 )
                 self.model_names.remove(model)
