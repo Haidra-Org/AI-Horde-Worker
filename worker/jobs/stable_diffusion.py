@@ -150,9 +150,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # if the model persists as inpainting for text2img or img2img, we abort.
             if self.current_model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
-                if len(self.pop.get("source_image", "")) > 10:
+                if type(self.pop.get("source_image", "")) is str and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
-                if len(self.pop.get("source_mask", "")) > 10:
+                if type(self.pop.get("source_mask", "")) is str and len(self.pop.get("source_mask", "")) > 10:
                     self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
                 logger.error(
                     "Received an non-inpainting request for inpainting model. This shouldn't happen. "
@@ -166,10 +166,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
             # We remove the base64 from the prompt to avoid flooding the output on the error
             if source_image is not None:
-                if len(self.pop.get("source_image", "")) > 10:
+                if type(self.pop.get("source_image", "")) is str and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
             if source_mask is not None:
-                if len(self.pop.get("source_mask", "")) > 10:
+                if type(self.pop.get("source_mask", "")) is str and len(self.pop.get("source_mask", "")) > 10:
                     self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
                 "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
@@ -195,13 +195,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
 
             if source_image:
-                base64_bytes = source_image.encode("utf-8")
-                img_bytes = base64.b64decode(base64_bytes)
-                img_source = Image.open(BytesIO(img_bytes))
+                img_source = source_image
             if source_mask:
-                base64_bytes = source_mask.encode("utf-8")
-                img_bytes = base64.b64decode(base64_bytes)
-                img_mask = Image.open(BytesIO(img_bytes))
+                img_mask = source_mask
                 if img_mask.size != img_source.size:
                     logger.warning(
                         f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}"
