@@ -31,6 +31,8 @@ class WorkerFramework:
             self.consecutive_failed_jobs = 0
             with ThreadPoolExecutor(max_workers=self.bridge_data.max_threads) as self.executor:
                 while True:
+                    if self.should_stop:
+                        break
                     if self.should_restart:
                         self.executor.shutdown(wait=False)
                         break
@@ -39,18 +41,18 @@ class WorkerFramework:
                     except KeyboardInterrupt:
                         self.should_stop = True
                         break
-            if self.should_stop:
-                logger.init("Worker", status="Shutting Down")
-                try:
-                    for job in self.running_jobs:
-                        job.cancel()
-                    self.executor.shutdown(wait=False)
-                # In case it's already shut-down
-                except Exception as e:
-                    logger.init_err(f"Worker Exception: {e}", status="Shut Down")
-                    pass
-                logger.init_ok("Worker", status="Shut Down")
-                break
+                if self.should_stop:
+                    logger.init("Worker", status="Shutting Down")
+                    try:
+                        for job in self.running_jobs:
+                            job.cancel()
+                        self.executor.shutdown(wait=False)
+                    # In case it's already shut-down
+                    except Exception as e:
+                        logger.init_err(f"Worker Exception: {e}", status="Shut Down")
+                        pass
+                    logger.init_ok("Worker", status="Shut Down")
+                    break
 
     def process_jobs(self):
         if time.time() - self.last_config_reload > 60:
