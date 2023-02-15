@@ -1,7 +1,7 @@
+import base64
 import copy
 import json
 import time
-import base64
 from io import BytesIO
 
 import requests
@@ -109,11 +109,12 @@ class JobPopper:
         try:
             return Image.open(BytesIO(img_data)).convert("RGB")
         except UnidentifiedImageError as e:
-            logger.error(f"Error when creating image: {e}. Url {current_image_url}")
+            logger.error(f"Error when creating image: {e}.")
             return None
         except UnboundLocalError as e:
-            logger.error(f"Error when creating image: {e}. Url {current_image_url}")
+            logger.error(f"Error when creating image: {e}.")
             return None
+
 
 class StableDiffusionPopper(JobPopper):
     def __init__(self, mm, bd):
@@ -206,7 +207,7 @@ class InterrogationPopper(JobPopper):
         current_image_url = None
         non_faulted_forms = []
         for form in self.pop["forms"]:
-            #TODO: Convert to use self.download_image_data and self.convert_image_data_to_pil
+            # TODO: Convert to use self.download_image_data and self.convert_image_data_to_pil
             if form["source_image"] != current_image_url:
                 current_image_url = form["source_image"]
                 try:

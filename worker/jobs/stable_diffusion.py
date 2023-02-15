@@ -10,7 +10,7 @@ from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
-from PIL import Image, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
