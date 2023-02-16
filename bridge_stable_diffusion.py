@@ -17,12 +17,12 @@ from worker.workers.stable_diffusion import StableDiffusionWorker
 def check_for_old_dir():
     models_folder = "models/custom"
     compvis_folder = "nataili/compvis"
+    if not os.path.exists(compvis_folder):
+        os.makedirs(compvis_folder)
     if os.path.exists(models_folder):
         print(f"{models_folder} folder exists.")
         answer = input(f"Do you want to move its contents to {compvis_folder} [Y/N]? ")
         if answer.lower() == "y":
-            if not os.path.exists(compvis_folder):
-                os.makedirs(compvis_folder)
             import shutil
 
             contents = os.listdir(models_folder)
