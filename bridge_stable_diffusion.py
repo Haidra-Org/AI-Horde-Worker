@@ -21,7 +21,7 @@ def check_for_old_dir():
         os.makedirs(compvis_folder)
     if os.path.exists(models_folder):
         print(f"{models_folder} folder exists.")
-        answer = input(f"Do you want to move its contents to {compvis_folder} [Y/N]? ")
+        answer = input(f"Do you want to move its contents to {compvis_folder} (recommended) [Y/N]? ")
         if answer.lower() == "y":
             import shutil
 
@@ -29,7 +29,7 @@ def check_for_old_dir():
             for item in contents:
                 shutil.move(os.path.join(models_folder, item), compvis_folder)
             print(f"Contents of {models_folder} have been moved to {compvis_folder}.")
-            answer = input("Do you want to delete the models/ folder [Y/N]? ")
+            answer = input("Do you want to delete the models/ folder (not needed anymore) [Y/N]? ")
             if answer.lower() == "y":
                 shutil.rmtree("models/")
                 print("models/ folder has been deleted.")
