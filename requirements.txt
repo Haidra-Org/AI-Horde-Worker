@@ -1,3 +1,3 @@
-nataili==0.2.44
+nataili
 xformers
 gradio
