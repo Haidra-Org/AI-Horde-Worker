@@ -131,8 +131,7 @@ class BridgeDataTemplate:
             ):
                 logger.info(f"Downloading model database trying to find model {model}")
                 self.last_model_database_download = time.time()
-                if model_manager.compvis:
-                    model_manager.compvis.download_model_reference()
+                model_manager.reload_database()
                 model_info = model_manager.models.get(model, None)
                 # If we still don't find a model after a database refresh, just ignore it
                 if not model_info:
