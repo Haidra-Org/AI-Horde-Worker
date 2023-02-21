@@ -158,7 +158,10 @@ class StableDiffusionPopper(JobPopper):
         if "https" in source_img:
             img_data = self.download_image_data(source_img)
             if img_data:
-                return self.convert_image_data_to_pil(img_data)
+                img = self.convert_image_data_to_pil(img_data)
+                if not img:
+                    logger.error("Non-image data when downloading image! Ignoring")
+                return img
             else:
                 logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
                 return None

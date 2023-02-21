@@ -90,10 +90,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "ddim_steps" in self.current_payload:
                 gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
             if "sampler_name" in self.current_payload:
-                # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                # if model_baseline == "stable diffusion 2":
-                #     gen_payload["sampler_name"] = "dpmsolver"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
             if "ddim_eta" in self.current_payload:
@@ -102,7 +99,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
             if self.current_payload.get("karras", False):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
-            if "hires_fix" in self.current_payload and not source_image and model_baseline != "stable diffusion 2":
+            if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
             if "control_type" in self.current_payload and source_image and source_processing == "img2img" and "stable diffusion 2" not in model_baseline:
                 gen_payload["control_type"] = self.current_payload["control_type"]
@@ -114,7 +111,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         # TODO: Fix img2img for SD2
-        if source_image and self.model_manager.models[self.current_model].get("baseline") != "stable diffusion 2":
+        if source_image:
             img_source = None
             img_mask = None
             if source_processing == "img2img":
