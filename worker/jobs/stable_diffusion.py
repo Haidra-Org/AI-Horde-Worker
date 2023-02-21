@@ -101,7 +101,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
             if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
-            if "control_type" in self.current_payload and source_image and source_processing == "img2img" and "stable diffusion 2" not in model_baseline:
+            if (
+                "control_type" in self.current_payload
+                and source_image
+                and source_processing == "img2img"
+                and "stable diffusion 2" not in model_baseline
+            ):
                 gen_payload["control_type"] = self.current_payload["control_type"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
