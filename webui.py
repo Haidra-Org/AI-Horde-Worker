@@ -33,6 +33,7 @@ def Update_Bridge(
     allow_painting=True,
     allow_unsafe_ip=True,
     allow_post_processing=True,
+    allow_controlnet=True,
     require_upfront_kudos=False,
     dynamic_models=True,
     number_of_dynamic_models=3,
@@ -60,6 +61,7 @@ allow_img2img = {allow_img2img}
 allow_painting = {allow_painting}
 allow_unsafe_ip = {allow_unsafe_ip}
 allow_post_processing = {allow_post_processing}
+allow_controlnet = {allow_controlnet}
 require_upfront_kudos = {require_upfront_kudos}
 dynamic_models = {dynamic_models}
 number_of_dynamic_models = {number_of_dynamic_models}
@@ -233,6 +235,10 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                         label="Allow Requests Requiring Post-Processing",
                         value=stable_diffusion_bridge_data.allow_post_processing,
                     )
+                    allow_controlnet = gr.Checkbox(
+                        label="Allow Requests Requiring ControlNet",
+                        value=stable_diffusion_bridge_data.allow_controlnet,
+                    )
             with gr.Tab("NSFW"):
                 with gr.Row():
                     nsfw = gr.Checkbox(label="Enable NSFW", value=stable_diffusion_bridge_data.nsfw)
@@ -298,6 +304,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                     allow_painting,
                     allow_unsafe_ip,
                     allow_post_processing,
+                    allow_controlnet,
                     require_upfront_kudos,
                     dynamic_models,
                     number_of_dynamic_models,

@@ -24,8 +24,8 @@ dependencies:
   - cuda-toolkit
   - git
   - numpy
-  - pip=20.3
-  - python=3.8.5
+  - pip
+  - python~=3.10
   - pytorch=1.13.1
   - pytorch-cuda
   - scikit-image
@@ -33,4 +33,8 @@ dependencies:
   - loguru
   - requests
   - pip:
-      - -r file:requirements.txt
+      - nataili
+      - xformers
+      - gradio
+      - transformers~=4.26
+
