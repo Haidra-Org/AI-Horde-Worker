@@ -23,6 +23,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_post_processing = os.environ.get("ALLOW_POST_PROCESSING", "true") == "true"
+        self.allow_controlnet = os.environ.get("ALLOW_CONTROLNET", "false") == "false"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
@@ -89,6 +90,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 self.allow_post_processing = bd.allow_post_processing
             except AttributeError:
                 pass
+            try:
+                self.allow_controlnet = bd.allow_controlnet
+            except AttributeError:
+                pass
         if args.max_power:
             self.max_power = args.max_power
         if args.model:
@@ -109,6 +114,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.dynamic_models = False
         if args.disable_post_processing:
             self.allow_post_processing = False
+        if args.disable_controlnet:
+            self.allow_controlnet = False
         if self.dynamic_models:
             try:
                 from creds import hf_password, hf_username  # noqa F401

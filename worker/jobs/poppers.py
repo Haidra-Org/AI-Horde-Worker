@@ -26,6 +26,8 @@ class JobPopper:
     def horde_pop(self):
         """Get a job from the horde"""
         try:
+            # logger.debug(self.headers)
+            # logger.debug(self.pop_payload)
             pop_req = requests.post(
                 self.bridge_data.horde_url + self.endpoint,
                 json=self.pop_payload,
@@ -136,6 +138,7 @@ class StableDiffusionPopper(JobPopper):
             "allow_unsafe_ip": self.bridge_data.allow_unsafe_ip,
             "threads": self.bridge_data.max_threads,
             "allow_post_processing": self.bridge_data.allow_post_processing,
+            "allow_controlnet": self.bridge_data.allow_controlnet,
             "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,

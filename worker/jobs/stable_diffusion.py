@@ -90,7 +90,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "ddim_steps" in self.current_payload:
                 gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
             if "sampler_name" in self.current_payload:
-                # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
@@ -102,6 +101,13 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
             if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
+            if (
+                "control_type" in self.current_payload
+                and source_image
+                and source_processing == "img2img"
+                and "stable diffusion 2" not in model_baseline
+            ):
+                gen_payload["control_type"] = self.current_payload["control_type"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -238,6 +244,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del gen_payload["init_mask"]
                 if "tiling" in gen_payload:
                     del gen_payload["tiling"]
+                if "control_type" in gen_payload:
+                    del gen_payload["control_type"]
                 generator = Depth2Img(
                     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -269,6 +277,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["denoising_strength"]
             if "tiling" in gen_payload:
                 del gen_payload["tiling"]
+            if "control_type" in gen_payload:
+                del gen_payload["control_type"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:

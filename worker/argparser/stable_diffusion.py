@@ -65,6 +65,12 @@ arg_parser.add_argument(
     default=False,
     help=("If specified this worker will not load post-processors."),
 )
+arg_parser.add_argument(
+    "--disable_controlnet",
+    action="store_true",
+    default=False,
+    help=("If specified this worker will not pick up controlnet jobs"),
+)
 
 args = arg_parser.parse_args()
 
