@@ -36,5 +36,6 @@ dependencies:
       - nataili
       - xformers
       - gradio
-      - transformers~=4.26
+      - transformers>=4.26
+      - k-diffusion>=0.0.14
 
