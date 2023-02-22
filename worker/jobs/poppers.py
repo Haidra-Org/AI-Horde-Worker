@@ -26,6 +26,8 @@ class JobPopper:
     def horde_pop(self):
         """Get a job from the horde"""
         try:
+            # logger.debug(self.headers)
+            # logger.debug(self.pop_payload)
             pop_req = requests.post(
                 self.bridge_data.horde_url + self.endpoint,
                 json=self.pop_payload,
