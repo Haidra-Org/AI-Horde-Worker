@@ -97,7 +97,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
             if "denoising_strength" in self.current_payload and source_image:
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-            if self.current_payload.get("karras", False):
+            if self.current_payload.get("karras", False) and gen_payload["sampler_name"] != "dpmsolver":
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
             if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]

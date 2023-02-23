@@ -38,4 +38,5 @@ dependencies:
       - gradio
       - transformers>=4.26
       - k-diffusion>=0.0.14
+      - requests>=2.28
 
