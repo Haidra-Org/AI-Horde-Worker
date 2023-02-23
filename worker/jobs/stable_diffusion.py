@@ -91,6 +91,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
             if "sampler_name" in self.current_payload:
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
+                if gen_payload["sampler_name"] == "dpmsolver" and "stable diffusion 2" not in model_baseline:
+                    logger.warning(f"dpmsolver cannot be used with {self.current_model}. Falling back to k_euler.")
+                    gen_payload["sampler_name"] = "k_euler"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
             if "ddim_eta" in self.current_payload:
