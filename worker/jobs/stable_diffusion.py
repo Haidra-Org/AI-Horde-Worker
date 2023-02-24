@@ -305,7 +305,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(
                 f"Starting generation: {self.current_model} @ "
                 f"{self.current_payload['width']}x{self.current_payload['height']} "
-                f"for {self.current_payload.get('steps',50)} steps. "
+                f"for {self.current_payload.get('ddim_steps',50)} steps. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
