@@ -1,6 +1,6 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-import time
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger

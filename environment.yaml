@@ -31,9 +31,10 @@ dependencies:
   - scikit-image
   - torchvision
   - loguru
-  - requests
+  - requests>=2.28
+  - numpy>=1.23
   - pip:
-      - nataili
+      - nataili>=0.2.9009
       - xformers
       - gradio
       - transformers>=4.26
