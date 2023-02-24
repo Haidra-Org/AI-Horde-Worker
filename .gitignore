@@ -169,6 +169,7 @@ nataili/**/*.bin
 nataili/**/*.txt
 nataili/**/*.yaml
 nataili/**/*.md5
+nataili/**/*.safetensors
 /outputs/
 /temp/
 /gfpgan/

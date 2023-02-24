@@ -90,18 +90,27 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "ddim_steps" in self.current_payload:
                 gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
             if "sampler_name" in self.current_payload:
-                # K-Diffusers still don't work in our SD2.x models
                 gen_payload["sampler_name"] = self.current_payload["sampler_name"]
+                if gen_payload["sampler_name"] == "dpmsolver" and "stable diffusion 2" not in model_baseline:
+                    logger.warning(f"dpmsolver cannot be used with {self.current_model}. Falling back to k_euler.")
+                    gen_payload["sampler_name"] = "k_euler"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
             if "ddim_eta" in self.current_payload:
                 gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
             if "denoising_strength" in self.current_payload and source_image:
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-            if self.current_payload.get("karras", False):
+            if self.current_payload.get("karras", False) and gen_payload["sampler_name"] != "dpmsolver":
                 gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
             if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
+            if (
+                "control_type" in self.current_payload
+                and source_image
+                and source_processing == "img2img"
+                and "stable diffusion 2" not in model_baseline
+            ):
+                gen_payload["control_type"] = self.current_payload["control_type"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -238,6 +247,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del gen_payload["init_mask"]
                 if "tiling" in gen_payload:
                     del gen_payload["tiling"]
+                if "control_type" in gen_payload:
+                    del gen_payload["control_type"]
                 generator = Depth2Img(
                     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -258,6 +269,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
+                    control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
                 )
         else:
             # These variables do not exist in the outpainting implementation
@@ -269,6 +281,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["denoising_strength"]
             if "tiling" in gen_payload:
                 del gen_payload["tiling"]
+            if "control_type" in gen_payload:
+                del gen_payload["control_type"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
@@ -291,7 +305,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
         try:
             logger.info(
                 f"Starting generation: {self.current_model} @ "
-                f"{self.current_payload['width']}x{self.current_payload['height']}..."
+                f"{self.current_payload['width']}x{self.current_payload['height']} "
+                f"for {self.current_payload.get('ddim_steps',50)} steps. "
+                f"Prompt length is {len(self.current_payload['prompt'])} characters "
+                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
             generator.generate(**gen_payload)
             logger.info("Generation finished successfully.")
@@ -363,3 +380,15 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
+
+
+def count_parentheses(s):
+    open_p = False
+    count = 0
+    for c in s:
+        if c == "(":
+            open_p = True
+        elif c == ")" and open_p:
+            open_p = False
+            count += 1
+    return count

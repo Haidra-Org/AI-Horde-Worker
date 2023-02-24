@@ -24,13 +24,19 @@ dependencies:
   - cuda-toolkit
   - git
   - numpy
-  - pip=20.3
-  - python=3.8.5
+  - pip
+  - python~=3.10
   - pytorch=1.13.1
   - pytorch-cuda
   - scikit-image
   - torchvision
   - loguru
-  - requests
+  - requests>=2.28
+  - numpy>=1.23
   - pip:
-      - -r file:requirements.txt
+      - nataili>=0.2.9006
+      - xformers
+      - gradio
+      - transformers>=4.26
+      - k-diffusion>=0.0.14
+

@@ -51,6 +51,7 @@ def main():
         gfpgan=True,
         safety_checker=True,
         codeformer=True,
+        controlnet=True,
     )
     try:
         worker = StableDiffusionWorker(model_manager, bridge_data)
