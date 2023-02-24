@@ -304,7 +304,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
         try:
             logger.info(
                 f"Starting generation: {self.current_model} @ "
-                f"{self.current_payload['width']}x{self.current_payload['height']}..."
+                f"{self.current_payload['width']}x{self.current_payload['height']} "
+                f"for {self.current_payload.get('steps',50)} steps. "
+                f"Prompt length is {len(self.current_payload['prompt'])} characters "
+                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
             generator.generate(**gen_payload)
             logger.info("Generation finished successfully.")
@@ -376,3 +379,15 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
+
+
+def count_parentheses(s):
+    open_p = False
+    count = 0
+    for c in s:
+        if c == "(":
+            open_p = True
+        elif c == ")" and open_p:
+            open_p = False
+            count += 1
+    return count
