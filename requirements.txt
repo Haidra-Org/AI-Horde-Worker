@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cu117
 nataili == 0.2.9009
 xformers
 gradio
