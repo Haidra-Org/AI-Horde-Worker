@@ -15,28 +15,12 @@ name: ldm
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 channels:
-  - pytorch
+  - nvidia
+  - conda-forge
   - defaults
-  - nvidia/label/cuda-11.7.0
-# Psst. If you change a dependency, make sure it's mirrored in the docker requirement
-# files as well.
+# These should only contain the minimal essentials to get the binaries going, everything else is managed in requirements.txt to keep it universal.
 dependencies:
-  - cuda-toolkit
+  - cudatoolkit==11.7.0
   - git
-  - numpy
   - pip
-  - python~=3.10
-  - pytorch=1.13.1
-  - pytorch-cuda
-  - scikit-image
-  - torchvision
-  - loguru
-  - requests>=2.28
-  - numpy>=1.23
-  - pip:
-      - nataili==0.2.9009
-      - xformers
-      - gradio
-      - transformers>=4.26
-      - k-diffusion>=0.0.14
-
+  - python==3.10
