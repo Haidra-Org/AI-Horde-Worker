@@ -131,6 +131,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 req_type = "inpainting"
             if source_processing == "outpainting":
                 req_type = "outpainting"
+            if gen_payload["sampler_name"] == "dpmsolver":
+                logger.warning("dpmsolver cannot handle img2img. Falling back to k_euler")
+                gen_payload["sampler_name"] = "k_euler"
         # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
         if self.current_model == "stable_diffusion_inpainting" and req_type not in [
             "inpainting",
