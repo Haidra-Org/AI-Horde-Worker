@@ -45,6 +45,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.start_submit_thread()
             return
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
+        if self.current_payload.get("control_type"):
+            self.stale_time = self.stale_time * 3
+        self.stale_time += 3 * count_parentheses(self.current_payload['prompt'])
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
