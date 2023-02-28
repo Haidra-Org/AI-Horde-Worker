@@ -116,13 +116,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
-        if self.dynamic_models:
-            try:
-                from creds import hf_password, hf_username  # noqa F401
-            except ImportError:
-                logger.warning(
-                    "Dynamic models enabled. Please setup creds.py so it won't prompt for authentication later"
-                )
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
