@@ -92,7 +92,7 @@ def download_models(model_location):
 
 
 def load_models():
-    remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/stable_diffusion.json"
+    remote_models = "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
     latest_models = download_models(remote_models)
 
     available_models = []
