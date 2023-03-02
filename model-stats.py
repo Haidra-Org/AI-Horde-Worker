@@ -92,7 +92,7 @@ class LogStats:
                     # Grab the lines we're interested in for models
                     regex = REGEX.match(line)
                     if regex:
-                        if self.period and regex.group(1) != self.get_date():
+                        if self.period in [PERIOD_TODAY, PERIOD_YESTERDAY] and regex.group(1) != self.get_date():
                             continue
                         # Extract model name
                         model = regex.group(2)
@@ -127,7 +127,7 @@ class LogStats:
             self.parse_log()
 
         # If we're reporting on kudos, do that
-        if self.kudos:
+        if self.period == PERIOD_KUDOS_HOUR:
             for k, v in self.kudos.items():
                 print(k, round(v))
             return
