@@ -49,6 +49,10 @@ allow_unsafe_ip = True
 # If set to False, this worker will not load post-processors like Codeformers and will not pick up jobs which require post-processing 
 # In the future this will be adjusted so that post-processing can be split from image generation
 allow_post_processing = True
+# If set to True, this worker start picking up ControlNet jobs
+# ControlNet is really heavy and requires a good GPU with at least 12G VRAM to run. 
+# If your controlnet jobs crash by running out of CUDA VRAM, set this to false
+allow_controlnet = False # needs at least 12G VRAM
 # Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
 dynamic_models = True
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy

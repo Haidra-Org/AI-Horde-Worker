@@ -1,3 +1,4 @@
-nataili
+--extra-index-url https://download.pytorch.org/whl/cu117
+git+https://github.com/db0/nataili.git
 xformers
 gradio
