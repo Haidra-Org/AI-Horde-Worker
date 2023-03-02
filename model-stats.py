@@ -87,7 +87,7 @@ class LogStats:
 
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
-            with open(logfile, "rt", encoding='UTF-8', errors='ignore') as infile:
+            with open(logfile, "rt", encoding="UTF-8", errors="ignore") as infile:
                 for line in infile:
                     # Grab the lines we're interested in for models
                     regex = REGEX.match(line)
