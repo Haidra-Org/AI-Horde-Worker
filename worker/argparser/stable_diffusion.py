@@ -1,5 +1,5 @@
 """Arg parsing for the main script."""
-from nataili import disable_progress, disable_voodoo, disable_xformers, enable_local_ray_temp
+from nataili import disable_progress, disable_voodoo, disable_xformers, enable_local_ray_temp, enable_ray_alternative
 
 from worker.argparser.framework import arg_parser
 
@@ -80,3 +80,4 @@ disable_voodoo.toggle(args.disable_voodoo)
 if disable_voodoo.active:
     enable_local_ray_temp.disable()
 disable_progress.activate()
+enable_ray_alternative.toggle(args.enable_model_cache)
