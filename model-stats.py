@@ -21,9 +21,13 @@ PERIOD_TODAY = 1
 PERIOD_YESTERDAY = 2
 PERIOD_HORDE_DAY = 3
 PERIOD_HORDE_MONTH = 4
+PERIOD_KUDOS_HOUR = 5
 
 # regex to identify model lines
 REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d).*Starting generation: (.*) @")
+
+# regex to identify kudos lines
+KUDOS_REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d \d\d:\d\d).* and contributed for (\d+\.\d+)")
 
 
 class LogStats:
@@ -32,6 +36,7 @@ class LogStats:
         self.unused_models = {}
         self.logfile = logfile
         self.period = period
+        self.kudos = {}
 
     def get_date(self):
         # Dates in log format for filtering
@@ -82,12 +87,12 @@ class LogStats:
 
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
-            with open(logfile, "rt") as infile:
+            with open(logfile, "rt", encoding="UTF-8", errors="ignore") as infile:
                 for line in infile:
-                    # Grab the lines we're interested in
+                    # Grab the lines we're interested in for models
                     regex = REGEX.match(line)
                     if regex:
-                        if self.period and regex.group(1) != self.get_date():
+                        if self.period in [PERIOD_TODAY, PERIOD_YESTERDAY] and regex.group(1) != self.get_date():
                             continue
                         # Extract model name
                         model = regex.group(2)
@@ -102,12 +107,30 @@ class LogStats:
                         else:
                             self.used_models[model] = 1
 
+                    # Grab kudos lines
+                    # Grab the lines we're interested in
+                    regex = KUDOS_REGEX.match(line)
+                    if regex:
+                        # Extract kudis and time
+                        timestamp = regex.group(1)[:-2]  # truncate to hour
+                        kudos = regex.group(2)
+                        if timestamp in self.kudos:
+                            self.kudos[timestamp] += float(kudos)
+                        else:
+                            self.kudos[timestamp] = float(kudos)
+
                     progress.update()
 
     def print_stats(self):
         # Parse our log file if we haven't done that yet
         if not self.used_models:
             self.parse_log()
+
+        # If we're reporting on kudos, do that
+        if self.period == PERIOD_KUDOS_HOUR:
+            for k, v in self.kudos.items():
+                print(k, round(v))
+            return
 
         # Whats our longest model name?
         max_len = max([len(x) for x in self.used_models])
@@ -137,6 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--today", help="Local statistics for today only", action="store_true")
     parser.add_argument("-y", "--yesterday", help="Local statistics for yesterday only", action="store_true")
     parser.add_argument("-d", "--horde", help="Show statistics for the entire horde for the day", action="store_true")
+    parser.add_argument("-k", "--kudos", help="Show statistics for the kudos per hour", action="store_true")
     parser.add_argument(
         "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
     )
@@ -151,6 +175,8 @@ if __name__ == "__main__":
         period = PERIOD_HORDE_DAY
     elif args["hordemonth"]:
         period = PERIOD_HORDE_MONTH
+    elif args["kudos"]:
+        period = PERIOD_KUDOS_HOUR
 
     logs = LogStats(period)
     logs.print_stats()
