@@ -130,6 +130,12 @@ arg_parser.add_argument(
     default=False,
     help="If specified will not check the downloaded model md5sum.",
 )
+arg_parser.add_argument(
+    "--enable_model_cache",
+    action="store_true",
+    default=False,
+    help="If specified will use an alternative to ray to cache models persistently.",
+)
 
 
 # This args must be parsed in the extended class
