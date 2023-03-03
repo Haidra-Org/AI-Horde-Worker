@@ -1,6 +1,7 @@
 import gradio as gr
 import regex as re
 import requests
+import yaml
 from nataili.util.logger import logger
 
 from worker.bridge_data.interrogation import InterrogationBridgeData
@@ -46,38 +47,35 @@ def Update_Bridge(
     blacklist_list = Process_Input_List(blacklist)
     censorlist_list = Process_Input_List(censorlist)
 
-    data = f"""horde_url = "{horde_url}"
-worker_name = "{worker_name}"
-api_key = "{api_key}"
-priority_usernames = {priority_usernames_list}
-max_power = {max_power}
-queue_size = {queue_size}
-max_threads = {max_threads}
-nsfw = {nsfw}
-censor_nsfw = {censor_nsfw}
-blacklist = {blacklist_list}
-censorlist = {censorlist_list}
-allow_img2img = {allow_img2img}
-allow_painting = {allow_painting}
-allow_unsafe_ip = {allow_unsafe_ip}
-allow_post_processing = {allow_post_processing}
-allow_controlnet = {allow_controlnet}
-require_upfront_kudos = {require_upfront_kudos}
-dynamic_models = {dynamic_models}
-number_of_dynamic_models = {number_of_dynamic_models}
-max_models_to_download = {max_models_to_download}
-models_to_load = {models_to_load}
-models_to_skip = {models_to_skip}
-forms = {forms}"""
-    toExec = """text_file = open("bridgeData.py", "w+"); text_file.write(data); text_file.close()"""
-    try:
-        exec(toExec)
-        output = "Bridge Data Updated Successfully\n"
-    except Exception as e:
-        output = f"Failed to update: {e}"
-    data = re.sub(r"api_key.*", 'api_key = "**********"', data)
-    output += "\n" + data
-    return output
+    data = {
+        "horde_url": horde_url,
+        "worker_name": worker_name,
+        "api_key": api_key,
+        "priority_usernames": priority_usernames_list,
+        "max_power": max_power,
+        "queue_size": queue_size,
+        "max_threads": max_threads,
+        "nsfw": nsfw,
+        "censor_nsfw": censor_nsfw,
+        "blacklist": blacklist_list,
+        "censorlist": censorlist_list,
+        "allow_img2img": allow_img2img,
+        "allow_painting": allow_painting,
+        "allow_unsafe_ip": allow_unsafe_ip,
+        "allow_post_processing": allow_post_processing,
+        "allow_controlnet": allow_controlnet,
+        "require_upfront_kudos": require_upfront_kudos,
+        "dynamic_models": dynamic_models,
+        "number_of_dynamic_models": number_of_dynamic_models,
+        "max_models_to_download": max_models_to_download,
+        "models_to_load": models_to_load,
+        "models_to_skip": models_to_skip,
+        "forms": forms
+    }
+    with open("bridgeData.yaml", "wt", encoding="utf-8") as configfile:
+        yaml.safe_dump(data, configfile)
+    data["api_key"] = "**********"
+    return yaml.dump(data)
 
 
 def download_models(model_location):
