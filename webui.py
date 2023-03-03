@@ -1,5 +1,4 @@
 import gradio as gr
-import regex as re
 import requests
 import yaml
 from nataili.util.logger import logger
