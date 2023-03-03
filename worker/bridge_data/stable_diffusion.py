@@ -43,9 +43,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         super().reload_data()
 
         if not self.dynamic_models:
-            self.model_names = self.models_to_load
+            self.model_names = self.models_to_load if hasattr(self, "models_to_load") else []
         else:
-            self.predefined_models = self.models_to_load
+            self.predefined_models = self.models_to_load if hasattr(self, "models_to_load") else []
 
         if args.max_power:
             self.max_power = args.max_power
