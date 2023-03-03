@@ -68,6 +68,21 @@ class BridgeDataTemplate:
                     if key.startswith("__") or type(value) not in [str, int, bool, list]:
                         continue
                     setattr(self, key, value)
+
+                # As we got here, we didn't have a yaml config file, try to create one
+                config = {}
+                for key, value in vars(self).items():
+                    # Only allow these data types
+                    if key.startswith("__") or type(value) not in [str, int, bool, list]:
+                        continue
+                    config[key] = value
+                with open(BRIDGE_CONFIG_FILE, "wt", encoding="utf-8") as configfile:
+                    yaml.safe_dump(config, configfile)
+                try:
+                    os.rename("bridgeData.py", "bridgeData.py-old")
+                except (FileExistsError, PermissionError, OSError):
+                    logger.warning("Could not move old bridgeData.py config to archive.")
+
                 return True  # loaded
             except (ImportError, AttributeError) as err:
                 logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
