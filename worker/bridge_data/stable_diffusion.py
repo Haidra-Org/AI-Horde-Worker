@@ -40,60 +40,13 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     def reload_data(self):
         """Reloads configuration data"""
         previous_url = self.horde_url
-        bd = super().reload_data()
-        if bd:
-            try:
-                self.max_power = bd.max_power
-            except AttributeError:
-                pass
-            try:
-                self.nsfw = bd.nsfw
-            except AttributeError:
-                pass
-            try:
-                self.censor_nsfw = bd.censor_nsfw
-            except AttributeError:
-                pass
-            try:
-                self.blacklist = bd.blacklist
-            except AttributeError:
-                pass
-            try:
-                self.censorlist = bd.censorlist
-            except AttributeError:
-                pass
-            try:
-                self.allow_img2img = bd.allow_img2img
-            except AttributeError:
-                pass
-            try:
-                self.allow_painting = bd.allow_painting
-            except AttributeError:
-                pass
-            try:
-                self.dynamic_models = bd.dynamic_models
-            except AttributeError:
-                pass
-            try:
-                self.number_of_dynamic_models = bd.number_of_dynamic_models
-            except AttributeError:
-                pass
-            try:
-                self.models_to_skip = bd.models_to_skip
-            except AttributeError:
-                pass
-            if not self.dynamic_models:
-                self.model_names = bd.models_to_load
-            else:
-                self.predefined_models = bd.models_to_load
-            try:
-                self.allow_post_processing = bd.allow_post_processing
-            except AttributeError:
-                pass
-            try:
-                self.allow_controlnet = bd.allow_controlnet
-            except AttributeError:
-                pass
+        super().reload_data()
+
+        if not self.dynamic_models:
+            self.model_names = self.models_to_load
+        else:
+            self.predefined_models = self.models_to_load
+
         if args.max_power:
             self.max_power = args.max_power
         if args.model:
