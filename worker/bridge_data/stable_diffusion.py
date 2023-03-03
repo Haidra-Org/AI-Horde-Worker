@@ -1,6 +1,7 @@
 """The configuration of the bridge"""
 import os
 
+import requests
 from nataili.util.logger import logger
 from PIL import Image
 
@@ -42,10 +43,16 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         previous_url = self.horde_url
         super().reload_data()
 
+        if not hasattr(self, "models_to_load"):
+            self.models_to_load = []
+
+        if "ALL MODELS" in self.models_to_load:
+            self.models_to_load = self.get_all_models()
+
         if not self.dynamic_models:
-            self.model_names = self.models_to_load if hasattr(self, "models_to_load") else []
+            self.model_names = self.models_to_load
         else:
-            self.predefined_models = self.models_to_load if hasattr(self, "models_to_load") else []
+            self.predefined_models = self.models_to_load
 
         if args.max_power:
             self.max_power = args.max_power
@@ -87,3 +94,30 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models
+
+    # Get all models directly from the server, not from nataili, as nataili
+    # may not be loaded, e.g. in webui.
+    def get_all_models(self):
+        # Try loading models from our environmental variable
+        if os.getenv("ALL_MODELS"):
+            return os.getenv("ALL_MODELS").split(",")
+
+        data = requests.get(
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+        ).json()
+
+        # get all interesting models
+        models = []
+        for _, model in data.items():
+            if (
+                model["name"] not in ["stable_diffusion_1.4", "safety_checker", "LDSR", "stable_diffusion_2.1"]
+                and model["type"] == "ckpt"
+            ):
+                models.append(model["name"])
+
+        models = sorted(list(set(models)))
+
+        # Save our models to our environmental variable
+        os.environ["ALL_MODELS"] = ",".join(models)
+
+        return models

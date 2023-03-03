@@ -70,7 +70,7 @@ def Update_Bridge(
         "max_models_to_download": max_models_to_download,
         "models_to_load": models_to_load,
         "models_to_skip": models_to_skip,
-        "forms": forms
+        "forms": forms,
     }
     with open("bridgeData.yaml", "wt", encoding="utf-8") as configfile:
         yaml.safe_dump(data, configfile)

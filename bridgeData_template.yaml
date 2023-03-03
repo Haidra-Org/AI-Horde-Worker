@@ -70,7 +70,9 @@ max_models_to_download: 10
 ## WARNING: In case you have dynamic models this list is instead specifying models to always load along with the dynamic models!
 # So your total list will be your specific models + the dynamic models
 # in that case, keep this list short, preferrably to only a few more obscure models you'd like to always see available
+# If you want to load ALL models, use the special model name "ALL MODELS"
 models_to_load:
+  #- ALL MODELS
   - "stable_diffusion_2.1"
   - "stable_diffusion"
   #- "Anything Diffusion"
