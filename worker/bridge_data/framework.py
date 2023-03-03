@@ -180,7 +180,8 @@ class BridgeDataTemplate:
             if not self.initialized:
                 logger.init_ok("Bridge Config", status="OK")
         elif input(
-            "You do not appear to have a bridgeData configuration file. Would you like to create it from the template now? (y/n)"
+            "You do not appear to have a bridgeData configuration file. "
+            "Would you like to create it from the template now? (y/n)"
         ) in ["y", "Y", "", "yes"]:
             with open("bridgeData_template.yaml", "r") as firstfile, open("bridgeData.yaml", "a") as secondfile:
                 for line in firstfile:
