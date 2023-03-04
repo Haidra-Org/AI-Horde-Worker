@@ -23,6 +23,7 @@ class HordeJobFramework:
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.start_time = time.time()
+        self.process_time = time.time()
         self.stale_time = None
         self.submit_dict = {}
         self.headers = {"apikey": self.bridge_data.api_key}
@@ -67,6 +68,7 @@ class HordeJobFramework:
             self.status = JobStatus.FAULTED
             # The extended function should return as well
             return
+        self.process_time = time.time()
         self.status = JobStatus.WORKING
         # Continue with the specific worker logic from here
         # At the end, you must call self.start_submit_thread()
@@ -125,17 +127,28 @@ class HordeJobFramework:
                     self.status = JobStatus.FAULTED
                     break
                 if not submit_req.ok:
-                    logger.warning(
-                        f"During gen submit, server {self.bridge_data.horde_url} "
-                        f"responded with status code {submit_req.status_code}: "
-                        f"{submit['message']}. Waiting for 2 seconds...  (Retry {self.loop_retry}/10)"
-                    )
-                    if "errors" in submit:
-                        logger.warning(f"Detailed Request Errors: {submit['errors']}")
-                    time.sleep(2)
-                    continue
+                    if submit_req.status_code == 400:
+                        logger.warning(
+                            f"During gen submit, server {self.bridge_data.horde_url} "
+                            f"responded with status code {submit_req.status_code}: "
+                            f'Job took {round(time.time() - self.start_time,1)} seconds since queued and {round(time.time() - self.process_time,1)} since start.'
+                            f"{submit['message']}. Aborting job!"
+                        )
+                        self.status = JobStatus.FAULTED
+                        break
+                    else:
+                        logger.warning(
+                            f"During gen submit, server {self.bridge_data.horde_url} "
+                            f"responded with status code {submit_req.status_code}: "
+                            f"{submit['message']}. Waiting for 2 seconds...  (Retry {self.loop_retry}/10)"
+                        )
+                        if "errors" in submit:
+                            logger.warning(f"Detailed Request Errors: {submit['errors']}")
+                        time.sleep(2)
+                        continue
                 logger.info(
-                    f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}'
+                    f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}. '
+                    f'Job took {round(time.time() - self.start_time,1)} seconds since queued and {round(time.time() - self.process_time,1)} since start.'
                 )
                 self.post_submit_tasks(submit_req)
                 self.status = JobStatus.DONE
