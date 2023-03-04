@@ -131,7 +131,8 @@ class HordeJobFramework:
                         logger.warning(
                             f"During gen submit, server {self.bridge_data.horde_url} "
                             f"responded with status code {submit_req.status_code}: "
-                            f"Job took {round(time.time() - self.start_time,1)} seconds since queued and {round(time.time() - self.process_time,1)} since start."
+                            f"Job took {round(time.time() - self.start_time,1)} seconds since queued "
+                            f"and {round(time.time() - self.process_time,1)} since start."
                             f"{submit['message']}. Aborting job!"
                         )
                         self.status = JobStatus.FAULTED
@@ -148,7 +149,8 @@ class HordeJobFramework:
                         continue
                 logger.info(
                     f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}. '
-                    f"Job took {round(time.time() - self.start_time,1)} seconds since queued and {round(time.time() - self.process_time,1)} since start."
+                    f"Job took {round(time.time() - self.start_time,1)} seconds since queued "
+                    f"and {round(time.time() - self.process_time,1)} since start."
                 )
                 self.post_submit_tasks(submit_req)
                 self.status = JobStatus.DONE
