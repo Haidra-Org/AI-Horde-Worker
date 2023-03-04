@@ -319,8 +319,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
+            time_state = time.time()
             generator.generate(**gen_payload)
-            logger.info("Generation finished successfully.")
+            logger.info(f"Generation finished successfully in {round(time.time() - time_state,1)} seconds.")
         except Exception as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
