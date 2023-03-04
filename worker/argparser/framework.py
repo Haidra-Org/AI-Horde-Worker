@@ -122,7 +122,7 @@ arg_parser.add_argument(
     "--yes",
     action="store_true",
     required=False,
-    help="Specify this argument to autodownload all missing models defined in your bridgeData.py",
+    help="Specify this argument to autodownload all missing models defined in your bridgeData.yaml",
 )
 arg_parser.add_argument(
     "--skip_md5",
