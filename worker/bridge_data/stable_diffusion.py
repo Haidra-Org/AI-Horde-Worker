@@ -110,7 +110,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         models = []
         for _, model in data.items():
             if (
-                model["name"] not in ["stable_diffusion_1.4", "safety_checker", "LDSR", "stable_diffusion_2.1"]
+                model["name"] not in ["stable_diffusion_1.4", "safety_checker", "LDSR"]
+                and model["name"] not in self.models_to_skip
                 and model["type"] == "ckpt"
             ):
                 models.append(model["name"])
