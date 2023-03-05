@@ -2,3 +2,4 @@
 git+https://github.com/db0/nataili.git
 xformers
 gradio
+pyyaml

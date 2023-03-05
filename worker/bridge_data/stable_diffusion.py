@@ -1,6 +1,7 @@
 """The configuration of the bridge"""
 import os
 
+import requests
 from nataili.util.logger import logger
 from PIL import Image
 
@@ -40,60 +41,19 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     def reload_data(self):
         """Reloads configuration data"""
         previous_url = self.horde_url
-        bd = super().reload_data()
-        if bd:
-            try:
-                self.max_power = bd.max_power
-            except AttributeError:
-                pass
-            try:
-                self.nsfw = bd.nsfw
-            except AttributeError:
-                pass
-            try:
-                self.censor_nsfw = bd.censor_nsfw
-            except AttributeError:
-                pass
-            try:
-                self.blacklist = bd.blacklist
-            except AttributeError:
-                pass
-            try:
-                self.censorlist = bd.censorlist
-            except AttributeError:
-                pass
-            try:
-                self.allow_img2img = bd.allow_img2img
-            except AttributeError:
-                pass
-            try:
-                self.allow_painting = bd.allow_painting
-            except AttributeError:
-                pass
-            try:
-                self.dynamic_models = bd.dynamic_models
-            except AttributeError:
-                pass
-            try:
-                self.number_of_dynamic_models = bd.number_of_dynamic_models
-            except AttributeError:
-                pass
-            try:
-                self.models_to_skip = bd.models_to_skip
-            except AttributeError:
-                pass
-            if not self.dynamic_models:
-                self.model_names = bd.models_to_load
-            else:
-                self.predefined_models = bd.models_to_load
-            try:
-                self.allow_post_processing = bd.allow_post_processing
-            except AttributeError:
-                pass
-            try:
-                self.allow_controlnet = bd.allow_controlnet
-            except AttributeError:
-                pass
+        super().reload_data()
+
+        if not hasattr(self, "models_to_load"):
+            self.models_to_load = []
+
+        if "ALL MODELS" in self.models_to_load:
+            self.models_to_load = self.get_all_models()
+
+        if not self.dynamic_models:
+            self.model_names = self.models_to_load
+        else:
+            self.predefined_models = self.models_to_load
+
         if args.max_power:
             self.max_power = args.max_power
         if args.model:
@@ -134,3 +94,31 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models
+
+    # Get all models directly from the server, not from nataili, as nataili
+    # may not be loaded, e.g. in webui.
+    def get_all_models(self):
+        # Try loading models from our environmental variable
+        if os.getenv("ALL_MODELS"):
+            return os.getenv("ALL_MODELS").split(",")
+
+        data = requests.get(
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+        ).json()
+
+        # get all interesting models
+        models = []
+        for _, model in data.items():
+            if (
+                model["name"] not in ["stable_diffusion_1.4", "safety_checker", "LDSR"]
+                and model["name"] not in self.models_to_skip
+                and model["type"] == "ckpt"
+            ):
+                models.append(model["name"])
+
+        models = sorted(list(set(models)))
+
+        # Save our models to our environmental variable
+        os.environ["ALL_MODELS"] = ",".join(models)
+
+        return models
