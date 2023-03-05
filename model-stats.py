@@ -9,7 +9,7 @@ import mmap
 import re
 
 import requests
-from bridgeData import models_to_load
+import yaml
 from tqdm import tqdm
 
 # Location of stable horde worker bridge log
@@ -67,7 +67,9 @@ class LogStats:
     def parse_log(self):
         self.used_models = {}
         # Grab any statically loaded models
-        self.unused_models = models_to_load[:]
+        with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
+            config = yaml.safe_load(configfile)
+        self.unused_models = config["models_to_load"]
         # Models to exclude
         if "safety_checker" in self.unused_models:
             self.unused_models.remove("safety_checker")
