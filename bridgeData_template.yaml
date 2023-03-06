@@ -21,7 +21,7 @@ queue_size: 0
 # If set to True, this worker will not only pick up jobs where the user has the required kudos upfront. 
 # Effectively this will exclude all anonymous accounts, and registered accounts who haven't contributed.
 # Users in priority_usernames and trusted users will bypass this restriction
-require_upfront_kudos: False
+require_upfront_kudos: false
 # If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
 # Note this ultimately overrides the models_to_load list
 
@@ -33,7 +33,7 @@ require_upfront_kudos: False
 # If you put this to 32, it is equivalent to 1024x1024 pixels
 max_power: 8
 # Set this to false, if you do not want your worker to receive requests for NSFW generations
-nsfw: True
+nsfw: true
 # Set this to True if you want your worker to censor NSFW generations. This will only be active is horde_nsfw == False
 censor_nsfw: false
 # A list of words which you do not want to your worker to accept
@@ -72,7 +72,7 @@ max_models_to_download: 10
 # in that case, keep this list short, preferrably to only a few more obscure models you'd like to always see available
 # If you want to load ALL models, use the special model name "ALL MODELS"
 models_to_load:
-  #- ALL MODELS
+  #- "ALL MODELS"
   - "stable_diffusion_2.1"
   - "stable_diffusion"
   #- "Anything Diffusion"
