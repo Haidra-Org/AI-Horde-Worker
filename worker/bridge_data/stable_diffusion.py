@@ -118,6 +118,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         models = sorted(list(set(models)))
 
+        # Add inpainting model if inpainting is enabled
+        if self.allow_painting:
+            models.append("stable_diffusion_inpainting")
+
         # Save our models to our environmental variable
         os.environ["ALL_MODELS"] = ",".join(models)
 
