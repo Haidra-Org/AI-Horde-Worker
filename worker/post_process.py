@@ -20,10 +20,7 @@ def post_process(model, image, model_manager):
         logger.init_ok(f"{model}", status="Success")
 
     pprocessor = KNOWN_POST_PROCESSORS[model]
-    post_processor = pprocessor(
-        model_manager.loaded_models[model],
-        save_individual_images=False,
-    )
+    post_processor = pprocessor(model_manager.loaded_models[model], save_individual_images=False,)
 
     post_processor(input_image=image, strength=1.0)
     return post_processor.output_images[0]

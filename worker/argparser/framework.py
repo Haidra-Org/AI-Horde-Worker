@@ -43,10 +43,7 @@ arg_parser.add_argument(
     help="Usernames which get priority use in this horde instance. The owner's username is always in this list.",
 )
 arg_parser.add_argument(
-    "--queue_size",
-    type=int,
-    required=False,
-    help="How many requests to keep in the queue. Min: 0",
+    "--queue_size", type=int, required=False, help="How many requests to keep in the queue. Min: 0",
 )
 arg_parser.add_argument(
     "--allow_unsafe_ip",
@@ -55,10 +52,7 @@ arg_parser.add_argument(
     help="Set to true if you want this worker worker to allow img2img requests from unsafe IPs.",
 )
 arg_parser.add_argument(
-    "--max_threads",
-    type=int,
-    required=False,
-    help="How many threads to use. Min: 1",
+    "--max_threads", type=int, required=False, help="How many threads to use. Min: 1",
 )
 arg_parser.add_argument(
     "-v",
@@ -81,10 +75,7 @@ arg_parser.add_argument(
     ),
 )
 arg_parser.add_argument(
-    "--log_file",
-    action="store_true",
-    default=False,
-    help="If specified will dump the log to the specified file",
+    "--log_file", action="store_true", default=False, help="If specified will dump the log to the specified file",
 )
 arg_parser.add_argument(
     "--disable_voodoo",
@@ -125,10 +116,7 @@ arg_parser.add_argument(
     help="Specify this argument to autodownload all missing models defined in your bridgeData.yaml",
 )
 arg_parser.add_argument(
-    "--skip_md5",
-    action="store_true",
-    default=False,
-    help="If specified will not check the downloaded model md5sum.",
+    "--skip_md5", action="store_true", default=False, help="If specified will not check the downloaded model md5sum.",
 )
 arg_parser.add_argument(
     "--enable_model_cache",

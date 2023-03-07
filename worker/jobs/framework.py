@@ -107,10 +107,7 @@ class HordeJobFramework:
                     f"posting payload with size of {round(sys.getsizeof(json.dumps(self.submit_dict)) / 1024,1)} kb"
                 )
                 submit_req = requests.post(
-                    self.bridge_data.horde_url + endpoint,
-                    json=self.submit_dict,
-                    headers=self.headers,
-                    timeout=60,
+                    self.bridge_data.horde_url + endpoint, json=self.submit_dict, headers=self.headers, timeout=60,
                 )
                 logger.debug(f"Upload completed in {submit_req.elapsed.total_seconds()}")
                 try:

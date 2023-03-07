@@ -12,11 +12,7 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
 
     bridge_data = InterrogationBridgeData()
-    model_manager = ModelManager(
-        blip=True,
-        clip=True,
-        safety_checker=True,
-    )
+    model_manager = ModelManager(blip=True, clip=True, safety_checker=True,)
     try:
         worker = InterrogationWorker(model_manager, bridge_data)
         worker.start()

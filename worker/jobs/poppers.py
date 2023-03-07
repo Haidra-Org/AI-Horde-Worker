@@ -29,10 +29,7 @@ class JobPopper:
             # logger.debug(self.headers)
             # logger.debug(self.pop_payload)
             pop_req = requests.post(
-                self.bridge_data.horde_url + self.endpoint,
-                json=self.pop_payload,
-                headers=self.headers,
-                timeout=40,
+                self.bridge_data.horde_url + self.endpoint, json=self.pop_payload, headers=self.headers, timeout=40,
             )
             # logger.debug(self.pop_payload)
             node = pop_req.headers["horde-node"] if "horde-node" in pop_req.headers else "unknown"

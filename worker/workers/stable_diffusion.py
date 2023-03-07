@@ -80,8 +80,7 @@ class StableDiffusionWorker(WorkerFramework):
             total_models.append(model["name"])
             new_dynamic_models.append(model["name"])
         logger.info(
-            "Dynamically loading new models to attack the relevant queue: {}",
-            new_dynamic_models,
+            "Dynamically loading new models to attack the relevant queue: {}", new_dynamic_models,
         )
         # Ensure we don't unload currently queued models
         self.bridge_data.model_names = list(set(total_models + running_models))
