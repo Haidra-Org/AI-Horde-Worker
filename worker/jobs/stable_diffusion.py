@@ -390,6 +390,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
+        logger.info(f"Estimated average kudos per hour: {bridge_stats.stats['kudos_per_hour']}")
 
 
 def count_parentheses(s):
