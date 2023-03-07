@@ -369,7 +369,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                 outputs=system,
             )
         gr.Markdown(
-            """
+            f"""
 ## Definitions
 
 ### Worker Name
@@ -399,7 +399,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
 {censorlist_info}
 
 ### Enable Dynamic Models
-{dynamic_models_info}
+{enable_dynamic_models_info}
 
 ### Max Models To Download
 {max_models_to_download_info}
@@ -408,22 +408,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
 {models_to_skip_info}
 
 ### Models To Load
-{models_to_load_info}""".format(
-                worker_name_info=worker_name_info,
-                api_key_info=api_key_info,
-                priority_usernames_info=priority_usernames_info,
-                max_power_info=max_power_info,
-                queue_size_info=queue_size_info,
-                max_threads_info=max_threads_info,
-                censor_nsfw_info=censor_nsfw_info,
-                blacklist_info=blacklist_info,
-                censorlist_info=censorlist_info,
-                dynamic_models_info=enable_dynamic_models_info,
-                max_models_to_download_info=max_models_to_download_info,
-                models_to_skip_info=models_to_skip_info,
-                models_to_load_info=models_to_load_info,
-            )
-        )
+{models_to_load_info}""")
 
         WebUI.queue()
         WebUI.load(load_workerID, inputs=worker_name, outputs=worker_ID, every=15)
