@@ -9,7 +9,9 @@ from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 style = """
 #has-over .svelte-1xipan2 {display : none;}
 #has-over:hover .svelte-1xipan2 {display : block;}
+#has-over{z-index: 50;}
 .svelte-1xipan2{
+    z-index:100;
     position: absolute;
 	top:-10px;
     left:-12px;
