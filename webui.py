@@ -6,6 +6,52 @@ from nataili.util.logger import logger
 from worker.bridge_data.interrogation import InterrogationBridgeData
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 
+style = """
+#has-over .svelte-1xipan2 {display : none;}
+#has-over:hover .svelte-1xipan2 {display : block;}
+.svelte-1xipan2{
+    position: absolute;
+	top:-10px;
+    left:-12px;
+    color:white;
+    background: #1F2937;
+    border: 1px solid #384151;
+    border-radius: 9px;
+    z-index: 1000;
+    transform: translateY(-100%);
+    padding: 10px;
+    color: white;
+    width:250px;
+    white-space: pre;
+    width: auto;
+}
+div.svelte-1fwqiwq{
+	overflow: initial!important;
+}
+"""
+
+worker_name_info="""This is a the name of your worker. It needs to be unique to the whole horde
+NOTE: You cannot run a interrogation and a stable diffusion worker with the same name"""
+api_key_info="""This is your Stable Horde API Key"""
+priority_usernames_info="""These users (in format username#id e.g. residentchiefnz#3966) will be prioritized over all other workers.
+Note: You do not need to add your own name to this list"""
+max_power_info="""This number derives the maximum image size your worker can generate.
+Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)"""
+queue_size_info="""This number determines the number of extra jobs that are collected.
+When the worker requests jobs it will request 1 job per thread plus this number"""
+max_threads_info="""This determines how many jobs will be processed simultaneously.
+Each job requires extra VRAM and will slow the speed of generations.
+This should be set to provide generations at a minumum of 0.6 megapixels per second
+Expected limit per VRAM size: 6Gb = 1 thread, 6-8Gb = 2 threads, 8-12Gb = 3 threads, 12Gb - 24Gb = 4 threads"""
+censor_nsfw_info="""If this is true and Enable NSFW is false, the worker will accept NSFW requests, but send back a censored image"""
+blacklist_info="""Any words in here that match a prompt will result in that job not being picked up by this worker"""
+censorlist_info="""Any words in here that match a prompt will always result in a censored image being returned"""
+enable_dynamic_models_info="""In addition to the models in "Models to Load" being loaded, the worker will also load models that in high demand"""
+max_models_to_download_info="""This number is the maximum number of models that the worker will download and run.
+Having a high number here will fill up your hard drive.  NOTE: This includes the safety checker and the post-processors"""
+models_to_skip_info="""These models will never be downloaded to the worker, even if Enable Dynamic Models is selected"""
+models_to_load_info="""This determines which models to always have available from this worker. Each model takes between 2 and 8Gb of VRAM"""
+
 
 def Process_Input_List(list):
     output = []
@@ -191,7 +237,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
         if existing_censorlist[-1] == ",":
             existing_censorlist = existing_censorlist[:-1]
 
-    with gr.Blocks() as WebUI:
+    with gr.Blocks(css=style) as WebUI:
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
         gr.Markdown("# Welcome to the Stable Horde Bridge Configurator")
         with gr.Column():
@@ -200,14 +246,18 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                 maintenance_mode = gr.TextArea(label="Current Maintenance Mode Status", lines=1, interactive=False)
                 worker_stats = gr.TextArea(label="Worker Statistics", lines=3, interactive=False)
             with gr.Row():
-                worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name)
-                api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key, type="password")
-                priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames)
+                worker_name = gr.Textbox(label="Worker Name", value=stable_diffusion_bridge_data.worker_name,elem_id='has-over',
+                info=worker_name_info)
+                api_key = gr.Textbox(label="API Key", value=stable_diffusion_bridge_data.api_key, type="password",elem_id='has-over', info=api_key_info)
+                priority_usernames = gr.Textbox(label="Priority Usernames", value=existing_priority_usernames,elem_id='has-over',
+                info=priority_usernames_info)
             with gr.Row():
                 max_threads = gr.Slider(
-                    1, 20, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads
-                )
-                queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size)
+                    1, 20, step=1, label="Number of Threads", value=stable_diffusion_bridge_data.max_threads,elem_id='has-over',
+                     info=max_threads_info)
+
+                queue_size = gr.Slider(0, 2, step=1, label="Queue Size", value=stable_diffusion_bridge_data.queue_size,elem_id='has-over',
+                info = queue_size_info)
                 allow_unsafe_ip = gr.Checkbox(
                     label="Allow Requests From Suspicious IP Addresses",
                     value=stable_diffusion_bridge_data.allow_unsafe_ip,
@@ -220,8 +270,8 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
             with gr.Tab("Image Generation"):
                 with gr.Row():
                     max_power = gr.Slider(
-                        2, 288, step=2, label="Max Power", value=stable_diffusion_bridge_data.max_power
-                    )
+                        2, 288, step=2, label="Max Power", value=stable_diffusion_bridge_data.max_power,elem_id='has-over', info=max_power_info)
+
                     allow_img2img = gr.Checkbox(
                         label="Allow img2img Requests", value=stable_diffusion_bridge_data.allow_img2img
                     )
@@ -240,19 +290,19 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                 with gr.Row():
                     nsfw = gr.Checkbox(label="Enable NSFW", value=stable_diffusion_bridge_data.nsfw)
                     censor_nsfw = gr.Checkbox(
-                        label="Censor NSFW Images", value=stable_diffusion_bridge_data.censor_nsfw
-                    )
+                        label="Censor NSFW Images", value=stable_diffusion_bridge_data.censor_nsfw,elem_id='has-over', info=censor_nsfw_info)
+
                 blacklist = gr.Textbox(
-                    label="Blacklisted Words or Phrases - Seperate with commas", value=existing_blacklist
-                )
+                    label="Blacklisted Words or Phrases - Seperate with commas", value=existing_blacklist,elem_id='has-over', info=blacklist_info)
+
                 censorlist = gr.Textbox(
-                    label="Censored Words or Phrases - Seperate with commas", value=existing_censorlist
-                )
+                    label="Censored Words or Phrases - Seperate with commas", value=existing_censorlist,elem_id='has-over', info=censorlist_info)
+
             with gr.Tab("Model Manager"):
                 with gr.Row():
                     dynamic_models = gr.Checkbox(
-                        label="Enable Dynamic Models", value=stable_diffusion_bridge_data.dynamic_models
-                    )
+                        label="Enable Dynamic Models", value=stable_diffusion_bridge_data.dynamic_models,elem_id='has-over', info=enable_dynamic_models_info)
+
                     number_of_dynamic_models = gr.Number(
                         label="Number of Models To Be Dynamically Loading",
                         value=stable_diffusion_bridge_data.number_of_dynamic_models,
@@ -262,15 +312,19 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
                         label="Maximum Number of Models To Download",
                         value=stable_diffusion_bridge_data.max_models_to_download,
                         precision=0,
+                        elem_id='has-over',
+                        info=max_models_to_download_info
                     )
                 models_to_load = gr.CheckboxGroup(
                     choices=model_list,
                     label="Models To Load (Not affected by dynamic models)",
                     value=current_model_list,
+                    elem_id='has-over',
+                    info=models_to_load_info
                 )
                 models_to_skip = gr.CheckboxGroup(
-                    choices=model_list, label="Models To Skip", value=stable_diffusion_bridge_data.models_to_skip
-                )
+                    choices=model_list, label="Models To Skip", value=stable_diffusion_bridge_data.models_to_skip, elem_id='has-over', info=models_to_skip_info)
+
         with gr.Tab("Image Interrogation"):
             forms = gr.CheckboxGroup(
                 label="Interrogation Modes",
@@ -317,53 +371,58 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
 ## Definitions
 
 ### Worker Name
-This is a the name of your worker.  It needs to be unique to the whole horde
-NOTE: You cannot run a interrogation and a stable diffusion worker with the same name
+{worker_name_info}
 
 ### API Key
-This is your Stable Horde API Key
-
+{api_key_info}
 ### Priority Usernames
-These users (in format username#id e.g. residentchiefnz#3966) will be prioritized over all other workers.
-Note: You do not need to add your own name to this list
+{priority_usernames_info}
 
 ### Max Power
-This number derives the maximum image size your worker can generate.
-Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)
+{max_power_info}
 
 ### Queue Size
-This number determines the number of extra jobs that are collected.
-When the worker requests jobs it will request 1 job per thread plus this number
+{queue_size_info}
 
 ### Max Threads
-This determines how many jobs will be processed simultaneously.
-Each job requires extra VRAM and will slow the speed of generations.
-This should be set to provide generations at a minumum of 0.6 megapixels per second
-Expected limit per VRAM size: 6Gb = 1 thread, 6-8Gb = 2 threads, 8-12Gb = 3 threads, 12Gb - 24Gb = 4 threads
+{max_threads_info}
 
 ### Censor NSFW
-If this is true and Enable NSFW is false, the worker will accept NSFW requests, but send back a censored image
+{censor_nsfw_info}
 
 ### Blacklist
-Any words in here that match a prompt will result in that job not being picked up by this worker
+{blacklist_info}
 
 ### Censorlist
-Any words in here that match a prompt will always result in a censored image being returned
+{censorlist_info}
 
 ### Enable Dynamic Models
-In addition to the models in "Models to Load" being loaded, the worker will also load models that in high demand
+{dynamic_models_info}
 
 ### Max Models To Download
-This number is the maximum number of models that the worker will download and run.
-Having a high number here will fill up your hard drive.  NOTE: This includes the safety checker and the post-processors
+{max_models_to_download_info}
 
 ### Models To Skip
-These models will never be downloaded to the worker, even if Enable Dynamic Models is selected
+{models_to_skip_info}
 
 ### Models To Load
-This determines which models to always have available from this worker. Each model takes between 2 and 8Gb of VRAM
-"""
+{models_to_load_info}""".format(
+                worker_name_info=worker_name_info,
+                api_key_info=api_key_info,
+                priority_usernames_info=priority_usernames_info,
+                max_power_info=max_power_info,
+                queue_size_info=queue_size_info,
+                max_threads_info=max_threads_info,
+                censor_nsfw_info=censor_nsfw_info,
+                blacklist_info=blacklist_info,
+                censorlist_info=censorlist_info,
+                dynamic_models_info=enable_dynamic_models_info,
+                max_models_to_download_info=max_models_to_download_info,
+                models_to_skip_info=models_to_skip_info,
+                models_to_load_info=models_to_load_info,
+            )
         )
+
         WebUI.queue()
         WebUI.load(load_workerID, inputs=worker_name, outputs=worker_ID, every=15)
         WebUI.load(load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
