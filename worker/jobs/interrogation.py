@@ -45,7 +45,9 @@ class InterrogationHordeJob(HordeJobFramework):
             self.result = has_nsfw_concept and True in has_nsfw_concept
         else:
             if self.current_form == "caption":
-                interrogator = Caption(self.model_manager.loaded_models["BLIP_Large"],)
+                interrogator = Caption(
+                    self.model_manager.loaded_models["BLIP_Large"],
+                )
                 payload_kwargs = {
                     "sample": True,
                     "num_beams": self.current_payload.get("num_beams", 7),
@@ -57,7 +59,9 @@ class InterrogationHordeJob(HordeJobFramework):
                     "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
                 }
             if self.current_form == "interrogation":
-                interrogator = Interrogator(self.model_manager.loaded_models["ViT-L/14"],)
+                interrogator = Interrogator(
+                    self.model_manager.loaded_models["ViT-L/14"],
+                )
                 payload_kwargs = {
                     "rank": self.current_payload.get(
                         "rank", True

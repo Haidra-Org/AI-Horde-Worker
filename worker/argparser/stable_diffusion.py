@@ -17,10 +17,16 @@ arg_parser.add_argument(
     help="Set to true if you do not want this worker generating NSFW images.",
 )
 arg_parser.add_argument(
-    "--blacklist", nargs="+", required=False, help="List the words that you want to blacklist.",
+    "--blacklist",
+    nargs="+",
+    required=False,
+    help="List the words that you want to blacklist.",
 )
 arg_parser.add_argument(
-    "--censorlist", nargs="+", required=False, help="List the words that you want to censor.",
+    "--censorlist",
+    nargs="+",
+    required=False,
+    help="List the words that you want to censor.",
 )
 arg_parser.add_argument(
     "--censor_nsfw",
@@ -41,7 +47,11 @@ arg_parser.add_argument(
     help="Set to true if you want this worker worker to allow inpainting/outpainting requests.",
 )
 arg_parser.add_argument(
-    "-m", "--model", action="store", required=False, help="Which model to run on this horde.",
+    "-m",
+    "--model",
+    action="store",
+    required=False,
+    help="Which model to run on this horde.",
 )
 arg_parser.add_argument(
     "--disable_dynamic_models",

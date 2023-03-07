@@ -45,7 +45,13 @@ def main():
 
     bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(
-        compvis=True, diffusers=True, esrgan=True, gfpgan=True, safety_checker=True, codeformer=True, controlnet=True,
+        compvis=True,
+        diffusers=True,
+        esrgan=True,
+        gfpgan=True,
+        safety_checker=True,
+        codeformer=True,
+        controlnet=True,
     )
     try:
         worker = StableDiffusionWorker(model_manager, bridge_data)
