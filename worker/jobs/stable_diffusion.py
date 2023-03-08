@@ -35,6 +35,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
         self.r2_upload = self.pop.get("r2_upload", False)
+        self.clip_model = None
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -48,6 +49,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
+        #PoC Stuff
+        if "ViT-L/14" in self.available_models:
+            print("Clip model loaded")
+            self.clip_model = self.model_manager.loaded_models["ViT-L/14"]
+        else: 
+            self.clip_model = None  
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
@@ -278,6 +285,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                     control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
+                    clip_model=self.clip_model
                 )
         else:
             # These variables do not exist in the outpainting implementation
