@@ -350,10 +350,13 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
         if generator.images[0].get("censored", False):
+            # Censor Reason will be none for CSAM rejections post image generation
+            if censor_reason is None:
+                censor_reason = "Image generated determined to be CSAM"
+                censor_image = self.bridge_data.censor_image_sfw_request
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
-        print(f"Variable check - Censored = {self.censored}; Image = {self.image}")
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
