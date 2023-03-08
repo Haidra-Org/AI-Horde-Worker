@@ -61,6 +61,9 @@ number_of_dynamic_models: 3
 # When the amount of models downloaded reaches this amount, the dynamic list will only use dynamic models already downloaded
 # Therefore make sure you put some generalist and popular models in your models_to_load list if this number is small!
 max_models_to_download: 10
+# The frequency (in seconds) to output worker summary stats, such as kudos per hour.
+# Set to zero to disable stats output completely.
+stats_output_frequency: 300
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
 # Adjust how many models you load based on how much RAM (not VRAM) you have available.
