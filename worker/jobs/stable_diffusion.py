@@ -6,6 +6,7 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
+from nataili.clip.interrogate import Interrogator
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
@@ -349,16 +350,33 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
+        # Proof of concept
+        poc_start = time.time()
+        interrogator = Interrogator(
+            self.clip_model
+        )
+        word_list = [
+            "loli",
+            "child",
+            "teen",
+            "porn",
+            "nude"
+        ]
+        similarity_result = interrogator(image=self.image, text_array=word_list, similarity=True)
+        poc_end = time.time()
+        poc_elapsed_time = poc_end - poc_start
+        is_csam = True if (similarity_result['default']['teen'] > 0.2 and similarity_result['default']['child'] > 0.195 and similarity_result['default']['loli'] > 0.2 ) and (similarity_result['default']['nude'] > 0.2 or similarity_result['default']['porn'] > 0.2) else False
+        logger.debug(f"Similarity Result after {poc_elapsed_time} seconds")
+        if is_csam:
+            censor_reason = "Image generated determined to be CSAM"
+            censor_image = self.bridge_data.censor_image_sfw_request
         if generator.images[0].get("censored", False):
-            # Censor Reason will be none for CSAM rejections post image generation
-            if censor_reason is None:
-                censor_reason = "Image generated determined to be CSAM"
-                censor_image = self.bridge_data.censor_image_sfw_request
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
-        # We unload the generator from RAM
+        # We unload the generator and interrogator from RAM
         generator = None
+        interrogator = None
         for post_processor in self.current_payload.get("post_processing", []):
             logger.debug(f"Post-processing with {post_processor}...")
             try:
