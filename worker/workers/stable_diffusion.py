@@ -17,7 +17,7 @@ class StableDiffusionWorker(WorkerFramework):
 
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
-        can_do = len(self.model_manager.get_loaded_models_names()) > 0
+        can_do = len(self.model_manager.compvis.get_loaded_models_names()) > 0
         if not can_do:
             logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
         return can_do
