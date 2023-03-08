@@ -51,7 +51,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
         #PoC Stuff
         if "ViT-L/14" in self.available_models:
-            print("Clip model loaded")
+            logger.debug("ViT-L/14 model loaded")
             self.clip_model = self.model_manager.loaded_models["ViT-L/14"]
         else: 
             self.clip_model = None  
