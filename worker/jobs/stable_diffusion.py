@@ -288,7 +288,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                     control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
-                    clip_model=self.clip_model,
                 )
         else:
             # These variables do not exist in the outpainting implementation
