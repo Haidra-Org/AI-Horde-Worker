@@ -19,12 +19,7 @@ class InterrogationBridgeData(BridgeDataTemplate):
     def reload_data(self):
         """Reloads configuration data"""
         previous_url = self.horde_url
-        bd = super().reload_data()
-        if bd:
-            try:
-                self.forms = bd.forms
-            except AttributeError:
-                pass
+        super().reload_data()
         if args.forms:
             self.forms = args.forms
         # Ensure no duplicates
