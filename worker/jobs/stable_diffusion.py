@@ -49,12 +49,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
-        #PoC Stuff
+        # PoC Stuff
         if "ViT-L/14" in self.available_models:
             logger.debug("ViT-L/14 model loaded")
             self.clip_model = self.model_manager.loaded_models["ViT-L/14"]
-        else: 
-            self.clip_model = None  
+        else:
+            self.clip_model = None
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
@@ -285,7 +285,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                     control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
-                    clip_model=self.clip_model
+                    clip_model=self.clip_model,
                 )
         else:
             # These variables do not exist in the outpainting implementation
@@ -351,6 +351,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
+        print(f"Variable check - Censored = {self.censored}; Image = {self.image}")
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
