@@ -89,6 +89,7 @@ class StableDiffusionWorker(WorkerFramework):
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
         super().reload_data()
+        logger.debug('aaa')
         self.bridge_data.check_models(self.model_manager)
         self.bridge_data.reload_models(self.model_manager)
 

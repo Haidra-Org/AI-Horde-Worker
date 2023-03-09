@@ -288,7 +288,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
                     control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
-                    clip_model=self.clip_model,
                 )
         else:
             # These variables do not exist in the outpainting implementation
@@ -352,24 +351,25 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.seed = generator.images[0]["seed"]
         # Proof of concept
         poc_start = time.time()
-        interrogator = Interrogator(
-            self.clip_model
-        )
-        word_list = [
-            "loli",
-            "child",
-            "teen",
-            "porn",
-            "nude"
-        ]
-        similarity_result = interrogator(image=self.image, text_array=word_list, similarity=True)
-        poc_end = time.time()
-        poc_elapsed_time = poc_end - poc_start
-        is_csam = True if (similarity_result['default']['teen'] > 0.2 and similarity_result['default']['child'] > 0.195 and similarity_result['default']['loli'] > 0.2 ) and (similarity_result['default']['nude'] > 0.2 or similarity_result['default']['porn'] > 0.2) else False
-        logger.debug(f"Similarity Result after {poc_elapsed_time} seconds")
-        if is_csam:
-            censor_reason = "Image generated determined to be CSAM"
-            censor_image = self.bridge_data.censor_image_sfw_request
+        if self.clip_model:
+            interrogator = Interrogator(
+                self.clip_model
+            )
+            word_list = [
+                "loli",
+                "child",
+                "teen",
+                "porn",
+                "nude"
+            ]
+            similarity_result = interrogator(image=self.image, text_array=word_list, similarity=True)
+            poc_end = time.time()
+            poc_elapsed_time = poc_end - poc_start
+            is_csam = True if (similarity_result['default']['teen'] > 0.2 and similarity_result['default']['child'] > 0.195 and similarity_result['default']['loli'] > 0.2 ) and (similarity_result['default']['nude'] > 0.2 or similarity_result['default']['porn'] > 0.2) else False
+            logger.debug(f"Similarity Result after {poc_elapsed_time} seconds")
+            if is_csam:
+                censor_reason = "Image generated determined to be CSAM"
+                censor_image = self.bridge_data.censor_image_sfw_request
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
