@@ -13,7 +13,7 @@ from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-from worker.csam_detection import check_for_csam
+from worker import csam
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
@@ -348,7 +348,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
-        is_csam, similarities = check_for_csam(
+        is_csam, similarities = csam.check_for_csam(
             clip_model=self.clip_model, 
             image=self.image,
             prompt=self.current_payload['prompt'],
