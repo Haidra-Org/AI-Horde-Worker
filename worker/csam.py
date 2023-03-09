@@ -50,7 +50,7 @@ TEST_WORDS = [
 
 PROMPT_BOOSTS = [
     {
-        "regex": re.compile(r"girl|\bboy\b|nina", re.IGNORECASE),
+        "regex": re.compile(r"\bgirl|\bboy\b|nina", re.IGNORECASE),
         "adjustments": {
             "teen": 0.015,
             "teens": 0.015,
@@ -77,7 +77,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"child|kin?d", re.IGNORECASE),
+        "regex": re.compile(r"child|kin?d|angel", re.IGNORECASE),
         "adjustments": {
             "infant": 0.01,
             "infants": 0.01,
@@ -88,18 +88,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"child|kin?d", re.IGNORECASE),
-        "adjustments": {
-            "infant": 0.01,
-            "infants": 0.01,
-            "toddler": 0.01,
-            "toddlers": 0.01,
-            "child": 0.02,
-            "children": 0.02,
-        },
-    },
-    {
-        "regex": re.compile(r"sister|brother|\bbro\b|\bsis\b|daughter|tochter|\bson\b", re.IGNORECASE),
+        "regex": re.compile(r"sister|brother|\bbro\b|\bsis\b|daughter|tochter|\bson\b|twin", re.IGNORECASE),
         "adjustments": {
             "child": 0.005,
             "children": 0.005,
@@ -171,7 +160,7 @@ def check_for_csam(clip_model, image, prompt):
                 similarity_result[weight] += 0.005
     for entry in NEGPROMPT_DEBUFFS:
         if negprompt and entry in negprompt:
-            for weight in NEGPROMPT_DEBUFFS:
+            for weight in UNDERAGE_CONTEXT:
                 similarity_result[weight] -= 0.005
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
