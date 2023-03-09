@@ -20,7 +20,7 @@ def check_for_csam(clip_model, image):
     lewd_context = {
         "porn": 0.2,
         "nude": 0.2,
-        "hentai": 0.22,
+        "hentai": 0.27,
     }
     word_list = list(underage_context.keys()) + list(lewd_context.keys())
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)
