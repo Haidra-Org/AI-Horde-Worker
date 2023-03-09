@@ -348,8 +348,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
-        if self.clip_model and check_for_csam(self.clip_model, self.image):
+        is_csam, similarities = check_for_csam(self.clip_model, self.image)
+        if self.clip_model and is_csam:
             logger.warning("Image generated determined to be CSAM. Censoring!")
+            img.save(f"csam/{self.seed}.webp")
+            similarities["prompt"] = self.current_payload['prompt']
+            json.dump(similarities, f"csam/{self.seed}.json")
             self.image = self.bridge_data.censor_image_csam
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
