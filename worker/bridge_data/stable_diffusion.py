@@ -81,7 +81,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
         self.model_names.append("safety_checker")
-        self.model_names.insert(0,"ViT-L/14")
+        self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
             self.model_names += self.POSTPROCESSORS
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:

@@ -153,8 +153,8 @@ class BridgeDataTemplate:
             if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
                 logger.debug(f"Model {model} not found or has wrong checksum")
                 if (
-                    model not in model_manager.get_available_models_by_types() or
-                    model_manager.count_available_models_by_types() + len(not_found_models)
+                    model not in model_manager.get_available_models_by_types()
+                    or model_manager.count_available_models_by_types() + len(not_found_models)
                     < self.max_models_to_download
                 ):
                     models_exist = False

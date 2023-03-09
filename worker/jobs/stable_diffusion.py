@@ -13,10 +13,10 @@ from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
+from worker.csam_detection import check_for_csam
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
-from worker.csam_detection import check_for_csam
 from worker.stats import bridge_stats
 
 
@@ -38,7 +38,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.r2_upload = self.pop.get("r2_upload", False)
         self.clip_model = None
         self.last_stats_time = time.monotonic()
-
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -352,9 +351,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.clip_model and check_for_csam(self.clip_model, self.image):
             logger.warning("Image generated determined to be CSAM. Censoring!")
             self.image = self.bridge_data.censor_image_csam
+        if generator.images[0].get("censored", False):
+            logger.info(f"Image censored with reason: {censor_reason}")
+            self.image = censor_image
+            self.censored = True
         # We unload the generator and interrogator from RAM
         generator = None
-        interrogator = None
         for post_processor in self.current_payload.get("post_processing", []):
             logger.debug(f"Post-processing with {post_processor}...")
             try:
