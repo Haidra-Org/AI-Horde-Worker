@@ -14,10 +14,12 @@ def check_for_csam(clip_model, image):
         "lolicon": 0.2,
         "child": 0.188,
         "children": 0.188,
-        "teen": 0.2,
-        "teens": 0.2,
+        "teen": 0.21,
+        "teens": 0.21,
         "infant": 0.19,
         "infants": 0.19,
+        "toddler": 0.19,
+        "toddlers": 0.19,
         "tween":0.188,
         "tweens":0.188,
     }
@@ -25,6 +27,8 @@ def check_for_csam(clip_model, image):
         "lolicon": 0.25,
         "child": 0.225,
         "children": 0.225,
+        "toddler": 0.22,
+        "toddlers": 0.22,
         "infant": 0.22,
         "infants": 0.22,
         "teen": 0.26,
@@ -39,14 +43,27 @@ def check_for_csam(clip_model, image):
         "lesbian scene": 0.2,
         "gay scene": 0.2,
     }
+    control_words = [
+        "pregnant",
+        "anime",
+    ]
     test_words = [
         "family",
     ]
-    word_list = list(underage_context.keys()) + list(lewd_context.keys()) + test_words
+    word_list = list(underage_context.keys()) + list(lewd_context.keys()) + control_words + test_words
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
     found_uc = 0
+    # For some reason clip associates infant with pregnant women a lot. 
+    # So to avoid censoring pregnant women, when they're drawn we reduce 
+    # the weight of "infant"
+    if similarity_result["default"]["pregnant"] > 0.21:
+        similarity_result["default"]["infant"] -= 0.03
+        similarity_result["default"]["infants"] -= 0.03
+    if similarity_result["default"]["anime"] > 0.23:
+        similarity_result["default"]["teen"] -= 0.03
+        similarity_result["default"]["teen"] -= 0.03
     for u_c in underage_context:
         if similarity_result["default"][u_c] > underage_context[u_c]:
             found_uc += 1
