@@ -153,7 +153,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     available_model != "stable_diffusion_inpainting"
-                    and available_model not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
+                    and available_model
+                    not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
                     logger.debug(
                         [
