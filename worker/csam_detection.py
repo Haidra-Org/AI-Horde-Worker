@@ -21,6 +21,13 @@ def check_for_csam(clip_model, image):
         "tween":0.19,
         "tweens":0.19,
     }
+    underage_critical = {
+        "lolicon": 0.25,
+        "child": 0.225,
+        "children": 0.225,
+        "infant": 0.22,
+        "infants": 0.22,
+    }
     lewd_context = {
         "porn": 0.2,
         "naked": 0.195,
@@ -41,6 +48,10 @@ def check_for_csam(clip_model, image):
     for u_c in underage_context:
         if similarity_result["default"][u_c] > underage_context[u_c]:
             found_uc += 1
+    # When the value for some underage context is too high, it goes critical and we triple the suspicion
+    for u_c in underage_critical:
+        if similarity_result["default"][u_c] > underage_critical[u_c]:
+            found_uc += 2
     found_lewd = 0
     for l_c in lewd_context:
         if similarity_result["default"][l_c] > lewd_context[l_c]:
