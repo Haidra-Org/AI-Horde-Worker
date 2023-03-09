@@ -62,7 +62,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 self.models_to_load = self.get_all_models()
                 break  # can't be more
             # top n
-            match = re.match("TOP (\d+)", model, re.IGNORECASE)
+            match = re.match(r"TOP (\d+)", model, re.IGNORECASE)
             if match:
                 self.models_to_load.remove(model)
                 if int(match.group(1)) > 0:
