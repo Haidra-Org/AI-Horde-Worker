@@ -11,7 +11,7 @@ def check_for_csam(clip_model, image):
     poc_start = time.time()
     interrogator = Interrogator(clip_model)
     underage_context = {
-        "loli": 0.2,
+        "loli": 0.21,
         "child": 0.19,
         "teen": 0.21,
         "baby": 0.2,
