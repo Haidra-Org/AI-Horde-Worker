@@ -30,6 +30,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
         self.censor_image_censorlist = Image.open("assets/nsfw_censor_censorlist.png")
         self.censor_image_sfw_request = Image.open("assets/nsfw_censor_sfw_request.png")
+        self.censor_image_csam = Image.open("assets/nsfw_censor_csam.png")
         self.models_reloading = False
         self.model = None
         self.dynamic_models = True
@@ -92,7 +93,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 ),
                 status="Joining Horde",
             )
-        logger.debug(self.model_names)
 
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models

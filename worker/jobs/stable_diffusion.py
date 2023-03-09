@@ -6,7 +6,6 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
-from nataili.clip.interrogate import Interrogator
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
@@ -17,6 +16,7 @@ from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
+from worker.csam_detection import check_for_csam
 from worker.stats import bridge_stats
 
 
@@ -349,30 +349,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
-        if self.clip_model:
-            poc_start = time.time()
-            interrogator = Interrogator(
-                self.clip_model
-            )
-            word_list = [
-                "loli",
-                "child",
-                "teen",
-                "porn",
-                "nude"
-            ]
-            similarity_result = interrogator(image=self.image, text_array=word_list, similarity=True)
-            poc_end = time.time()
-            poc_elapsed_time = poc_end - poc_start
-            is_csam = True if (similarity_result['default']['teen'] > 0.2 and similarity_result['default']['child'] > 0.195 and similarity_result['default']['loli'] > 0.2 ) and (similarity_result['default']['nude'] > 0.2 or similarity_result['default']['porn'] > 0.2) else False
-            logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam} - Details = {similarity_result['default']}")
-            if is_csam:
-                logger.info("Image generated determined to be CSAM")
-                self.image = self.bridge_data.censor_image_sfw_request
-        if generator.images[0].get("censored", False):
-            logger.info(f"Image censored with reason: {censor_reason}")
-            self.image = censor_image
-            self.censored = True
+        if self.clip_model and check_for_csam(self.clip_model, self.image):
+            logger.warning("Image generated determined to be CSAM. Censoring!")
+            self.image = self.bridge_data.censor_image_csam
         # We unload the generator and interrogator from RAM
         generator = None
         interrogator = None
