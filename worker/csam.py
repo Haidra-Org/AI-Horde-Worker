@@ -52,10 +52,10 @@ PROMPT_BOOSTS = [
     {
         "regex": re.compile(r"girl|\bboy\b|nina", re.IGNORECASE),
         "adjustments": {
-            "teen": 0.01,
-            "teens": 0.01,
-            "tween": 0.01,
-            "tweens": 0.01,
+            "teen": 0.015,
+            "teens": 0.015,
+            "tween": 0.015,
+            "tweens": 0.015,
         },
     },
     {
@@ -140,6 +140,11 @@ NEGPROMPT_BOOSTS = {
     "adult"
     "elderly"
 }
+NEGPROMPT_DEBUFFS = {
+    "young"
+    "little"
+    "child"
+}
 
 weight_remover = re.compile(r'\((.*?):\d+\.\d+\)')
 whitespace_remover = re.compile(r'(\s(\w)){3,}\b')
@@ -161,9 +166,13 @@ def check_for_csam(clip_model, image, prompt):
             for weight in entry["adjustments"]:
                 similarity_result[weight] += entry["adjustments"][weight]
     for entry in NEGPROMPT_BOOSTS:
-        if entry in negprompt:
+        if negprompt and entry in negprompt:
             for weight in UNDERAGE_CONTEXT:
                 similarity_result[weight] += 0.005
+    for entry in NEGPROMPT_DEBUFFS:
+        if negprompt and entry in negprompt:
+            for weight in NEGPROMPT_DEBUFFS:
+                similarity_result[weight] -= 0.005
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
     found_uc = 0
@@ -190,7 +199,7 @@ def check_for_csam(clip_model, image, prompt):
     if found_uc >= 3 and found_lewd >= 1:
         is_csam = True
     logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
-    return is_csam, similarity_result['default']
+    return is_csam, similarity_result
         
 def normalize_prompt(prompt):
     """Prepares the prompt to be scanned by the regex, by removing tricks one might use to avoid the filters
@@ -200,20 +209,21 @@ def normalize_prompt(prompt):
         prompt, negprompt = prompt.split("###", 1)
     prompt = weight_remover.sub(r'\1', prompt)
     prompt = whitespace_converter.sub(' ', prompt)
-    for match in re.finditer(self.whitespace_remover, prompt):
+    for match in re.finditer(whitespace_remover, prompt):
         trim_match = match.group(0).strip()
         replacement = re.sub(r'\s+', '', trim_match)
         prompt = prompt.replace(trim_match, replacement)
     prompt = re.sub('\s+', ' ', prompt)
     # Remove all accents
     prompt = unidecode(prompt)
-    negprompt = weight_remover.sub(r'\1', negprompt)
-    negprompt = whitespace_converter.sub(' ', negprompt)
-    for match in re.finditer(self.whitespace_remover, negprompt):
-        trim_match = match.group(0).strip()
-        replacement = re.sub(r'\s+', '', trim_match)
-        negprompt = negprompt.replace(trim_match, replacement)
-    negprompt = re.sub('\s+', ' ', negprompt)
-    # Remove all accents
-    negprompt = unidecode(negprompt)
+    if negprompt:
+        negprompt = weight_remover.sub(r'\1', negprompt)
+        negprompt = whitespace_converter.sub(' ', negprompt)
+        for match in re.finditer(whitespace_remover, negprompt):
+            trim_match = match.group(0).strip()
+            replacement = re.sub(r'\s+', '', trim_match)
+            negprompt = negprompt.replace(trim_match, replacement)
+        negprompt = re.sub('\s+', ' ', negprompt)
+        # Remove all accents
+        negprompt = unidecode(negprompt)
     return prompt, negprompt
