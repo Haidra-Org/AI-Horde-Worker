@@ -12,8 +12,8 @@ from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
-from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker import csam
+from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
@@ -349,9 +349,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
         is_csam, similarities = csam.check_for_csam(
-            clip_model=self.clip_model, 
+            clip_model=self.clip_model,
             image=self.image,
-            prompt=self.current_payload['prompt'],
+            prompt=self.current_payload["prompt"],
         )
         if self.clip_model and is_csam:
             logger.warning("Image generated determined to be CSAM. Censoring!")

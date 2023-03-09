@@ -1,11 +1,10 @@
 """Post process images"""
-import time
 import re
-from unidecode import unidecode
+import time
 
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
-
+from unidecode import unidecode
 
 UNDERAGE_CONTEXT = {
     "lolicon": 0.2,
@@ -17,8 +16,8 @@ UNDERAGE_CONTEXT = {
     "infants": 0.19,
     "toddler": 0.19,
     "toddlers": 0.19,
-    "tween":0.188,
-    "tweens":0.188,
+    "tween": 0.188,
+    "tweens": 0.188,
 }
 UNDERAGE_CRITICAL = {
     "lolicon": 0.25,
@@ -36,7 +35,7 @@ LEWD_CONTEXT = {
     "naked": 0.195,
     "hentai": 0.25,
     "orgy": 0.21,
-    "nudity":0.195,
+    "nudity": 0.195,
     "lesbian scene": 0.2,
     "gay scene": 0.2,
 }
@@ -123,22 +122,12 @@ PROMPT_BOOSTS = [
         },
     },
 ]
-NEGPROMPT_BOOSTS = {
-    "mature"
-    "old"
-    "adult"
-    "elderly"
-}
-NEGPROMPT_DEBUFFS = {
-    "young"
-    "little"
-    "child"
-}
+NEGPROMPT_BOOSTS = {"mature" "old" "adult" "elderly"}
+NEGPROMPT_DEBUFFS = {"young" "little" "child"}
 
-weight_remover = re.compile(r'\((.*?):\d+\.\d+\)')
-whitespace_remover = re.compile(r'(\s(\w)){3,}\b')
-whitespace_converter = re.compile(r'[^\w\s]')
-
+weight_remover = re.compile(r"\((.*?):\d+\.\d+\)")
+whitespace_remover = re.compile(r"(\s(\w)){3,}\b")
+whitespace_converter = re.compile(r"[^\w\s]")
 
 
 def check_for_csam(clip_model, image, prompt):
@@ -149,7 +138,7 @@ def check_for_csam(clip_model, image, prompt):
 
     word_list = list(UNDERAGE_CONTEXT.keys()) + list(LEWD_CONTEXT.keys()) + CONTROL_WORDS + TEST_WORDS
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)["default"]
-    prompt,negprompt = normalize_prompt(prompt)
+    prompt, negprompt = normalize_prompt(prompt)
     for entry in PROMPT_BOOSTS:
         if entry["regex"].search(prompt):
             for weight in entry["adjustments"]:
@@ -165,8 +154,8 @@ def check_for_csam(clip_model, image, prompt):
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
     found_uc = 0
-    # For some reason clip associates infant with pregnant women a lot. 
-    # So to avoid censoring pregnant women, when they're drawn we reduce 
+    # For some reason clip associates infant with pregnant women a lot.
+    # So to avoid censoring pregnant women, when they're drawn we reduce
     # the weight of "infant"
     if similarity_result["pregnant"] > 0.21:
         similarity_result["infant"] -= 0.03
@@ -189,30 +178,30 @@ def check_for_csam(clip_model, image, prompt):
         is_csam = True
     logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
     return is_csam, similarity_result
-        
+
+
 def normalize_prompt(prompt):
-    """Prepares the prompt to be scanned by the regex, by removing tricks one might use to avoid the filters
-    """
+    """Prepares the prompt to be scanned by the regex, by removing tricks one might use to avoid the filters"""
     negprompt = None
     if "###" in prompt:
         prompt, negprompt = prompt.split("###", 1)
-    prompt = weight_remover.sub(r'\1', prompt)
-    prompt = whitespace_converter.sub(' ', prompt)
+    prompt = weight_remover.sub(r"\1", prompt)
+    prompt = whitespace_converter.sub(" ", prompt)
     for match in re.finditer(whitespace_remover, prompt):
         trim_match = match.group(0).strip()
-        replacement = re.sub(r'\s+', '', trim_match)
+        replacement = re.sub(r"\s+", "", trim_match)
         prompt = prompt.replace(trim_match, replacement)
-    prompt = re.sub('\s+', ' ', prompt)
+    prompt = re.sub("\s+", " ", prompt)
     # Remove all accents
     prompt = unidecode(prompt)
     if negprompt:
-        negprompt = weight_remover.sub(r'\1', negprompt)
-        negprompt = whitespace_converter.sub(' ', negprompt)
+        negprompt = weight_remover.sub(r"\1", negprompt)
+        negprompt = whitespace_converter.sub(" ", negprompt)
         for match in re.finditer(whitespace_remover, negprompt):
             trim_match = match.group(0).strip()
-            replacement = re.sub(r'\s+', '', trim_match)
+            replacement = re.sub(r"\s+", "", trim_match)
             negprompt = negprompt.replace(trim_match, replacement)
-        negprompt = re.sub('\s+', ' ', negprompt)
+        negprompt = re.sub("\s+", " ", negprompt)
         # Remove all accents
         negprompt = unidecode(negprompt)
     return prompt, negprompt
