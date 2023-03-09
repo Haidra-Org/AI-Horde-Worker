@@ -1,5 +1,7 @@
 """The configuration of the bridge"""
 import os
+import re
+import time
 
 import requests
 from nataili.util.logger import logger
@@ -16,6 +18,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
     def __init__(self):
         super().__init__(args)
+        self._last_top_n_refresh = 0
+        self._last_model_db_refresh = 0
+        self._all_model_names = []
+        self._top_n_model_names = []
         self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.censor_nsfw = os.environ.get("HORDE_CENSOR", "false") == "true"
@@ -36,6 +42,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.number_of_dynamic_models = 3
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
+        self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
+        self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
 
     @logger.catch(reraise=True)
     def reload_data(self):
@@ -46,8 +54,21 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
 
-        if "ALL MODELS" in self.models_to_load:
-            self.models_to_load = self.get_all_models()
+        # Check for magic constants and expand them
+        top_n = 0
+        for model in self.models_to_load[:]:
+            # all models
+            if re.match("ALL MODELS", model, re.IGNORECASE):
+                self.models_to_load = self.get_all_models()
+                break  # can't be more
+            # top n
+            match = re.match("TOP (\d+)", model, re.IGNORECASE)
+            if match:
+                self.models_to_load.remove(model)
+                if int(match.group(1)) > 0:
+                    top_n = int(match.group(1))
+        if top_n:
+            self.models_to_load.extend(self.get_top_n_models(top_n))
 
         if not self.dynamic_models:
             self.model_names = self.models_to_load
@@ -98,10 +119,21 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     # Get all models directly from the server, not from nataili, as nataili
     # may not be loaded, e.g. in webui.
     def get_all_models(self):
-        # Try loading models from our environmental variable
-        if os.getenv("ALL_MODELS"):
-            return os.getenv("ALL_MODELS").split(",")
 
+        # Never refresh more than once per hour
+        if self.model_database_refresh_frequency < 3600:
+            self.model_database_refresh_frequency = 3600
+
+        # Should we refresh the model list?
+        if time.monotonic() - self._last_model_db_refresh < self.model_database_refresh_frequency:
+            # No, return cached version
+            return self._all_model_names[:]
+
+        # If we're never refreshing and have a cache, just use that
+        if not self.model_database_refresh_frequency and self._all_model_names:
+            return self._all_model_names[:]
+
+        logger.info("Refreshing the list of all available models")
         data = requests.get(
             "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
         ).json()
@@ -126,7 +158,46 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if self.allow_painting:
             models.append("stable_diffusion_inpainting")
 
-        # Save our models to our environmental variable
-        os.environ["ALL_MODELS"] = ",".join(models)
+        # Save our models
+        self._all_model_names = models[:]
+        self._last_model_db_refresh = time.monotonic()
 
         return models
+
+    # Get the top n most popular models from the horde server
+    def get_top_n_models(self, top_n, period="day"):
+
+        model_list = []
+
+        # Never refresh more than once per hour
+        if self.top_n_refresh_frequency < 3600:
+            self.top_n_refresh_frequency = 3600
+
+        # Should we refresh the top n list?
+        if time.monotonic() - self._last_top_n_refresh < self.top_n_refresh_frequency:
+            # No, use cached data
+            model_list = self._top_n_model_names
+
+        # If we're never refreshing and have a cache, just use that
+        if not self.top_n_refresh_frequency and self._top_n_model_names:
+            model_list = self._top_n_model_names
+
+        # Update the top n model chart
+        if not model_list:
+            models = {}
+            logger.info("Refreshing the most popular model data")
+            try:
+                req = requests.get(f"{self.horde_url}/api/v2/stats/img/models")
+                models = req.json()[period] if req.ok else {}
+            except requests.exceptions.RequestException:
+                logger.warning("Failed to retrieve the most popular models data.")
+            model_list = sorted(((models[model], model) for model in models), reverse=True)
+            self._top_n_model_names = model_list
+            self._last_top_n_refresh = time.monotonic()
+
+        top = [x[1] for x in self._top_n_model_names[:top_n]]
+
+        # Always return something, no matter what went wrong
+        if not top:
+            top.append("stable_diffusion")
+        return top
