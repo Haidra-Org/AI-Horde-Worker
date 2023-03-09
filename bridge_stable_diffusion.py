@@ -17,7 +17,7 @@ from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.workers.stable_diffusion import StableDiffusionWorker
 
 # The lowest nataili version we require to function correctly
-MINIMIUM_NATAILI_VERSION = "0.2.2012"
+MINIMIUM_NATAILI_VERSION = "0.2.9012"
 
 
 def check_for_old_dir():
@@ -48,7 +48,7 @@ def check_for_old_dir():
 def check_dependencies():
     # Check nataili
     version = importlib.metadata.version("nataili")
-    if packaging.version.parse(MINIMIUM_NATAILI_VERSION) < packaging.version.parse(version):
+    if packaging.version.parse(MINIMIUM_NATAILI_VERSION) > packaging.version.parse(version):
         logger.error("The nataili library is out of date. " "Please run update-runtime to update your environment.")
         exit(1)
 
