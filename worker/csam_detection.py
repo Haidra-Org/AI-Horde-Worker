@@ -11,17 +11,29 @@ def check_for_csam(clip_model, image):
     poc_start = time.time()
     interrogator = Interrogator(clip_model)
     underage_context = {
-        "loli": 0.2,
-        "child": 0.195,
-        "teen": 0.2,
-        "baby": 0.2,
+        "lolicon": 0.2,
+        "child": 0.19,
+        "children": 0.19,
+        "teenager": 0.2,
+        "teenagers": 0.2,
+        "infant": 0.2,
+        "infants": 0.2,
+        "tween":0.19,
+        "tweens":0.19,
     }
     lewd_context = {
         "porn": 0.2,
-        "nude": 0.2,
-        "hentai": 0.27,
+        "naked": 0.195,
+        "hentai": 0.25,
+        "orgy": 0.21,
+        "nudity":0.195,
+        "lesbian scene": 0.2,
+        "gay scene": 0.2,
     }
-    word_list = list(underage_context.keys()) + list(lewd_context.keys())
+    test_words = [
+        "family",
+    ]
+    word_list = list(underage_context.keys()) + list(lewd_context.keys()) + test_words
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
