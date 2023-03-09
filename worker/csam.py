@@ -189,7 +189,7 @@ def normalize_prompt(prompt):
         trim_match = match.group(0).strip()
         replacement = re.sub(r"\s+", "", trim_match)
         prompt = prompt.replace(trim_match, replacement)
-    prompt = re.sub("\s+", " ", prompt)
+    prompt = re.sub(r"\s+", " ", prompt)
     # Remove all accents
     prompt = unidecode(prompt)
     if negprompt:
@@ -199,7 +199,7 @@ def normalize_prompt(prompt):
             trim_match = match.group(0).strip()
             replacement = re.sub(r"\s+", "", trim_match)
             negprompt = negprompt.replace(trim_match, replacement)
-        negprompt = re.sub("\s+", " ", negprompt)
+        negprompt = re.sub(r"\s+", " ", negprompt)
         # Remove all accents
         negprompt = unidecode(negprompt)
     return prompt, negprompt
