@@ -349,9 +349,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
-        # Proof of concept
-        poc_start = time.time()
         if self.clip_model:
+            poc_start = time.time()
             interrogator = Interrogator(
                 self.clip_model
             )
@@ -366,10 +365,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             poc_end = time.time()
             poc_elapsed_time = poc_end - poc_start
             is_csam = True if (similarity_result['default']['teen'] > 0.2 and similarity_result['default']['child'] > 0.195 and similarity_result['default']['loli'] > 0.2 ) and (similarity_result['default']['nude'] > 0.2 or similarity_result['default']['porn'] > 0.2) else False
-            logger.debug(f"Similarity Result after {poc_elapsed_time} seconds")
+            logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam} - Details = {similarity_result['default']}")
             if is_csam:
-                censor_reason = "Image generated determined to be CSAM"
-                censor_image = self.bridge_data.censor_image_sfw_request
+                logger.info("Image generated determined to be CSAM")
+                self.image = self.bridge_data.censor_image_sfw_request
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
