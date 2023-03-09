@@ -43,8 +43,7 @@ CONTROL_WORDS = [
     "pregnant",
     "anime",
 ]
-TEST_WORDS = [
-]
+TEST_WORDS = []
 
 PROMPT_BOOSTS = [
     {
