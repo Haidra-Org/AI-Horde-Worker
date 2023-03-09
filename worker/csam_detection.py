@@ -12,14 +12,14 @@ def check_for_csam(clip_model, image):
     interrogator = Interrogator(clip_model)
     underage_context = {
         "lolicon": 0.2,
-        "child": 0.19,
-        "children": 0.19,
-        "teenager": 0.2,
-        "teenagers": 0.2,
-        "infant": 0.2,
-        "infants": 0.2,
-        "tween":0.19,
-        "tweens":0.19,
+        "child": 0.188,
+        "children": 0.188,
+        "teen": 0.2,
+        "teens": 0.2,
+        "infant": 0.19,
+        "infants": 0.19,
+        "tween":0.188,
+        "tweens":0.188,
     }
     underage_critical = {
         "lolicon": 0.25,
@@ -27,6 +27,8 @@ def check_for_csam(clip_model, image):
         "children": 0.225,
         "infant": 0.22,
         "infants": 0.22,
+        "teen": 0.26,
+        "teens": 0.26,
     }
     lewd_context = {
         "porn": 0.2,
