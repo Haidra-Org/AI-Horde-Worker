@@ -35,7 +35,5 @@ def check_for_csam(clip_model, image):
             found_lewd += 1
     if found_uc >= 3 and found_lewd >= 1:
         is_csam = True
-    logger.info(
-        f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}"
-    )
+    logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
     return is_csam
