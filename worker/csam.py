@@ -44,7 +44,6 @@ CONTROL_WORDS = [
     "anime",
 ]
 TEST_WORDS = [
-    "family",
 ]
 
 PROMPT_BOOSTS = [
@@ -122,7 +121,7 @@ PROMPT_BOOSTS = [
         },
     },
 ]
-NEGPROMPT_BOOSTS = {"mature" "old" "adult" "elderly"}
+NEGPROMPT_BOOSTS = {"mature" "old" "adult" "elderly", "middle aged"}
 NEGPROMPT_DEBUFFS = {"young" "little" "child"}
 
 weight_remover = re.compile(r"\((.*?):\d+\.\d+\)")
