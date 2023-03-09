@@ -117,6 +117,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 models.append(model["name"])
 
         models = sorted(list(set(models)))
+        # Move the standard SD model to the top of the list
+        if "stable_diffusion" in models:
+            models.remove("stable_diffusion")
+            models.insert(0, "stable_diffusion")
 
         # Add inpainting model if inpainting is enabled
         if self.allow_painting:
