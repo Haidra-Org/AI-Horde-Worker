@@ -13,6 +13,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
     POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]
+    INTERROGATORS = ["ViT-L/14"]
 
     def __init__(self):
         super().__init__(args)
