@@ -17,6 +17,8 @@ from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.workers.stable_diffusion import StableDiffusionWorker
 
 # The lowest nataili version we require to function correctly
+# XXX This is temporary measure. Once nataili is published to pypi
+# XXX we can load this from the worker project requirements.txt
 MINIMIUM_NATAILI_VERSION = "0.2.9012"
 
 
