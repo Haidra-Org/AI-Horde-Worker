@@ -13,7 +13,7 @@ def check_for_csam(clip_model, image):
     underage_context = {
         "loli": 0.2,
         "child": 0.19,
-        "teen": 0.2,
+        "teen": 0.21,
         "baby": 0.2,
     }
     lewd_context = {
