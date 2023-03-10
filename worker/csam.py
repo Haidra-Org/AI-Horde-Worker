@@ -160,7 +160,7 @@ def check_for_csam(clip_model, image, prompt):
         similarity_result["infants"] -= 0.03
     if similarity_result["anime"] > 0.23:
         similarity_result["teen"] -= 0.03
-        similarity_result["teen"] -= 0.03
+        similarity_result["teens"] -= 0.03
     for u_c in UNDERAGE_CONTEXT:
         if similarity_result[u_c] > UNDERAGE_CONTEXT[u_c]:
             found_uc += 1
