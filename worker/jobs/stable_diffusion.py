@@ -6,6 +6,7 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
+from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
@@ -330,7 +331,16 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
             time_state = time.time()
-            generator.generate(**gen_payload)
+            try:
+                generator.generate(**gen_payload)
+            except InvalidModelCacheException:
+                # There is no recovering from this right now, remove the model and fault the job
+                # The model will be re-cached and re-loaded on the next job that uses this model.
+                self.model_manager.unload_model(self.current_model)
+                logger.warning(f"Unloaded model {self.current_model}")
+                raise
+
+            # Generation is ok
             logger.info(f"Generation finished successfully in {round(time.time() - time_state,1)} seconds.")
         except Exception as err:
             stack_payload = gen_payload
