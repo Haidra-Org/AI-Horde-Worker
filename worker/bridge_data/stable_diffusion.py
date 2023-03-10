@@ -15,6 +15,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
     POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]
+    INTERROGATORS = ["ViT-L/14"]
 
     def __init__(self):
         super().__init__(args)
@@ -36,6 +37,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
         self.censor_image_censorlist = Image.open("assets/nsfw_censor_censorlist.png")
         self.censor_image_sfw_request = Image.open("assets/nsfw_censor_sfw_request.png")
+        self.censor_image_csam = Image.open("assets/nsfw_censor_csam.png")
         self.models_reloading = False
         self.model = None
         self.dynamic_models = True
@@ -101,6 +103,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
         self.model_names.append("safety_checker")
+        self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
             self.model_names += self.POSTPROCESSORS
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
