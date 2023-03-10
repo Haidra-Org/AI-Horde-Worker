@@ -51,8 +51,8 @@ PROMPT_BOOSTS = [
         "adjustments": {
             "teen": 0.015,
             "teens": 0.015,
-            "tween": 0.015,
-            "tweens": 0.015,
+            "tween": 0.005,
+            "tweens": 0.005,
         },
     },
     {
@@ -100,8 +100,8 @@ PROMPT_BOOSTS = [
             "children": 0.01,
             "toddler": 0.01,
             "toddlers": 0.01,
-            "tween": 0.05,
-            "tweens": 0.05,
+            "tween": 0.005,
+            "tweens": 0.005,
         },
     },
     {
@@ -123,6 +123,19 @@ PROMPT_BOOSTS = [
 NEGPROMPT_BOOSTS = {"mature" "old" "adult" "elderly", "middle aged"}
 NEGPROMPT_DEBUFFS = {"young" "little" "child"}
 
+PAIRS = {
+    "tween": "tweens",
+    "tweens": "tween",
+    "teen": "teens",
+    "teens": "teen",
+    "infant": "infants",
+    "infants": "infant",
+    "toddler": "toddlers",
+    "toddlers": "toddler",
+    "child": "children",
+    "children": "child",
+}
+
 weight_remover = re.compile(r"\((.*?):\d+\.\d+\)")
 whitespace_remover = re.compile(r"(\s(\w)){3,}\b")
 whitespace_converter = re.compile(r"[^\w\s]")
@@ -137,10 +150,6 @@ def check_for_csam(clip_model, image, prompt):
     word_list = list(UNDERAGE_CONTEXT.keys()) + list(LEWD_CONTEXT.keys()) + CONTROL_WORDS + TEST_WORDS
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)["default"]
     prompt, negprompt = normalize_prompt(prompt)
-    for entry in PROMPT_BOOSTS:
-        if entry["regex"].search(prompt):
-            for weight in entry["adjustments"]:
-                similarity_result[weight] += entry["adjustments"][weight]
     for entry in NEGPROMPT_BOOSTS:
         if negprompt and entry in negprompt:
             for weight in UNDERAGE_CONTEXT:
@@ -149,6 +158,15 @@ def check_for_csam(clip_model, image, prompt):
         if negprompt and entry in negprompt:
             for weight in UNDERAGE_CONTEXT:
                 similarity_result[weight] -= 0.005
+    for entry in PROMPT_BOOSTS:
+        if entry["regex"].search(prompt):
+            for weight in entry["adjustments"]:
+                #  The below prevents us from increasing the plural and the singlar above the threshold
+                # due to the boost. This prevents us from hitting the threshold with something like
+                # teen + teens due to boosts
+                if weight in PAIRS and similarity_result[PAIRS[weight]] > UNDERAGE_CONTEXT[weight]:
+                    continue
+                similarity_result[weight] += entry["adjustments"][weight]
     poc_elapsed_time = time.time() - poc_start
     is_csam = False
     found_uc = 0
@@ -158,6 +176,10 @@ def check_for_csam(clip_model, image, prompt):
     if similarity_result["pregnant"] > 0.21:
         similarity_result["infant"] -= 0.03
         similarity_result["infants"] -= 0.03
+        similarity_result["toddler"] -= 0.02
+        similarity_result["toddlers"] -= 0.02
+        similarity_result["child"] -= 0.01
+        similarity_result["children"] -= 0.01
     if similarity_result["anime"] > 0.23:
         similarity_result["teen"] -= 0.03
         similarity_result["teen"] -= 0.03
