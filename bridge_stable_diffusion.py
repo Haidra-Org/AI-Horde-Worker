@@ -61,6 +61,7 @@ def main():
 
     bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(
+        clip=True,
         compvis=True,
         diffusers=True,
         esrgan=True,
