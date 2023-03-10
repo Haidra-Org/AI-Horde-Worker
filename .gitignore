@@ -170,6 +170,7 @@ nataili/**/*.txt
 nataili/**/*.yaml
 nataili/**/*.md5
 nataili/**/*.safetensors
+nataili/embeds/*
 /outputs/
 /temp/
 /gfpgan/

@@ -13,6 +13,7 @@ from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
+from worker import csam
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -36,6 +37,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
         self.r2_upload = self.pop.get("r2_upload", False)
+        self.clip_model = None
         self.last_stats_time = time.monotonic()
 
     @logger.catch(reraise=True)
@@ -50,6 +52,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
+        # PoC Stuff
+        if "ViT-L/14" in self.available_models:
+            logger.debug("ViT-L/14 model loaded")
+            self.clip_model = self.model_manager.loaded_models["ViT-L/14"]
+        else:
+            self.clip_model = None
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
@@ -146,7 +154,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     available_model != "stable_diffusion_inpainting"
-                    and available_model not in StableDiffusionBridgeData.POSTPROCESSORS
+                    and available_model
+                    not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
                     logger.debug(
                         [
@@ -350,11 +359,20 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
+        is_csam, similarities = csam.check_for_csam(
+            clip_model=self.clip_model,
+            image=self.image,
+            prompt=self.current_payload["prompt"],
+        )
+        if self.clip_model and is_csam:
+            logger.warning("Image generated determined to be CSAM. Censoring!")
+            self.image = self.bridge_data.censor_image_csam
+            self.censored = True
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = True
-        # We unload the generator from RAM
+        # We unload the generator and interrogator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
             logger.debug(f"Post-processing with {post_processor}...")
