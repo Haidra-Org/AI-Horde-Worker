@@ -362,7 +362,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
-            self.censored = True
+            self.censored = 'censored'
         generator = None
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
@@ -373,7 +373,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if self.clip_model and is_csam:
                 logger.warning("Image generated determined to be CSAM. Censoring!")
                 self.image = self.bridge_data.censor_image_csam
-                self.censored = True
+                self.censored = 'csam'
         # We unload the generator and interrogator from RAM
         for post_processor in self.current_payload.get("post_processing", []):
             # Do not PP when censored
@@ -419,7 +419,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "seed": self.seed,
         }
         if self.censored:
-            self.submit_dict["state"] = "censored"
+            self.submit_dict["state"] = self.censored
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
