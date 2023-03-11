@@ -60,8 +60,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         top_n = 0
         for model in self.models_to_load[:]:
             # all models
-            if re.match("ALL MODELS", model, re.IGNORECASE):
-                self.models_to_load = self.get_all_models()
+            match = re.match("ALL ((\w*) )?MODELS", model, re.IGNORECASE)
+            if match:
+                self.models_to_load = self.get_all_models(match.group(2))
                 break  # can't be more
             # top n
             match = re.match(r"TOP (\d+)", model, re.IGNORECASE)
@@ -119,9 +120,30 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models
 
+    def _is_valid_stable_diffusion_model(self, model_name):
+        if model_name in ["safety_checker", "LDSR"]:
+            return False
+
+        if model_name in self.POSTPROCESSORS or model_name in self.INTERROGATORS:
+            return False
+
+        if model_name in self.models_to_skip:
+            return False
+
+        return True
+
     # Get all models directly from the server, not from nataili, as nataili
     # may not be loaded, e.g. in webui.
-    def get_all_models(self):
+    def get_all_models(self, style=""):
+
+        # Recognise some magic style constants
+        nsfw = None
+        if style and style.upper() == "SFW":
+            style = ""
+            nsfw = False
+        elif style and style.upper() == "NSFW":
+            style = ""
+            nsfw = True
 
         # Never refresh more than once per hour
         if self.model_database_refresh_frequency < 3600:
@@ -141,21 +163,32 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
         ).json()
 
-        # get all interesting models
+        # Get all interesting models
         models = []
         for _, model in data.items():
-            if (
-                model["name"] not in ["stable_diffusion_1.4", "safety_checker", "LDSR"]
-                and model["name"] not in self.models_to_skip
-                and model["type"] == "ckpt"
-            ):
-                models.append(model["name"])
+            if not self._is_valid_stable_diffusion_model(model["name"]):
+                continue  # ignore
+            if model["type"] != "ckpt":
+                continue  # ignore
+            if style and "style" in model and style.lower() not in model["style"].lower():
+                continue  # ignore
+            if nsfw is False and model["nsfw"]:
+                continue  # ignore
+            if nsfw is True and not model["nsfw"]:
+                continue  # ignore
+            # Add to the list of models to load
+            models.append(model["name"])
 
         models = sorted(list(set(models)))
+
         # Move the standard SD model to the top of the list
         if "stable_diffusion" in models:
             models.remove("stable_diffusion")
             models.insert(0, "stable_diffusion")
+
+        # Always have usable model something, no matter what went wrong
+        if not models:
+            models.append("stable_diffusion")
 
         # Add inpainting model if inpainting is enabled
         if self.allow_painting:
