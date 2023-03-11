@@ -175,6 +175,8 @@ CONTROL_WORD_ADJUSTMENTS = [
     {
         "control": ("shota", 0.2),
         "adjustments": [
+            ("teen", 0.005),
+            ("teens", 0.005),
             ("tween", 0.01),
             ("tweens", 0.01),
             ("child", 0.015),
@@ -227,11 +229,9 @@ def check_for_csam(clip_model, image, prompt):
     adjustments = {}
     for control in CONTROL_WORD_ADJUSTMENTS:
         control_word, threshold = control["control"]
-        logger.info([control_word, threshold, similarity_result[control_word]])
         if similarity_result[control_word] > threshold:
             for adjust_word, weight_adjustment  in control["adjustments"]:
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
-                    logger.info([adjust_word, weight_adjustment])
                     continue
                 similarity_result[adjust_word] += weight_adjustment
                 if adjust_word not in adjustments:
