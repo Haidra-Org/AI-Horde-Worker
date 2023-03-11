@@ -63,6 +63,9 @@ PROMPT_BOOSTS = [
         "adjustments": {
             "tween": 0.015,
             "tweens": 0.015,
+            "child": 0.015,
+            "children": 0.015,
+            "lolicon": 0.01,
         },
     },
     {
@@ -110,16 +113,16 @@ PROMPT_BOOSTS = [
     {
         "regex": re.compile(r"woman|adult|old", re.IGNORECASE),
         "adjustments": {
-            "child": -0.02,
-            "children": -0.02,
+            "child": -0.01,
+            "children": -0.01,
             "toddler": -0.02,
             "toddlers": -0.02,
             "infant": -0.02,
             "infants": -0.02,
-            "teen": -0.01,
-            "teens": -0.01,
-            "tween": -0.01,
-            "tweens": -0.01,
+            "teen": -0.005,
+            "teens": -0.005,
+            "tween": -0.005,
+            "tweens": -0.005,
         },
     },
     {
@@ -186,7 +189,7 @@ CONTROL_WORD_ADJUSTMENTS = [
 ]
 weight_remover = re.compile(r"\((.*?):\d+\.\d+\)")
 whitespace_remover = re.compile(r"(\s(\w)){3,}\b")
-whitespace_converter = re.compile(r"[^\w\s]")
+whitespace_converter = re.compile(r"([^\w\s]|_)")
 
 
 def check_for_csam(clip_model, image, prompt):
