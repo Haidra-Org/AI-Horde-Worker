@@ -60,7 +60,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         top_n = 0
         for model in self.models_to_load[:]:
             # all models
-            match = re.match("ALL ((\w*) )?MODELS", model, re.IGNORECASE)
+            match = re.match(r"ALL ((\w*) )?MODELS", model, re.IGNORECASE)
             if match:
                 self.models_to_load = self.get_all_models(match.group(2))
                 break  # can't be more
