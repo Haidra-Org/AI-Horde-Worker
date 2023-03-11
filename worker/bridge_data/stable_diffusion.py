@@ -150,7 +150,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.model_database_refresh_frequency = 3600
 
         # Should we refresh the model list?
-        if time.monotonic() - self._last_model_db_refresh < self.model_database_refresh_frequency:
+        if (
+            self._last_model_db_refresh
+            and time.monotonic() - self._last_model_db_refresh < self.model_database_refresh_frequency
+        ):
             # No, return cached version
             return self._all_model_names[:]
 
@@ -210,7 +213,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.top_n_refresh_frequency = 3600
 
         # Should we refresh the top n list?
-        if time.monotonic() - self._last_top_n_refresh < self.top_n_refresh_frequency:
+        if self._last_top_n_refresh and time.monotonic() - self._last_top_n_refresh < self.top_n_refresh_frequency:
             # No, use cached data
             model_list = self._top_n_model_names
 
