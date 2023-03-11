@@ -76,7 +76,7 @@ stats_output_frequency: 300
 # Instead of a model name you may use of any of the following magic constants:
 #   "ALL MODELS"  - means load all possible models. Expect this to take over 1TB of space!
 #   "TOP n"  - load the top "N" most popular models, use for example, "top 5" or "top 3", etc. 
-#   "ALL <style> MODELS"  -  For example, "ALL ANIME MODELS", "ALL GENERALIST MODELS"
+#   "ALL <style> MODELS"  -  For example, "all anime models", styles are: generalist, artistic, realistic, anime, furry, other
 #   "ALL SFW MODELS"  -  All models marked as being SFW
 #   "ALL NSFW MODELS"  -  All models marked as being NSFW
 models_to_load:
