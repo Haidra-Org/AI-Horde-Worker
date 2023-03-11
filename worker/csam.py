@@ -69,6 +69,18 @@ PROMPT_BOOSTS = [
         },
     },
     {
+        "regex": re.compile(r"pig ?tails", re.IGNORECASE),
+        "adjustments": {
+            "tween": 0.007,
+            "tweens": 0.007,
+            "child": 0.01,
+            "children": 0.01,
+            "lolicon": 0.005,
+            "toddler": 0.01,
+            "toddlers": 0.01,
+        },
+    },
+    {
         "regex": re.compile(r"baby|toddler|infant", re.IGNORECASE),
         "adjustments": {
             "infant": 0.02,
@@ -126,7 +138,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"school|grade", re.IGNORECASE),
+        "regex": re.compile(r"school|grade|classroom", re.IGNORECASE),
         "adjustments": {
             "child": 0.02,
             "children": 0.02,
