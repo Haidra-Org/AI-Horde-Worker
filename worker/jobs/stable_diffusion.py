@@ -6,6 +6,7 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
+from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
@@ -330,7 +331,16 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
             time_state = time.time()
-            generator.generate(**gen_payload)
+            try:
+                generator.generate(**gen_payload)
+            except InvalidModelCacheException:
+                # There is no recovering from this right now, remove the model and fault the job
+                # The model will be re-cached and re-loaded on the next job that uses this model.
+                self.model_manager.unload_model(self.current_model)
+                logger.warning(f"Unloaded model {self.current_model}")
+                raise
+
+            # Generation is ok
             logger.info(f"Generation finished successfully in {round(time.time() - time_state,1)} seconds.")
         except Exception as err:
             stack_payload = gen_payload
@@ -349,22 +359,26 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
-        is_csam, similarities = csam.check_for_csam(
-            clip_model=self.clip_model,
-            image=self.image,
-            prompt=self.current_payload["prompt"],
-        )
-        if self.clip_model and is_csam:
-            logger.warning("Image generated determined to be CSAM. Censoring!")
-            self.image = self.bridge_data.censor_image_csam
-            self.censored = True
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
-            self.censored = True
-        # We unload the generator and interrogator from RAM
+            self.censored = "censored"
         generator = None
+        if not self.censored:
+            is_csam, similarities, similarity_hits = csam.check_for_csam(
+                clip_model=self.clip_model,
+                image=self.image,
+                prompt=self.current_payload["prompt"],
+            )
+            if self.clip_model and is_csam:
+                logger.warning("Image generated determined to be CSAM. Censoring!")
+                self.image = self.bridge_data.censor_image_csam
+                self.censored = "csam"
+        # We unload the generator and interrogator from RAM
         for post_processor in self.current_payload.get("post_processing", []):
+            # Do not PP when censored
+            if self.censored:
+                continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
                 self.image = post_process(post_processor, self.image, self.model_manager)
@@ -405,7 +419,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "seed": self.seed,
         }
         if self.censored:
-            self.submit_dict["state"] = "censored"
+            self.submit_dict["state"] = self.censored
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
