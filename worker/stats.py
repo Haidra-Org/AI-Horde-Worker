@@ -9,7 +9,7 @@ class BridgeStats:
     stats = {}  # Deliberately on class level
 
     def __init__(self):
-        self.startup_time = time.monotonic()
+        self.startup_time = 0
 
     def update_inference_stats(self, model_name, kudos):
         """Updates the stats for a model inference"""
@@ -23,10 +23,14 @@ class BridgeStats:
         self.stats["inference"][model_name]["avg_kpr"] = round(stats_for_model["kudos"] / stats_for_model["count"], 2)
 
         # Update overall kudos stats
-        if "total_kudos" in self.stats:
-            self.stats["total_kudos"] += kudos
-        else:
-            self.stats["total_kudos"] = kudos
+        if not self.startup_time:
+            # Start the clock
+            self.startup_time = time.monotonic()
+            self.stats["kudos_per_hour"] = 0
+            self.stats["total_kudos"] = 0
+            return
+
+        self.stats["total_kudos"] += kudos
         self.stats["total_uptime"] = time.monotonic() - self.startup_time
         self.stats["kudos_per_hour"] = int((self.stats["total_kudos"] / self.stats["total_uptime"]) * 3600)
 
