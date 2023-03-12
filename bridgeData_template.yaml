@@ -73,9 +73,15 @@ stats_output_frequency: 300
 ## WARNING: In case you have dynamic models this list is instead specifying models to always load along with the dynamic models!
 # So your total list will be your specific models + the dynamic models
 # in that case, keep this list short, preferrably to only a few more obscure models you'd like to always see available
-# If you want to load ALL models, use the special model name "ALL MODELS"
+# Instead of a model name you may use of any of the following magic constants:
+#   "ALL MODELS"  - means load all possible models. Expect this to take over 1TB of space!
+#   "TOP n"  - load the top "N" most popular models, use for example, "top 5" or "top 3", etc. 
+#   "ALL <style> MODELS"  -  For example, "all anime models", styles are: generalist, artistic, realistic, anime, furry, other
+#   "ALL SFW MODELS"  -  All models marked as being SFW
+#   "ALL NSFW MODELS"  -  All models marked as being NSFW
 models_to_load:
   #- "ALL MODELS"
+  #- "TOP 3"
   - "stable_diffusion_2.1"
   - "stable_diffusion"
   #- "Anything Diffusion"
