@@ -388,7 +388,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 # Collect strength for facefixer from job, or set to 0.5 default
                 strength = (
                     self.current_payload["facefixer_strength"]
-                    if self.current_payload["facefixer_strength"] is not None
+                    if "facefixer_strength" in self.current_payload
                     else 0.5
                 )
                 self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
