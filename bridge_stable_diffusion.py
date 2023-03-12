@@ -1,5 +1,8 @@
 """This is the bridge, It connects the horde with the ML processing"""
+import importlib.metadata
 import os
+
+import packaging.version
 
 # isort: off
 # We need to import the argparser first, as it sets the necessry Switches
@@ -12,6 +15,11 @@ from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.workers.stable_diffusion import StableDiffusionWorker
+
+# The lowest nataili version we require to function correctly
+# XXX This is temporary measure. Once nataili is published to pypi
+# XXX we can load this from the worker project requirements.txt
+MINIMIUM_NATAILI_VERSION = "0.2.9014"
 
 
 def check_for_old_dir():
@@ -39,6 +47,14 @@ def check_for_old_dir():
             print("Existing custom models left in their previous location.")
 
 
+def check_dependencies():
+    # Check nataili
+    version = importlib.metadata.version("nataili")
+    if packaging.version.parse(MINIMIUM_NATAILI_VERSION) > packaging.version.parse(version):
+        logger.error("The nataili library is out of date. Please run update-runtime to update your environment.")
+        exit(1)
+
+
 def main():
     set_logger_verbosity(args.verbosity)
     quiesce_logger(args.quiet)
@@ -64,4 +80,5 @@ def main():
 
 if __name__ == "__main__":
     check_for_old_dir()
+    check_dependencies()
     main()
