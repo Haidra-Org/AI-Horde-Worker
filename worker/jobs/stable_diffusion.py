@@ -363,7 +363,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = "censored"
+        # We unload the generator from RAM
         generator = None
+
+        # Run the CSAM Checker
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
                 clip_model=self.clip_model,
@@ -374,20 +377,28 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 logger.warning("Image generated determined to be CSAM. Censoring!")
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
-        # We unload the generator and interrogator from RAM
+
+        # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
             # Do not PP when censored
             if self.censored:
                 continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
-                self.image = post_process(post_processor, self.image, self.model_manager)
+                # Collect strength for facefixer from job, or set to 0.5 default
+                strength = (
+                    self.current_payload["facefixer_strength"]
+                    if self.current_payload["facefixer_strength"] is not None
+                    else 0.5
+                )
+                self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
                     post_processor,
                     err,
                 )
+            # Edit the webp upload quality if post-processor used
             if self.r2_upload:
                 self.upload_quality = 95
             else:
