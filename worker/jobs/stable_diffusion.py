@@ -6,12 +6,14 @@ from base64 import binascii
 from io import BytesIO
 
 import requests
+from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
+from worker import csam
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -35,6 +37,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
         self.r2_upload = self.pop.get("r2_upload", False)
+        self.clip_model = None
+        self.last_stats_time = time.monotonic()
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -48,6 +52,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
+        # PoC Stuff
+        if "ViT-L/14" in self.available_models:
+            logger.debug("ViT-L/14 model loaded")
+            self.clip_model = self.model_manager.loaded_models["ViT-L/14"]
+        else:
+            self.clip_model = None
         # Here starts the Stable Diffusion Specific Logic
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
@@ -114,6 +124,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 and "stable diffusion 2" not in model_baseline
             ):
                 gen_payload["control_type"] = self.current_payload["control_type"]
+                gen_payload["init_as_control"] = self.current_payload["image_is_control"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -143,7 +154,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     available_model != "stable_diffusion_inpainting"
-                    and available_model not in StableDiffusionBridgeData.POSTPROCESSORS
+                    and available_model
+                    not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
                     logger.debug(
                         [
@@ -255,6 +267,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del gen_payload["tiling"]
                 if "control_type" in gen_payload:
                     del gen_payload["control_type"]
+                    del gen_payload["init_as_control"]
                 generator = Depth2Img(
                     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -289,6 +302,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["tiling"]
             if "control_type" in gen_payload:
                 del gen_payload["control_type"]
+                del gen_payload["init_as_control"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
@@ -316,8 +330,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
             )
-            generator.generate(**gen_payload)
-            logger.info("Generation finished successfully.")
+            time_state = time.time()
+            try:
+                generator.generate(**gen_payload)
+            except InvalidModelCacheException:
+                # There is no recovering from this right now, remove the model and fault the job
+                # The model will be re-cached and re-loaded on the next job that uses this model.
+                self.model_manager.unload_model(self.current_model)
+                logger.warning(f"Unloaded model {self.current_model}")
+                raise
+
+            # Generation is ok
+            logger.info(f"Generation finished successfully in {round(time.time() - time_state,1)} seconds.")
         except Exception as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -338,19 +362,41 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
-            self.censored = True
+            self.censored = "censored"
         # We unload the generator from RAM
         generator = None
+
+        # Run the CSAM Checker
+        if not self.censored:
+            is_csam, similarities, similarity_hits = csam.check_for_csam(
+                clip_model=self.clip_model,
+                image=self.image,
+                prompt=self.current_payload["prompt"],
+            )
+            if self.clip_model and is_csam:
+                logger.warning("Image generated determined to be CSAM. Censoring!")
+                self.image = self.bridge_data.censor_image_csam
+                self.censored = "csam"
+
+        # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
+            # Do not PP when censored
+            if self.censored:
+                continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
-                self.image = post_process(post_processor, self.image, self.model_manager)
+                # Collect strength for facefixer from job, or set to 0.5 default
+                strength = (
+                    self.current_payload["facefixer_strength"] if "facefixer_strength" in self.current_payload else 0.5
+                )
+                self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
                     post_processor,
                     err,
                 )
+            # Edit the webp upload quality if post-processor used
             if self.r2_upload:
                 self.upload_quality = 95
             else:
@@ -382,10 +428,16 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "seed": self.seed,
         }
         if self.censored:
-            self.submit_dict["state"] = "censored"
+            self.submit_dict["state"] = self.censored
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
+        if (
+            self.bridge_data.stats_output_frequency
+            and time.monotonic() - self.last_stats_time > self.bridge_data.stats_output_frequency
+        ):
+            self.last_stats_time = time.monotonic()
+            logger.info(f"Estimated average kudos per hour: {bridge_stats.stats['kudos_per_hour']}")
 
 
 def count_parentheses(s):

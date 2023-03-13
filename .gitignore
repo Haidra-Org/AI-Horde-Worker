@@ -170,6 +170,7 @@ nataili/**/*.txt
 nataili/**/*.yaml
 nataili/**/*.md5
 nataili/**/*.safetensors
+nataili/embeds/*
 /outputs/
 /temp/
 /gfpgan/
@@ -183,6 +184,8 @@ creds.py
 z_version_env.tmp
 custom-conda-path.txt
 /bridgeData.py
+/bridgeData.yaml
+/bridgeData.py-old
 src/taming-transformers
 
 /xformers-*

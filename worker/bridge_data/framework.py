@@ -6,10 +6,11 @@ import sys
 import threading
 
 import requests
+import yaml
 from nataili import disable_voodoo
 from nataili.util.logger import logger
 
-from worker.consts import BRIDGE_VERSION
+from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
 
 
 class BridgeDataTemplate:
@@ -20,6 +21,10 @@ class BridgeDataTemplate:
         # I have to pass the args from the extended class, as the framework class doesn't
         # know what kind of polymorphism this worker is using
         self.args = args
+
+        # If there is a YAML config file, load it
+        self.load_config()
+
         self.horde_url = os.environ.get("HORDE_URL", "https://stablehorde.net")
         # Give a cool name to your instance
         self.worker_name = os.environ.get(
@@ -36,6 +41,7 @@ class BridgeDataTemplate:
         self.queue_size = int(os.environ.get("HORDE_QUEUE_SIZE", 0))
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.require_upfront_kudos = os.environ.get("REQUIRE_UPFRONT_KUDOS", "false") == "true"
+        self.stats_output_frequency = int(os.environ.get("STATS_OUTPUT_FREQUENCY", 300))
         self.initialized = False
         self.username = None
         self.models_reloading = False
@@ -43,42 +49,50 @@ class BridgeDataTemplate:
 
         self.disable_voodoo = disable_voodoo
 
+    def load_config(self):
+        # YAML config
+        if os.path.exists(BRIDGE_CONFIG_FILE):
+            with open(BRIDGE_CONFIG_FILE, "rt", encoding="utf-8", errors="ignore") as configfile:
+                config = yaml.safe_load(configfile)
+                # Map the config's values directly into this instance's properties
+                for key, value in config.items():
+                    setattr(self, key, value)
+            return True  # loaded
+        # fall back to try old python bridge data
+        elif os.path.exists("bridgeData.py"):
+            try:
+                import bridgeData as bd
+
+                importlib.reload(bd)
+                for key, value in vars(bd).items():
+                    # Only allow these data types
+                    if key.startswith("__") or type(value) not in [str, int, bool, list]:
+                        continue
+                    setattr(self, key, value)
+
+                # As we got here, we didn't have a yaml config file, try to create one
+                config = {}
+                for key, value in vars(self).items():
+                    # Only allow these data types
+                    if key.startswith("__") or type(value) not in [str, int, bool, list]:
+                        continue
+                    config[key] = value
+                with open(BRIDGE_CONFIG_FILE, "wt", encoding="utf-8") as configfile:
+                    yaml.safe_dump(config, configfile)
+                try:
+                    os.rename("bridgeData.py", "bridgeData.py-old")
+                except (FileExistsError, PermissionError, OSError):
+                    logger.warning("Could not move old bridgeData.py config to archive.")
+
+                return True  # loaded
+            except (ImportError, AttributeError) as err:
+                logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
+
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
         previous_api_key = self.api_key
-        try:
-            # TODO - move this to a yaml file
-            import bridgeData as bd
-
-            importlib.reload(bd)
-            self.api_key = bd.api_key
-            self.worker_name = bd.worker_name
-            self.horde_url = bd.horde_url
-            self.priority_usernames = bd.priority_usernames
-            try:
-                self.allow_unsafe_ip = bd.allow_unsafe_ip
-            except AttributeError:
-                pass
-            try:
-                self.max_threads = bd.max_threads
-            except AttributeError:
-                pass
-            try:
-                self.queue_size = bd.queue_size
-            except AttributeError:
-                pass
-            try:
-                self.require_upfront_kudos = bd.require_upfront_kudos
-            except AttributeError:
-                pass
-            try:
-                self.max_models_to_download = bd.max_models_to_download
-            except AttributeError:
-                pass
-        except (ImportError, AttributeError) as err:
-            logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
-            bd = None
+        self.load_config()
         if self.args.api_key:
             self.api_key = self.args.api_key
         if self.args.worker_name:
@@ -107,7 +121,6 @@ class BridgeDataTemplate:
             except Exception:
                 logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
                 self.username = "N/A"
-        return bd
 
     @logger.catch(reraise=True)
     def check_models(self, model_manager):
@@ -140,7 +153,8 @@ class BridgeDataTemplate:
             if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
                 logger.debug(f"Model {model} not found or has wrong checksum")
                 if (
-                    model_manager.count_available_models_by_types() + len(not_found_models)
+                    model not in model_manager.get_available_models_by_types()
+                    or model_manager.count_available_models_by_types() + len(not_found_models)
                     < self.max_models_to_download
                 ):
                     models_exist = False
@@ -179,18 +193,19 @@ class BridgeDataTemplate:
             model_manager.init()
         if not self.initialized:
             logger.init_ok("Models", status="OK")
-        if os.path.exists("./bridgeData.py"):
+        if os.path.exists("bridgeData.py") or os.path.exists(BRIDGE_CONFIG_FILE):
             if not self.initialized:
                 logger.init_ok("Bridge Config", status="OK")
         elif input(
-            "You do not appear to have a bridgeData.py. Would you like to create it from the template now? (y/n)"
+            "You do not appear to have a bridgeData configuration file. "
+            "Would you like to create it from the template now? (y/n)"
         ) in ["y", "Y", "", "yes"]:
-            with open("bridgeData_template.py", "r") as firstfile, open("bridgeData.py", "a") as secondfile:
+            with open("bridgeData_template.yaml", "r") as firstfile, open("bridgeData.yaml", "a") as secondfile:
                 for line in firstfile:
                     secondfile.write(line)
             logger.message(
-                "bridgeData.py created. Bridge will exit. "
-                "Please edit bridgeData.py with your setup and restart the worker"
+                "bridgeData.yaml created. Bridge will exit. "
+                "Please edit bridgeData.yaml with your setup and restart the worker"
             )
             sys.exit(2)
 
