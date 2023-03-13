@@ -51,7 +51,8 @@ def check_dependencies():
     # Check nataili
     version = importlib.metadata.version("nataili")
     if packaging.version.parse(MINIMIUM_NATAILI_VERSION) > packaging.version.parse(version):
-        logger.error("The nataili library is out of date. Please run update-runtime to update your environment.")
+        logger.error(f"The nataili library is out of date. Please run update-runtime to update your environment. "
+                     f"Have {version} need {packaging.version.parse(MINIMIUM_NATAILI_VERSION)}")
         exit(1)
 
 
