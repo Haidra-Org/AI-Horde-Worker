@@ -1,6 +1,7 @@
 """This is the bridge, It connects the horde with the ML processing"""
 import importlib.metadata
 import os
+import time
 
 import packaging.version
 
@@ -51,8 +52,11 @@ def check_dependencies():
     # Check nataili
     version = importlib.metadata.version("nataili")
     if packaging.version.parse(MINIMIUM_NATAILI_VERSION) > packaging.version.parse(version):
-        logger.error("The nataili library is out of date. Please run update-runtime to update your environment.")
-        exit(1)
+        logger.warning(
+            f"The nataili library is out of date. Please run update-runtime to update your environment. "
+            f"Have {version} need {packaging.version.parse(MINIMIUM_NATAILI_VERSION)}"
+        )
+        time.sleep(5)
 
 
 def main():
