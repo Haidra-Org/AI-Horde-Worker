@@ -115,12 +115,12 @@ PROMPT_BOOSTS = [
     {
         "regex": re.compile(r"small|little|\btiny\b|petite", re.IGNORECASE),
         "adjustments": {
-            "child": 0.01,
-            "children": 0.01,
-            "toddler": 0.01,
-            "toddlers": 0.01,
-            "tween": 0.005,
-            "tweens": 0.005,
+            "child": 0.005,
+            "children": 0.005,
+            "toddler": 0.005,
+            "toddlers": 0.005,
+            "tween": 0.003,
+            "tweens": 0.003,
         },
     },
     {
@@ -139,7 +139,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"school|grade|classroom", re.IGNORECASE),
+        "regex": re.compile(r"school|grade|\bclass\b", re.IGNORECASE),
         "adjustments": {
             "child": 0.02,
             "children": 0.02,
@@ -158,8 +158,8 @@ PROMPT_BOOSTS = [
         },
     },
 ]
-NEGPROMPT_BOOSTS = {"mature" " old" "adult" "elderly", "middle aged"}
-NEGPROMPT_DEBUFFS = {"young" "little" "child"}
+NEGPROMPT_BOOSTS = {"mature", " old", "adult", "elderly", "middle aged"}
+NEGPROMPT_DEBUFFS = {"young", "little", "child"}
 
 PAIRS = {
     "tween": "tweens",
@@ -215,29 +215,62 @@ CONTROL_WORD_ADJUSTMENTS = [
         ],
     },
 ]
+MODEL_TAG_ADJUSTMENTS = [
+    {
+        "tag": "anime",
+        "adjustments": [
+            ("teen", -0.015),
+            ("anime", 0.02),
+            ("tween", -0.015),
+            ("child", -0.01),
+            ("children", -0.01),
+        ],
+    },
+    {
+        "tag": "hentai",
+        "adjustments": [
+            ("hentai", 0.02),
+        ],
+    },
+]
+NSFW_MODEL_ADJUSTMENTS = [
+    ("nudity", 0.02),
+    ("naked", 0.02),
+    ("porn", 0.015),
+    ("orgy", 0.01),
+]
 weight_remover = re.compile(r"\((.*?):\d+\.\d+\)")
 whitespace_remover = re.compile(r"(\s(\w)){3,}\b")
 whitespace_converter = re.compile(r"([^\w\s]|_)")
 
 
-def check_for_csam(clip_model, image, prompt):
+def check_for_csam(clip_model, image, prompt, model_info = None):
     """This is the post-processing function,
     it takes the model name, and the image, and returns the post processed image"""
+    if not model_info:
+        model_info = {}
+    model_nsfw = model_info.get("nsfw", False)
+    model_tags = model_info.get("tags")
+    if not model_tags:
+        model_tags = []
     poc_start = time.time()
     interrogator = Interrogator(clip_model)
 
     word_list = list(UNDERAGE_CONTEXT.keys()) + list(LEWD_CONTEXT.keys()) + CONTROL_WORDS + TEST_WORDS
     similarity_result = interrogator(image=image, text_array=word_list, similarity=True)["default"]
+    poc_elapsed_time = time.time() - poc_start
     prompt, negprompt = normalize_prompt(prompt)
+    prompt_tweaks = {}
     for entry in NEGPROMPT_BOOSTS:
         if negprompt and entry in negprompt:
-            for weight in UNDERAGE_CONTEXT:
-                similarity_result[weight] += 0.005
+            for adjust_word in UNDERAGE_CONTEXT:
+                add_value_to_dict_array(prompt_tweaks,adjust_word,entry)
+                similarity_result[adjust_word] += 0.005
     for entry in NEGPROMPT_DEBUFFS:
         if negprompt and entry in negprompt:
-            for weight in UNDERAGE_CONTEXT:
-                similarity_result[weight] -= 0.005
-    prompt_tweaks = {}
+            for adjust_word in UNDERAGE_CONTEXT:
+                add_value_to_dict_array(prompt_tweaks,adjust_word,entry)
+                similarity_result[adjust_word] -= 0.005
     for entry in PROMPT_BOOSTS:
         prompt_re = entry["regex"].search(prompt)
         if prompt_re:
@@ -247,27 +280,30 @@ def check_for_csam(clip_model, image, prompt):
                 # teen + teens due to boosts
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
                     continue
-                if adjust_word not in prompt_tweaks:
-                    prompt_tweaks[adjust_word] = []
-                prompt_tweaks[adjust_word].append(prompt_re.group())
+                add_value_to_dict_array(prompt_tweaks,adjust_word,prompt_re.group())
                 similarity_result[adjust_word] += entry["adjustments"][adjust_word]
-    poc_elapsed_time = time.time() - poc_start
-    is_csam = False
-    found_uc = []
     # For some reason clip associates infant with pregnant women a lot.
     # So to avoid censoring pregnant women, when they're drawn we reduce
     # the weight of "infant"
+    model_tweaks = {}
+    if model_nsfw:
+        for adjust_word, similarity_adjustment in NSFW_MODEL_ADJUSTMENTS:
+            add_value_to_dict_array(model_tweaks,adjust_word,"nsfw")
+            similarity_result[adjust_word] += similarity_adjustment
+    for tag_entry in [tag for tag in model_tags if tag in MODEL_TAG_ADJUSTMENTS]:
+        for adjust_word, similarity_adjustment in tag_entry:
+            add_value_to_dict_array(model_tweaks, adjust_word, tag_entry["tag"])
+            similarity_result[adjust_word] += similarity_adjustment
     adjustments = {}
     for control in CONTROL_WORD_ADJUSTMENTS:
         control_word, threshold = control["control"]
         if similarity_result[control_word] > threshold:
-            for adjust_word, weight_adjustment in control["adjustments"]:
+            for adjust_word, similarity_adjustment in control["adjustments"]:
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
                     continue
-                similarity_result[adjust_word] += weight_adjustment
-                if adjust_word not in adjustments:
-                    adjustments[adjust_word] = []
-                adjustments[adjust_word].append(control_word)
+                similarity_result[adjust_word] += similarity_adjustment
+                add_value_to_dict_array(adjustments,adjust_word,control_word)
+    found_uc = []
     for u_c in UNDERAGE_CONTEXT:
         if similarity_result[u_c] > UNDERAGE_CONTEXT[u_c]:
             found_uc.append(
@@ -276,6 +312,7 @@ def check_for_csam(clip_model, image, prompt):
                     "similarity": similarity_result[u_c],
                     "threshold": UNDERAGE_CONTEXT[u_c],
                     "prompt_tweaks": prompt_tweaks.get(u_c),
+                    "model_tweaks": model_tweaks.get(u_c),
                     "adjustments": adjustments.get(u_c),
                 }
             )
@@ -289,6 +326,7 @@ def check_for_csam(clip_model, image, prompt):
                     "threshold": UNDERAGE_CRITICAL[u_c],
                     "prompt_tweaks": prompt_tweaks.get(u_c),
                     "adjustments": adjustments.get(u_c),
+                    "model_tweaks": model_tweaks.get(u_c),
                     "critical": True,
                 }
             )
@@ -299,6 +337,7 @@ def check_for_csam(clip_model, image, prompt):
                     "threshold": UNDERAGE_CRITICAL[u_c],
                     "prompt_tweaks": prompt_tweaks.get(u_c),
                     "adjustments": adjustments.get(u_c),
+                    "model_tweaks": model_tweaks.get(u_c),
                     "critical": True,
                 }
             )
@@ -312,8 +351,10 @@ def check_for_csam(clip_model, image, prompt):
                     "threshold": LEWD_CONTEXT[l_c],
                     "prompt_tweaks": prompt_tweaks.get(l_c),
                     "adjustments": adjustments.get(l_c),
+                    "model_tweaks": model_tweaks.get(l_c),
                 }
             )
+    is_csam = False
     if len(found_uc) >= 3 and len(found_lewd) >= 1:
         is_csam = True
     logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
@@ -345,3 +386,11 @@ def normalize_prompt(prompt):
         # Remove all accents
         negprompt = unidecode(negprompt)
     return prompt, negprompt
+
+def add_value_to_dict_array(dict_to_modify, array_key, value):
+    '''Adds a value to an array stored in a dict key
+    If the key does not exist, it is created
+    '''
+    if array_key not in dict_to_modify:
+        dict_to_modify[array_key] = []
+    dict_to_modify[array_key].append(value)

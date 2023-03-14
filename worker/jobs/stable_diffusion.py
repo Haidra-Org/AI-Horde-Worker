@@ -372,6 +372,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 clip_model=self.clip_model,
                 image=self.image,
                 prompt=self.current_payload["prompt"],
+                model_info=self.model_manager.models[self.current_model],
             )
             if self.clip_model and is_csam:
                 logger.warning("Image generated determined to be CSAM. Censoring!")
