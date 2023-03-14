@@ -141,14 +141,14 @@ PROMPT_BOOSTS = [
     {
         "regex": re.compile(r"school|grade|\bclass\b", re.IGNORECASE),
         "adjustments": {
-            "child": 0.02,
-            "children": 0.02,
-            "toddler": 0.005,
-            "toddlers": 0.005,
+            "child": 0.01,
+            "children": 0.01,
+            "toddler": 0.002,
+            "toddlers": 0.002,
             "teen": 0.02,
             "teens": 0.02,
-            "tween": 0.02,
-            "tweens": 0.02,
+            "tween": 0.015,
+            "tweens": 0.015,
         },
     },
     {
@@ -215,24 +215,18 @@ CONTROL_WORD_ADJUSTMENTS = [
         ],
     },
 ]
-MODEL_TAG_ADJUSTMENTS = [
-    {
-        "tag": "anime",
-        "adjustments": [
-            ("teen", -0.015),
-            ("anime", 0.02),
-            ("tween", -0.015),
-            ("child", -0.01),
-            ("children", -0.01),
-        ],
-    },
-    {
-        "tag": "hentai",
-        "adjustments": [
-            ("hentai", 0.02),
-        ],
-    },
-]
+MODEL_TAG_ADJUSTMENTS = {
+    "anime": [
+        ("teen", -0.015),
+        ("anime", 0.02),
+        ("tween", -0.015),
+        ("child", -0.01),
+        ("children", -0.01),
+    ],
+    "hentai": [
+        ("hentai", 0.02),
+    ],
+}
 NSFW_MODEL_ADJUSTMENTS = [
     ("nudity", 0.02),
     ("naked", 0.02),
@@ -290,13 +284,14 @@ def check_for_csam(clip_model, image, prompt, model_info = None):
         for adjust_word, similarity_adjustment in NSFW_MODEL_ADJUSTMENTS:
             add_value_to_dict_array(model_tweaks,adjust_word,"nsfw")
             similarity_result[adjust_word] += similarity_adjustment
-    for tag_entry in [tag for tag in model_tags if tag in MODEL_TAG_ADJUSTMENTS]:
-        for adjust_word, similarity_adjustment in tag_entry:
-            add_value_to_dict_array(model_tweaks, adjust_word, tag_entry["tag"])
+    for tag in [tag for tag in MODEL_TAG_ADJUSTMENTS if tag in model_tags]:
+        for adjust_word, similarity_adjustment in MODEL_TAG_ADJUSTMENTS[tag]:
+            add_value_to_dict_array(model_tweaks, adjust_word, tag)
             similarity_result[adjust_word] += similarity_adjustment
     adjustments = {}
     for control in CONTROL_WORD_ADJUSTMENTS:
         control_word, threshold = control["control"]
+        # logger.info([similarity_result[control_word],control_word,threshold])
         if similarity_result[control_word] > threshold:
             for adjust_word, similarity_adjustment in control["adjustments"]:
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
