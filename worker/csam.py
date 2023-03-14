@@ -238,7 +238,7 @@ whitespace_remover = re.compile(r"(\s(\w)){3,}\b")
 whitespace_converter = re.compile(r"([^\w\s]|_)")
 
 
-def check_for_csam(clip_model, image, prompt, model_info = None):
+def check_for_csam(clip_model, image, prompt, model_info=None):
     """This is the post-processing function,
     it takes the model name, and the image, and returns the post processed image"""
     if not model_info:
@@ -258,12 +258,12 @@ def check_for_csam(clip_model, image, prompt, model_info = None):
     for entry in NEGPROMPT_BOOSTS:
         if negprompt and entry in negprompt:
             for adjust_word in UNDERAGE_CONTEXT:
-                add_value_to_dict_array(prompt_tweaks,adjust_word,entry)
+                add_value_to_dict_array(prompt_tweaks, adjust_word, entry)
                 similarity_result[adjust_word] += 0.005
     for entry in NEGPROMPT_DEBUFFS:
         if negprompt and entry in negprompt:
             for adjust_word in UNDERAGE_CONTEXT:
-                add_value_to_dict_array(prompt_tweaks,adjust_word,entry)
+                add_value_to_dict_array(prompt_tweaks, adjust_word, entry)
                 similarity_result[adjust_word] -= 0.005
     for entry in PROMPT_BOOSTS:
         prompt_re = entry["regex"].search(prompt)
@@ -274,7 +274,7 @@ def check_for_csam(clip_model, image, prompt, model_info = None):
                 # teen + teens due to boosts
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
                     continue
-                add_value_to_dict_array(prompt_tweaks,adjust_word,prompt_re.group())
+                add_value_to_dict_array(prompt_tweaks, adjust_word, prompt_re.group())
                 similarity_result[adjust_word] += entry["adjustments"][adjust_word]
     # For some reason clip associates infant with pregnant women a lot.
     # So to avoid censoring pregnant women, when they're drawn we reduce
@@ -282,7 +282,7 @@ def check_for_csam(clip_model, image, prompt, model_info = None):
     model_tweaks = {}
     if model_nsfw:
         for adjust_word, similarity_adjustment in NSFW_MODEL_ADJUSTMENTS:
-            add_value_to_dict_array(model_tweaks,adjust_word,"nsfw")
+            add_value_to_dict_array(model_tweaks, adjust_word, "nsfw")
             similarity_result[adjust_word] += similarity_adjustment
     for tag in [tag for tag in MODEL_TAG_ADJUSTMENTS if tag in model_tags]:
         for adjust_word, similarity_adjustment in MODEL_TAG_ADJUSTMENTS[tag]:
@@ -297,7 +297,7 @@ def check_for_csam(clip_model, image, prompt, model_info = None):
                 if adjust_word in PAIRS and similarity_result[PAIRS[adjust_word]] > UNDERAGE_CONTEXT[adjust_word]:
                     continue
                 similarity_result[adjust_word] += similarity_adjustment
-                add_value_to_dict_array(adjustments,adjust_word,control_word)
+                add_value_to_dict_array(adjustments, adjust_word, control_word)
     found_uc = []
     for u_c in UNDERAGE_CONTEXT:
         if similarity_result[u_c] > UNDERAGE_CONTEXT[u_c]:
@@ -382,10 +382,11 @@ def normalize_prompt(prompt):
         negprompt = unidecode(negprompt)
     return prompt, negprompt
 
+
 def add_value_to_dict_array(dict_to_modify, array_key, value):
-    '''Adds a value to an array stored in a dict key
+    """Adds a value to an array stored in a dict key
     If the key does not exist, it is created
-    '''
+    """
     if array_key not in dict_to_modify:
         dict_to_modify[array_key] = []
     dict_to_modify[array_key].append(value)
