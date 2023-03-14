@@ -129,7 +129,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
     # Get all models directly from the server, not from nataili, as nataili
     # may not be loaded, e.g. in webui.
     def get_all_models(self, style=""):
-
         # Recognise some magic style constants
         nsfw = None
         if style:
@@ -141,9 +140,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 nsfw = True
 
         # Never refresh more than once per hour
-        self.model_database_refresh_frequency = max(
-            self.model_database_refresh_frequency, 3600
-        )
+        self.model_database_refresh_frequency = max(self.model_database_refresh_frequency, 3600)
         # Should we refresh the model list?
         if (
             self._last_model_db_refresh
@@ -200,7 +197,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
     # Get the top n most popular models from the horde server
     def get_top_n_models(self, top_n, period="day"):
-
         model_list = []
 
         # Never refresh more than once per hour

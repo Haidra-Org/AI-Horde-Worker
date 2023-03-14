@@ -56,10 +56,7 @@ class WorkerFramework:
         if len(self.waiting_jobs) < self.bridge_data.queue_size:
             self.add_job_to_queue()
         # Start new jobs
-        while (
-            len(self.running_jobs) < self.bridge_data.max_threads
-            and self.start_job()
-        ):
+        while len(self.running_jobs) < self.bridge_data.max_threads and self.start_job():
             pass
         # Check if any jobs are done
         for job_thread, start_time, job in self.running_jobs:

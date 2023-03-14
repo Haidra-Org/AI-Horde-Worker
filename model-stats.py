@@ -83,9 +83,7 @@ class LogStats:
             return
 
         # Identify all log files and total number of log lines
-        total_log_lines = sum(
-            self.get_num_lines(logfile) for logfile in glob.glob(self.logfile)
-        )
+        total_log_lines = sum(self.get_num_lines(logfile) for logfile in glob.glob(self.logfile))
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
             with open(logfile, "rt", encoding="UTF-8", errors="ignore") as infile:

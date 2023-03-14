@@ -235,10 +235,7 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
     for item in stable_diffusion_bridge_data.priority_usernames:
         existing_priority_usernames += item
         existing_priority_usernames += ","
-    if (
-        len(existing_priority_usernames) > 0
-        and existing_priority_usernames[-1] == ","
-    ):
+    if len(existing_priority_usernames) > 0 and existing_priority_usernames[-1] == ",":
         existing_priority_usernames = existing_priority_usernames[:-1]
 
     existing_blacklist = ""
