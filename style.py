@@ -47,12 +47,8 @@ if args.fix:
 else:
     print("fix not requested")
 
-    black_args.append("--check")
-    black_args.append("--diff")
-
-    isort_args.append("--check-only")
-    isort_args.append("--diff")
-
+    black_args.extend(("--check", "--diff"))
+    isort_args.extend(("--check-only", "--diff"))
 lint_processes = [
     black_args,
     isort_args,

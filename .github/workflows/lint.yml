@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
 
-    - name: Install dev dependencies
-      run: python -m pip install -r requirements.dev.txt
+      - name: Install dev dependencies
+        run: python -m pip install -r requirements.dev.txt
 
-    - name: Run lint and static type checks
-      run: bash ${GITHUB_WORKSPACE}/style.sh
+      - name: Run lint and static type checks
+        run: bash ${GITHUB_WORKSPACE}/style.sh
