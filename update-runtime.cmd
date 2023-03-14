@@ -1,7 +1,10 @@
 @echo off
 cd /d "%~dp0"
 
+:Isolation
 SET CONDA_SHLVL=
+SET PYTHONNOUSERSITE=1
+SET PYTHONPATH=
 
 Reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d "1" /f 2>nul
 :We do this twice the first time to workaround a conda bug where pip is not installed correctly the first time - Henk
