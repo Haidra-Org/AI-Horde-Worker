@@ -58,9 +58,9 @@ lint_processes = [
 for process_args in lint_processes:
     process_args.extend(src)
 
-    command = " ".join(process_args)
-    print(f"\nRunning {command}")
+    COMMAND = " ".join(process_args)
+    print(f"\nRunning {COMMAND}")
     try:
-        subprocess.run(command, shell=True, check=True)
+        subprocess.run(COMMAND, shell=True, check=True)
     except subprocess.CalledProcessError:
         sys.exit(1)
