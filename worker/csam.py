@@ -218,8 +218,10 @@ CONTROL_WORD_ADJUSTMENTS = [
 MODEL_TAG_ADJUSTMENTS = {
     "anime": [
         ("teen", -0.015),
+        ("teens", -0.015),
         ("anime", 0.02),
         ("tween", -0.015),
+        ("tweens", -0.015),
         ("child", -0.01),
         ("children", -0.01),
     ],
