@@ -155,9 +155,11 @@ def load_models():
     remote_models = "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
     latest_models = download_models(remote_models)
 
-    available_models = []
-    for model in latest_models:
-        if model not in [
+    available_models = [
+        model
+        for model in latest_models
+        if model
+        not in [
             "RealESRGAN_x4plus",
             "RealESRGAN_x4plus_anime_6B",
             "GFPGAN",
@@ -170,10 +172,9 @@ def load_models():
             "ViT-H-14",
             "diffusers_stable_diffusion",
             "safety_checker",
-        ]:
-            available_models.append(model)
-    model_list = sorted(available_models, key=str.casefold)
-    return model_list
+        ]
+    ]
+    return sorted(available_models, key=str.casefold)
 
 
 def load_workerID(worker_name):
@@ -234,25 +235,22 @@ def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
     for item in stable_diffusion_bridge_data.priority_usernames:
         existing_priority_usernames += item
         existing_priority_usernames += ","
-    if len(existing_priority_usernames) > 0:
-        if existing_priority_usernames[-1] == ",":
-            existing_priority_usernames = existing_priority_usernames[:-1]
+    if len(existing_priority_usernames) > 0 and existing_priority_usernames[-1] == ",":
+        existing_priority_usernames = existing_priority_usernames[:-1]
 
     existing_blacklist = ""
     for item in stable_diffusion_bridge_data.blacklist:
         existing_blacklist += item
         existing_blacklist += ","
-    if len(existing_blacklist) > 0:
-        if existing_blacklist[-1] == ",":
-            existing_blacklist = existing_blacklist[:-1]
+    if len(existing_blacklist) > 0 and existing_blacklist[-1] == ",":
+        existing_blacklist = existing_blacklist[:-1]
 
     existing_censorlist = ""
     for item in stable_diffusion_bridge_data.censorlist:
         existing_censorlist += item
         existing_censorlist += ","
-    if len(existing_censorlist) > 0:
-        if existing_censorlist[-1] == ",":
-            existing_censorlist = existing_censorlist[:-1]
+    if len(existing_censorlist) > 0 and existing_censorlist[-1] == ",":
+        existing_censorlist = existing_censorlist[:-1]
 
     with gr.Blocks(css=style) as WebUI:
         horde_url = gr.Textbox("https://stablehorde.net", visible=False)
