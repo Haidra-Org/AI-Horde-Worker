@@ -62,6 +62,9 @@ def check_dependencies():
 def main():
     set_logger_verbosity(args.verbosity)
     quiesce_logger(args.quiet)
+    # TODO: Remove check after fully deprecating arg.
+    if args.skip_md5:
+        logger.warning("DeprecationWarning: `--skip_md5` has been deprecated. Please use `--skip_checksum` instead.")
 
     bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(
