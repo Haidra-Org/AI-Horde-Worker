@@ -83,17 +83,13 @@ class LogStats:
             return
 
         # Identify all log files and total number of log lines
-        total_log_lines = 0
-        for logfile in glob.glob(self.logfile):
-            total_log_lines += self.get_num_lines(logfile)
-
+        total_log_lines = sum(self.get_num_lines(logfile) for logfile in glob.glob(self.logfile))
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
             with open(logfile, "rt", encoding="UTF-8", errors="ignore") as infile:
                 for line in infile:
                     # Grab the lines we're interested in for models
-                    regex = REGEX.match(line)
-                    if regex:
+                    if regex := REGEX.match(line):
                         if self.period in [PERIOD_TODAY, PERIOD_YESTERDAY] and regex.group(1) != self.get_date():
                             continue
                         # Extract model name
@@ -111,8 +107,7 @@ class LogStats:
 
                     # Grab kudos lines
                     # Grab the lines we're interested in
-                    regex = KUDOS_REGEX.match(line)
-                    if regex:
+                    if regex := KUDOS_REGEX.match(line):
                         # Extract kudis and time
                         timestamp = regex.group(1)[:-2]  # truncate to hour
                         kudos = regex.group(2)
@@ -135,19 +130,13 @@ class LogStats:
             return
 
         # Whats our longest model name?
-        max_len = max([len(x) for x in self.used_models])
+        max_len = max(len(x) for x in self.used_models)
 
         scores = sorted(((self.used_models[model], model) for model in self.used_models), reverse=True)
-        total = 0
-        for count, name in scores:
-            total += count
-
-        j = 1
-        for count, name in scores:
+        total = sum(count for count, name in scores)
+        for j, (count, name) in enumerate(scores, start=1):
             perc = round((count / total) * 100, 1)
             print(f"{j:>2}. {name:<{max_len}} {perc}% ({count})")
-            j += 1
-
         print()
         if self.unused_models:
             print("The following models were not used at all:")

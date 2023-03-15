@@ -88,7 +88,7 @@ class JobPopper:
         try:
             with requests.get(image_url, stream=True, timeout=2) as r:
                 size = r.headers.get("Content-Length", 0)
-                if int(size) / 1024 > 5000:
+                if int(size) > 5120000:
                     logger.error(f"Provided image ({image_url}) cannot be larger than 5Mb")
                     return None
                 mbs = 0
@@ -123,7 +123,15 @@ class StableDiffusionPopper(JobPopper):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers", "ViT-L/14"]:
+        for util_model in [
+            "LDSR",
+            "safety_checker",
+            "GFPGAN",
+            "RealESRGAN_x4plus",
+            "RealESRGAN_x4plus_anime_6B",
+            "CodeFormers",
+            "ViT-L/14",
+        ]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.pop_payload = {
@@ -159,8 +167,7 @@ class StableDiffusionPopper(JobPopper):
         if not source_img:
             return None
         if "https" in source_img:
-            img_data = self.download_image_data(source_img)
-            if img_data:
+            if img_data := self.download_image_data(source_img):
                 img = self.convert_image_data_to_pil(img_data)
                 if not img:
                     logger.error("Non-image data when downloading image! Ignoring")
@@ -180,7 +187,7 @@ class InterrogationPopper(JobPopper):
         self.endpoint = "/api/v2/interrogate/pop"
         available_forms = []
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]:
+        for util_model in ["LDSR", "GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers"]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         if "BLIP_Large" in self.available_models:
@@ -189,10 +196,7 @@ class InterrogationPopper(JobPopper):
             available_forms.append("nsfw")
         if "ViT-L/14" in self.available_models:
             available_forms.append("interrogation")
-        # Avoid div/0
-        amount = 1
-        if self.bridge_data.queue_size > 1:
-            amount = self.bridge_data.queue_size
+        amount = max(self.bridge_data.queue_size, 1)
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "forms": available_forms,
@@ -219,7 +223,7 @@ class InterrogationPopper(JobPopper):
                 try:
                     with requests.get(current_image_url, stream=True, timeout=2) as r:
                         size = r.headers.get("Content-Length", 0)
-                        if int(size) / 1024 > 5000:
+                        if int(size) > 5120000:
                             logger.error(f"Provided image ({current_image_url}) cannot be larger than 5Mb")
                             current_image_url = None
                             continue
