@@ -401,7 +401,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if self.r2_upload:
                 self.upload_quality = 95
             else:
-                if post_processor in ["RealESRGAN_x4plus"]:
+                if post_processor in ["RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B"]:
                     self.upload_quality = 45
                 else:
                     self.upload_quality = 75

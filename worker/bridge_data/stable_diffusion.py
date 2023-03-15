@@ -14,7 +14,7 @@ from worker.bridge_data.framework import BridgeDataTemplate
 class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
-    POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "CodeFormers"]
+    POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers"]
     INTERROGATORS = ["ViT-L/14"]
 
     def __init__(self):
