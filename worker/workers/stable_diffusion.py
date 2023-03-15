@@ -24,8 +24,7 @@ class StableDiffusionWorker(WorkerFramework):
 
     # We want this to be extendable as well
     def add_job_to_queue(self):
-        job = super().add_job_to_queue()
-        if job:
+        if job := super().add_job_to_queue():
             # The job sends the current models loaded in the MM to
             # the horde. That model might end up unloaded if it's dynamic
             # so we need to ensure it will be there next iteration.
@@ -36,14 +35,10 @@ class StableDiffusionWorker(WorkerFramework):
         return super().pop_job()
 
     def get_running_models(self):
-        running_models = []
-        for job_thread, start_time, job in self.running_jobs:
-            running_models.append(job.current_model)
-        # logger.debug(running_models)
-        return running_models
+        return [job.current_model for job_thread, start_time, job in self.running_jobs]
 
     def calculate_dynamic_models(self):
-        all_models_data = requests.get(self.bridge_data.horde_url + "/api/v2/status/models", timeout=10).json()
+        all_models_data = requests.get(f"{self.bridge_data.horde_url}/api/v2/status/models", timeout=10).json()
         # We remove models with no queue from our list of models to load dynamically
         models_data = [md for md in all_models_data if md["queued"] > 0]
         models_data.sort(key=lambda x: (x["eta"], x["queued"]), reverse=True)
@@ -59,10 +54,9 @@ class StableDiffusionWorker(WorkerFramework):
         # as we may run out of RAM/VRAM.
         # So we reduce the amount of dynamic models
         # based on how many previous dynamic models we need to keep loaded
-        needed_previous_dynamic_models = 0
-        for model_name in running_models:
-            if model_name not in self.bridge_data.predefined_models:
-                needed_previous_dynamic_models += 1
+        needed_previous_dynamic_models = sum(
+            model_name not in self.bridge_data.predefined_models for model_name in running_models
+        )
         for model in models_data:
             if model["name"] in self.bridge_data.models_to_skip:
                 continue

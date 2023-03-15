@@ -62,9 +62,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
-        use_nsfw_censor = False
         censor_image = None
         censor_reason = None
+        use_nsfw_censor = False
         if self.bridge_data.censor_nsfw and not self.bridge_data.nsfw:
             use_nsfw_censor = True
             censor_image = self.bridge_data.censor_image_sfw_worker
@@ -140,7 +140,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 req_type = "img2img"
             elif source_processing == "inpainting":
                 req_type = "inpainting"
-            if source_processing == "outpainting":
+            elif source_processing == "outpainting":
                 req_type = "outpainting"
             if gen_payload["sampler_name"] == "dpmsolver":
                 logger.warning("dpmsolver cannot handle img2img. Falling back to k_euler")
@@ -175,9 +175,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # if the model persists as inpainting for text2img or img2img, we abort.
             if self.current_model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
-                if type(self.pop.get("source_image", "")) is str and len(self.pop.get("source_image", "")) > 10:
+                if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
-                if type(self.pop.get("source_mask", "")) is str and len(self.pop.get("source_mask", "")) > 10:
+                if isinstance(self.pop.get("source_mask", ""), str) and len(self.pop.get("source_mask", "")) > 10:
                     self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
                 logger.error(
                     "Received an non-inpainting request for inpainting model. This shouldn't happen. "
@@ -190,12 +190,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # Reject jobs for SD2Depth/pix2pix if not img2img
         if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
             # We remove the base64 from the prompt to avoid flooding the output on the error
-            if source_image is not None:
-                if type(self.pop.get("source_image", "")) is str and len(self.pop.get("source_image", "")) > 10:
-                    self.pop["source_image"] = len(self.pop.get("source_image", ""))
-            if source_mask is not None:
-                if type(self.pop.get("source_mask", "")) is str and len(self.pop.get("source_mask", "")) > 10:
-                    self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            if (
+                source_image is not None
+                and isinstance(self.pop.get("source_image", ""), str)
+                and len(self.pop.get("source_image", "")) > 10
+            ):
+                self.pop["source_image"] = len(self.pop.get("source_image", ""))
+            if (
+                source_mask is not None
+                and isinstance(self.pop.get("source_mask", ""), str)
+                and len(self.pop.get("source_mask", "")) > 10
+            ):
+                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
                 "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
                 f"Inform the developer. Current payload {self.pop}"
@@ -251,7 +257,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        if req_type in ["img2img", "txt2img"]:
+        if req_type in {"img2img", "txt2img"}:
             if req_type == "img2img":
                 gen_payload["init_img"] = img_source
                 if img_mask:
@@ -288,7 +294,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
                     disable_voodoo=self.bridge_data.disable_voodoo.active,
-                    control_net_manager=self.model_manager.controlnet if self.model_manager.controlnet else None,
+                    control_net_manager=self.model_manager.controlnet or None,
                 )
         else:
             # These variables do not exist in the outpainting implementation
@@ -401,10 +407,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if self.r2_upload:
                 self.upload_quality = 95
             else:
-                if post_processor in ["RealESRGAN_x4plus"]:
-                    self.upload_quality = 45
-                else:
-                    self.upload_quality = 75
+                self.upload_quality = 45 if post_processor in ["RealESRGAN_x4plus"] else 75
         logger.debug("post-processing done...")
         self.start_submit_thread()
 
