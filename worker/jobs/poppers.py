@@ -123,7 +123,15 @@ class StableDiffusionPopper(JobPopper):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "safety_checker", "GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers", "ViT-L/14"]:
+        for util_model in [
+            "LDSR",
+            "safety_checker",
+            "GFPGAN",
+            "RealESRGAN_x4plus",
+            "RealESRGAN_x4plus_anime_6B",
+            "CodeFormers",
+            "ViT-L/14",
+        ]:
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.pop_payload = {

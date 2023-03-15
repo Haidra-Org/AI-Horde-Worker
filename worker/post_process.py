@@ -4,7 +4,12 @@ from nataili.esrgan import esrgan
 from nataili.gfpgan import gfpgan
 from nataili.util.logger import logger
 
-KNOWN_POST_PROCESSORS = {"GFPGAN": gfpgan, "RealESRGAN_x4plus": esrgan, "RealESRGAN_x4plus_anime_6B": esrgan, "CodeFormers": codeformers}
+KNOWN_POST_PROCESSORS = {
+    "GFPGAN": gfpgan,
+    "RealESRGAN_x4plus": esrgan,
+    "RealESRGAN_x4plus_anime_6B": esrgan,
+    "CodeFormers": codeformers,
+}
 
 
 def post_process(model, image, model_manager, strength):
