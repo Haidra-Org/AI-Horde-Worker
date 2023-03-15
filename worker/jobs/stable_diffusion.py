@@ -107,6 +107,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if gen_payload["sampler_name"] == "dpmsolver" and "stable diffusion 2" not in model_baseline:
                     logger.warning(f"dpmsolver cannot be used with {self.current_model}. Falling back to k_euler.")
                     gen_payload["sampler_name"] = "k_euler"
+                if gen_payload["sampler_name"] == "DDIM" and source_mask is not None:
+                    logger.warning(f"DDIM cannot be used with a mask for {self.current_model}. Falling back to k_euler.")
+                    gen_payload["sampler_name"] = "k_euler"
+                if gen_payload["sampler_name"] == "DDIM" and self.current_model == "pix2pix":
+                    logger.warning(f"DDIM cannot be used with {self.current_model}. Falling back to k_euler_a.")
+                    gen_payload["sampler_name"] = "k_euler_a"
             if "cfg_scale" in self.current_payload:
                 gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
             if "ddim_eta" in self.current_payload:
