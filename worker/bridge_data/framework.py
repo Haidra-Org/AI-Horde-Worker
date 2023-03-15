@@ -149,7 +149,8 @@ class BridgeDataTemplate:
                 continue
             if model in model_manager.get_loaded_models_names():
                 continue
-            if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
+            # TODO: Remove `self.args.skip_md5 or ` after fully deprecating arg.
+            if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5 or self.args.skip_checksum):
                 logger.debug(f"Model {model} not found or has wrong checksum")
                 if (
                     model not in model_manager.get_available_models_by_types()
