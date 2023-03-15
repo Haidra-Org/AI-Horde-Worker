@@ -96,8 +96,8 @@ class InterrogationHordeJob(HordeJobFramework):
         self.submit_dict = {"id": self.current_id}
         if self.current_form == "caption":
             self.submit_dict["result"] = {"caption": self.result}
-        if self.current_form == "nsfw":
-            self.submit_dict["result"] = {"nsfw": self.result}
-        if self.current_form == "interrogation":
+        elif self.current_form == "interrogation":
             self.submit_dict["result"] = {"interrogation": self.result}
+        elif self.current_form == "nsfw":
+            self.submit_dict["result"] = {"nsfw": self.result}
         logger.debug(self.submit_dict)

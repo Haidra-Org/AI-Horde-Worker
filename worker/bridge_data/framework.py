@@ -81,7 +81,7 @@ class BridgeDataTemplate:
                     yaml.safe_dump(config, configfile)
                 try:
                     os.rename("bridgeData.py", "bridgeData.py-old")
-                except (FileExistsError, PermissionError, OSError):
+                except OSError:
                     logger.warning("Could not move old bridgeData.py config to archive.")
 
                 return True  # loaded
@@ -110,14 +110,13 @@ class BridgeDataTemplate:
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
-                    self.horde_url + "/api/v2/find_user",
+                    f"{self.horde_url}/api/v2/find_user",
                     headers={"apikey": self.api_key},
                     timeout=10,
                 )
                 user_req = user_req.json()
                 self.username = user_req["username"]
 
-            # pylint: disable=broad-except
             except Exception:
                 logger.warning(f"Server {self.horde_url} error during find_user. Setting username 'N/A'")
                 self.username = "N/A"
@@ -150,7 +149,8 @@ class BridgeDataTemplate:
                 continue
             if model in model_manager.get_loaded_models_names():
                 continue
-            if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5):
+            # TODO: Remove `self.args.skip_md5 or ` after fully deprecating arg.
+            if not model_manager.validate_model(model, skip_checksum=self.args.skip_md5 or self.args.skip_checksum):
                 logger.debug(f"Model {model} not found or has wrong checksum")
                 if (
                     model not in model_manager.get_available_models_by_types()
@@ -230,7 +230,7 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model, voodoo=False if self.disable_voodoo.active else True)
+                success = model_manager.load(model, voodoo=not self.disable_voodoo.active)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True

@@ -32,9 +32,7 @@ class WorkerFramework:
             self.should_restart = False
             self.consecutive_failed_jobs = 0
             with ThreadPoolExecutor(max_workers=self.bridge_data.max_threads) as self.executor:
-                while True:
-                    if self.should_stop:
-                        break
+                while not self.should_stop:
                     if self.should_restart:
                         self.executor.shutdown(wait=False)
                         break
@@ -58,9 +56,8 @@ class WorkerFramework:
         if len(self.waiting_jobs) < self.bridge_data.queue_size:
             self.add_job_to_queue()
         # Start new jobs
-        while len(self.running_jobs) < self.bridge_data.max_threads:
-            if not self.start_job():
-                break
+        while len(self.running_jobs) < self.bridge_data.max_threads and self.start_job():
+            pass
         # Check if any jobs are done
         for job_thread, start_time, job in self.running_jobs:
             self.check_running_job_status(job_thread, start_time, job)
@@ -77,8 +74,7 @@ class WorkerFramework:
     def add_job_to_queue(self):
         """Picks up a job from the horde and adds it to the local queue
         Returns the job object created, if any"""
-        jobs = self.pop_job()
-        if jobs:
+        if jobs := self.pop_job():
             self.waiting_jobs.extend(jobs)
 
     def pop_job(self):
@@ -101,10 +97,8 @@ class WorkerFramework:
         job = None
         # Queue disabled
         if self.bridge_data.queue_size == 0:
-            jobs = self.pop_job()
-            if jobs:
+            if jobs := self.pop_job():
                 job = jobs[0]
-        # Queue enabled
         elif len(self.waiting_jobs) > 0:
             job = self.waiting_jobs.pop(0)
         else:
