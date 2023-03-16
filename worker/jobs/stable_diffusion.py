@@ -419,7 +419,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 else:    
                     strength = self.current_payload.get("facefixer_strength", 0.5)
                     self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
-                    print(self.image)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
