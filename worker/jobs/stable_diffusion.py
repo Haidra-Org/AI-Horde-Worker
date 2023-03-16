@@ -87,6 +87,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         source_image = self.pop.get("source_image")
         source_mask = self.pop.get("source_mask")
         model_baseline = self.model_manager.models[self.current_model].get("baseline")
+        print (self.current_payload["control_type"])
         # These params will always exist in the payload from the horde
         try:
             gen_payload = {
