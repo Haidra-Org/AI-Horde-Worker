@@ -74,6 +74,8 @@ enable_model_cache: false
 always_download: false
 # The location of the ray temp directly, also used for the model cache
 ray_temp_dir: "./ray"
+# If voodoo is disabled, caching models in RAM and on disk is disabled and models are loaded directly into VRAM. Total size of models loaded must fit in VRAM.
+disable_voodoo: false
 
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
