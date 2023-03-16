@@ -1,1 +1,1 @@
-./runtime.sh python bridge_interrogation.py $*
+./runtime.sh python -s bridge_interrogation.py $*

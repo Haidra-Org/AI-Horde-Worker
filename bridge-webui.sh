@@ -1,1 +1,1 @@
-./runtime.sh python webui.py $*
+./runtime.sh python -s webui.py $*
