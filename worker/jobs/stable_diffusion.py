@@ -135,6 +135,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 ):
                     gen_payload["control_type"] = self.current_payload["control_type"]
                     gen_payload["init_as_control"] = self.current_payload["image_is_control"]
+                    gen_payload["return_control_map"] = self.current_payload["return_control_map"]
             except KeyError as err:
                 logger.error("Received incomplete payload from job. Aborting. ({})", err)
                 self.status = JobStatus.FAULTED
@@ -284,6 +285,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     if "control_type" in gen_payload:
                         del gen_payload["control_type"]
                         del gen_payload["init_as_control"]
+                        del gen_payload["return_control_map"]
                     generator = Depth2Img(
                         pipe=self.model_manager.loaded_models[self.current_model]["model"],
                         device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -319,6 +321,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if "control_type" in gen_payload:
                     del gen_payload["control_type"]
                     del gen_payload["init_as_control"]
+                    del gen_payload["return_control_map"]
                 # We prevent sending an inpainting without mask or transparency, as it will crash us.
                 if img_mask is None:
                     try:
