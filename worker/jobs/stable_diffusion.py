@@ -135,7 +135,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 ):
                     gen_payload["control_type"] = self.current_payload["control_type"]
                     gen_payload["init_as_control"] = self.current_payload["image_is_control"]
-                    gen_payload["return_control_map"] = self.current_payload["return_control_map"]
+                    gen_payload["return_control_map"] = self.current_payload.get("return_control_map", False)
             except KeyError as err:
                 logger.error("Received incomplete payload from job. Aborting. ({})", err)
                 self.status = JobStatus.FAULTED
