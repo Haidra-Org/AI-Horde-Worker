@@ -1,3 +1,3 @@
 @echo off
 cd /d %~dp0
-call runtime python show_available_models.py %*
+call runtime python -s show_available_models.py %*

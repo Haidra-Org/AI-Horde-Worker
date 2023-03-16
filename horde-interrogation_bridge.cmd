@@ -1,4 +1,4 @@
 @echo off
 cd /d %~dp0
-call runtime python bridge_interrogation.py %*
+call runtime python -s bridge_interrogation.py %*
 %0 %*
