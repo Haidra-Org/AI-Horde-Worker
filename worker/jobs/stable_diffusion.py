@@ -394,6 +394,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     logger.warning("Image generated determined to be CSAM. Censoring!")
                     self.image = self.bridge_data.censor_image_csam
                     self.censored = "csam"
+        else:
+            self.image = self.pop.get("source_image")
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
