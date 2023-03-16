@@ -2,7 +2,6 @@
 from nataili.codeformers import codeformers
 from nataili.esrgan import esrgan
 from nataili.gfpgan import gfpgan
-from nataili.rembg import rembg
 from nataili.util.logger import logger
 
 KNOWN_POST_PROCESSORS = {
@@ -10,7 +9,6 @@ KNOWN_POST_PROCESSORS = {
     "RealESRGAN_x4plus": esrgan,
     "RealESRGAN_x4plus_anime_6B": esrgan,
     "CodeFormers": codeformers,
-    "strip_background": rembg,
 }
 
 

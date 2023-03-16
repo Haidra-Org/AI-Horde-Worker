@@ -2,6 +2,7 @@
 import base64
 import time
 import traceback
+import rembg
 from base64 import binascii
 from io import BytesIO
 
@@ -401,8 +402,19 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
-                strength = self.current_payload.get("facefixer_strength", 0.5)
-                self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
+                if post_processor == "strip_background":
+                    self.image = rembg.remove(
+                        self.image, 
+                        session=rembg.new_session("u2net"),
+                        only_mask=False,
+                        alpha_matting=10,
+                        alpha_matting_foreground_threshold=240,
+                        alpha_matting_background_threshold=10,
+                        alpha_matting_erode_size=10,
+                    )
+                else:    
+                    strength = self.current_payload.get("facefixer_strength", 0.5)
+                    self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
