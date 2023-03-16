@@ -2,17 +2,17 @@
 import base64
 import time
 import traceback
-import rembg
 from base64 import binascii
 from io import BytesIO
 
+import rembg
 import requests
 from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
-from PIL import Image, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 
 from worker import csam
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
@@ -186,7 +186,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 # if the model persists as inpainting for text2img or img2img, we abort.
                 if self.current_model == "stable_diffusion_inpainting":
                     # We remove the base64 from the prompt to avoid flooding the output on the error
-                    if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
+                    if (
+                        isinstance(self.pop.get("source_image", ""), str)
+                        and len(self.pop.get("source_image", "")) > 10
+                    ):
                         self.pop["source_image"] = len(self.pop.get("source_image", ""))
                     if isinstance(self.pop.get("source_mask", ""), str) and len(self.pop.get("source_mask", "")) > 10:
                         self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
@@ -264,7 +267,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if "denoising_strength" in gen_payload:
                     del gen_payload["denoising_strength"]
             if self.current_model not in self.model_manager.loaded_models:
-                logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
+                logger.error(
+                    f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting..."
+                )
                 self.status = JobStatus.FAULTED
                 self.start_submit_thread()
                 return
@@ -411,7 +416,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             try:
                 if post_processor == "strip_background":
                     self.image = rembg.remove(
-                        self.image, 
+                        self.image,
                         session=rembg.new_session("u2net"),
                         only_mask=False,
                         alpha_matting=10,
@@ -419,7 +424,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                         alpha_matting_background_threshold=10,
                         alpha_matting_erode_size=10,
                     )
-                else:    
+                else:
                     strength = self.current_payload.get("facefixer_strength", 0.5)
                     self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
