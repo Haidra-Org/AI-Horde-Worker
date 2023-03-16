@@ -4,6 +4,7 @@ import re
 import time
 
 import requests
+from nataili import enable_ray_alternative
 from nataili.util.logger import logger
 from PIL import Image
 
@@ -40,12 +41,25 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.censor_image_csam = Image.open("assets/nsfw_censor_csam.png")
         self.models_reloading = False
         self.model = None
+        self.always_download = False
         self.dynamic_models = True
         self.number_of_dynamic_models = 3
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
         self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
+        # Some config file options require us to actually set env vars to pass settings to third party systems
+        # Where we load models from
+        if not hasattr(self, "nataili_cache_home"):
+            self.nataili_cache_home = os.environ.get("NATAILI_CACHE_HOME", "./")
+        os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
+        # Disable low vram mode
+        if hasattr(self, "low_vram_mode"):
+            if not self.low_vram_mode:
+                os.environ["LOW_VRAM_MODE"] = "0"
+        # Where the ray temp dir and/or model cache are located
+        if hasattr(self, "ray_temp_dir"):
+            os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
 
     @logger.catch(reraise=True)
     def reload_data(self):
@@ -55,6 +69,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
+
+        if hasattr(self, "enable_model_cache"):
+            enable_ray_alternative.active = self.enable_model_cache
 
         # Check for magic constants and expand them
         top_n = 0
@@ -97,6 +114,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
+        if args.enable_model_cache:
+            enable_ray_alternative.activate()
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
@@ -115,7 +134,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             )
 
     def check_extra_conditions_for_download_choice(self):
-        return self.dynamic_models
+        return self.dynamic_models or self.always_download
 
     def _is_valid_stable_diffusion_model(self, model_name):
         if model_name in ["safety_checker", "LDSR"]:
