@@ -395,6 +395,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     self.image = self.bridge_data.censor_image_csam
                     self.censored = "csam"
         else:
+            logger.info("Skipping to post-processors")
             self.image = self.pop.get("source_image")
 
         # Run Post-Processors
@@ -419,6 +420,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 else:    
                     strength = self.current_payload.get("facefixer_strength", 0.5)
                     self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
+                    print(self.image)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
