@@ -63,7 +63,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
-        if not self.current_payload.get("postprocessor_only", False) and self.pop.get("source_image") is not None:
+        if not self.current_payload.get("postprocessor_only", False):
             censor_image = None
             censor_reason = None
             use_nsfw_censor = False
