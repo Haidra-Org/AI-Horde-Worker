@@ -397,6 +397,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         else:
             logger.info("Skipping to post-processors")
             self.image = self.pop.get("source_image")
+            self.image = Image.open(self.image)
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
@@ -406,9 +407,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.debug(f"Post-processing with {post_processor}...")
             try:
                 if post_processor == "strip_background":
-                    rembg_image = Image.open(self.image)
                     rembg_image = rembg.remove(
-                        rembg_image, 
+                        self.image, 
                         session=rembg.new_session("u2net"),
                         only_mask=False,
                         alpha_matting=10,
