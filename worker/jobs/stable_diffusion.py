@@ -400,7 +400,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.seed = 1
 
         # Run Post-Processors
-        for post_processor in self.current_payload.get("post_processing", ["strip_background"]):
+        for post_processor in ["strip_background"]:
             # Do not PP when censored
             if self.censored:
                 continue
