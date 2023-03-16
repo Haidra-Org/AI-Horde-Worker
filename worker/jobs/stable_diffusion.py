@@ -185,10 +185,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # if the model persists as inpainting for text2img or img2img, we abort.
             if self.current_model == "stable_diffusion_inpainting":
                 # We remove the base64 from the prompt to avoid flooding the output on the error
-                if (
-                    isinstance(self.pop.get("source_image", ""), str)
-                    and len(self.pop.get("source_image", "")) > 10
-                ):
+                if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
                 if isinstance(self.pop.get("source_mask", ""), str) and len(self.pop.get("source_mask", "")) > 10:
                     self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
@@ -266,9 +263,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
         if self.current_model not in self.model_manager.loaded_models:
-            logger.error(
-                f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting..."
-            )
+            logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
@@ -410,7 +405,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.debug(f"Post-processing with {post_processor}...")
             try:
                 if post_processor == "strip_background":
-                    session=rembg.new_session("u2net")
+                    session = rembg.new_session("u2net")
                     self.image = rembg.remove(
                         self.image,
                         session=session,
