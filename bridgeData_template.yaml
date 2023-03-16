@@ -72,6 +72,8 @@ low_vram_mode: true
 enable_model_cache: false
 # Always download models when required without prompting
 always_download: false
+# The location of the ray temp directly, also used for the model cache
+ray_temp_dir: "./ray"
 
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
