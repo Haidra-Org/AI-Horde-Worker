@@ -405,8 +405,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.debug(f"Post-processing with {post_processor}...")
             try:
                 if post_processor == "strip_background":
+                    rembg_image = Image.open(self.image)
                     rembg_image = rembg.remove(
-                        self.image, 
+                        rembg_image, 
                         session=rembg.new_session("u2net"),
                         only_mask=False,
                         alpha_matting=10,
@@ -414,7 +415,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                         alpha_matting_background_threshold=10,
                         alpha_matting_erode_size=10,
                     )
-                    self.image = Image.frombuffer(rembg_image)
+                    self.image = Image.fromarray(rembg_image)
                 else:    
                     strength = self.current_payload.get("facefixer_strength", 0.5)
                     self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
