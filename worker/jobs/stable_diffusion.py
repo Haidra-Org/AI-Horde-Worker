@@ -397,6 +397,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         else:
             logger.info("Skipping to post-processors")
             self.image = self.pop.get("source_image")
+            self.seed = 1
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
