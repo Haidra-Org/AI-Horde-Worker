@@ -61,7 +61,7 @@ class LogStats:
     def download_stats(self, period):
         self.unused_models = []  # not relevant
 
-        req = requests.get("https://stablehorde.net/api/v2/stats/img/models")
+        req = requests.get("https://stablehorde.net/api/v2/stats/img/models", verify=False)
         self.used_models = req.json()[period] if req.ok else {}
 
     def parse_log(self):
