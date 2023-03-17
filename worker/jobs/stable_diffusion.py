@@ -156,14 +156,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 logger.warning("dpmsolver cannot handle img2img. Falling back to k_euler")
                 gen_payload["sampler_name"] = "k_euler"
         # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
-        if self.current_model == "stable_diffusion_inpainting" and req_type not in [
+        if self.current_model.contains("_inpainting") and req_type not in [
             "inpainting",
             "outpainting",
         ]:
             # Try to find any other model to do text2img or img2img
             for available_model in self.available_models:
                 if (
-                    available_model != "stable_diffusion_inpainting"
+                    not available_model.contains("_inpainting")
                     and available_model
                     not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
@@ -183,7 +183,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     break
 
             # if the model persists as inpainting for text2img or img2img, we abort.
-            if self.current_model == "stable_diffusion_inpainting":
+            if self.current_model.contains("_inpainting"):
                 # We remove the base64 from the prompt to avoid flooding the output on the error
                 if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
@@ -219,8 +219,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        if self.current_model != "stable_diffusion_inpainting" and req_type == "inpainting":
-            # Try to use inpainting model if available
+        if not self.current_model.contains("_inpainting") and req_type == "inpainting":
+            # Try to use default inpainting model if available
             if "stable_diffusion_inpainting" in self.available_models:
                 self.current_model = "stable_diffusion_inpainting"
             else:
