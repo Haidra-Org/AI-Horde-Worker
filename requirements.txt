@@ -4,3 +4,4 @@ xformers
 gradio
 pyyaml
 unidecode
+rembg
