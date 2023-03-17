@@ -163,7 +163,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # Try to find any other model to do text2img or img2img
             for available_model in self.available_models:
                 if (
-                    not "_inpainting" in available_model
+                    "_inpainting" not in available_model
                     and available_model
                     not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
@@ -219,7 +219,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        if not "_inpainting" in self.current_model and req_type == "inpainting":
+        if "_inpainting" not in self.current_model and req_type == "inpainting":
             # Try to use default inpainting model if available
             if "stable_diffusion_inpainting" in self.available_models:
                 self.current_model = "stable_diffusion_inpainting"
