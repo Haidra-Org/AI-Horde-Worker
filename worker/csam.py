@@ -1,5 +1,5 @@
 """Post process images"""
-import re
+import regex as re
 import time
 
 from nataili.clip.interrogate import Interrogator
@@ -124,7 +124,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"woman|adult|old", re.IGNORECASE),
+        "regex": re.compile(r"woman|adult|(?<!years? )old", re.IGNORECASE),
         "adjustments": {
             "child": -0.01,
             "children": -0.01,
@@ -139,7 +139,7 @@ PROMPT_BOOSTS = [
         },
     },
     {
-        "regex": re.compile(r"school|grade|\bclass\b", re.IGNORECASE),
+        "regex": re.compile(r"school|grade|\b(?<!high )class\b", re.IGNORECASE),
         "adjustments": {
             "child": 0.01,
             "children": 0.01,
