@@ -152,6 +152,21 @@ PROMPT_BOOSTS = [
         },
     },
     {
+        "regex": re.compile(r"kitten", re.IGNORECASE),
+        "adjustments": {
+            "child": 0.025,
+            "children": 0.02,
+            "toddler": 0.025,
+            "toddlers": 0.02,
+            "teen": 0.01,
+            "teens": 0.01,
+            "tween": 0.01,
+            "tweens": 0.01,
+            "infant": 0.01,
+            "infants": 0.01,
+        },
+    },
+    {
         "regex": re.compile(r"realistic", re.IGNORECASE),
         "adjustments": {
             "lolicon": -0.015,
@@ -179,12 +194,12 @@ CONTROL_WORD_ADJUSTMENTS = [
     {
         "control": ("pregnant", 0.21),
         "adjustments": [
-            ("infant", -0.03),
-            ("infants", -0.03),
-            ("toddler", -0.02),
-            ("toddlers", -0.02),
-            ("child", -0.01),
-            ("children", -0.01),
+            ("infant", -0.04),
+            ("infants", -0.04),
+            ("toddler", -0.03),
+            ("toddlers", -0.03),
+            ("child", -0.02),
+            ("children", -0.02),
         ],
     },
     {
@@ -209,9 +224,9 @@ CONTROL_WORD_ADJUSTMENTS = [
         # For some reason, clip thinks all east asian woman are very child-like
         "control": ("east asian", 0.24),
         "adjustments": [
-            ("teen", -0.01),
-            ("child", -0.01),
-            ("tween", -0.01),
+            ("teen", -0.025),
+            ("child", -0.025),
+            ("tween", -0.025),
         ],
     },
 ]
