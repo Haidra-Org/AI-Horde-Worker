@@ -84,8 +84,6 @@ Start your worker, depending on which type your want.
 
 * If you want to generate Stable Diffusion images for others, run `horde-bridge`.
 
-    **Note:** In order for your worker to work, it needs to download a stable diffusion model. To do that, you will need to register a free account at https://huggingface.co. You will need to put your username and password for it when prompted. You will also need to accept the license of the model you're about to download, so after logging in to huggingface, visit https://huggingface.co/runwayml/stable-diffusion-v1-5 and accept the license presented within.
-
     **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 20G or RAM, append `--disable_voodoo` to your startup command above! If you do not have at least 6Gb of swap, also `--disable_voodoo`!
 * If you want to interrogate images for other, run `horde-interrogation_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
 
