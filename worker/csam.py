@@ -1,7 +1,7 @@
 """Post process images"""
-import regex as re
 import time
 
+import regex as re
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
 from unidecode import unidecode
