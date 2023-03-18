@@ -5,6 +5,7 @@ import traceback
 from base64 import binascii
 from io import BytesIO
 
+import rembg
 import requests
 from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
@@ -133,6 +134,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             ):
                 gen_payload["control_type"] = self.current_payload["control_type"]
                 gen_payload["init_as_control"] = self.current_payload["image_is_control"]
+                gen_payload["return_control_map"] = self.current_payload.get("return_control_map", False)
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -154,14 +156,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 logger.warning("dpmsolver cannot handle img2img. Falling back to k_euler")
                 gen_payload["sampler_name"] = "k_euler"
         # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
-        if self.current_model == "stable_diffusion_inpainting" and req_type not in [
+        if "_inpainting" in self.current_model and req_type not in [
             "inpainting",
             "outpainting",
         ]:
             # Try to find any other model to do text2img or img2img
             for available_model in self.available_models:
                 if (
-                    available_model != "stable_diffusion_inpainting"
+                    "_inpainting" not in available_model
                     and available_model
                     not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
                 ):
@@ -181,7 +183,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     break
 
             # if the model persists as inpainting for text2img or img2img, we abort.
-            if self.current_model == "stable_diffusion_inpainting":
+            if "_inpainting" in self.current_model:
                 # We remove the base64 from the prompt to avoid flooding the output on the error
                 if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
                     self.pop["source_image"] = len(self.pop.get("source_image", ""))
@@ -217,8 +219,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        if self.current_model != "stable_diffusion_inpainting" and req_type == "inpainting":
-            # Try to use inpainting model if available
+        if "_inpainting" not in self.current_model and req_type == "inpainting":
+            # Try to use default inpainting model if available
             if "stable_diffusion_inpainting" in self.available_models:
                 self.current_model = "stable_diffusion_inpainting"
             else:
@@ -282,6 +284,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if "control_type" in gen_payload:
                     del gen_payload["control_type"]
                     del gen_payload["init_as_control"]
+                    del gen_payload["return_control_map"]
                 generator = Depth2Img(
                     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -317,6 +320,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if "control_type" in gen_payload:
                 del gen_payload["control_type"]
                 del gen_payload["init_as_control"]
+                del gen_payload["return_control_map"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
@@ -400,11 +404,21 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
-                # Collect strength for facefixer from job, or set to 0.5 default
-                strength = (
-                    self.current_payload["facefixer_strength"] if "facefixer_strength" in self.current_payload else 0.5
-                )
-                self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
+                if post_processor == "strip_background":
+                    session = rembg.new_session("u2net")
+                    self.image = rembg.remove(
+                        self.image,
+                        session=session,
+                        only_mask=False,
+                        alpha_matting=10,
+                        alpha_matting_foreground_threshold=240,
+                        alpha_matting_background_threshold=10,
+                        alpha_matting_erode_size=10,
+                    )
+                    del session
+                else:
+                    strength = self.current_payload.get("facefixer_strength", 0.5)
+                    self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",

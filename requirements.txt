@@ -5,3 +5,4 @@ gradio
 pyyaml
 unidecode
 regex
+rembg
