@@ -116,9 +116,10 @@ class WorkerFramework:
         """Polls the AI Horde for new jobs and creates a Job class"""
         runtime = time.monotonic() - start_time
         if job_thread.done():
-            if job_thread.exception(timeout=1):
-                logger.error("Job failed with exception, {}", job_thread.exception())
-                logger.exception(job_thread.exception())
+            if job_thread.exception(timeout=1) or job.is_faulted():
+                if job_thread.exception(timeout=1):
+                    logger.error("Job failed with exception, {}", job_thread.exception())
+                    logger.exception(job_thread.exception())
                 if self.consecutive_executor_restarts > 0:
                     logger.critical(
                         "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!"
