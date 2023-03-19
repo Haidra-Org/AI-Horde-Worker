@@ -5,7 +5,7 @@ from nataili.util.logger import logger
 
 from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
-
+from worker.consts import POST_PROCESSORS_NATAILI_MODELS
 
 class InterrogationBridgeData(BridgeDataTemplate):
     """Configuration object"""
@@ -30,6 +30,8 @@ class InterrogationBridgeData(BridgeDataTemplate):
             self.model_names.append("BLIP_Large")
         if "interrogation" in self.forms and "ViT-L/14" not in self.model_names:
             self.model_names.append("ViT-L/14")
+        if "post-process" in self.forms:
+            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (

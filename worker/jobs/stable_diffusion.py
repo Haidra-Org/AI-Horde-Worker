@@ -20,6 +20,7 @@ from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
 from worker.stats import bridge_stats
+from worker.consts import POST_PROCESSORS_NATAILI_MODELS, KNOWN_INTERROGATORS
 
 
 class StableDiffusionHordeJob(HordeJobFramework):
@@ -165,7 +166,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if (
                     "_inpainting" not in available_model
                     and available_model
-                    not in StableDiffusionBridgeData.POSTPROCESSORS + StableDiffusionBridgeData.INTERROGATORS
+                    not in POST_PROCESSORS_NATAILI_MODELS + KNOWN_INTERROGATORS
                 ):
                     logger.debug(
                         [
