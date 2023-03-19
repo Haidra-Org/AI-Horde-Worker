@@ -10,13 +10,11 @@ from PIL import Image
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 
 
 class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
-
-    POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers"]
-    INTERROGATORS = ["ViT-L/14"]
 
     def __init__(self):
         super().__init__(args)
@@ -122,7 +120,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.model_names.append("safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
-            self.model_names += self.POSTPROCESSORS
+            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
@@ -140,7 +138,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if model_name in ["safety_checker", "LDSR"]:
             return False
 
-        if model_name in self.POSTPROCESSORS or model_name in self.INTERROGATORS:
+        if model_name in POST_PROCESSORS_NATAILI_MODELS or model_name in KNOWN_INTERROGATORS:
             return False
 
         return model_name not in self.models_to_skip

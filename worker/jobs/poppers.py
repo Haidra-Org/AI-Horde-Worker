@@ -8,7 +8,7 @@ import requests
 from nataili.util.logger import logger
 from PIL import Image, UnidentifiedImageError
 
-from worker.consts import BRIDGE_VERSION
+from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_NATAILI_MODELS
 
 
 class JobPopper:
@@ -123,15 +123,14 @@ class StableDiffusionPopper(JobPopper):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in [
-            "LDSR",
-            "safety_checker",
-            "GFPGAN",
-            "RealESRGAN_x4plus",
-            "RealESRGAN_x4plus_anime_6B",
-            "CodeFormers",
-            "ViT-L/14",
-        ]:
+        for util_model in (
+            KNOWN_INTERROGATORS
+            + POST_PROCESSORS_NATAILI_MODELS
+            + [
+                "LDSR",
+                "safety_checker",
+            ]
+        ):
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.pop_payload = {
@@ -187,15 +186,14 @@ class InterrogationPopper(JobPopper):
         self.endpoint = "/api/v2/interrogate/pop"
         available_forms = []
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in ["LDSR", "GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers"]:
-            if util_model in self.available_models:
-                self.available_models.remove(util_model)
         if "BLIP_Large" in self.available_models:
             available_forms.append("caption")
         if "safety_checker" in self.available_models:
             available_forms.append("nsfw")
         if "ViT-L/14" in self.available_models:
             available_forms.append("interrogation")
+        if "post-process" in bd.forms:
+            available_forms.extend(list(KNOWN_POST_PROCESSORS))
         amount = max(self.bridge_data.queue_size, 1)
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
@@ -206,6 +204,7 @@ class InterrogationPopper(JobPopper):
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
+        logger.debug(self.pop_payload)
 
     def horde_pop(self):
         if not super().horde_pop():
