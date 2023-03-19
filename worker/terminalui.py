@@ -11,6 +11,7 @@ from collections import deque
 
 import requests
 import yaml
+import locale
 
 
 class DequeOutputCollector:
@@ -85,6 +86,7 @@ class Terminal:
         self.total_models = 0
         self.total_jobs = 0
 
+        locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
         self.initialise_status_window()
         self.initialise_log_window()
@@ -169,6 +171,36 @@ class Terminal:
         curses.echo()
         curses.endwin()
 
+    def draw_box(self, win):
+        # An attempt to work cross platform, box() doesn't.
+        border_chars = {
+            'top_left': '╔',
+            'top_right': '╗',
+            'bottom_left': '╚',
+            'bottom_right': '╝',
+            'horizontal': '═',
+            'vertical': '║',
+        }
+
+        height, width = win.getmaxyx()
+        border_height = height - 1
+        border_width = width - 1
+
+        # Draw the top border
+        win.addstr(0, 0, border_chars['top_left'] + border_chars['horizontal'] * (width - 2) + border_chars['top_right'])
+
+        # Draw the side borders
+        for y in range(1, height - 1):
+            win.addstr(y, 0, border_chars['vertical'])
+            win.addstr(y, width - 1, border_chars['vertical'])
+
+        # Draw the bottom border
+        win.addstr(height - 1, 0, border_chars['bottom_left'] + border_chars['horizontal'] * (width - 2))
+        try:
+            win.addstr(height - 1, width - 1, border_chars['bottom_right'])
+        except curses.error:
+            pass
+
     def get_uptime(self):
         hours = int((time.time() - self.start_time) // 3600)
         minutes = int(((time.time() - self.start_time) % 3600) // 60)
@@ -199,7 +231,8 @@ class Terminal:
 
     def print_status(self):
         self.status.erase()
-        self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
+        #self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
+        self.draw_box(self.status)
         self.status.addstr(0, 2, f"{self.worker_name}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
@@ -251,7 +284,7 @@ class Terminal:
         linecount = 0
         maxrows = 0
         for i, fullline in enumerate(reversed(output)):
-            _, _, _, line = fullline.split(Terminal.DELIM)
+            line = fullline.split(Terminal.DELIM)[-1:][0]
             linecount += len(textwrap.wrap(line, self.width - 21))
             if self.show_module:
                 linecount += 1
