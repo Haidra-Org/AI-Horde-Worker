@@ -4,6 +4,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
+
 from worker.terminalui import Terminal
 
 
@@ -33,7 +34,7 @@ class WorkerFramework:
 
         # Setup UI if requested
         if self.bridge_data.enable_terminal_ui:
-            self.ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key)
+            self.ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False

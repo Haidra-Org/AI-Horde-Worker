@@ -53,7 +53,8 @@ class Terminal:
         "Result = True",
     ]
 
-    def __init__(self, worker_name=None, apikey=None):
+    def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
+        self.url = url
         self.main = None
         self.status = None
         self.log = None
@@ -343,7 +344,7 @@ class Terminal:
     def load_worker_id(self):
         if not self.worker_name:
             return
-        workers_url = "https://stablehorde.net/api/v2/workers"
+        workers_url = f"{self.url}/api/v2/workers"
         r = requests.get(workers_url)
         if r.ok:
             worker_json = r.json()
@@ -356,13 +357,13 @@ class Terminal:
             return
         header = {"apikey": self.apikey}
         payload = {"maintenance": enabled, "name": self.worker_name}
-        worker_URL = f"https://stablehorde.net/api/v2/workers/{self.worker_id}"
+        worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         requests.put(worker_URL, json=payload, headers=header)
 
     def get_remote_worker_info(self):
         if not self.worker_id:
             return
-        worker_URL = f"https://stablehorde.net/api/v2/workers/{self.worker_id}"
+        worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         r = requests.get(worker_URL)
         if r.ok:
             data = r.json()
@@ -400,6 +401,7 @@ if __name__ == "__main__":
     # This can be used to run this terminal view along side an already running worker.
     # This is very useful for development, as you don't need to stop and start any
     # locally running worker to test this terminal UI.
+    # From the project root: python -m worker.terminalui
 
     workername = ""
     apikey = ""
