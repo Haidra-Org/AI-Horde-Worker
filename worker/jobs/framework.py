@@ -51,6 +51,10 @@ class HordeJobFramework:
             return False
         return time.time() > self.stale_time
 
+    def is_faulted(self):
+        """Check if the job is faulted"""
+        return self.status == JobStatus.FAULTED
+
     @logger.catch(reraise=True)
     def start_job(self):
         """Starts a job from a pop request
