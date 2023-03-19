@@ -4,4 +4,5 @@ xformers
 gradio
 pyyaml
 unidecode
+regex
 rembg
