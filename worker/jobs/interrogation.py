@@ -1,15 +1,20 @@
 """Get and process a job from the horde"""
 import time
 import traceback
+from io import BytesIO
 
 import numpy as np
+import rembg
+import requests
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
 from transformers import CLIPFeatureExtractor
 
+from worker.consts import KNOWN_POST_PROCESSORS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
+from worker.post_process import post_process
 
 
 class InterrogationHordeJob(HordeJobFramework):
@@ -21,6 +26,7 @@ class InterrogationHordeJob(HordeJobFramework):
         self.current_id = self.pop["id"]
         self.current_payload = self.pop.get("payload", {})
         self.image = self.pop["image"]
+        self.r2_upload = self.pop.get("r2_upload", False)
         # We allow a generation a plentiful 10 seconds per form before we consider it stale
         self.result = None
 
@@ -43,6 +49,33 @@ class InterrogationHordeJob(HordeJobFramework):
                 clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
             )
             self.result = has_nsfw_concept and True in has_nsfw_concept
+        elif self.current_form in KNOWN_POST_PROCESSORS:
+            try:
+                if self.current_form == "strip_background":
+                    session = rembg.new_session("u2net")
+                    self.image = rembg.remove(
+                        self.image,
+                        session=session,
+                        only_mask=False,
+                        alpha_matting=10,
+                        alpha_matting_foreground_threshold=240,
+                        alpha_matting_background_threshold=10,
+                        alpha_matting_erode_size=10,
+                    )
+                    del session
+                else:
+                    strength = self.current_payload.get("facefixer_strength", 0.5)
+                    self.image = post_process(self.current_form, self.image, self.model_manager, strength=strength)
+                self.result = "R2"
+            except (AssertionError, RuntimeError) as err:
+                logger.error(
+                    "Post-Processor form '{}' encountered an error when working on image . Skipping! {}",
+                    self.current_form,
+                    err,
+                )
+                self.status = JobStatus.FAULTED
+                self.start_submit_thread()
+                return
         else:
             if self.current_form == "caption":
                 interrogator = Caption(
@@ -82,6 +115,7 @@ class InterrogationHordeJob(HordeJobFramework):
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
                 self.status = JobStatus.FAULTED
+                self.start_submit_thread()
                 return
         logger.info(f"Finished interrogation {self.current_id}")
         interrogator = None
@@ -100,4 +134,14 @@ class InterrogationHordeJob(HordeJobFramework):
             self.submit_dict["result"] = {"interrogation": self.result}
         elif self.current_form == "nsfw":
             self.submit_dict["result"] = {"nsfw": self.result}
+        elif self.current_form in KNOWN_POST_PROCESSORS:
+            logger.debug(self.r2_upload)
+            buffer = BytesIO()
+            # We send as WebP to avoid using all the horde bandwidth
+            self.image.save(buffer, format="WebP", quality=95)
+            if self.r2_upload:
+                put_response = requests.put(self.r2_upload, data=buffer.getvalue())
+                logger.debug("R2 Upload response: {}", put_response)
+            self.submit_dict["result"] = {self.current_form: self.result}
+        logger.debug([self.current_form in KNOWN_POST_PROCESSORS, self.current_form, KNOWN_POST_PROCESSORS])
         logger.debug(self.submit_dict)
