@@ -125,4 +125,6 @@ models_to_skip:
 forms:
   - "caption"
   - "nsfw" # uses CPU
-  #- "interrogation" # Heavier than the others, but rewards more kudos
+  # Heavier than the others, but rewards more kudos
+  #- "interrogation"
+  #- "post-process"
