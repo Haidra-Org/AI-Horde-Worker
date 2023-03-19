@@ -14,6 +14,7 @@ from worker.jobs.framework import HordeJobFramework
 from worker.consts import KNOWN_POST_PROCESSORS
 from worker.post_process import post_process
 import rembg
+import requests
 
 class InterrogationHordeJob(HordeJobFramework):
     """Get and process an image interrogation job from the horde"""
@@ -133,10 +134,13 @@ class InterrogationHordeJob(HordeJobFramework):
         elif self.current_form == "nsfw":
             self.submit_dict["result"] = {"nsfw": self.result}
         elif self.current_form in KNOWN_POST_PROCESSORS:
+            logger.debug(self.r2_upload)
             buffer = BytesIO()
             # We send as WebP to avoid using all the horde bandwidth
             self.image.save(buffer, format="WebP", quality=95)
             if self.r2_upload:
                 put_response = requests.put(self.r2_upload, data=buffer.getvalue())
                 logger.debug("R2 Upload response: {}", put_response)
+            self.submit_dict["result"] = {self.current_form: self.result}
+        logger.debug([self.current_form in KNOWN_POST_PROCESSORS,self.current_form,KNOWN_POST_PROCESSORS])
         logger.debug(self.submit_dict)

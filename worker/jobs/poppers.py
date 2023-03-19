@@ -188,7 +188,7 @@ class InterrogationPopper(JobPopper):
             available_forms.append("nsfw")
         if "ViT-L/14" in self.available_models:
             available_forms.append("interrogation")
-        if "port-process" in bd.forms:
+        if "post-process" in bd.forms:
             available_forms.extend(list(KNOWN_POST_PROCESSORS))
         amount = max(self.bridge_data.queue_size, 1)
         self.pop_payload = {

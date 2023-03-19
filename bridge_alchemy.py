@@ -16,6 +16,10 @@ if __name__ == "__main__":
         blip=True,
         clip=True,
         safety_checker=True,
+        esrgan=True,
+        gfpgan=True,
+        codeformer=True,
+        controlnet=True,
     )
     try:
         worker = InterrogationWorker(model_manager, bridge_data)
