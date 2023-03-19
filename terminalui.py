@@ -1,3 +1,5 @@
+# curses.py
+# A simple terminal worker UI
 import curses
 import os
 import re
@@ -33,7 +35,7 @@ class Terminal:
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*Generation finished successfully")
 
-    # Refresh interval to call API for remote worker stats
+    # Refresh interval in seconds to call API for remote worker stats
     REMOTE_STATS_REFRESH = 30
 
     COLOUR_RED = 1
@@ -203,7 +205,7 @@ class Terminal:
     def print_status(self):
         self.status.erase()
         self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
-        self.status.addstr(0, 3, f"{self.worker_name}")
+        self.status.addstr(0, 2, f"{self.worker_name}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
         self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
@@ -331,7 +333,7 @@ class Terminal:
             self.show_dev = not self.show_dev
         elif x == ord("q"):
             self.finalise()
-            exit(0)
+            return True
         elif x == ord("m"):
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
@@ -384,7 +386,8 @@ class Terminal:
             self.update_stats()
             self.print_status()
             self.print_log()
-            self.get_input()
+            if self.get_input():
+                return True
         except KeyboardInterrupt:
             self.finalise()
             return True
@@ -411,5 +414,6 @@ if __name__ == "__main__":
     term = Terminal(workername, apikey)
 
     while True:
-        term.poll()
+        if term.poll():
+            exit(0)
         time.sleep(0.1)
