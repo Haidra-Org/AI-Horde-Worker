@@ -123,10 +123,14 @@ class StableDiffusionPopper(JobPopper):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
-        for util_model in KNOWN_INTERROGATORS + POST_PROCESSORS_NATAILI_MODELS + [
-            "LDSR",
-            "safety_checker",
-        ]:
+        for util_model in (
+            KNOWN_INTERROGATORS
+            + POST_PROCESSORS_NATAILI_MODELS
+            + [
+                "LDSR",
+                "safety_checker",
+            ]
+        ):
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
         self.pop_payload = {

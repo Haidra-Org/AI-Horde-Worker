@@ -4,17 +4,18 @@ import traceback
 from io import BytesIO
 
 import numpy as np
+import rembg
+import requests
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
 from transformers import CLIPFeatureExtractor
 
+from worker.consts import KNOWN_POST_PROCESSORS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
-from worker.consts import KNOWN_POST_PROCESSORS
 from worker.post_process import post_process
-import rembg
-import requests
+
 
 class InterrogationHordeJob(HordeJobFramework):
     """Get and process an image interrogation job from the horde"""
@@ -74,7 +75,7 @@ class InterrogationHordeJob(HordeJobFramework):
                 )
                 self.status = JobStatus.FAULTED
                 self.start_submit_thread()
-                return                
+                return
         else:
             if self.current_form == "caption":
                 interrogator = Caption(
@@ -142,5 +143,5 @@ class InterrogationHordeJob(HordeJobFramework):
                 put_response = requests.put(self.r2_upload, data=buffer.getvalue())
                 logger.debug("R2 Upload response: {}", put_response)
             self.submit_dict["result"] = {self.current_form: self.result}
-        logger.debug([self.current_form in KNOWN_POST_PROCESSORS,self.current_form,KNOWN_POST_PROCESSORS])
+        logger.debug([self.current_form in KNOWN_POST_PROCESSORS, self.current_form, KNOWN_POST_PROCESSORS])
         logger.debug(self.submit_dict)

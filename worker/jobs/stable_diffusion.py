@@ -16,11 +16,11 @@ from PIL import UnidentifiedImageError
 
 from worker import csam
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
 from worker.stats import bridge_stats
-from worker.consts import POST_PROCESSORS_NATAILI_MODELS, KNOWN_INTERROGATORS
 
 
 class StableDiffusionHordeJob(HordeJobFramework):
@@ -165,8 +165,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     "_inpainting" not in available_model
-                    and available_model
-                    not in POST_PROCESSORS_NATAILI_MODELS + KNOWN_INTERROGATORS
+                    and available_model not in POST_PROCESSORS_NATAILI_MODELS + KNOWN_INTERROGATORS
                 ):
                     logger.debug(
                         [
