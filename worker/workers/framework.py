@@ -33,7 +33,7 @@ class WorkerFramework:
 
         # Setup UI if requested
         if self.bridge_data.enable_terminal_ui:
-            ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key)
+            self.ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key)
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
@@ -45,7 +45,7 @@ class WorkerFramework:
                         break
                     try:
                         self.process_jobs()
-                        if ui and ui.poll():
+                        if self.ui and self.ui.poll():
                             # Exit requested
                             raise KeyboardInterrupt()
                     except KeyboardInterrupt:
