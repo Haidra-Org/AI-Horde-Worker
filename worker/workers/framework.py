@@ -44,10 +44,10 @@ class WorkerFramework:
                         self.executor.shutdown(wait=False)
                         break
                     try:
-                        self.process_jobs()
                         if self.ui and self.ui.poll():
                             # Exit requested
                             raise KeyboardInterrupt()
+                        self.process_jobs()
                     except KeyboardInterrupt:
                         self.should_stop = True
                         self.exit_rc = 0
