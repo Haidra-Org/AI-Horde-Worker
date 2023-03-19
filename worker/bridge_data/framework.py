@@ -42,6 +42,7 @@ class BridgeDataTemplate:
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.require_upfront_kudos = os.environ.get("REQUIRE_UPFRONT_KUDOS", "false") == "true"
         self.stats_output_frequency = int(os.environ.get("STATS_OUTPUT_FREQUENCY", 300))
+        self.enable_terminal_ui = os.environ.get("ENABLE_TERMINAL_UI", "false") == "true"
         self.initialized = False
         self.username = None
         self.models_reloading = False

@@ -4,6 +4,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
+from worker.terminalui import Terminal
 
 
 class WorkerFramework:
@@ -19,6 +20,7 @@ class WorkerFramework:
         self.consecutive_executor_restarts = 0
         self.consecutive_failed_jobs = 0
         self.executor = None
+        self.ui = None
         self.reload_data()
         logger.stats("Starting new stats session")
         # These two should be filled in by the extending classes
@@ -28,6 +30,11 @@ class WorkerFramework:
     @logger.catch(reraise=True)
     def start(self):
         self.exit_rc = 1
+
+        # Setup UI if requested
+        if self.bridge_data.enable_terminal_ui:
+            ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key)
+
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
             self.consecutive_failed_jobs = 0
@@ -38,6 +45,9 @@ class WorkerFramework:
                         break
                     try:
                         self.process_jobs()
+                        if ui and ui.poll():
+                            # Exit requested
+                            raise KeyboardInterrupt()
                     except KeyboardInterrupt:
                         self.should_stop = True
                         self.exit_rc = 0
