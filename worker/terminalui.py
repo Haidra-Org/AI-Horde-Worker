@@ -88,7 +88,7 @@ class Terminal:
         self.initialise_main_window()
         self.initialise_status_window()
         self.initialise_log_window()
-        self.clear()
+        self.resize()
         self.open_log()
         self.get_remote_worker_info()
 
@@ -150,15 +150,6 @@ class Terminal:
         self.log.scrollok(True)
         sys.stdout = self.output
 
-    def clear(self):
-        self.main.erase()
-        self.status.erase()
-        self.log.erase()
-        self.main.refresh()
-        self.status.refresh()
-        self.log.refresh()
-        self.resize()
-
     def resize(self):
         # Determine terminal size
         self.main.erase()
@@ -167,6 +158,9 @@ class Terminal:
         self.height, self.width = self.main.getmaxyx()
         self.status.resize(self.status_height, self.width)
         self.log.resize(self.height - self.status_height, self.width)
+        self.main.refresh()
+        self.status.refresh()
+        self.log.refresh()
 
     def finalise(self):
         curses.nocbreak()
@@ -243,6 +237,7 @@ class Terminal:
         x = self.print_switch(y, x, inputs[2], self.show_debug)
         x = self.print_switch(y, x, inputs[3], self.pause_display)
         x = self.print_switch(y, x, inputs[4], False)
+        self.status.refresh()
 
     def print_log(self):
         if self.pause_display:
@@ -323,7 +318,6 @@ class Terminal:
     def get_input(self):
         x = self.status.getch()
         self.last_key = x
-        self.status.refresh()
         if x == curses.KEY_RESIZE:
             self.resize()
         elif x == ord("d"):
@@ -384,11 +378,11 @@ class Terminal:
 
     def poll(self):
         try:
+            if self.get_input():
+                return True
             self.update_stats()
             self.print_status()
             self.print_log()
-            if self.get_input():
-                return True
         except KeyboardInterrupt:
             self.finalise()
             return True
