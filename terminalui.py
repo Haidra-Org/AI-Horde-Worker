@@ -1,14 +1,14 @@
 import curses
 import os
-import io
-import sys
-import time
 import re
+import sys
 import textwrap
+import threading
+import time
 from collections import deque
+
 import requests
 import yaml
-import threading
 
 
 class DequeOutputCollector:
@@ -16,7 +16,7 @@ class DequeOutputCollector:
         self.deque = deque()
 
     def write(self, s):
-        if s != '\n':
+        if s != "\n":
             self.deque.append(s.strip())
 
     def set_size(self, size):
@@ -27,7 +27,7 @@ class DequeOutputCollector:
         pass
 
 
-class Terminal():
+class Terminal:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
@@ -57,7 +57,7 @@ class Terminal():
         self.log = None
         self.width = 0
         self.height = 0
-        self.status_height = 7
+        self.status_height = 8
         self.show_module = False
         self.show_debug = False
         self.show_dev = False
@@ -76,11 +76,12 @@ class Terminal():
         self.total_requests_fulfilled = 0
         self.total_kudos = 0
         self.total_worker_kudos = 0
+        self.total_uptime = ""
         self.performance = "unknown"
         self.threads = 0
         self.total_failed_jobs = 0
         self.total_models = 0
-        
+
         self.initialise_main_window()
         self.initialise_status_window()
         self.initialise_log_window()
@@ -93,7 +94,6 @@ class Terminal():
         self.input.seek(0, os.SEEK_END)
 
     def load_log(self):
-        lines = []
         while True:
             line = self.input.readline()
             if line:
@@ -115,7 +115,7 @@ class Terminal():
             else:
                 break
         self.output.set_size(self.height - self.status_height)
-        
+
     def initialise_main_window(self):
         self.main = curses.initscr()
         # Don't each key presses
@@ -142,11 +142,11 @@ class Terminal():
         self.status.nodelay(True)
 
     def initialise_log_window(self):
-        self.log = curses.newwin(self.height - self.status_height, self.width, 4, 0)
+        self.log = curses.newwin(self.height - self.status_height, self.width, self.status_height, 0)
         self.log.idlok(True)
         self.log.scrollok(True)
         sys.stdout = self.output
-        
+
     def clear(self):
         self.main.erase()
         self.status.erase()
@@ -178,6 +178,20 @@ class Terminal():
         seconds = int((time.time() - self.start_time) % 60)
         return f"{hours}:{minutes:02}:{seconds:02}"
 
+    def get_total_uptime(self):
+        hours = int(self.total_uptime // 3600)
+        days = int(hours / 24)
+        hours = hours % 24
+        minutes = int((self.total_uptime % 3600) // 60)
+        result = ""
+        if days:
+            result += f"{days}d "
+        if hours:
+            result += f"{hours}h "
+        if minutes:
+            result += f"{minutes}m"
+        return result
+
     def print_switch(self, y, x, label, switch):
         if switch:
             colour = curses.color_pair(Terminal.COLOUR_CYAN)
@@ -187,11 +201,30 @@ class Terminal():
         return x + len(label) + 2
 
     def print_status(self):
+        self.status.erase()
         self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
-        self.status.addstr(0, 3, f"Worker Status {self.worker_name}")
-        self.status.addstr(1, 2, f"Uptime {self.get_uptime()}  Jobs Completed: {self.jobs_done}  Kudos Per Hour: {self.kudos_per_hour}   Jobs Per Hour: {self.jobs_per_hour}")
-        self.status.addstr(2, 2, f"Models loaded: {self.total_models}  Performance: {self.performance}  Threads: {self.threads}  ")
-        self.status.addstr(3, 2, f"Total Worker Kudos: {self.total_worker_kudos} ({self.total_kudos} user)  Total Failed jobs: {self.total_failed_jobs}")
+        self.status.addstr(0, 3, f"{self.worker_name}")
+
+        self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
+        self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
+        self.status.addstr(3, 2, "Threads:          Worker Kudos:               Total Failed jobs: ")
+        self.status.addstr(4, 2, "                  Total Uptime:               Total Jobs Done:   ")
+
+        self.status.addstr(1, 11, f"{self.get_uptime()}")
+        self.status.addstr(1, 36, f"{self.jobs_done}")
+        self.status.addstr(1, 68, f"{self.performance}")
+
+        self.status.addstr(2, 11, f"{self.total_models}")
+        self.status.addstr(2, 36, f"{self.kudos_per_hour}")
+        self.status.addstr(2, 68, f"{self.jobs_per_hour}")
+
+        self.status.addstr(3, 11, f"{self.threads}")
+        self.status.addstr(3, 36, f"{self.total_kudos}")
+        self.status.addstr(3, 68, f"{self.total_failed_jobs}")
+
+        # self.status.addstr(4, 11, f"{self.threads}")
+        self.status.addstr(4, 36, f"{self.get_total_uptime()}")
+        self.status.addstr(4, 68, f"{self.total_jobs}")
 
         inputs = [
             "(m)aintenance mode",
@@ -201,7 +234,7 @@ class Terminal():
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
-        y = 5
+        y = 6
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
@@ -215,8 +248,6 @@ class Terminal():
         termrows = self.height - self.status_height
         self.load_log()
         output = list(self.output.deque)
-        y = 0
-        inputrow = 0
 
         # How many lines of output can we fit, with wrapping and stuff
         linecount = 0
@@ -231,8 +262,15 @@ class Terminal():
                 break
         output = output[-maxrows:]
         if self.show_dev:
-            self.status.addstr(3, 3, f"Output rows {len(output)}, wrapped {linecount}  Terminal rows {termrows}, height {self.height}  Key: {self.last_key}  ")
-    
+            self.status.addstr(
+                5,
+                2,
+                f"Output rows {len(output)}, wrapped {linecount}  Terminal rows {termrows}, "
+                f"height {self.height}  Key: {self.last_key}  Status Height {self.status_height}",
+            )
+
+        y = 0
+        inputrow = 0
         last_timestamp = ""
         while y < termrows:
             if inputrow < len(output):
@@ -248,7 +286,7 @@ class Terminal():
                     colour = Terminal.COLOUR_MAGENTA
                 elif cat == "DEBUG":
                     colour = Terminal.COLOUR_WHITE
-                # Timestamp                
+                # Timestamp
                 when = nextwhen if nextwhen != last_timestamp else ""
                 last_timestamp = nextwhen
                 length = len(last_timestamp) + 2
@@ -291,6 +329,9 @@ class Terminal():
             self.show_module = not self.show_module
         elif x == ord("v"):
             self.show_dev = not self.show_dev
+        elif x == ord("q"):
+            self.finalise()
+            exit(0)
         elif x == ord("m"):
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
@@ -324,13 +365,14 @@ class Terminal():
         if r.ok:
             data = r.json()
             self.maintenance_mode = data.get("maintenance_mode", False)
-            self.total_requests_fulfilled = data.get("requests_fulfilled", 0)
+            self.total_jobs = data.get("requests_fulfilled", 0)
             self.total_kudos = int(data.get("kudos_rewards", 0))
             self.total_worker_kudos = int(data.get("kudos_details", {}).get("generated", 0))
-            self.performance = data.get("performance")
+            self.performance = data.get("performance").replace("megapixelsteps per second", "MPS")
             self.threads = data.get("threads", 0)
             self.total_failed_jobs = data.get("uncompleted_jobs", 0)
-            self.total_models = len(data.get("models", []))        
+            self.total_uptime = data.get("uptime", 0)
+            self.total_models = len(data.get("models", []))
 
     def update_stats(self):
         if time.time() - self.last_stats_refresh > Terminal.REMOTE_STATS_REFRESH:
@@ -340,19 +382,20 @@ class Terminal():
     def poll(self):
         try:
             self.update_stats()
-            self.print_log()
             self.print_status()
+            self.print_log()
             self.get_input()
-        except KeyboardInterrupt:    
+        except KeyboardInterrupt:
             self.finalise()
             return True
-        except:
+        except Exception:
             self.finalise()
             raise
 
+
 if __name__ == "__main__":
     # This can be used to run this terminal view along side an already running worker.
-    # This is very useful for development, as you don't need to stop and start any 
+    # This is very useful for development, as you don't need to stop and start any
     # locally running worker to test this terminal UI.
 
     workername = ""
