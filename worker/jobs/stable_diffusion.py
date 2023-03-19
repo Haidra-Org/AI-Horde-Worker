@@ -292,7 +292,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     load_concepts=True,
                     concepts_dir="models/custom/sd-concepts-library",
                     filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo.active,
+                    disable_voodoo=self.bridge_data.disable_voodoo,
                 )
             else:
                 generator = CompVis(
@@ -304,7 +304,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     concepts_dir="models/custom/sd-concepts-library",
                     safety_checker=safety_checker,
                     filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo.active,
+                    disable_voodoo=self.bridge_data.disable_voodoo,
                     control_net_manager=self.model_manager.controlnet or None,
                 )
         else:
@@ -338,7 +338,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.model_manager.loaded_models[self.current_model]["device"],
                 "bridge_generations",
                 filter_nsfw=use_nsfw_censor,
-                disable_voodoo=self.bridge_data.disable_voodoo.active,
+                disable_voodoo=self.bridge_data.disable_voodoo,
             )
         try:
             logger.info(
