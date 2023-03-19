@@ -63,7 +63,20 @@ number_of_dynamic_models: 3
 max_models_to_download: 10
 # The frequency (in seconds) to output worker summary stats, such as kudos per hour.
 # Set to zero to disable stats output completely.
-stats_output_frequency: 300
+stats_output_frequency: 30
+# The location in which stable diffusion ckpt models are stored
+nataili_cache_home: "./nataili/compvis/"
+# Enable or disable low vram mode. Leave enabled if unsure
+low_vram_mode: true
+# Enable or disable model caching. If you have a lot of models, enable this to reduce the worker startup time and reduce RAM usage.
+enable_model_cache: false
+# Always download models when required without prompting
+always_download: false
+# The location of the ray temp directly, also used for the model cache
+ray_temp_dir: "./ray"
+# If voodoo is disabled, caching models in RAM and on disk is disabled and models are loaded directly into VRAM. Total size of models loaded must fit in VRAM.
+disable_voodoo: false
+
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
 # Adjust how many models you load based on how much RAM (not VRAM) you have available.
@@ -112,4 +125,6 @@ models_to_skip:
 forms:
   - "caption"
   - "nsfw" # uses CPU
-  #- "interrogation" # Heavier than the others, but rewards more kudos
+  # Heavier than the others, but rewards more kudos
+  #- "interrogation"
+  #- "post-process"

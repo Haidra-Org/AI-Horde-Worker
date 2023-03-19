@@ -22,6 +22,9 @@ def post_process(model, image, model_manager, strength):
     if model not in model_manager.loaded_models:
         logger.init(f"{model}", status="Loading")
         model_manager.load(model)
+        if model not in model_manager.loaded_models:
+            logger.init_err(f"{model}", status="Error")
+            return image
         logger.init_ok(f"{model}", status="Success")
 
     pprocessor = KNOWN_POST_PROCESSORS[model]

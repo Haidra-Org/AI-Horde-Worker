@@ -47,7 +47,7 @@ class BridgeDataTemplate:
         self.models_reloading = False
         self.max_models_to_download = 10
 
-        self.disable_voodoo = disable_voodoo
+        self.disable_voodoo = disable_voodoo.active
 
     def load_config(self):
         # YAML config
@@ -230,7 +230,7 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model, voodoo=not self.disable_voodoo.active)
+                success = model_manager.load(model, voodoo=not self.disable_voodoo)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True

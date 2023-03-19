@@ -4,18 +4,17 @@ import re
 import time
 
 import requests
+from nataili import enable_ray_alternative
 from nataili.util.logger import logger
 from PIL import Image
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 
 
 class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
-
-    POSTPROCESSORS = ["GFPGAN", "RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B", "CodeFormers"]
-    INTERROGATORS = ["ViT-L/14"]
 
     def __init__(self):
         super().__init__(args)
@@ -40,12 +39,25 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.censor_image_csam = Image.open("assets/nsfw_censor_csam.png")
         self.models_reloading = False
         self.model = None
+        self.always_download = False
         self.dynamic_models = True
         self.number_of_dynamic_models = 3
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
         self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
+        # Some config file options require us to actually set env vars to pass settings to third party systems
+        # Where we load models from
+        if not hasattr(self, "nataili_cache_home"):
+            self.nataili_cache_home = os.environ.get("NATAILI_CACHE_HOME", "./")
+        os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
+        # Disable low vram mode
+        if hasattr(self, "low_vram_mode"):
+            if not self.low_vram_mode:
+                os.environ["LOW_VRAM_MODE"] = "0"
+        # Where the ray temp dir and/or model cache are located
+        if hasattr(self, "ray_temp_dir"):
+            os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
 
     @logger.catch(reraise=True)
     def reload_data(self):
@@ -55,6 +67,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
+
+        if hasattr(self, "enable_model_cache"):
+            enable_ray_alternative.active = self.enable_model_cache
 
         # Check for magic constants and expand them
         top_n = 0
@@ -97,13 +112,15 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
+        if args.enable_model_cache:
+            enable_ray_alternative.activate()
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
         self.model_names.append("safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
-            self.model_names += self.POSTPROCESSORS
+            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
@@ -115,13 +132,13 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             )
 
     def check_extra_conditions_for_download_choice(self):
-        return self.dynamic_models
+        return self.dynamic_models or self.always_download
 
     def _is_valid_stable_diffusion_model(self, model_name):
         if model_name in ["safety_checker", "LDSR"]:
             return False
 
-        if model_name in self.POSTPROCESSORS or model_name in self.INTERROGATORS:
+        if model_name in POST_PROCESSORS_NATAILI_MODELS or model_name in KNOWN_INTERROGATORS:
             return False
 
         return model_name not in self.models_to_skip
