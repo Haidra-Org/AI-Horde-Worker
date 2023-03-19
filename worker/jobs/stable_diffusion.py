@@ -165,7 +165,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     "_inpainting" not in available_model
-                    and available_model not in POST_PROCESSORS_NATAILI_MODELS + KNOWN_INTERROGATORS
+                    and available_model not in POST_PROCESSORS_NATAILI_MODELS | KNOWN_INTERROGATORS
                 ):
                     logger.debug(
                         [

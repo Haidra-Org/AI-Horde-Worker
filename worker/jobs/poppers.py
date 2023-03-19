@@ -124,8 +124,8 @@ class StableDiffusionPopper(JobPopper):
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
         for util_model in (
-            KNOWN_INTERROGATORS
-            + POST_PROCESSORS_NATAILI_MODELS
+            list(KNOWN_INTERROGATORS)
+            + list(POST_PROCESSORS_NATAILI_MODELS)
             + [
                 "LDSR",
                 "safety_checker",
