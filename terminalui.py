@@ -8,12 +8,7 @@ import textwrap
 from collections import deque
 import requests
 import yaml
-
-
-# Running for 2h 12m
-# Jobs completed
-# Kudos per hour
-# Jobs per hour
+import threading
 
 
 class DequeOutputCollector:
@@ -28,10 +23,18 @@ class DequeOutputCollector:
         while len(self.deque) > size:
             self.deque.popleft()
 
+    def flush(self):
+        pass
+
 
 class Terminal():
 
-    REGEX = re.compile(r"(DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
+    REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
+    KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
+    JOBDONE_REGEX = re.compile(r".*Generation finished successfully")
+
+    # Refresh interval to call API for remote worker stats
+    REMOTE_STATS_REFRESH = 30
 
     COLOUR_RED = 1
     COLOUR_GREEN = 2
@@ -54,11 +57,10 @@ class Terminal():
         self.log = None
         self.width = 0
         self.height = 0
-        self.status_height = 6
+        self.status_height = 7
         self.show_module = False
         self.show_debug = False
         self.show_dev = False
-        self.maintenance_mode = False
         self.last_key = None
         self.pause_display = False
         self.output = DequeOutputCollector()
@@ -66,14 +68,25 @@ class Terminal():
         self.apikey = apikey
         self.worker_id = self.load_worker_id()
         self.start_time = time.time()
+        self.last_stats_refresh = 0
         self.jobs_done = 0
         self.kudos_per_hour = 0
         self.jobs_per_hour = 0
+        self.maintenance_mode = False
+        self.total_requests_fulfilled = 0
+        self.total_kudos = 0
+        self.total_worker_kudos = 0
+        self.performance = "unknown"
+        self.threads = 0
+        self.total_failed_jobs = 0
+        self.total_models = 0
+        
         self.initialise_main_window()
         self.initialise_status_window()
         self.initialise_log_window()
         self.clear()
         self.open_log()
+        self.get_remote_worker_info()
 
     def open_log(self):
         self.input = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
@@ -94,6 +107,11 @@ class Terminal():
                     if not self.show_debug and regex.group(1) == "DEBUG":
                         continue
                     self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
+                if regex := Terminal.KUDOS_REGEX.match(line):
+                    self.kudos_per_hour = int(regex.group(1))
+                if regex := Terminal.JOBDONE_REGEX.match(line):
+                    self.jobs_done += 1
+                    self.jobs_per_hour = int(((time.time() - self.start_time) / self.jobs_done) * 3600)
             else:
                 break
         self.output.set_size(self.height - self.status_height)
@@ -170,8 +188,10 @@ class Terminal():
 
     def print_status(self):
         self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
-        self.status.addstr(0, 3, "Worker Status")
+        self.status.addstr(0, 3, f"Worker Status {self.worker_name}")
         self.status.addstr(1, 2, f"Uptime {self.get_uptime()}  Jobs Completed: {self.jobs_done}  Kudos Per Hour: {self.kudos_per_hour}   Jobs Per Hour: {self.jobs_per_hour}")
+        self.status.addstr(2, 2, f"Models loaded: {self.total_models}  Performance: {self.performance}  Threads: {self.threads}  ")
+        self.status.addstr(3, 2, f"Total Worker Kudos: {self.total_worker_kudos} ({self.total_kudos} user)  Total Failed jobs: {self.total_failed_jobs}")
 
         inputs = [
             "(m)aintenance mode",
@@ -181,7 +201,7 @@ class Terminal():
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
-        y = 4
+        y = 5
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
@@ -224,6 +244,8 @@ class Terminal():
                     colour = Terminal.COLOUR_YELLOW
                 elif cat == "ERROR":
                     colour = Terminal.COLOUR_RED
+                elif cat == "INIT":
+                    colour = Terminal.COLOUR_MAGENTA
                 elif cat == "DEBUG":
                     colour = Terminal.COLOUR_WHITE
                 # Timestamp                
@@ -294,8 +316,30 @@ class Terminal():
         r = requests.put(worker_URL, json=payload, headers=header)
         return r.json()
 
+    def get_remote_worker_info(self):
+        if not self.worker_id:
+            return
+        worker_URL = f"https://stablehorde.net/api/v2/workers/{self.worker_id}"
+        r = requests.get(worker_URL)
+        if r.ok:
+            data = r.json()
+            self.maintenance_mode = data.get("maintenance_mode", False)
+            self.total_requests_fulfilled = data.get("requests_fulfilled", 0)
+            self.total_kudos = int(data.get("kudos_rewards", 0))
+            self.total_worker_kudos = int(data.get("kudos_details", {}).get("generated", 0))
+            self.performance = data.get("performance")
+            self.threads = data.get("threads", 0)
+            self.total_failed_jobs = data.get("uncompleted_jobs", 0)
+            self.total_models = len(data.get("models", []))        
+
+    def update_stats(self):
+        if time.time() - self.last_stats_refresh > Terminal.REMOTE_STATS_REFRESH:
+            self.last_stats_refresh = time.time()
+            threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
+
     def poll(self):
         try:
+            self.update_stats()
             self.print_log()
             self.print_status()
             self.get_input()
