@@ -35,7 +35,7 @@ class Terminal:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
-    JOBDONE_REGEX = re.compile(r".*Generation finished successfully")
+    JOBDONE_REGEX = re.compile(r".*Generation for id.*finished successfully")
 
     ART = {
         'top_left': '╔',
@@ -66,6 +66,8 @@ class Terminal:
         "Result = False",
         "Result = True",
     ]
+
+    CLIENT_AGENT = "terminalui:1:db0"
 
     def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
         self.url = url
@@ -135,7 +137,7 @@ class Terminal:
                     self.kudos_per_hour = int(regex.group(1))
                 if regex := Terminal.JOBDONE_REGEX.match(line):
                     self.jobs_done += 1
-                    self.jobs_per_hour = int(((time.time() - self.start_time) / self.jobs_done) * 3600)
+                    self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
             else:
                 break
         self.output.set_size(self.height - self.status_height)
@@ -410,7 +412,7 @@ class Terminal:
         if not self.worker_name:
             return
         workers_url = f"{self.url}/api/v2/workers"
-        r = requests.get(workers_url)
+        r = requests.get(workers_url, headers={"client-agent": Terminal.CLIENT_AGENT})
         if r.ok:
             worker_json = r.json()
             for item in worker_json:
@@ -420,7 +422,7 @@ class Terminal:
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
             return
-        header = {"apikey": self.apikey}
+        header = {"apikey": self.apikey, "client-agent": Terminal.CLIENT_AGENT}
         payload = {"maintenance": enabled, "name": self.worker_name}
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         requests.put(worker_URL, json=payload, headers=header)
@@ -429,7 +431,7 @@ class Terminal:
         if not self.worker_id:
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
-        r = requests.get(worker_URL)
+        r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
         if r.ok:
             data = r.json()
             self.maintenance_mode = data.get("maintenance_mode", False)
@@ -444,7 +446,7 @@ class Terminal:
 
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
-        r = requests.get(url)
+        r = requests.get(url, headers={"client-agent": Terminal.CLIENT_AGENT})
         if r.ok:
             data = r.json()
             self.queued_requests = int(data.get("queued_requests", 0))
