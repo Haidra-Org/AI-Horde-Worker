@@ -1,6 +1,6 @@
 # pop-stats.py
-# Calculate some basic model usage statistics from the local worker log file.
-# Usage: model-stats.py [-h] [--today] [--yesterday]
+# Calculate node pop stats from the local worker log file.
+# Usage: pop-stats.py [-h] [--today] [--yesterday]
 import argparse
 import datetime
 import glob
@@ -69,7 +69,6 @@ class LogStats:
                             continue
 
                         # Extract kudis and time
-                        timestamp = regex.group(1)[:-1]  # truncate to 10 mins
                         kudos = regex.group(2)
                         node = regex.group(3).split(":")[0]
                         if node in self.data:
@@ -94,7 +93,7 @@ class LogStats:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate local worker model usage statistics")
+    parser = argparse.ArgumentParser(description="Generate local worker job pop statistics")
     parser.add_argument("-t", "--today", help="Statistics for today only", action="store_true")
     parser.add_argument("-y", "--yesterday", help="Statistics for yesterday only", action="store_true")
     parser.add_argument("-1", "--hour", help="Statistics for last hour only", action="store_true")
