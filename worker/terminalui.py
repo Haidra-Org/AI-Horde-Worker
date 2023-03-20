@@ -82,6 +82,7 @@ class Terminal:
         self.last_key = None
         self.pause_display = False
         self.output = DequeOutputCollector()
+        self.stdout = DequeOutputCollector()
         self.worker_name = worker_name
         self.apikey = apikey
         self.worker_id = self.load_worker_id()
@@ -170,7 +171,7 @@ class Terminal:
         self.log = curses.newwin(self.height - self.status_height, self.width, self.status_height, 0)
         self.log.idlok(True)
         self.log.scrollok(True)
-        sys.stdout = self.output
+        sys.stdout = self.stdoutput
 
     def resize(self):
         # Determine terminal size
@@ -244,20 +245,20 @@ class Terminal:
         return x + len(label) + 2
 
     def print_status(self):
-        # This is the design template:
-        # ╔═AIDream-01══════════════════════════════════════════════════════════════════════════════╗
-        # ║ Uptime:  0:14:35  Jobs Completed: 6           Performance:        0.3 MPS               ║
-        # ║ Models:  174      Kudos Per Hour: 5283        Jobs Per Hour:      524966                ║
-        # ╟─Worker Total────────────────────────────────────────────────────────────────────────────╢
-        # ║                   Worker Kudos:   9385297     Total Jobs Failed:  972                   ║
-        # ║                   Total Uptime:   34d 19h 14m Total Jobs Done:    701138                ║
-        # ╟─Entire Horde────────────────────────────────────────────────────────────────────────────╢
-        # ║                   Jobs Queued:    99999       Queue Time:         99m                   ║
-        # ║                   Total Workers:  1000        Total Threads:      1000                  ║
-        # ║                                                                                         ║
-        # ║                         (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
-        # ╚═════════════════════════════════════════════════════════════════════════════════════════╝        
-        self.status.erase()
+        # This is the design template: (80 columns)
+        # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
+        # ║ Uptime:  0:14:35  Jobs Completed: 6           Performance:        0.3 MPS   ║
+        # ║ Models:  174      Kudos Per Hour: 5283        Jobs Per Hour:      524966    ║
+        # ╟─Worker Total────────────────────────────────────────────────────────────────╢
+        # ║                   Worker Kudos:   9385297     Total Jobs Failed:  972       ║
+        # ║                   Total Uptime:   34d 19h 14m Total Jobs Done:    701138    ║
+        # ╟─Entire Horde────────────────────────────────────────────────────────────────╢
+        # ║                   Jobs Queued:    99999       Queue Time:         99m       ║
+        # ║                   Total Workers:  1000        Total Threads:      1000      ║
+        # ║                                                                             ║
+        # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
+        # ╙─────────────────────────────────────────────────────────────────────────────╜        
+        self.status.erase()        
         #self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
         self.draw_line(self.status, 3, "Worker Total")
