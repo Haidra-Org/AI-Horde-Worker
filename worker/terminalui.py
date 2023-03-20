@@ -1,6 +1,7 @@
 # curses.py
 # A simple terminal worker UI
 import curses
+import locale
 import os
 import re
 import sys
@@ -11,7 +12,7 @@ from collections import deque
 
 import requests
 import yaml
-import locale
+
 
 class DequeOutputCollector:
     def __init__(self):
@@ -36,14 +37,14 @@ class Terminal:
     JOBDONE_REGEX = re.compile(r".*Generation for id.*finished successfully")
 
     ART = {
-        'top_left': '╓',
-        'top_right': '╖',
-        'bottom_left': '╙',
-        'bottom_right': '╜',
-        'horizontal': '─',
-        'vertical': '║',
-        'left-join': '╟',
-        'right-join': '╢'
+        "top_left": "╓",
+        "top_right": "╖",
+        "bottom_left": "╙",
+        "bottom_right": "╜",
+        "horizontal": "─",
+        "vertical": "║",
+        "left-join": "╟",
+        "right-join": "╢",
     }
 
     # Refresh interval in seconds to call API for remote worker stats
@@ -192,7 +193,9 @@ class Terminal:
 
     def draw_line(self, win, y, label):
         height, width = win.getmaxyx()
-        win.addstr(y, 0, Terminal.ART['left-join'] + Terminal.ART['horizontal'] * (width - 2) + Terminal.ART['right-join'])
+        win.addstr(
+            y, 0, Terminal.ART["left-join"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["right-join"]
+        )
         win.addstr(y, 2, label)
 
     def draw_box(self, win):
@@ -200,17 +203,19 @@ class Terminal:
         height, width = win.getmaxyx()
 
         # Draw the top border
-        win.addstr(0, 0, Terminal.ART['top_left'] + Terminal.ART['horizontal'] * (width - 2) + Terminal.ART['top_right'])
+        win.addstr(
+            0, 0, Terminal.ART["top_left"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["top_right"]
+        )
 
         # Draw the side borders
         for y in range(1, height - 1):
-            win.addstr(y, 0, Terminal.ART['vertical'])
-            win.addstr(y, width - 1, Terminal.ART['vertical'])
+            win.addstr(y, 0, Terminal.ART["vertical"])
+            win.addstr(y, width - 1, Terminal.ART["vertical"])
 
         # Draw the bottom border
-        win.addstr(height - 1, 0, Terminal.ART['bottom_left'] + Terminal.ART['horizontal'] * (width - 2))
+        win.addstr(height - 1, 0, Terminal.ART["bottom_left"] + Terminal.ART["horizontal"] * (width - 2))
         try:
-            win.addstr(height - 1, width - 1, Terminal.ART['bottom_right'])
+            win.addstr(height - 1, width - 1, Terminal.ART["bottom_right"])
         except curses.error:
             pass
 
@@ -233,7 +238,7 @@ class Terminal:
         minutes = int(((time.time() - self.start_time) % 3600) // 60)
         seconds = int((time.time() - self.start_time) % 60)
         return f"{hours}:{minutes:02}:{seconds:02}"
-    
+
     def print_switch(self, y, x, label, switch):
         if switch:
             colour = curses.color_pair(Terminal.COLOUR_CYAN)
@@ -255,9 +260,9 @@ class Terminal:
         # ║                   Total Workers:  1000        Total Threads:      1000      ║
         # ║                                                                             ║
         # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
-        # ╙─────────────────────────────────────────────────────────────────────────────╜        
-        self.status.erase()        
-        #self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
+        # ╙─────────────────────────────────────────────────────────────────────────────╜
+        self.status.erase()
+        # self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
         self.draw_line(self.status, 3, "Worker Total")
         self.draw_line(self.status, 6, "Entire Horde")
