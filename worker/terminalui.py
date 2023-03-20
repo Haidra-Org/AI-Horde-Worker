@@ -169,7 +169,7 @@ class Terminal:
         self.log = curses.newwin(self.height - self.status_height, self.width, self.status_height, 0)
         self.log.idlok(True)
         self.log.scrollok(True)
-        sys.stdout = self.stdoutput
+        sys.stdout = self.stdout
 
     def resize(self):
         # Determine terminal size
