@@ -13,8 +13,6 @@ import requests
 import yaml
 import locale
 
-from nataili.util.logger import logger  # XXX Remove
-
 class DequeOutputCollector:
     def __init__(self):
         self.deque = deque()
@@ -343,11 +341,7 @@ class Terminal:
             if inputrow < len(output):
                 self.log.move(y, 0)
                 self.log.clrtoeol()
-                try:
-                    cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
-                except ValueError:
-                    logger.error(f"Can not split string '{output[inputrow]}'")
-                    raise
+                cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
                 colour = Terminal.COLOUR_WHITE
                 if cat == "WARNING":
                     colour = Terminal.COLOUR_YELLOW
