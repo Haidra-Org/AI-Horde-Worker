@@ -37,6 +37,18 @@ class Terminal:
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*Generation finished successfully")
 
+    ART = {
+        'top_left': '╔',
+        'top_right': '╗',
+        'bottom_left': '╚',
+        'bottom_right': '╝',
+        'horizontal': '═',
+        'vertical': '║',
+        'left-join': '╟',
+        'right-join': '╢',
+        'hline': '─'
+    }
+
     # Refresh interval in seconds to call API for remote worker stats
     REMOTE_STATS_REFRESH = 30
 
@@ -62,7 +74,7 @@ class Terminal:
         self.log = None
         self.width = 0
         self.height = 0
-        self.status_height = 8
+        self.status_height = 12
         self.show_module = False
         self.show_debug = False
         self.show_dev = False
@@ -86,6 +98,12 @@ class Terminal:
         self.total_failed_jobs = 0
         self.total_models = 0
         self.total_jobs = 0
+        self.queued_requests = 0
+        self.worker_count = 0
+        self.thread_count = 0
+        self.queued_mps = 0
+        self.last_minute_mps = 0
+        self.queue_time = 0
 
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
@@ -172,47 +190,35 @@ class Terminal:
         curses.echo()
         curses.endwin()
 
+    def draw_line(self, win, y, label):
+        height, width = win.getmaxyx()
+        win.addstr(y, 0, Terminal.ART['left-join'] + Terminal.ART['hline'] * (width - 2) + Terminal.ART['right-join'])
+        win.addstr(y, 2, label)
+
     def draw_box(self, win):
         # An attempt to work cross platform, box() doesn't.
-        border_chars = {
-            'top_left': '╔',
-            'top_right': '╗',
-            'bottom_left': '╚',
-            'bottom_right': '╝',
-            'horizontal': '═',
-            'vertical': '║',
-        }
-
         height, width = win.getmaxyx()
-        border_height = height - 1
-        border_width = width - 1
 
         # Draw the top border
-        win.addstr(0, 0, border_chars['top_left'] + border_chars['horizontal'] * (width - 2) + border_chars['top_right'])
+        win.addstr(0, 0, Terminal.ART['top_left'] + Terminal.ART['horizontal'] * (width - 2) + Terminal.ART['top_right'])
 
         # Draw the side borders
         for y in range(1, height - 1):
-            win.addstr(y, 0, border_chars['vertical'])
-            win.addstr(y, width - 1, border_chars['vertical'])
+            win.addstr(y, 0, Terminal.ART['vertical'])
+            win.addstr(y, width - 1, Terminal.ART['vertical'])
 
         # Draw the bottom border
-        win.addstr(height - 1, 0, border_chars['bottom_left'] + border_chars['horizontal'] * (width - 2))
+        win.addstr(height - 1, 0, Terminal.ART['bottom_left'] + Terminal.ART['horizontal'] * (width - 2))
         try:
-            win.addstr(height - 1, width - 1, border_chars['bottom_right'])
+            win.addstr(height - 1, width - 1, Terminal.ART['bottom_right'])
         except curses.error:
             pass
 
-    def get_uptime(self):
-        hours = int((time.time() - self.start_time) // 3600)
-        minutes = int(((time.time() - self.start_time) % 3600) // 60)
-        seconds = int((time.time() - self.start_time) % 60)
-        return f"{hours}:{minutes:02}:{seconds:02}"
-
-    def get_total_uptime(self):
-        hours = int(self.total_uptime // 3600)
+    def seconds_to_timestring(self, seconds):
+        hours = int(seconds // 3600)
         days = int(hours / 24)
         hours = hours % 24
-        minutes = int((self.total_uptime % 3600) // 60)
+        minutes = int((seconds % 3600) // 60)
         result = ""
         if days:
             result += f"{days}d "
@@ -222,6 +228,12 @@ class Terminal:
             result += f"{minutes}m"
         return result
 
+    def get_uptime(self):
+        hours = int((time.time() - self.start_time) // 3600)
+        minutes = int(((time.time() - self.start_time) % 3600) // 60)
+        seconds = int((time.time() - self.start_time) % 60)
+        return f"{hours}:{minutes:02}:{seconds:02}"
+    
     def print_switch(self, y, x, label, switch):
         if switch:
             colour = curses.color_pair(Terminal.COLOUR_CYAN)
@@ -231,15 +243,32 @@ class Terminal:
         return x + len(label) + 2
 
     def print_status(self):
+        # This is the design template:
+        # ╔═AIDream-01══════════════════════════════════════════════════════════════════════════════╗
+        # ║ Uptime:  0:14:35  Jobs Completed: 6           Performance:        0.3 MPS               ║
+        # ║ Models:  174      Kudos Per Hour: 5283        Jobs Per Hour:      524966                ║
+        # ╟─Worker Total────────────────────────────────────────────────────────────────────────────╢
+        # ║                   Worker Kudos:   9385297     Total Jobs Failed:  972                   ║
+        # ║                   Total Uptime:   34d 19h 14m Total Jobs Done:    701138                ║
+        # ╟─Entire Horde────────────────────────────────────────────────────────────────────────────╢
+        # ║                   Jobs Queued:    99999       Queue Time:         99m                   ║
+        # ║                   Total Workers:  1000        Total Threads:      1000                  ║
+        # ║                                                                                         ║
+        # ║                         (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
+        # ╚═════════════════════════════════════════════════════════════════════════════════════════╝        
         self.status.erase()
         #self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
+        self.draw_line(self.status, 3, "Worker Total")
+        self.draw_line(self.status, 6, "Entire Horde")
         self.status.addstr(0, 2, f"{self.worker_name}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
         self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
-        self.status.addstr(3, 2, "Threads:          Worker Kudos:               Total Jobs Failed: ")
-        self.status.addstr(4, 2, "                  Total Uptime:               Total Jobs Done:   ")
+        self.status.addstr(4, 2, "                  Worker Kudos:               Total Jobs Done:  ")
+        self.status.addstr(5, 2, "                  Total Uptime:               Total Jobs Failed:  ")
+        self.status.addstr(7, 2, "                  Jobs Queued:                Queue Time: ")
+        self.status.addstr(8, 2, "                  Total Workers:              Total Threads:   ")
 
         self.status.addstr(1, 11, f"{self.get_uptime()}")
         self.status.addstr(1, 36, f"{self.jobs_done}")
@@ -249,13 +278,17 @@ class Terminal:
         self.status.addstr(2, 36, f"{self.kudos_per_hour}")
         self.status.addstr(2, 68, f"{self.jobs_per_hour}")
 
-        self.status.addstr(3, 11, f"{self.threads}")
-        self.status.addstr(3, 36, f"{self.total_kudos}")
-        self.status.addstr(3, 68, f"{self.total_failed_jobs}")
-
-        # self.status.addstr(4, 11, f"{self.threads}")
-        self.status.addstr(4, 36, f"{self.get_total_uptime()}")
+        self.status.addstr(4, 36, f"{self.total_kudos}")
         self.status.addstr(4, 68, f"{self.total_jobs}")
+
+        self.status.addstr(5, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.status.addstr(5, 68, f"{self.total_failed_jobs}")
+
+        self.status.addstr(7, 36, f"{self.queued_requests}")
+        self.status.addstr(7, 68, f"{self.seconds_to_timestring(self.queue_time)}")
+
+        self.status.addstr(8, 36, f"{self.worker_count}")
+        self.status.addstr(8, 68, f"{self.thread_count}")
 
         inputs = [
             "(m)aintenance mode",
@@ -265,7 +298,7 @@ class Terminal:
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
-        y = 6
+        y = 10
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
@@ -409,10 +442,23 @@ class Terminal:
             self.total_uptime = data.get("uptime", 0)
             self.total_models = len(data.get("models", []))
 
+    def get_remote_horde_stats(self):
+        url = f"{self.url}/api/v2/status/performance"
+        r = requests.get(url)
+        if r.ok:
+            data = r.json()
+            self.queued_requests = int(data.get("queued_requests", 0))
+            self.worker_count = int(data.get("worker_count", 1))
+            self.thread_count = int(data.get("thread_count", 0))
+            self.queued_mps = int(data.get("queued_megapixelsteps", 0))
+            self.last_minute_mps = int(data.get("past_minute_megapixelsteps", 0))
+            self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
+
     def update_stats(self):
         if time.time() - self.last_stats_refresh > Terminal.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
+            threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
 
     def poll(self):
         try:
