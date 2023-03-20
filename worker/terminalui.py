@@ -38,15 +38,14 @@ class Terminal:
     JOBDONE_REGEX = re.compile(r".*Generation for id.*finished successfully")
 
     ART = {
-        'top_left': '╔',
-        'top_right': '╗',
-        'bottom_left': '╚',
-        'bottom_right': '╝',
-        'horizontal': '═',
+        'top_left': '╓',
+        'top_right': '╖',
+        'bottom_left': '╙',
+        'bottom_right': '╜',
+        'horizontal': '─',
         'vertical': '║',
         'left-join': '╟',
-        'right-join': '╢',
-        'hline': '─'
+        'right-join': '╢'
     }
 
     # Refresh interval in seconds to call API for remote worker stats
@@ -194,7 +193,7 @@ class Terminal:
 
     def draw_line(self, win, y, label):
         height, width = win.getmaxyx()
-        win.addstr(y, 0, Terminal.ART['left-join'] + Terminal.ART['hline'] * (width - 2) + Terminal.ART['right-join'])
+        win.addstr(y, 0, Terminal.ART['left-join'] + Terminal.ART['horizontal'] * (width - 2) + Terminal.ART['right-join'])
         win.addstr(y, 2, label)
 
     def draw_box(self, win):
