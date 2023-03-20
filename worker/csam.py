@@ -364,7 +364,7 @@ def check_for_csam(clip_model, image, prompt, model_info=None):
         if similarity_result[l_c] > LEWD_CONTEXT[l_c]
     ]
     is_csam = bool(len(found_uc) >= 3 and found_lewd)
-    logger.info(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
+    logger.debug(f"Similarity Result after {poc_elapsed_time} seconds - Result = {is_csam}")
     return is_csam, similarity_result, {"found_uc": found_uc, "found_lewd": found_lewd}
 
 

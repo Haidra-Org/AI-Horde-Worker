@@ -15,7 +15,6 @@ from nataili.util.logger import logger
 from PIL import UnidentifiedImageError
 
 from worker import csam
-from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
@@ -342,7 +341,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
         try:
             logger.info(
-                f"Starting generation: {self.current_model} @ "
+                f"Starting generation for id {self.current_id}: {self.current_model} @ "
                 f"{self.current_payload['width']}x{self.current_payload['height']} "
                 f"for {self.current_payload.get('ddim_steps',50)} steps. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
@@ -359,7 +358,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 raise
 
             # Generation is ok
-            logger.info(f"Generation finished successfully in {round(time.time() - time_state,1)} seconds.")
+            logger.info(
+                f"Generation for id {self.current_id} finished successfully"
+                f" in {round(time.time() - time_state,1)} seconds."
+            )
         except Exception as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -393,7 +395,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 model_info=self.model_manager.models[self.current_model],
             )
             if self.clip_model and is_csam:
-                logger.warning("Image generated determined to be CSAM. Censoring!")
+                logger.warning(f"Image for id {self.current_id} generated determined to be CSAM. Censoring!")
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
