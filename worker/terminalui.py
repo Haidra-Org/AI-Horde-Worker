@@ -1,5 +1,6 @@
 # curses.py
 # A simple terminal worker UI
+import contextlib
 import curses
 import locale
 import os
@@ -119,26 +120,22 @@ class Terminal:
         self.input.seek(0, os.SEEK_END)
 
     def load_log(self):
-        while True:
-            line = self.input.readline()
-            if line:
-                ignore = False
-                for skip in Terminal.JUNK:
-                    if skip.lower() in line.lower():
-                        ignore = True
-                if ignore:
+        while line := self.input.readline():
+            ignore = False
+            for skip in Terminal.JUNK:
+                if skip.lower() in line.lower():
+                    ignore = True
+            if ignore:
+                continue
+            if regex := Terminal.REGEX.match(line):
+                if not self.show_debug and regex.group(1) == "DEBUG":
                     continue
-                if regex := Terminal.REGEX.match(line):
-                    if not self.show_debug and regex.group(1) == "DEBUG":
-                        continue
-                    self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
-                if regex := Terminal.KUDOS_REGEX.match(line):
-                    self.kudos_per_hour = int(regex.group(1))
-                if regex := Terminal.JOBDONE_REGEX.match(line):
-                    self.jobs_done += 1
-                    self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
-            else:
-                break
+                self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
+            if regex := Terminal.KUDOS_REGEX.match(line):
+                self.kudos_per_hour = int(regex.group(1))
+            if regex := Terminal.JOBDONE_REGEX.match(line):
+                self.jobs_done += 1
+                self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
         self.output.set_size(self.height - self.status_height)
 
     def initialise_main_window(self):
@@ -214,22 +211,19 @@ class Terminal:
 
         # Draw the bottom border
         win.addstr(height - 1, 0, Terminal.ART["bottom_left"] + Terminal.ART["horizontal"] * (width - 2))
-        try:
+        with contextlib.suppress(curses.error):
             win.addstr(height - 1, width - 1, Terminal.ART["bottom_right"])
-        except curses.error:
-            pass
 
     def seconds_to_timestring(self, seconds):
         hours = int(seconds // 3600)
-        days = int(hours / 24)
-        hours = hours % 24
-        minutes = int((seconds % 3600) // 60)
+        days = hours // 24
+        hours %= 24
         result = ""
         if days:
             result += f"{days}d "
         if hours:
             result += f"{hours}h "
-        if minutes:
+        if minutes := int((seconds % 3600) // 60):
             result += f"{minutes}m"
         return result
 
@@ -343,48 +337,50 @@ class Terminal:
         inputrow = 0
         last_timestamp = ""
         while y < termrows:
-            if inputrow < len(output):
-                self.log.move(y, 0)
-                self.log.clrtoeol()
-                cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
-                colour = Terminal.COLOUR_WHITE
-                if cat == "WARNING":
-                    colour = Terminal.COLOUR_YELLOW
-                elif cat == "ERROR":
-                    colour = Terminal.COLOUR_RED
-                elif cat == "INIT":
-                    colour = Terminal.COLOUR_MAGENTA
-                elif cat == "DEBUG":
-                    colour = Terminal.COLOUR_WHITE
-                # Timestamp
-                when = nextwhen if nextwhen != last_timestamp else ""
-                last_timestamp = nextwhen
-                length = len(last_timestamp) + 2
-                self.log.addstr(y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
-                # Module
-                if self.show_module:
-                    self.log.addstr(y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
-                    y += 1
-                    if y > termrows:
-                        break
-                # Message
-                text = textwrap.wrap(msg, self.width - length)
-                cont = False
-                for line in text:
-                    if cont or not when:
-                        self.log.move(y, 0)
-                        self.log.clrtoeol()
-                    self.log.addstr(y, length, line, curses.color_pair(colour))
-                    y += 1
-                    if y > termrows:
-                        break
-                    cont = True
-                inputrow += 1
-                self.log.clrtoeol()
-            else:
+            # If we ran out of stuff to print
+            if inputrow >= len(output):
                 self.log.move(y, 0)
                 self.log.clrtoeol()
                 y += 1
+                continue
+            # Print any log info we have
+            self.log.move(y, 0)
+            self.log.clrtoeol()
+            cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
+            colour = Terminal.COLOUR_WHITE
+            if cat == "WARNING":
+                colour = Terminal.COLOUR_YELLOW
+            elif cat == "ERROR":
+                colour = Terminal.COLOUR_RED
+            elif cat == "INIT":
+                colour = Terminal.COLOUR_MAGENTA
+            elif cat == "DEBUG":
+                colour = Terminal.COLOUR_WHITE
+            # Timestamp
+            when = nextwhen if nextwhen != last_timestamp else ""
+            last_timestamp = nextwhen
+            length = len(last_timestamp) + 2
+            self.log.addstr(y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
+            # Module
+            if self.show_module:
+                self.log.addstr(y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
+                y += 1
+                if y > termrows:
+                    break
+            # Message
+            text = textwrap.wrap(msg, self.width - length)
+            cont = False
+            for line in text:
+                if cont or not when:
+                    self.log.move(y, 0)
+                    self.log.clrtoeol()
+                self.log.addstr(y, length, line, curses.color_pair(colour))
+                y += 1
+                if y > termrows:
+                    break
+                cont = True
+            inputrow += 1
+            self.log.clrtoeol()
         self.log.refresh()
 
     def get_input(self):
@@ -431,29 +427,31 @@ class Terminal:
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
-        if r.ok:
-            data = r.json()
-            self.maintenance_mode = data.get("maintenance_mode", False)
-            self.total_jobs = data.get("requests_fulfilled", 0)
-            self.total_kudos = int(data.get("kudos_rewards", 0))
-            self.total_worker_kudos = int(data.get("kudos_details", {}).get("generated", 0))
-            self.performance = data.get("performance").replace("megapixelsteps per second", "MPS")
-            self.threads = data.get("threads", 0)
-            self.total_failed_jobs = data.get("uncompleted_jobs", 0)
-            self.total_uptime = data.get("uptime", 0)
-            self.total_models = len(data.get("models", []))
+        if not r.ok:
+            return
+        data = r.json()
+        self.maintenance_mode = data.get("maintenance_mode", False)
+        self.total_jobs = data.get("requests_fulfilled", 0)
+        self.total_kudos = int(data.get("kudos_rewards", 0))
+        self.total_worker_kudos = int(data.get("kudos_details", {}).get("generated", 0))
+        self.performance = data.get("performance").replace("megapixelsteps per second", "MPS")
+        self.threads = data.get("threads", 0)
+        self.total_failed_jobs = data.get("uncompleted_jobs", 0)
+        self.total_uptime = data.get("uptime", 0)
+        self.total_models = len(data.get("models", []))
 
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
         r = requests.get(url, headers={"client-agent": Terminal.CLIENT_AGENT})
-        if r.ok:
-            data = r.json()
-            self.queued_requests = int(data.get("queued_requests", 0))
-            self.worker_count = int(data.get("worker_count", 1))
-            self.thread_count = int(data.get("thread_count", 0))
-            self.queued_mps = int(data.get("queued_megapixelsteps", 0))
-            self.last_minute_mps = int(data.get("past_minute_megapixelsteps", 0))
-            self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
+        if not r.ok:
+            return
+        data = r.json()
+        self.queued_requests = int(data.get("queued_requests", 0))
+        self.worker_count = int(data.get("worker_count", 1))
+        self.thread_count = int(data.get("thread_count", 0))
+        self.queued_mps = int(data.get("queued_megapixelsteps", 0))
+        self.last_minute_mps = int(data.get("past_minute_megapixelsteps", 0))
+        self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
         if time.time() - self.last_stats_refresh > Terminal.REMOTE_STATS_REFRESH:
