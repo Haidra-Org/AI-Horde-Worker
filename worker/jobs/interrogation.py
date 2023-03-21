@@ -11,7 +11,7 @@ from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
 from transformers import CLIPFeatureExtractor
 
-from worker.consts import KNOWN_POST_PROCESSORS
+from worker.consts import KNOWN_POST_PROCESSORS, KNOWN_UPSCALERS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.post_process import post_process
@@ -37,7 +37,10 @@ class InterrogationHordeJob(HordeJobFramework):
         super().start_job()
         if self.status == JobStatus.FAULTED:
             return
-        self.stale_time = time.time() + 10
+        stale_buffer = 10 # seconds
+        if self.current_form in KNOWN_UPSCALERS:
+            stale_buffer = self.calculate_upscale_chunks() * 5
+        self.stale_time = time.time() + stale_buffer + 5
         interrogator = None
         payload_kwargs = {}
         logger.debug(f"Starting interrogation {self.current_id}")
@@ -145,3 +148,10 @@ class InterrogationHordeJob(HordeJobFramework):
             self.submit_dict["result"] = {self.current_form: self.result}
         logger.debug([self.current_form in KNOWN_POST_PROCESSORS, self.current_form, KNOWN_POST_PROCESSORS])
         logger.debug(self.submit_dict)
+
+    def calculate_upscale_chunks(self):
+        width, height = self.image.size
+
+        tiles_x = (width + 511) // 512
+        tiles_y = (height + 511) // 512
+        return  tiles_x*tiles_y
