@@ -37,7 +37,7 @@ class InterrogationHordeJob(HordeJobFramework):
         super().start_job()
         if self.status == JobStatus.FAULTED:
             return
-        stale_buffer = 10 # seconds
+        stale_buffer = 10  # seconds
         if self.current_form in KNOWN_UPSCALERS:
             stale_buffer = self.calculate_upscale_chunks() * 5
         self.stale_time = time.time() + stale_buffer + 5
@@ -154,4 +154,4 @@ class InterrogationHordeJob(HordeJobFramework):
 
         tiles_x = (width + 511) // 512
         tiles_y = (height + 511) // 512
-        return  tiles_x*tiles_y
+        return tiles_x * tiles_y
