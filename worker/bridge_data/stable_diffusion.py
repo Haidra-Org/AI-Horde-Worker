@@ -22,7 +22,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self._last_model_db_refresh = 0
         self._all_model_names = []
         self._top_n_model_names = []
-        self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.censor_nsfw = os.environ.get("HORDE_CENSOR", "false") == "true"
         self.blacklist = list(filter(lambda a: a, os.environ.get("HORDE_BLACKLIST", "").split(",")))
