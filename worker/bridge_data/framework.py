@@ -37,6 +37,7 @@ class BridgeDataTemplate:
         # The owner's username is always included so you don't need to add it here,
         # unless you want it to have lower priority than another user
         self.priority_usernames = list(filter(lambda a: a, os.environ.get("HORDE_PRIORITY_USERNAMES", "").split(",")))
+        self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.max_threads = int(os.environ.get("HORDE_MAX_THREADS", 1))
         self.queue_size = int(os.environ.get("HORDE_QUEUE_SIZE", 0))
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
@@ -107,6 +108,9 @@ class BridgeDataTemplate:
             self.queue_size = self.args.queue_size
         if self.args.allow_unsafe_ip:
             self.allow_unsafe_ip = self.args.allow_unsafe_ip
+        if self.args.max_power:
+            self.max_power = self.args.max_power
+        self.max_power = max(self.max_power, 2)
         if not self.initialized or previous_api_key != self.api_key:
             try:
                 user_req = requests.get(
