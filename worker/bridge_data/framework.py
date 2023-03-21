@@ -186,8 +186,7 @@ class BridgeDataTemplate:
                     if not model_manager.download_model(model):
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
-                            "checksum. Please check that your HuggingFace authentication is correct and that "
-                            "you've accepted the model license from the browser. This model will be skipped!"
+                            "checksum."
                         )
                         self.model_names.remove(model)
             model_manager.init()
