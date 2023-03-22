@@ -399,7 +399,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 model_info=self.model_manager.models[self.current_model],
             )
             if self.clip_model and is_csam:
-                logger.warning(f"Curent values for id {self.current_id} would create CSAM. Censoring!")
+                logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
