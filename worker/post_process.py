@@ -8,7 +8,7 @@ KNOWN_POST_PROCESSORS = {
     "GFPGAN": gfpgan,
     "RealESRGAN_x4plus": esrgan,
     "RealESRGAN_x4plus_anime_6B": esrgan,
-    "NKMD_Siax": esrgan,
+    "NMKD_Siax": esrgan,
     "4x_AnimeSharp": esrgan,
     "CodeFormers": codeformers,
 }
