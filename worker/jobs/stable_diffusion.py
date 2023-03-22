@@ -381,8 +381,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             generator = None
             self.start_submit_thread()
             return
-        
-        rgb_pixel_data = generator.images[0]["image"]
+        self.image = generator.images[0]["image"]
         self.seed = generator.images[0]["seed"]
         if generator.images[0].get("censored", False):
             logger.info(f"Image censored with reason: {censor_reason}")
@@ -394,8 +393,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # Run the CSAM Checker
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
-                self.clip_model,
-                rgb_pixel_data,
+                clip_model=self.clip_model,
+                image=self.image,
                 prompt=self.current_payload["prompt"],
                 model_info=self.model_manager.models[self.current_model],
             )
@@ -413,8 +412,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             try:
                 if post_processor == "strip_background":
                     session = rembg.new_session("u2net")
-                    rgb_pixel_data = rembg.remove(
-                        rgb_pixel_data,
+                    self.image = rembg.remove(
+                        self.image,
                         session=session,
                         only_mask=False,
                         alpha_matting=10,
@@ -425,15 +424,13 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del session
                 else:
                     strength = self.current_payload.get("facefixer_strength", 0.5)
-                    rgb_pixel_data = post_process(post_processor, rgb_pixel_data, self.model_manager, strength=strength)
+                    self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
                     post_processor,
                     err,
                 )
-            #Once happy that the image is safe, set the final image to be the data
-            self.image = rgb_pixel_data
             # Edit the webp upload quality if post-processor used
             if self.r2_upload:
                 self.upload_quality = 95
