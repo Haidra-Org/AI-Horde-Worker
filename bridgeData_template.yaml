@@ -65,7 +65,7 @@ max_models_to_download: 10
 # Set to zero to disable stats output completely.
 stats_output_frequency: 30
 # The location in which stable diffusion ckpt models are stored
-nataili_cache_home: "./nataili/compvis/"
+nataili_cache_home: "./"
 # Enable or disable low vram mode. Leave enabled if unsure
 low_vram_mode: true
 # Enable or disable model caching. If you have a lot of models, enable this to reduce the worker startup time and reduce RAM usage.
