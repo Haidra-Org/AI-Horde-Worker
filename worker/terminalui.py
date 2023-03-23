@@ -284,6 +284,7 @@ class Terminal:
         self.draw_line(self.status, 3, "Worker Total")
         self.draw_line(self.status, 6, "Entire Horde")
         self.status.addstr(0, 2, f"{self.worker_name}")
+        self.status.addstr(0, self.width-8, f"{self.get_commit_hash()[:6]}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
         self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
@@ -484,6 +485,26 @@ class Terminal:
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
             threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
 
+    def get_commit_hash(self):
+        head_file = os.path.join(".git", 'HEAD')
+        if not os.path.exists(head_file):
+            return ""
+        try:
+            with open(head_file, 'r') as f:
+                head_contents = f.read().strip()
+
+            if not head_contents.startswith('ref:'):
+                return head_contents
+
+            ref_path = os.path.join(".git", *head_contents[5:].split('/'))
+
+            with open(ref_path, 'r') as f:
+                commit_hash = f.read().strip()
+
+            return commit_hash
+        except Exception:
+            return ""
+        
     def poll(self):
         try:
             if self.get_input():
