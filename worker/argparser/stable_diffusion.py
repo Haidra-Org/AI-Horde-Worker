@@ -4,13 +4,6 @@ from nataili import disable_progress, disable_voodoo, disable_xformers, enable_l
 from worker.argparser.framework import arg_parser
 
 arg_parser.add_argument(
-    "-p",
-    "--max_power",
-    type=int,
-    required=False,
-    help="How much power this instance has to generate pictures. Min: 2",
-)
-arg_parser.add_argument(
     "--sfw",
     action="store_true",
     required=False,

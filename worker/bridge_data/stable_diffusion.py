@@ -22,7 +22,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self._last_model_db_refresh = 0
         self._all_model_names = []
         self._top_n_model_names = []
-        self.max_power = int(os.environ.get("HORDE_MAX_POWER", 8))
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.censor_nsfw = os.environ.get("HORDE_CENSOR", "false") == "true"
         self.blacklist = list(filter(lambda a: a, os.environ.get("HORDE_BLACKLIST", "").split(",")))
@@ -50,6 +49,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         # Where we load models from
         if not hasattr(self, "nataili_cache_home"):
             self.nataili_cache_home = os.environ.get("NATAILI_CACHE_HOME", "./")
+        # If any workers got a bad default path from an old bridgeData_template.yaml, continue
+        # to use that original bad path to avoid making a mess with duplicating models.
+        if self.nataili_cache_home == "./" and os.path.exists("./nataili/compvis/nataili/compvis"):
+            self.nataili_cache_home = "./nataili/compvis/"
         os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
         # Disable low vram mode
         if hasattr(self, "low_vram_mode"):

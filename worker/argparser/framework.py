@@ -3,6 +3,13 @@ import argparse
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument(
+    "-p",
+    "--max_power",
+    type=int,
+    required=False,
+    help="How much power this instance has to generate or alchemize images. Min: 2",
+)
+arg_parser.add_argument(
     "-i",
     "--interval",
     action="store",
