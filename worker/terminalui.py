@@ -424,6 +424,8 @@ class Terminal:
 
     def get_remote_worker_info(self):
         if not self.worker_id:
+            self.worker_id = self.load_worker_id()
+        if not self.worker_id:
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
