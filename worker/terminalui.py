@@ -68,6 +68,9 @@ class Terminal:
 
     CLIENT_AGENT = "terminalui:1:db0"
 
+    MIN_WIDTH = 79
+    MIN_HEIGHT = 16
+
     def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
         self.url = url
         self.main = None
@@ -106,6 +109,7 @@ class Terminal:
         self.queued_mps = 0
         self.last_minute_mps = 0
         self.queue_time = 0
+        self.allow_redraw = True
 
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
@@ -138,6 +142,14 @@ class Terminal:
                 self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
         self.output.set_size(self.height - self.status_height)
 
+    def window_size_ok(self, win):
+        height, width = win.getmaxyx()
+        if height < Terminal.MIN_HEIGHT or width < Terminal.MIN_WIDTH:
+            self.allow_redraw = False
+        else:
+            self.allow_redraw = True
+        return self.allow_redraw
+
     def initialise_main_window(self):
         self.main = curses.initscr()
         # Don't each key presses
@@ -146,6 +158,7 @@ class Terminal:
         curses.cbreak()
         # Determine terminal size
         self.height, self.width = self.main.getmaxyx()
+        self.window_size_ok(self.main)
         self.main.keypad(True)
         curses.curs_set(0)
         curses.start_color()
@@ -171,6 +184,7 @@ class Terminal:
 
     def resize(self):
         # Determine terminal size
+        self.window_size_ok(self.main)
         self.main.erase()
         self.log.erase()
         self.status.erase()
@@ -189,6 +203,8 @@ class Terminal:
         curses.endwin()
 
     def draw_line(self, win, y, label):
+        if not self.allow_redraw:
+            return
         height, width = win.getmaxyx()
         win.addstr(
             y, 0, Terminal.ART["left-join"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["right-join"]
@@ -196,6 +212,8 @@ class Terminal:
         win.addstr(y, 2, label)
 
     def draw_box(self, win):
+        if not self.allow_redraw:
+            return
         # An attempt to work cross platform, box() doesn't.
         height, width = win.getmaxyx()
 
@@ -256,6 +274,10 @@ class Terminal:
         # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
         self.status.erase()
+
+        if not self.allow_redraw:
+            return
+
         # self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
         self.draw_line(self.status, 3, "Worker Total")
@@ -465,9 +487,10 @@ class Terminal:
         try:
             if self.get_input():
                 return True
-            self.update_stats()
-            self.print_status()
-            self.print_log()
+            if self.allow_redraw:
+                self.update_stats()
+                self.print_status()
+                self.print_log()
         except KeyboardInterrupt:
             self.finalise()
             return True
