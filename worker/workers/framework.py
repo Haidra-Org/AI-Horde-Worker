@@ -1,5 +1,6 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,7 +35,9 @@ class WorkerFramework:
 
         # Setup UI if requested
         if self.bridge_data.enable_terminal_ui:
-            self.ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+            ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+            self.ui = threading.Thread(target=ui.run, daemon=True)
+            self.ui.start()
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
@@ -45,8 +48,8 @@ class WorkerFramework:
                         self.executor.shutdown(wait=False)
                         break
                     try:
-                        if self.ui and self.ui.poll():
-                            # Exit requested
+                        if self.ui and not self.ui.is_alive():
+                            # UI Exited, we should probably exit
                             raise KeyboardInterrupt()
                         self.process_jobs()
                     except KeyboardInterrupt:

@@ -111,6 +111,7 @@ class Terminal:
         self.queue_time = 0
         self.allow_redraw = True
 
+    def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
         self.initialise_status_window()
@@ -498,6 +499,13 @@ class Terminal:
             self.finalise()
             raise
 
+    def run(self):
+        self.initialise()
+        while True:
+            if self.poll():
+                return
+            time.sleep(0.02)
+
 
 if __name__ == "__main__":
     # This can be used to run this terminal view along side an already running worker.
@@ -516,8 +524,6 @@ if __name__ == "__main__":
             apikey = config.get("api_key", "")
 
     term = Terminal(workername, apikey)
-
-    while True:
-        if term.poll():
-            exit(0)
-        time.sleep(0.1)
+    termthread = threading.Thread(target=term.run, daemon=True)
+    termthread.start()
+    termthread.join()
