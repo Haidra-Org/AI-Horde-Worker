@@ -160,11 +160,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
             "inpainting",
             "outpainting",
         ]:
-            # Try to find any other model to do text2img or img2img
+            # Try to find any other compvis model to do text2img or img2img
             for available_model in self.available_models:
                 if (
                     "_inpainting" not in available_model
                     and available_model not in POST_PROCESSORS_NATAILI_MODELS | KNOWN_INTERROGATORS
+                    and available_model in self.model_manager.compvis.get_loaded_models_names()
                 ):
                     logger.debug(
                         [
@@ -323,6 +324,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
             if img_mask is None:
                 try:
+                    if img_source.mode == "P":
+                        img_source.convert("RGBA")
                     _red, _green, _blue, _alpha = img_source.split()
                 except ValueError:
                     logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
@@ -366,6 +369,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
             stack_payload["model"] = self.current_model
+            stack_payload["prompt"] = "PROMPT REDACTED"
             logger.error(
                 "Something went wrong when processing request. "
                 "Please check your trace.log file for the full stack trace. "
@@ -395,7 +399,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 model_info=self.model_manager.models[self.current_model],
             )
             if self.clip_model and is_csam:
-                logger.warning(f"Image for id {self.current_id} generated determined to be CSAM. Censoring!")
+                logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
