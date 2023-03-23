@@ -1,8 +1,8 @@
-This repository allows you to set up a Stable Horde Worker to generate or interrogate images for others
+This repository allows you to set up a AI Horde Worker to generate or alchemize images for others
 
-# Stable Horde Worker
+# AI Horde Worker
 
-This repo contains the latest implementation for the [Stable Horde](https://stablehorde.net) Worker. This will turn your graphics card(s) into a worker for the Stable Horde and you will receive in turn kudos which will give you priority for your own generations.
+This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
 Alternatively you can become an interrogation worker which is much more lightweight and can even run on CPU (i.e. without a GPU)
 
@@ -10,7 +10,7 @@ To run the bridge, simply follow the instructions for your own OS
 
 # Installing
 
-If you haven't already, go to [stable horde and register an account](https://stablehorde.net/register), then store your API key somewhere secure. You will need it later in these instructions.
+If you haven't already, go to [AI Horde and register an account](https://aihorde.net/register), then store your API key somewhere secure. You will need it later in these instructions.
 
 This will allow your worker to gather kudos for your account.
 
@@ -72,7 +72,7 @@ To load it, simply run `bridge-webui`. It will then show you a URL you can open 
 
 Fill in at least:
    * Your worker name (has to be unique horde-wide)
-   * Your stable horde API key
+   * Your AI Horde API key
 
 You can use this UI and update your bridge settings even while your worker is running. Your worker should then pick up the new settings within 60 seconds.
 
@@ -104,7 +104,7 @@ etc
 
 # Updating
 
-The stable horde workers are under constant improvement. In case there is more recent code to use follow these steps to update
+The AI Horde workers are under constant improvement. In case there is more recent code to use follow these steps to update
 
 First step: Shut down your worker by putting it into maintenance, and then pressing ctrl+c
 
