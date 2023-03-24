@@ -70,14 +70,9 @@ class Terminal:
 
     CLIENT_AGENT = "terminalui:1:db0"
 
-    MIN_WIDTH = 79
-    MIN_HEIGHT = 16
-
     def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
         self.url = url
         self.main = None
-        self.status = None
-        self.log = None
         self.width = 0
         self.height = 0
         self.status_height = 17
@@ -111,7 +106,6 @@ class Terminal:
         self.queued_mps = 0
         self.last_minute_mps = 0
         self.queue_time = 0
-        self.allow_redraw = True
         self.gpu = gpu.GPUInfo()
         self.error_count = 0
         self.warning_count = 0
@@ -120,8 +114,6 @@ class Terminal:
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
-        self.initialise_status_window()
-        self.initialise_log_window()
         self.resize()
         self.open_log()
         self.get_remote_worker_info()
@@ -151,15 +143,8 @@ class Terminal:
             if regex := Terminal.JOBDONE_REGEX.match(line):
                 self.jobs_done += 1
                 self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
-        self.output.set_size(self.height - self.status_height)
 
-    def window_size_ok(self, win):
-        height, width = win.getmaxyx()
-        if height < Terminal.MIN_HEIGHT or width < Terminal.MIN_WIDTH:
-            self.allow_redraw = False
-        else:
-            self.allow_redraw = True
-        return self.allow_redraw
+        self.output.set_size(self.height)
 
     def initialise_main_window(self):
         self.main = curses.initscr()
@@ -167,9 +152,9 @@ class Terminal:
         curses.noecho()
         # Respond on keydown
         curses.cbreak()
+        self.main.nodelay(True)
         # Determine terminal size
         self.height, self.width = self.main.getmaxyx()
-        self.window_size_ok(self.main)
         self.main.keypad(True)
         curses.curs_set(0)
         curses.start_color()
@@ -180,69 +165,59 @@ class Terminal:
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-
-    def initialise_status_window(self):
-        self.status = curses.newwin(self.status_height, self.width, 0, 0)
-        # Request more helpful key names
-        self.status.keypad(True)
-        self.status.nodelay(True)
-
-    def initialise_log_window(self):
-        self.log = curses.newwin(self.height - self.status_height, self.width, self.status_height, 0)
-        self.log.idlok(True)
-        self.log.scrollok(True)
         sys.stdout = self.stdout
 
     def resize(self):
         # Determine terminal size
-        self.window_size_ok(self.main)
-        with contextlib.suppress(curses.error):
-            self.main.erase()
-            self.log.erase()
-            self.status.erase()
-            self.height, self.width = self.main.getmaxyx()
-            self.status.resize(self.status_height, self.width)
-            self.log.resize(self.height - self.status_height, self.width)
-        self.main.refresh()
-        self.status.refresh()
-        self.log.refresh()
+        self.height, self.width = self.main.getmaxyx()
 
     def finalise(self):
         curses.nocbreak()
         self.main.keypad(False)
-        self.status.keypad(False)
         curses.echo()
+        curses.curs_set(1)
         curses.endwin()
 
-    def draw_line(self, win, y, label):
-        if not self.allow_redraw:
-            return
+    def print(self, win, y, x, text, colour=None):
+        # Ensure we're going to fit
         height, width = win.getmaxyx()
-        win.addstr(
-            y, 0, Terminal.ART["left-join"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["right-join"]
-        )
-        win.addstr(y, 2, label)
+        if y < 0 or x < 0 or x + len(text) > width or y > height:
+            return
+        with contextlib.suppress(curses.error):
+            if not colour:
+                win.addstr(y, x, text)
+            else:
+                win.addstr(y, x, text, colour)
 
-    def draw_box(self, win):
-        if not self.allow_redraw:
-            return
-        # An attempt to work cross platform, box() doesn't.
+    def draw_line(self, win, y, label):
         height, width = win.getmaxyx()
+        self.print(
+            win,
+            y,
+            0,
+            Terminal.ART["left-join"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["right-join"],
+        )
+        self.print(win, y, 2, label)
+
+    def draw_box(self, y, x, width, height):
+        # An attempt to work cross platform, box() doesn't.
 
         # Draw the top border
-        win.addstr(
-            0, 0, Terminal.ART["top_left"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["top_right"]
+        self.print(
+            self.main,
+            0,
+            0,
+            Terminal.ART["top_left"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["top_right"],
         )
 
         # Draw the side borders
         for y in range(1, height - 1):
-            win.addstr(y, 0, Terminal.ART["vertical"])
-            win.addstr(y, width - 1, Terminal.ART["vertical"])
+            self.print(self.main, y, 0, Terminal.ART["vertical"])
+            self.print(self.main, y, width - 1, Terminal.ART["vertical"])
 
         # Draw the bottom border
-        win.addstr(height - 1, 0, Terminal.ART["bottom_left"] + Terminal.ART["horizontal"] * (width - 2))
-        with contextlib.suppress(curses.error):
-            win.addstr(height - 1, width - 1, Terminal.ART["bottom_right"])
+        self.print(self.main, height - 1, 0, Terminal.ART["bottom_left"] + Terminal.ART["horizontal"] * (width - 2))
+        self.print(self.main, height - 1, width - 1, Terminal.ART["bottom_right"])
 
     def seconds_to_timestring(self, seconds):
         hours = int(seconds // 3600)
@@ -268,7 +243,7 @@ class Terminal:
             colour = curses.color_pair(Terminal.COLOUR_CYAN)
         else:
             colour = curses.color_pair(Terminal.COLOUR_WHITE)
-        self.status.addstr(y, x, label, colour)
+        self.print(self.main, y, x, label, colour)
         return x + len(label) + 2
 
     def print_status(self):
@@ -290,10 +265,6 @@ class Terminal:
         # ║                                                                             ║
         # ║                       (m)aintenance  (s)ource  (d)ebug  (p)ause log  (q)uit ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
-        self.status.erase()
-
-        if not self.allow_redraw:
-            return
 
         # Define three colums centres
 
@@ -308,14 +279,14 @@ class Terminal:
         row_horde = row_total + 3
 
         def label(y, x, label):
-            self.status.addstr(y, x - len(label) - 1, label)
+            self.print(self.main, y, x - len(label) - 1, label)
 
-        self.draw_box(self.status)
-        self.draw_line(self.status, row_gpu, "")
-        self.draw_line(self.status, row_total, "Worker Total")
-        self.draw_line(self.status, row_horde, "Entire Horde")
-        self.status.addstr(row_local, 2, f"{self.worker_name}")
-        self.status.addstr(row_local, self.width - 8, f"{self.commit_hash[:6]}")
+        self.draw_box(0, 0, self.width, self.status_height)
+        self.draw_line(self.main, row_gpu, "")
+        self.draw_line(self.main, row_total, "Worker Total")
+        self.draw_line(self.main, row_horde, "Entire Horde")
+        self.print(self.main, row_local, 2, f"{self.worker_name}")
+        self.print(self.main, row_local, self.width - 8, f"{self.commit_hash[:6]}")
 
         label(row_local + 1, col_left, "Uptime:")
         label(row_local + 2, col_left, "Models:")
@@ -346,46 +317,46 @@ class Terminal:
         label(row_horde + 1, col_right, "Queue Time:")
         label(row_horde + 2, col_right, "Total Threads:")
 
-        self.status.addstr(row_local + 1, col_left, f"{self.get_uptime()}")
-        self.status.addstr(row_local + 1, col_mid, f"{self.jobs_done}")
-        self.status.addstr(row_local + 1, col_right, f"{self.performance}")
+        self.print(self.main, row_local + 1, col_left, f"{self.get_uptime()}")
+        self.print(self.main, row_local + 1, col_mid, f"{self.jobs_done}")
+        self.print(self.main, row_local + 1, col_right, f"{self.performance}")
 
-        self.status.addstr(row_local + 2, col_left, f"{self.total_models}")
-        self.status.addstr(row_local + 2, col_mid, f"{self.kudos_per_hour}")
-        self.status.addstr(row_local + 2, col_right, f"{self.jobs_per_hour}")
+        self.print(self.main, row_local + 2, col_left, f"{self.total_models}")
+        self.print(self.main, row_local + 2, col_mid, f"{self.kudos_per_hour}")
+        self.print(self.main, row_local + 2, col_right, f"{self.jobs_per_hour}")
 
-        # self.status.addstr(row_local+3, col_left, f"")
-        self.status.addstr(row_local + 3, col_mid, f"{self.warning_count}")
-        self.status.addstr(row_local + 3, col_right, f"{self.error_count}")
+        # self.print(self.main, row_local+3, col_left, f"")
+        self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
+        self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
 
         gpu = self.gpu.get_info()
         if gpu:
 
-            self.draw_line(self.status, row_gpu, gpu["product"])
+            self.draw_line(self.main, row_gpu, gpu["product"])
 
-            self.status.addstr(row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
-            self.status.addstr(row_gpu + 1, col_mid, f"{gpu['vram_total']}")
-            self.status.addstr(row_gpu + 1, col_right, f"{gpu['fan_speed']}")
+            self.print(self.main, row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
+            self.print(self.main, row_gpu + 1, col_mid, f"{gpu['vram_total']}")
+            self.print(self.main, row_gpu + 1, col_right, f"{gpu['fan_speed']}")
 
-            self.status.addstr(row_gpu + 2, col_left, f"{gpu['temp']:4} ({gpu['avg_temp']})")
-            self.status.addstr(row_gpu + 2, col_mid, f"{gpu['vram_used']}")
-            self.status.addstr(row_gpu + 2, col_right, f"{gpu['pci_gen']}")
+            self.print(self.main, row_gpu + 2, col_left, f"{gpu['temp']:4} ({gpu['avg_temp']})")
+            self.print(self.main, row_gpu + 2, col_mid, f"{gpu['vram_used']}")
+            self.print(self.main, row_gpu + 2, col_right, f"{gpu['pci_gen']}")
 
-            self.status.addstr(row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
-            self.status.addstr(row_gpu + 3, col_mid, f"{gpu['vram_free']}")
-            self.status.addstr(row_gpu + 3, col_right, f"{gpu['pci_width']}")
+            self.print(self.main, row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
+            self.print(self.main, row_gpu + 3, col_mid, f"{gpu['vram_free']}")
+            self.print(self.main, row_gpu + 3, col_right, f"{gpu['pci_width']}")
 
-        self.status.addstr(row_total + 1, col_mid, f"{self.total_kudos}")
-        self.status.addstr(row_total + 1, col_right, f"{self.total_jobs}")
+        self.print(self.main, row_total + 1, col_mid, f"{self.total_kudos}")
+        self.print(self.main, row_total + 1, col_right, f"{self.total_jobs}")
 
-        self.status.addstr(row_total + 2, col_mid, f"{self.seconds_to_timestring(self.total_uptime)}")
-        self.status.addstr(row_total + 2, col_right, f"{self.total_failed_jobs}")
+        self.print(self.main, row_total + 2, col_mid, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.print(self.main, row_total + 2, col_right, f"{self.total_failed_jobs}")
 
-        self.status.addstr(row_horde + 1, col_mid, f"{self.queued_requests}")
-        self.status.addstr(row_horde + 1, col_right, f"{self.seconds_to_timestring(self.queue_time)}")
+        self.print(self.main, row_horde + 1, col_mid, f"{self.queued_requests}")
+        self.print(self.main, row_horde + 1, col_right, f"{self.seconds_to_timestring(self.queue_time)}")
 
-        self.status.addstr(row_horde + 2, col_mid, f"{self.worker_count}")
-        self.status.addstr(row_horde + 2, col_right, f"{self.thread_count}")
+        self.print(self.main, row_horde + 2, col_mid, f"{self.worker_count}")
+        self.print(self.main, row_horde + 2, col_right, f"{self.thread_count}")
 
         inputs = [
             "(m)aintenance",
@@ -401,14 +372,12 @@ class Terminal:
         x = self.print_switch(y, x, inputs[2], self.show_debug)
         x = self.print_switch(y, x, inputs[3], self.pause_log)
         x = self.print_switch(y, x, inputs[4], False)
-        self.status.refresh()
 
     def print_log(self):
-        if self.pause_log:
-            return
 
         termrows = self.height - self.status_height
-        self.load_log()
+        if not self.pause_log:
+            self.load_log()
         output = list(self.output.deque)
 
         # How many lines of output can we fit, with wrapping and stuff
@@ -423,45 +392,43 @@ class Terminal:
                 maxrows = i
                 break
         output = output[-maxrows:]
+        logheight, _ = self.main.getmaxyx()
+
         if self.show_dev:
-            self.status.addstr(
-                5,
+            self.print(
+                self.main,
+                self.status_height,
                 2,
                 f"Output rows {len(output)}, wrapped {linecount}  Terminal rows {termrows}, "
-                f"height {self.height}  Key: {self.last_key}  Status Height {self.status_height}",
+                f"win height {self.height}  Log: {logheight}  Status Height {self.status_height}",
             )
-
-        y = 0
+        y = self.status_height
         inputrow = 0
+        termrows += self.status_height
         last_timestamp = ""
         while y < termrows:
             # If we ran out of stuff to print
             if inputrow >= len(output):
-                self.log.move(y, 0)
-                self.log.clrtoeol()
-                y += 1
-                continue
+                break
             # Print any log info we have
-            self.log.move(y, 0)
-            self.log.clrtoeol()
             cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
             colour = Terminal.COLOUR_WHITE
-            if cat == "WARNING":
-                colour = Terminal.COLOUR_YELLOW
+            if cat == "DEBUG":
+                colour = Terminal.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = Terminal.COLOUR_RED
             elif cat == "INIT":
                 colour = Terminal.COLOUR_MAGENTA
-            elif cat == "DEBUG":
-                colour = Terminal.COLOUR_WHITE
+            elif cat == "WARNING":
+                colour = Terminal.COLOUR_YELLOW
             # Timestamp
             when = nextwhen if nextwhen != last_timestamp else ""
             last_timestamp = nextwhen
             length = len(last_timestamp) + 2
-            self.log.addstr(y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
+            self.print(self.main, y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
             # Module
             if self.show_module:
-                self.log.addstr(y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
+                self.print(self.main, y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
                 y += 1
                 if y > termrows:
                     break
@@ -470,19 +437,18 @@ class Terminal:
             cont = False
             for line in text:
                 if cont or not when:
-                    self.log.move(y, 0)
-                    self.log.clrtoeol()
-                self.log.addstr(y, length, line, curses.color_pair(colour))
+                    self.main.move(y, 0)
+                    self.main.clrtoeol()
+                self.print(self.main, y, length, line, curses.color_pair(colour))
                 y += 1
                 if y > termrows:
                     break
                 cont = True
             inputrow += 1
-            self.log.clrtoeol()
-        self.log.refresh()
+            self.main.clrtoeol()
 
     def get_input(self):
-        x = self.status.getch()
+        x = self.main.getch()
         self.last_key = x
         if x == curses.KEY_RESIZE:
             self.resize()
@@ -592,20 +558,13 @@ class Terminal:
             return ""
 
     def poll(self):
-        try:
-            if self.get_input():
-                return True
-            if self.allow_redraw:
-                with contextlib.suppress(curses.error):
-                    self.update_stats()
-                    self.print_status()
-                    self.print_log()
-        except KeyboardInterrupt:
-            self.finalise()
+        if self.get_input():
             return True
-        except Exception:
-            self.finalise()
-            raise
+        self.main.erase()
+        self.update_stats()
+        self.print_status()
+        self.print_log()
+        self.main.refresh()
 
     def run(self):
         try:
@@ -613,7 +572,9 @@ class Terminal:
             while True:
                 if self.poll():
                     return
-                time.sleep(0.1)
+                time.sleep(0.2)
+        except KeyboardInterrupt:
+            return
         finally:
             self.finalise()
 
@@ -635,6 +596,4 @@ if __name__ == "__main__":
             apikey = config.get("api_key", "")
 
     term = Terminal(workername, apikey)
-    termthread = threading.Thread(target=term.run, daemon=True)
-    termthread.start()
-    termthread.join()
+    term.run()
