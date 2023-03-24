@@ -1,15 +1,16 @@
 import contextlib
+
 from pynvml.smi import nvidia_smi
 
 
-class GPUInfo():
+class GPUInfo:
     def __init__(self):
         pass
 
     # Return a value from the given dictionary supporting dot notation
     def get(self, data, key, default=""):
         # Handle nested structures
-        path = key.split('.')
+        path = key.split(".")
 
         if len(path) == 1:
             # Simple case
@@ -20,7 +21,7 @@ class GPUInfo():
             if element in walkdata:
                 walkdata = walkdata[element]
             else:
-                walkdata = ''
+                walkdata = ""
                 break
         return walkdata
 

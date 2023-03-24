@@ -13,6 +13,7 @@ from collections import deque
 
 import requests
 import yaml
+
 import worker.gpu as gpu
 
 
@@ -291,7 +292,7 @@ class Terminal:
         self.draw_line(self.status, 7, "Worker Total")
         self.draw_line(self.status, 10, "Entire Horde")
         self.status.addstr(0, 2, f"{self.worker_name}")
-        self.status.addstr(0, self.width-8, f"{self.get_commit_hash()[:6]}")
+        self.status.addstr(0, self.width - 8, f"{self.get_commit_hash()[:6]}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:                   Performance:     ")
         self.status.addstr(2, 2, "Models:           Kudos Per Hour:                 Jobs Per Hour:     ")
@@ -299,7 +300,7 @@ class Terminal:
         self.status.addstr(4, 2, "  Load:               VRAM Total:                     Fan Speed:      ")
         self.status.addstr(5, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
         self.status.addstr(6, 2, " Power:                VRAM Free:                     PCI Width:      ")
-                
+
         self.status.addstr(8, 2, "                    Worker Kudos:               Total Jobs Done:  ")
         self.status.addstr(9, 2, "                    Total Uptime:             Total Jobs Failed:  ")
 
@@ -525,25 +526,25 @@ class Terminal:
             threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
 
     def get_commit_hash(self):
-        head_file = os.path.join(".git", 'HEAD')
+        head_file = os.path.join(".git", "HEAD")
         if not os.path.exists(head_file):
             return ""
         try:
-            with open(head_file, 'r') as f:
+            with open(head_file, "r") as f:
                 head_contents = f.read().strip()
 
-            if not head_contents.startswith('ref:'):
+            if not head_contents.startswith("ref:"):
                 return head_contents
 
-            ref_path = os.path.join(".git", *head_contents[5:].split('/'))
+            ref_path = os.path.join(".git", *head_contents[5:].split("/"))
 
-            with open(ref_path, 'r') as f:
+            with open(ref_path, "r") as f:
                 commit_hash = f.read().strip()
 
             return commit_hash
         except Exception:
             return ""
-        
+
     def poll(self):
         try:
             if self.get_input():
