@@ -431,7 +431,10 @@ class Terminal:
         if not self.worker_name:
             return
         workers_url = f"{self.url}/api/v2/workers"
-        r = requests.get(workers_url, headers={"client-agent": Terminal.CLIENT_AGENT})
+        try:
+            r = requests.get(workers_url, headers={"client-agent": Terminal.CLIENT_AGENT})
+        except requests.exceptions.RequestException:
+            return
         if r.ok:
             worker_json = r.json()
             for item in worker_json:
@@ -452,7 +455,10 @@ class Terminal:
         if not self.worker_id:
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
-        r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
+        try:
+            r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
+        except requests.exceptions.RequestException:
+            return
         if not r.ok:
             return
         data = r.json()
@@ -468,7 +474,10 @@ class Terminal:
 
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
-        r = requests.get(url, headers={"client-agent": Terminal.CLIENT_AGENT})
+        try:
+            r = requests.get(url, headers={"client-agent": Terminal.CLIENT_AGENT})
+        except requests.exceptions.RequestException:
+            return
         if not r.ok:
             return
         data = r.json()
