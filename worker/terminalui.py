@@ -275,8 +275,8 @@ class Terminal:
         # ║   Temp:  100C          VRAM Used: 16334MiB              PCI Gen: 5          ║
         # ║  Power:  460W          VRAM Free: 8241MiB             PCI Width: 32x        ║
         # ╟─Worker Total────────────────────────────────────────────────────────────────╢
-        # ║                     Worker Kudos: 9385297       Total Jobs Done: 701138     ║
-        # ║                     Total Uptime: 34d 19h 14m Total Jobs Failed: 972        ║
+        # ║                     Worker Kudos: 9385297            Total Jobs: 701138     ║
+        # ║                     Total Uptime: 34d 19h 14m       Jobs Failed: 972        ║
         # ╟─Entire Horde────────────────────────────────────────────────────────────────╢
         # ║                      Jobs Queued: 99999              Queue Time: 99m        ║
         # ║                    Total Workers: 1000            Total Threads: 1000       ║
@@ -310,8 +310,8 @@ class Terminal:
         self.status.addstr(row_gpu + 2, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
         self.status.addstr(row_gpu + 3, 2, " Power:                VRAM Free:                     PCI Width:      ")
 
-        self.status.addstr(row_total + 1, 2, "                    Worker Kudos:               Total Jobs Done:    ")
-        self.status.addstr(row_total + 2, 2, "                    Total Uptime:             Total Jobs Failed:    ")
+        self.status.addstr(row_total + 1, 2, "                    Worker Kudos:                    Total Jobs:    ")
+        self.status.addstr(row_total + 2, 2, "                    Total Uptime:                   Jobs Failed:    ")
 
         self.status.addstr(row_horde + 1, 2, "                     Jobs Queued:                    Queue Time:    ")
         self.status.addstr(row_horde + 2, 2, "                   Total Workers:                 Total Threads:    ")
@@ -333,15 +333,15 @@ class Terminal:
 
             self.draw_line(self.status, row_gpu, gpu["product"])
 
-            self.status.addstr(row_gpu + 1, 11, f"{gpu['load']} ({gpu['avg_load']})")
+            self.status.addstr(row_gpu + 1, 11, f"{gpu['load']:4} ({gpu['avg_load']})")
             self.status.addstr(row_gpu + 1, 36, f"{gpu['vram_total']}")
             self.status.addstr(row_gpu + 1, 68, f"{gpu['fan_speed']}")
 
-            self.status.addstr(row_gpu + 2, 11, f"{gpu['temp']} ({gpu['avg_temp']})")
+            self.status.addstr(row_gpu + 2, 11, f"{gpu['temp']:4} ({gpu['avg_temp']})")
             self.status.addstr(row_gpu + 2, 36, f"{gpu['vram_used']}")
             self.status.addstr(row_gpu + 2, 68, f"{gpu['pci_gen']}")
 
-            self.status.addstr(row_gpu + 3, 11, f"{gpu['power']} ({gpu['avg_power']})")
+            self.status.addstr(row_gpu + 3, 11, f"{gpu['power']:4} ({gpu['avg_power']})")
             self.status.addstr(row_gpu + 3, 36, f"{gpu['vram_free']}")
             self.status.addstr(row_gpu + 3, 68, f"{gpu['pci_width']}")
 
