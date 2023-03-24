@@ -196,12 +196,13 @@ class Terminal:
     def resize(self):
         # Determine terminal size
         self.window_size_ok(self.main)
-        self.main.erase()
-        self.log.erase()
-        self.status.erase()
-        self.height, self.width = self.main.getmaxyx()
-        self.status.resize(self.status_height, self.width)
-        self.log.resize(self.height - self.status_height, self.width)
+        with contextlib.suppress(curses.error):
+            self.main.erase()
+            self.log.erase()
+            self.status.erase()
+            self.height, self.width = self.main.getmaxyx()
+            self.status.resize(self.status_height, self.width)
+            self.log.resize(self.height - self.status_height, self.width)
         self.main.refresh()
         self.status.refresh()
         self.log.refresh()
@@ -595,9 +596,10 @@ class Terminal:
             if self.get_input():
                 return True
             if self.allow_redraw:
-                self.update_stats()
-                self.print_status()
-                self.print_log()
+                with contextlib.suppress(curses.error):
+                    self.update_stats()
+                    self.print_status()
+                    self.print_log()
         except KeyboardInterrupt:
             self.finalise()
             return True
@@ -606,18 +608,21 @@ class Terminal:
             raise
 
     def run(self):
-        self.initialise()
-        while True:
-            if self.poll():
-                return
-            time.sleep(0.1)
+        try:
+            self.initialise()
+            while True:
+                if self.poll():
+                    return
+                time.sleep(0.1)
+        finally:
+            self.finalise()
 
 
 if __name__ == "__main__":
-    # This can be used to run this terminal view along side an already running worker.
-    # This is very useful for development, as you don't need to stop and start any
-    # locally running worker to test this terminal UI.
-    # From the project root: python -m worker.terminalui
+    # From the project root: runtime.cmd python -m worker.terminalui
+    # This will connect to the currently running worker via it's log file,
+    # very useful for development or connecting to a worker running as a background
+    # service.
 
     workername = ""
     apikey = ""
