@@ -456,9 +456,6 @@ class Terminal:
         requests.put(worker_URL, json=payload, headers=header)
 
     def get_remote_worker_info(self):
-        # Sneak a git commit hash in here
-        self.commit_hash = self.get_commit_hash()
-
         if not self.worker_id:
             self.worker_id = self.load_worker_id()
         if not self.worker_id:
