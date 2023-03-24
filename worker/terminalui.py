@@ -114,6 +114,7 @@ class Terminal:
         self.allow_redraw = True
         self.gpu = gpu.GPUInfo()
         self.error_count = 0
+        self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
 
     def initialise(self):
@@ -268,13 +269,13 @@ class Terminal:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
-        # ║ Uptime:  0:14:35      Jobs Completed: 6             Performance: 0.3 MPS    ║
-        # ║ Models:  174          Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
-        # ║                                                          Errors: 100        ║
+        # ║ Uptime: 0:14:35       Jobs Completed: 6             Performance: 0.3 MPS    ║
+        # ║ Models: 174           Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
+        # ║                             Warnings: 9999               Errors: 100        ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
-        # ║   Load:  100% (90%)       VRAM Total: 24576MiB        Fan Speed: 100%       ║
-        # ║   Temp:  100C (58C)        VRAM Used: 16334MiB          PCI Gen: 5          ║
-        # ║  Power:  460W (178W)       VRAM Free: 8241MiB         PCI Width: 32x        ║
+        # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
+        # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
+        # ║  Power: 460W (178W)        VRAM Free: 8241MiB         PCI Width: 32x        ║
         # ╟─Worker Total────────────────────────────────────────────────────────────────╢
         # ║                         Worker Kudos: 9385297        Total Jobs: 701138     ║
         # ║                         Total Uptime: 34d 19h 14m   Jobs Failed: 972        ║
@@ -289,13 +290,21 @@ class Terminal:
         if not self.allow_redraw:
             return
 
+        # Define three colums centres
+
+        col_left = 10
+        col_mid = self.width // 2
+        col_right = self.width - 12
+
         # Define rows on which sections start
         row_local = 0
         row_gpu = row_local + 4
         row_total = row_gpu + 4
         row_horde = row_total + 3
 
-        # self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
+        def label(y, x, label):
+            self.status.addstr(y, x - len(label) - 1, label)
+
         self.draw_box(self.status)
         self.draw_line(self.status, row_gpu, "")
         self.draw_line(self.status, row_total, "Worker Total")
@@ -303,60 +312,75 @@ class Terminal:
         self.status.addstr(row_local, 2, f"{self.worker_name}")
         self.status.addstr(row_local, self.width - 8, f"{self.commit_hash[:6]}")
 
-        self.status.addstr(row_local + 1, 2, "Uptime:               Jobs Completed:               Performance:    ")
-        self.status.addstr(row_local + 2, 2, "Models:               Kudos Per Hour:             Jobs Per Hour:    ")
-        self.status.addstr(row_local + 3, 2, "                                                         Errors:    ")
+        label(row_local + 1, col_left, "Uptime:")
+        label(row_local + 2, col_left, "Models:")
+        label(row_local + 1, col_mid, "Jobs Completed:")
+        label(row_local + 2, col_mid, "Kudos Per Hour:")
+        label(row_local + 3, col_mid, "Warnings:")
+        label(row_local + 1, col_right, "Performance:")
+        label(row_local + 2, col_right, "Jobs Per Hour:")
+        label(row_local + 3, col_right, "Error:")
 
-        self.status.addstr(row_gpu + 1, 2, "  Load:                   VRAM Total:                 Fan Speed:      ")
-        self.status.addstr(row_gpu + 2, 2, "  Temp:                    VRAM Used:                   PCI Gen:      ")
-        self.status.addstr(row_gpu + 3, 2, " Power:                    VRAM Free:                 PCI Width:      ")
+        label(row_gpu + 1, col_left, "Load:")
+        label(row_gpu + 2, col_left, "Temp:")
+        label(row_gpu + 3, col_left, "Power:")
+        label(row_gpu + 1, col_mid, "VRAM Total:")
+        label(row_gpu + 2, col_mid, "VRAM Used:")
+        label(row_gpu + 3, col_mid, "VRAM Free:")
+        label(row_gpu + 1, col_right, "Fan Speed:")
+        label(row_gpu + 2, col_right, "PCI Gen:")
+        label(row_gpu + 3, col_right, "PCI Width:")
 
-        self.status.addstr(row_total + 1, 2, "                        Worker Kudos:                Total Jobs:    ")
-        self.status.addstr(row_total + 2, 2, "                        Total Uptime:               Jobs Failed:    ")
+        label(row_total + 1, col_mid, "Worker Kudos:")
+        label(row_total + 2, col_mid, "Total Uptime:")
+        label(row_total + 1, col_right, "Total Jobs:")
+        label(row_total + 2, col_right, "Jobs Failed:")
 
-        self.status.addstr(row_horde + 1, 2, "                         Jobs Queued:                Queue Time:    ")
-        self.status.addstr(row_horde + 2, 2, "                       Total Workers:             Total Threads:    ")
+        label(row_horde + 1, col_mid, "Jobs Queued:")
+        label(row_horde + 2, col_mid, "Total Workers:")
+        label(row_horde + 1, col_right, "Queue Time:")
+        label(row_horde + 2, col_right, "Total Threads:")
 
-        self.status.addstr(row_local + 1, 11, f"{self.get_uptime()}")
-        self.status.addstr(row_local + 1, 40, f"{self.jobs_done}")
-        self.status.addstr(row_local + 1, 68, f"{self.performance}")
+        self.status.addstr(row_local + 1, col_left, f"{self.get_uptime()}")
+        self.status.addstr(row_local + 1, col_mid, f"{self.jobs_done}")
+        self.status.addstr(row_local + 1, col_right, f"{self.performance}")
 
-        self.status.addstr(row_local + 2, 11, f"{self.total_models}")
-        self.status.addstr(row_local + 2, 40, f"{self.kudos_per_hour}")
-        self.status.addstr(row_local + 2, 68, f"{self.jobs_per_hour}")
+        self.status.addstr(row_local + 2, col_left, f"{self.total_models}")
+        self.status.addstr(row_local + 2, col_mid, f"{self.kudos_per_hour}")
+        self.status.addstr(row_local + 2, col_right, f"{self.jobs_per_hour}")
 
-        # self.status.addstr(row_local+3, 11, f"")
-        # self.status.addstr(row_local+3, 40, f"")
-        self.status.addstr(row_local + 3, 68, f"{self.error_count}")
+        # self.status.addstr(row_local+3, col_left, f"")
+        self.status.addstr(row_local + 3, col_mid, f"{self.warning_count}")
+        self.status.addstr(row_local + 3, col_right, f"{self.error_count}")
 
         gpu = self.gpu.get_info()
         if gpu:
 
             self.draw_line(self.status, row_gpu, gpu["product"])
 
-            self.status.addstr(row_gpu + 1, 11, f"{gpu['load']:4} ({gpu['avg_load']})")
-            self.status.addstr(row_gpu + 1, 40, f"{gpu['vram_total']}")
-            self.status.addstr(row_gpu + 1, 68, f"{gpu['fan_speed']}")
+            self.status.addstr(row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
+            self.status.addstr(row_gpu + 1, col_mid, f"{gpu['vram_total']}")
+            self.status.addstr(row_gpu + 1, col_right, f"{gpu['fan_speed']}")
 
-            self.status.addstr(row_gpu + 2, 11, f"{gpu['temp']:4} ({gpu['avg_temp']})")
-            self.status.addstr(row_gpu + 2, 40, f"{gpu['vram_used']}")
-            self.status.addstr(row_gpu + 2, 68, f"{gpu['pci_gen']}")
+            self.status.addstr(row_gpu + 2, col_left, f"{gpu['temp']:4} ({gpu['avg_temp']})")
+            self.status.addstr(row_gpu + 2, col_mid, f"{gpu['vram_used']}")
+            self.status.addstr(row_gpu + 2, col_right, f"{gpu['pci_gen']}")
 
-            self.status.addstr(row_gpu + 3, 11, f"{gpu['power']:4} ({gpu['avg_power']})")
-            self.status.addstr(row_gpu + 3, 40, f"{gpu['vram_free']}")
-            self.status.addstr(row_gpu + 3, 68, f"{gpu['pci_width']}")
+            self.status.addstr(row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
+            self.status.addstr(row_gpu + 3, col_mid, f"{gpu['vram_free']}")
+            self.status.addstr(row_gpu + 3, col_right, f"{gpu['pci_width']}")
 
-        self.status.addstr(row_total + 1, 40, f"{self.total_kudos}")
-        self.status.addstr(row_total + 1, 68, f"{self.total_jobs}")
+        self.status.addstr(row_total + 1, col_mid, f"{self.total_kudos}")
+        self.status.addstr(row_total + 1, col_right, f"{self.total_jobs}")
 
-        self.status.addstr(row_total + 2, 40, f"{self.seconds_to_timestring(self.total_uptime)}")
-        self.status.addstr(row_total + 2, 68, f"{self.total_failed_jobs}")
+        self.status.addstr(row_total + 2, col_mid, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.status.addstr(row_total + 2, col_right, f"{self.total_failed_jobs}")
 
-        self.status.addstr(row_horde + 1, 40, f"{self.queued_requests}")
-        self.status.addstr(row_horde + 1, 68, f"{self.seconds_to_timestring(self.queue_time)}")
+        self.status.addstr(row_horde + 1, col_mid, f"{self.queued_requests}")
+        self.status.addstr(row_horde + 1, col_right, f"{self.seconds_to_timestring(self.queue_time)}")
 
-        self.status.addstr(row_horde + 2, 40, f"{self.worker_count}")
-        self.status.addstr(row_horde + 2, 68, f"{self.thread_count}")
+        self.status.addstr(row_horde + 2, col_mid, f"{self.worker_count}")
+        self.status.addstr(row_horde + 2, col_right, f"{self.thread_count}")
 
         inputs = [
             "(m)aintenance mode",
