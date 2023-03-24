@@ -443,6 +443,7 @@ class Terminal:
             colour = Terminal.COLOUR_WHITE
             if cat == "WARNING":
                 colour = Terminal.COLOUR_YELLOW
+                self.warning_count += 1
             elif cat == "ERROR":
                 colour = Terminal.COLOUR_RED
                 self.error_count += 1
