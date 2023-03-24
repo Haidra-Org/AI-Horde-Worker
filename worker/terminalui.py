@@ -141,6 +141,10 @@ class Terminal:
             if regex := Terminal.REGEX.match(line):
                 if not self.show_debug and regex.group(1) == "DEBUG":
                     continue
+                if regex.group(1) == "ERROR":
+                    self.error_count += 1
+                elif regex.group(1) == "WARNING":
+                    self.warning_count += 1
                 self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
             if regex := Terminal.KUDOS_REGEX.match(line):
                 self.kudos_per_hour = int(regex.group(1))
@@ -443,10 +447,8 @@ class Terminal:
             colour = Terminal.COLOUR_WHITE
             if cat == "WARNING":
                 colour = Terminal.COLOUR_YELLOW
-                self.warning_count += 1
             elif cat == "ERROR":
                 colour = Terminal.COLOUR_RED
-                self.error_count += 1
             elif cat == "INIT":
                 colour = Terminal.COLOUR_MAGENTA
             elif cat == "DEBUG":
