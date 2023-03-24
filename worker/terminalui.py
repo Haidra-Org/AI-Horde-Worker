@@ -265,18 +265,18 @@ class Terminal:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
-        # ║ Uptime:  0:14:35  Jobs Completed: 6           Performance:        0.3 MPS   ║
-        # ║ Models:  174      Kudos Per Hour: 5283        Jobs Per Hour:      524966    ║
+        # ║ Uptime:  0:14:35  Jobs Completed: 6                 Performance: 0.3 MPS    ║
+        # ║ Models:  174      Kudos Per Hour: 5283            Jobs Per Hour: 524966     ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
-        # ║ Load:    100%         VRAM Total: 24576MiB          Fan Speed:    100%      ║
-        # ║ Temp:    100C         VRAM Used:  16334MiB          PCI Gen:      5         ║
-        # ║ Power:   460W         VRAM Free:  8241MiB           PCI Width:    32x       ║
+        # ║   Load:  100%         VRAM Total: 24576MiB            Fan Speed: 100%       ║
+        # ║   Temp:  100C          VRAM Used: 16334MiB              PCI Gen: 5          ║
+        # ║  Power:  460W          VRAM Free: 8241MiB             PCI Width: 32x        ║
         # ╟─Worker Total────────────────────────────────────────────────────────────────╢
-        # ║                   Worker Kudos:   9385297     Total Jobs Failed:  972       ║
-        # ║                   Total Uptime:   34d 19h 14m Total Jobs Done:    701138    ║
+        # ║                     Worker Kudos: 9385297       Total Jobs Done: 701138     ║
+        # ║                     Total Uptime: 34d 19h 14m Total Jobs Failed: 972        ║
         # ╟─Entire Horde────────────────────────────────────────────────────────────────╢
-        # ║                   Jobs Queued:    99999       Queue Time:         99m       ║
-        # ║                   Total Workers:  1000        Total Threads:      1000      ║
+        # ║                      Jobs Queued: 99999              Queue Time: 99m        ║
+        # ║                    Total Workers: 1000            Total Threads: 1000       ║
         # ║                                                                             ║
         # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
@@ -293,18 +293,18 @@ class Terminal:
         self.status.addstr(0, 2, f"{self.worker_name}")
         self.status.addstr(0, self.width-8, f"{self.get_commit_hash()[:6]}")
 
-        self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
-        self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
+        self.status.addstr(1, 2, "Uptime:           Jobs Completed:                   Performance:     ")
+        self.status.addstr(2, 2, "Models:           Kudos Per Hour:                 Jobs Per Hour:     ")
 
-        self.status.addstr(4, 2, "Load:                 VRAM Total:                   Fan Speed:      ")
-        self.status.addstr(5, 2, "Temp:                 VRAM Used:                    PCI Gen:        ")
-        self.status.addstr(6, 2, "Power:                VRAM Free:                    PCI Width:      ")
+        self.status.addstr(4, 2, "  Load:               VRAM Total:                     Fan Speed:      ")
+        self.status.addstr(5, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
+        self.status.addstr(6, 2, " Power:                VRAM Free:                     PCI Width:      ")
                 
-        self.status.addstr(8, 2, "                  Worker Kudos:               Total Jobs Done:  ")
-        self.status.addstr(9, 2, "                  Total Uptime:               Total Jobs Failed:  ")
+        self.status.addstr(8, 2, "                    Worker Kudos:               Total Jobs Done:  ")
+        self.status.addstr(9, 2, "                    Total Uptime:             Total Jobs Failed:  ")
 
-        self.status.addstr(11, 2, "                  Jobs Queued:                Queue Time: ")
-        self.status.addstr(12, 2, "                  Total Workers:              Total Threads:   ")
+        self.status.addstr(11, 2, "                     Jobs Queued:                    Queue Time: ")
+        self.status.addstr(12, 2, "                   Total Workers:                 Total Threads:   ")
 
         self.status.addstr(1, 11, f"{self.get_uptime()}")
         self.status.addstr(1, 36, f"{self.jobs_done}")
