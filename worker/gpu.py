@@ -1,4 +1,5 @@
 import contextlib
+import os
 
 from pynvml.smi import nvidia_smi
 
@@ -10,6 +11,8 @@ class GPUInfo:
         self.avg_power = []
         # Average period in samples, default 10 samples per second, period 5 minutes
         self.average_length = 10 * 60 * 5
+        # Look out for device env var hack
+        self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
 
     # Return a value from the given dictionary supporting dot notation
     def get(self, data, key, default=""):
@@ -33,7 +36,7 @@ class GPUInfo:
         with contextlib.suppress(Exception):
             nvsmi = nvidia_smi.getInstance()
             data = nvsmi.DeviceQuery()
-            return data.get("gpu", [None])[0]
+            return data.get("gpu", [None])[self.device]
 
     def _mem(self, raw):
         unit = "GB"
