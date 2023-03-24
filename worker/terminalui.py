@@ -78,7 +78,6 @@ class Terminal:
         self.status_height = 17
         self.show_module = False
         self.show_debug = False
-        self.show_dev = False
         self.last_key = None
         self.pause_log = False
         self.output = DequeOutputCollector()
@@ -166,9 +165,12 @@ class Terminal:
         curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
         sys.stdout = self.stdout
+        self.main.clear()
+        self.main.refresh()
 
     def resize(self):
         # Determine terminal size
+        curses.update_lines_cols()
         self.height, self.width = self.main.getmaxyx()
 
     def finalise(self):
@@ -380,11 +382,12 @@ class Terminal:
             self.load_log()
         output = list(self.output.deque)
 
-        # How many lines of output can we fit, with wrapping and stuff
+        # How many lines of output can we fit, after line wrapping?
         linecount = 0
         maxrows = 0
         for i, fullline in enumerate(reversed(output)):
             line = fullline.split(Terminal.DELIM)[-1:][0]
+            # 21 is the timestamp length
             linecount += len(textwrap.wrap(line, self.width - 21))
             if self.show_module:
                 linecount += 1
@@ -392,24 +395,12 @@ class Terminal:
                 maxrows = i
                 break
         output = output[-maxrows:]
-        logheight, _ = self.main.getmaxyx()
 
-        if self.show_dev:
-            self.print(
-                self.main,
-                self.status_height,
-                2,
-                f"Output rows {len(output)}, wrapped {linecount}  Terminal rows {termrows}, "
-                f"win height {self.height}  Log: {logheight}  Status Height {self.status_height}",
-            )
         y = self.status_height
         inputrow = 0
         termrows += self.status_height
         last_timestamp = ""
-        while y < termrows:
-            # If we ran out of stuff to print
-            if inputrow >= len(output):
-                break
+        while y < termrows and inputrow < len(output):
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
             colour = Terminal.COLOUR_WHITE
@@ -434,38 +425,13 @@ class Terminal:
                     break
             # Message
             text = textwrap.wrap(msg, self.width - length)
-            cont = False
             for line in text:
-                if cont or not when:
-                    self.main.move(y, 0)
-                    self.main.clrtoeol()
                 self.print(self.main, y, length, line, curses.color_pair(colour))
                 y += 1
                 if y > termrows:
                     break
-                cont = True
             inputrow += 1
             self.main.clrtoeol()
-
-    def get_input(self):
-        x = self.main.getch()
-        self.last_key = x
-        if x == curses.KEY_RESIZE:
-            self.resize()
-        elif x == ord("d"):
-            self.show_debug = not self.show_debug
-        elif x == ord("s"):
-            self.show_module = not self.show_module
-        elif x == ord("v"):
-            self.show_dev = not self.show_dev
-        elif x == ord("q"):
-            self.finalise()
-            return True
-        elif x == ord("m"):
-            self.maintenance_mode = not self.maintenance_mode
-            self.set_maintenance_mode(self.maintenance_mode)
-        elif x == ord("p"):
-            self.pause_log = not self.pause_log
 
     def load_worker_id(self):
         if not self.worker_name:
@@ -556,6 +522,24 @@ class Terminal:
             return commit_hash
         except Exception:
             return ""
+
+    def get_input(self):
+        x = self.main.getch()
+        self.last_key = x
+        if x == curses.KEY_RESIZE:
+            self.resize()
+        elif x == ord("d"):
+            self.show_debug = not self.show_debug
+        elif x == ord("s"):
+            self.show_module = not self.show_module
+        elif x == ord("q"):
+            self.finalise()
+            return True
+        elif x == ord("m"):
+            self.maintenance_mode = not self.maintenance_mode
+            self.set_maintenance_mode(self.maintenance_mode)
+        elif x == ord("p"):
+            self.pause_log = not self.pause_log
 
     def poll(self):
         if self.get_input():
