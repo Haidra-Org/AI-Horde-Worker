@@ -114,6 +114,7 @@ class Terminal:
         self.allow_redraw = True
         self.gpu = gpu.GPUInfo()
         self.error_count = 0
+        self.commit_hash = self.get_commit_hash()
 
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
@@ -300,7 +301,7 @@ class Terminal:
         self.draw_line(self.status, row_total, "Worker Total")
         self.draw_line(self.status, row_horde, "Entire Horde")
         self.status.addstr(row_local, 2, f"{self.worker_name}")
-        self.status.addstr(row_local, self.width - 8, f"{self.get_commit_hash()[:6]}")
+        self.status.addstr(row_local, self.width - 8, f"{self.commit_hash[:6]}")
 
         self.status.addstr(row_local + 1, 2, "Uptime:               Jobs Completed:               Performance:    ")
         self.status.addstr(row_local + 2, 2, "Models:               Kudos Per Hour:             Jobs Per Hour:    ")
@@ -495,6 +496,9 @@ class Terminal:
         requests.put(worker_URL, json=payload, headers=header)
 
     def get_remote_worker_info(self):
+        # Sneak a git commit hash in here
+        self.commit_hash = self.get_commit_hash()
+
         if not self.worker_id:
             self.worker_id = self.load_worker_id()
         if not self.worker_id:
