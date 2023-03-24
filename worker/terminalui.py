@@ -13,6 +13,7 @@ from collections import deque
 
 import requests
 import yaml
+import worker.gpu as gpu
 
 
 class DequeOutputCollector:
@@ -78,7 +79,7 @@ class Terminal:
         self.log = None
         self.width = 0
         self.height = 0
-        self.status_height = 12
+        self.status_height = 16
         self.show_module = False
         self.show_debug = False
         self.show_dev = False
@@ -110,6 +111,7 @@ class Terminal:
         self.last_minute_mps = 0
         self.queue_time = 0
         self.allow_redraw = True
+        self.gpu = gpu.GPUInfo()
 
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
@@ -265,6 +267,10 @@ class Terminal:
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
         # ║ Uptime:  0:14:35  Jobs Completed: 6           Performance:        0.3 MPS   ║
         # ║ Models:  174      Kudos Per Hour: 5283        Jobs Per Hour:      524966    ║
+        # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
+        # ║ Load:    100%         VRAM Total: 24576MiB          Fan Speed:    100%      ║
+        # ║ Temp:    100C         VRAM Used:  16334MiB          PCI Gen:      5         ║
+        # ║ Power:   460W         VRAM Free:  8241MiB           PCI Width:    32x       ║
         # ╟─Worker Total────────────────────────────────────────────────────────────────╢
         # ║                   Worker Kudos:   9385297     Total Jobs Failed:  972       ║
         # ║                   Total Uptime:   34d 19h 14m Total Jobs Done:    701138    ║
@@ -281,17 +287,24 @@ class Terminal:
 
         # self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
-        self.draw_line(self.status, 3, "Worker Total")
-        self.draw_line(self.status, 6, "Entire Horde")
+        self.draw_line(self.status, 3, "")
+        self.draw_line(self.status, 7, "Worker Total")
+        self.draw_line(self.status, 10, "Entire Horde")
         self.status.addstr(0, 2, f"{self.worker_name}")
         self.status.addstr(0, self.width-8, f"{self.get_commit_hash()[:6]}")
 
         self.status.addstr(1, 2, "Uptime:           Jobs Completed:             Performance:       ")
         self.status.addstr(2, 2, "Models:           Kudos Per Hour:             Jobs Per Hour:     ")
-        self.status.addstr(4, 2, "                  Worker Kudos:               Total Jobs Done:  ")
-        self.status.addstr(5, 2, "                  Total Uptime:               Total Jobs Failed:  ")
-        self.status.addstr(7, 2, "                  Jobs Queued:                Queue Time: ")
-        self.status.addstr(8, 2, "                  Total Workers:              Total Threads:   ")
+
+        self.status.addstr(4, 2, "Load:                 VRAM Total:                   Fan Speed:      ")
+        self.status.addstr(5, 2, "Temp:                 VRAM Used:                    PCI Gen:        ")
+        self.status.addstr(6, 2, "Power:                VRAM Free:                    PCI Width:      ")
+                
+        self.status.addstr(8, 2, "                  Worker Kudos:               Total Jobs Done:  ")
+        self.status.addstr(9, 2, "                  Total Uptime:               Total Jobs Failed:  ")
+
+        self.status.addstr(11, 2, "                  Jobs Queued:                Queue Time: ")
+        self.status.addstr(12, 2, "                  Total Workers:              Total Threads:   ")
 
         self.status.addstr(1, 11, f"{self.get_uptime()}")
         self.status.addstr(1, 36, f"{self.jobs_done}")
@@ -301,17 +314,34 @@ class Terminal:
         self.status.addstr(2, 36, f"{self.kudos_per_hour}")
         self.status.addstr(2, 68, f"{self.jobs_per_hour}")
 
-        self.status.addstr(4, 36, f"{self.total_kudos}")
-        self.status.addstr(4, 68, f"{self.total_jobs}")
+        gpu = self.gpu.get_info()
+        if gpu:
 
-        self.status.addstr(5, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
-        self.status.addstr(5, 68, f"{self.total_failed_jobs}")
+            self.draw_line(self.status, 3, gpu["product"])
 
-        self.status.addstr(7, 36, f"{self.queued_requests}")
-        self.status.addstr(7, 68, f"{self.seconds_to_timestring(self.queue_time)}")
+            self.status.addstr(4, 11, f"{gpu['load']}")
+            self.status.addstr(4, 36, f"{gpu['vram_total']}")
+            self.status.addstr(4, 68, f"{gpu['fan_speed']}")
 
-        self.status.addstr(8, 36, f"{self.worker_count}")
-        self.status.addstr(8, 68, f"{self.thread_count}")
+            self.status.addstr(5, 11, f"{gpu['temp']}")
+            self.status.addstr(5, 36, f"{gpu['vram_used']}")
+            self.status.addstr(5, 68, f"{gpu['pci_gen']}")
+
+            self.status.addstr(6, 11, f"{gpu['power']}")
+            self.status.addstr(6, 36, f"{gpu['vram_free']}")
+            self.status.addstr(6, 68, f"{gpu['pci_width']}")
+
+        self.status.addstr(8, 36, f"{self.total_kudos}")
+        self.status.addstr(8, 68, f"{self.total_jobs}")
+
+        self.status.addstr(9, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.status.addstr(9, 68, f"{self.total_failed_jobs}")
+
+        self.status.addstr(11, 36, f"{self.queued_requests}")
+        self.status.addstr(11, 68, f"{self.seconds_to_timestring(self.queue_time)}")
+
+        self.status.addstr(12, 36, f"{self.worker_count}")
+        self.status.addstr(12, 68, f"{self.thread_count}")
 
         inputs = [
             "(m)aintenance mode",
@@ -321,7 +351,7 @@ class Terminal:
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
-        y = 10
+        y = 14
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
@@ -534,7 +564,7 @@ class Terminal:
         while True:
             if self.poll():
                 return
-            time.sleep(0.02)
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
