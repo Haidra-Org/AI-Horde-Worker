@@ -267,19 +267,19 @@ class Terminal:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
-        # ║ Uptime:  0:14:35  Jobs Completed: 6                 Performance: 0.3 MPS    ║
-        # ║ Models:  174      Kudos Per Hour: 5283            Jobs Per Hour: 524966     ║
-        # ║                                               Unexpected Errors: 100        ║
+        # ║ Uptime:  0:14:35      Jobs Completed: 6             Performance: 0.3 MPS    ║
+        # ║ Models:  174          Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
+        # ║                                                          Errors: 100        ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
-        # ║   Load:  100%         VRAM Total: 24576MiB            Fan Speed: 100%       ║
-        # ║   Temp:  100C          VRAM Used: 16334MiB              PCI Gen: 5          ║
-        # ║  Power:  460W          VRAM Free: 8241MiB             PCI Width: 32x        ║
+        # ║   Load:  100% (90%)       VRAM Total: 24576MiB        Fan Speed: 100%       ║
+        # ║   Temp:  100C (58C)        VRAM Used: 16334MiB          PCI Gen: 5          ║
+        # ║  Power:  460W (178W)       VRAM Free: 8241MiB         PCI Width: 32x        ║
         # ╟─Worker Total────────────────────────────────────────────────────────────────╢
-        # ║                     Worker Kudos: 9385297            Total Jobs: 701138     ║
-        # ║                     Total Uptime: 34d 19h 14m       Jobs Failed: 972        ║
+        # ║                         Worker Kudos: 9385297        Total Jobs: 701138     ║
+        # ║                         Total Uptime: 34d 19h 14m   Jobs Failed: 972        ║
         # ╟─Entire Horde────────────────────────────────────────────────────────────────╢
-        # ║                      Jobs Queued: 99999              Queue Time: 99m        ║
-        # ║                    Total Workers: 1000            Total Threads: 1000       ║
+        # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
+        # ║                        Total Workers: 1000        Total Threads: 1000       ║
         # ║                                                                             ║
         # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
@@ -302,30 +302,30 @@ class Terminal:
         self.status.addstr(row_local, 2, f"{self.worker_name}")
         self.status.addstr(row_local, self.width - 8, f"{self.get_commit_hash()[:6]}")
 
-        self.status.addstr(row_local + 1, 2, "Uptime:           Jobs Completed:                   Performance:    ")
-        self.status.addstr(row_local + 2, 2, "Models:           Kudos Per Hour:                 Jobs Per Hour:    ")
-        self.status.addstr(row_local + 3, 2, "                                              Unexpected Errors:    ")
+        self.status.addstr(row_local + 1, 2, "Uptime:               Jobs Completed:               Performance:    ")
+        self.status.addstr(row_local + 2, 2, "Models:               Kudos Per Hour:             Jobs Per Hour:    ")
+        self.status.addstr(row_local + 3, 2, "                                                         Errors:    ")
 
-        self.status.addstr(row_gpu + 1, 2, "  Load:               VRAM Total:                     Fan Speed:      ")
-        self.status.addstr(row_gpu + 2, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
-        self.status.addstr(row_gpu + 3, 2, " Power:                VRAM Free:                     PCI Width:      ")
+        self.status.addstr(row_gpu + 1, 2, "  Load:                   VRAM Total:                 Fan Speed:      ")
+        self.status.addstr(row_gpu + 2, 2, "  Temp:                    VRAM Used:                   PCI Gen:      ")
+        self.status.addstr(row_gpu + 3, 2, " Power:                    VRAM Free:                 PCI Width:      ")
 
-        self.status.addstr(row_total + 1, 2, "                    Worker Kudos:                    Total Jobs:    ")
-        self.status.addstr(row_total + 2, 2, "                    Total Uptime:                   Jobs Failed:    ")
+        self.status.addstr(row_total + 1, 2, "                        Worker Kudos:                Total Jobs:    ")
+        self.status.addstr(row_total + 2, 2, "                        Total Uptime:               Jobs Failed:    ")
 
-        self.status.addstr(row_horde + 1, 2, "                     Jobs Queued:                    Queue Time:    ")
-        self.status.addstr(row_horde + 2, 2, "                   Total Workers:                 Total Threads:    ")
+        self.status.addstr(row_horde + 1, 2, "                         Jobs Queued:                Queue Time:    ")
+        self.status.addstr(row_horde + 2, 2, "                       Total Workers:             Total Threads:    ")
 
         self.status.addstr(row_local + 1, 11, f"{self.get_uptime()}")
-        self.status.addstr(row_local + 1, 36, f"{self.jobs_done}")
+        self.status.addstr(row_local + 1, 40, f"{self.jobs_done}")
         self.status.addstr(row_local + 1, 68, f"{self.performance}")
 
         self.status.addstr(row_local + 2, 11, f"{self.total_models}")
-        self.status.addstr(row_local + 2, 36, f"{self.kudos_per_hour}")
+        self.status.addstr(row_local + 2, 40, f"{self.kudos_per_hour}")
         self.status.addstr(row_local + 2, 68, f"{self.jobs_per_hour}")
 
         # self.status.addstr(row_local+3, 11, f"")
-        # self.status.addstr(row_local+3, 36, f"")
+        # self.status.addstr(row_local+3, 40, f"")
         self.status.addstr(row_local + 3, 68, f"{self.error_count}")
 
         gpu = self.gpu.get_info()
@@ -334,27 +334,27 @@ class Terminal:
             self.draw_line(self.status, row_gpu, gpu["product"])
 
             self.status.addstr(row_gpu + 1, 11, f"{gpu['load']:4} ({gpu['avg_load']})")
-            self.status.addstr(row_gpu + 1, 36, f"{gpu['vram_total']}")
+            self.status.addstr(row_gpu + 1, 40, f"{gpu['vram_total']}")
             self.status.addstr(row_gpu + 1, 68, f"{gpu['fan_speed']}")
 
             self.status.addstr(row_gpu + 2, 11, f"{gpu['temp']:4} ({gpu['avg_temp']})")
-            self.status.addstr(row_gpu + 2, 36, f"{gpu['vram_used']}")
+            self.status.addstr(row_gpu + 2, 40, f"{gpu['vram_used']}")
             self.status.addstr(row_gpu + 2, 68, f"{gpu['pci_gen']}")
 
             self.status.addstr(row_gpu + 3, 11, f"{gpu['power']:4} ({gpu['avg_power']})")
-            self.status.addstr(row_gpu + 3, 36, f"{gpu['vram_free']}")
+            self.status.addstr(row_gpu + 3, 40, f"{gpu['vram_free']}")
             self.status.addstr(row_gpu + 3, 68, f"{gpu['pci_width']}")
 
-        self.status.addstr(row_total + 1, 36, f"{self.total_kudos}")
+        self.status.addstr(row_total + 1, 40, f"{self.total_kudos}")
         self.status.addstr(row_total + 1, 68, f"{self.total_jobs}")
 
-        self.status.addstr(row_total + 2, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.status.addstr(row_total + 2, 40, f"{self.seconds_to_timestring(self.total_uptime)}")
         self.status.addstr(row_total + 2, 68, f"{self.total_failed_jobs}")
 
-        self.status.addstr(row_horde + 1, 36, f"{self.queued_requests}")
+        self.status.addstr(row_horde + 1, 40, f"{self.queued_requests}")
         self.status.addstr(row_horde + 1, 68, f"{self.seconds_to_timestring(self.queue_time)}")
 
-        self.status.addstr(row_horde + 2, 36, f"{self.worker_count}")
+        self.status.addstr(row_horde + 2, 40, f"{self.worker_count}")
         self.status.addstr(row_horde + 2, 68, f"{self.thread_count}")
 
         inputs = [
