@@ -80,7 +80,7 @@ class Terminal:
         self.log = None
         self.width = 0
         self.height = 0
-        self.status_height = 16
+        self.status_height = 17
         self.show_module = False
         self.show_debug = False
         self.show_dev = False
@@ -113,6 +113,7 @@ class Terminal:
         self.queue_time = 0
         self.allow_redraw = True
         self.gpu = gpu.GPUInfo()
+        self.error_count = 0
 
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
@@ -268,6 +269,7 @@ class Terminal:
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
         # ║ Uptime:  0:14:35  Jobs Completed: 6                 Performance: 0.3 MPS    ║
         # ║ Models:  174      Kudos Per Hour: 5283            Jobs Per Hour: 524966     ║
+        # ║                                               Unexpected Errors: 100        ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load:  100%         VRAM Total: 24576MiB            Fan Speed: 100%       ║
         # ║   Temp:  100C          VRAM Used: 16334MiB              PCI Gen: 5          ║
@@ -286,63 +288,74 @@ class Terminal:
         if not self.allow_redraw:
             return
 
+        # Define rows on which sections start
+        row_local = 0
+        row_gpu = row_local + 4
+        row_total = row_gpu + 4
+        row_horde = row_total + 3
+
         # self.status.border("|", "|", "-", "-", "+", "+", "+", "+")
         self.draw_box(self.status)
-        self.draw_line(self.status, 3, "")
-        self.draw_line(self.status, 7, "Worker Total")
-        self.draw_line(self.status, 10, "Entire Horde")
-        self.status.addstr(0, 2, f"{self.worker_name}")
-        self.status.addstr(0, self.width - 8, f"{self.get_commit_hash()[:6]}")
+        self.draw_line(self.status, row_gpu, "")
+        self.draw_line(self.status, row_total, "Worker Total")
+        self.draw_line(self.status, row_horde, "Entire Horde")
+        self.status.addstr(row_local, 2, f"{self.worker_name}")
+        self.status.addstr(row_local, self.width - 8, f"{self.get_commit_hash()[:6]}")
 
-        self.status.addstr(1, 2, "Uptime:           Jobs Completed:                   Performance:     ")
-        self.status.addstr(2, 2, "Models:           Kudos Per Hour:                 Jobs Per Hour:     ")
+        self.status.addstr(row_local + 1, 2, "Uptime:           Jobs Completed:                   Performance:    ")
+        self.status.addstr(row_local + 2, 2, "Models:           Kudos Per Hour:                 Jobs Per Hour:    ")
+        self.status.addstr(row_local + 3, 2, "                                              Unexpected Errors:    ")
 
-        self.status.addstr(4, 2, "  Load:               VRAM Total:                     Fan Speed:      ")
-        self.status.addstr(5, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
-        self.status.addstr(6, 2, " Power:                VRAM Free:                     PCI Width:      ")
+        self.status.addstr(row_gpu + 1, 2, "  Load:               VRAM Total:                     Fan Speed:      ")
+        self.status.addstr(row_gpu + 2, 2, "  Temp:                VRAM Used:                       PCI Gen:      ")
+        self.status.addstr(row_gpu + 3, 2, " Power:                VRAM Free:                     PCI Width:      ")
 
-        self.status.addstr(8, 2, "                    Worker Kudos:               Total Jobs Done:  ")
-        self.status.addstr(9, 2, "                    Total Uptime:             Total Jobs Failed:  ")
+        self.status.addstr(row_total + 1, 2, "                    Worker Kudos:               Total Jobs Done:    ")
+        self.status.addstr(row_total + 2, 2, "                    Total Uptime:             Total Jobs Failed:    ")
 
-        self.status.addstr(11, 2, "                     Jobs Queued:                    Queue Time: ")
-        self.status.addstr(12, 2, "                   Total Workers:                 Total Threads:   ")
+        self.status.addstr(row_horde + 1, 2, "                     Jobs Queued:                    Queue Time:    ")
+        self.status.addstr(row_horde + 2, 2, "                   Total Workers:                 Total Threads:    ")
 
-        self.status.addstr(1, 11, f"{self.get_uptime()}")
-        self.status.addstr(1, 36, f"{self.jobs_done}")
-        self.status.addstr(1, 68, f"{self.performance}")
+        self.status.addstr(row_local + 1, 11, f"{self.get_uptime()}")
+        self.status.addstr(row_local + 1, 36, f"{self.jobs_done}")
+        self.status.addstr(row_local + 1, 68, f"{self.performance}")
 
-        self.status.addstr(2, 11, f"{self.total_models}")
-        self.status.addstr(2, 36, f"{self.kudos_per_hour}")
-        self.status.addstr(2, 68, f"{self.jobs_per_hour}")
+        self.status.addstr(row_local + 2, 11, f"{self.total_models}")
+        self.status.addstr(row_local + 2, 36, f"{self.kudos_per_hour}")
+        self.status.addstr(row_local + 2, 68, f"{self.jobs_per_hour}")
+
+        # self.status.addstr(row_local+3, 11, f"")
+        # self.status.addstr(row_local+3, 36, f"")
+        self.status.addstr(row_local + 3, 68, f"{self.error_count}")
 
         gpu = self.gpu.get_info()
         if gpu:
 
-            self.draw_line(self.status, 3, gpu["product"])
+            self.draw_line(self.status, row_gpu, gpu["product"])
 
-            self.status.addstr(4, 11, f"{gpu['load']}")
-            self.status.addstr(4, 36, f"{gpu['vram_total']}")
-            self.status.addstr(4, 68, f"{gpu['fan_speed']}")
+            self.status.addstr(row_gpu + 1, 11, f"{gpu['load']} ({gpu['avg_load']})")
+            self.status.addstr(row_gpu + 1, 36, f"{gpu['vram_total']}")
+            self.status.addstr(row_gpu + 1, 68, f"{gpu['fan_speed']}")
 
-            self.status.addstr(5, 11, f"{gpu['temp']}")
-            self.status.addstr(5, 36, f"{gpu['vram_used']}")
-            self.status.addstr(5, 68, f"{gpu['pci_gen']}")
+            self.status.addstr(row_gpu + 2, 11, f"{gpu['temp']} ({gpu['avg_temp']})")
+            self.status.addstr(row_gpu + 2, 36, f"{gpu['vram_used']}")
+            self.status.addstr(row_gpu + 2, 68, f"{gpu['pci_gen']}")
 
-            self.status.addstr(6, 11, f"{gpu['power']}")
-            self.status.addstr(6, 36, f"{gpu['vram_free']}")
-            self.status.addstr(6, 68, f"{gpu['pci_width']}")
+            self.status.addstr(row_gpu + 3, 11, f"{gpu['power']} ({gpu['avg_power']})")
+            self.status.addstr(row_gpu + 3, 36, f"{gpu['vram_free']}")
+            self.status.addstr(row_gpu + 3, 68, f"{gpu['pci_width']}")
 
-        self.status.addstr(8, 36, f"{self.total_kudos}")
-        self.status.addstr(8, 68, f"{self.total_jobs}")
+        self.status.addstr(row_total + 1, 36, f"{self.total_kudos}")
+        self.status.addstr(row_total + 1, 68, f"{self.total_jobs}")
 
-        self.status.addstr(9, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
-        self.status.addstr(9, 68, f"{self.total_failed_jobs}")
+        self.status.addstr(row_total + 2, 36, f"{self.seconds_to_timestring(self.total_uptime)}")
+        self.status.addstr(row_total + 2, 68, f"{self.total_failed_jobs}")
 
-        self.status.addstr(11, 36, f"{self.queued_requests}")
-        self.status.addstr(11, 68, f"{self.seconds_to_timestring(self.queue_time)}")
+        self.status.addstr(row_horde + 1, 36, f"{self.queued_requests}")
+        self.status.addstr(row_horde + 1, 68, f"{self.seconds_to_timestring(self.queue_time)}")
 
-        self.status.addstr(12, 36, f"{self.worker_count}")
-        self.status.addstr(12, 68, f"{self.thread_count}")
+        self.status.addstr(row_horde + 2, 36, f"{self.worker_count}")
+        self.status.addstr(row_horde + 2, 68, f"{self.thread_count}")
 
         inputs = [
             "(m)aintenance mode",
@@ -352,7 +365,7 @@ class Terminal:
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
-        y = 14
+        y = row_horde + 4
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
@@ -407,6 +420,7 @@ class Terminal:
                 colour = Terminal.COLOUR_YELLOW
             elif cat == "ERROR":
                 colour = Terminal.COLOUR_RED
+                self.error_count += 1
             elif cat == "INIT":
                 colour = Terminal.COLOUR_MAGENTA
             elif cat == "DEBUG":

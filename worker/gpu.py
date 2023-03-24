@@ -5,7 +5,11 @@ from pynvml.smi import nvidia_smi
 
 class GPUInfo:
     def __init__(self):
-        pass
+        self.avg_load = []
+        self.avg_temp = []
+        self.avg_power = []
+        # Average period in samples, default 10 samples per second, period 5 minutes
+        self.average_length = 10 * 60 * 5
 
     # Return a value from the given dictionary supporting dot notation
     def get(self, data, key, default=""):
@@ -43,6 +47,18 @@ class GPUInfo:
         data = self._get_gpu_data()
         if not data:
             return
+
+        # Calculate averages
+        self.avg_load.append(int(self.get(data, "utilization.gpu_util", 0)))
+        self.avg_temp.append(int(self.get(data, "temperature.gpu_temp", 0)))
+        self.avg_power.append(int(self.get(data, "power_readings.power_draw", 0)))
+        self.avg_load = self.avg_load[-self.average_length :]
+        self.avg_power = self.avg_power[-self.average_length :]
+        self.avg_temp = self.avg_temp[-self.average_length :]
+        avg_load = int(sum(self.avg_load) / len(self.avg_load))
+        avg_power = int(sum(self.avg_power) / len(self.avg_power))
+        avg_temp = int(sum(self.avg_temp) / len(self.avg_temp))
+
         return {
             "product": self.get(data, "product_name", "unknown"),
             "pci_gen": self.get(data, "pci.pci_gpu_link_info.pcie_gen.current_link_gen", "?"),
@@ -54,6 +70,9 @@ class GPUInfo:
             "load": f"{self.get(data, 'utilization.gpu_util')}{self.get(data, 'utilization.unit')}",
             "temp": f"{self.get(data, 'temperature.gpu_temp')}{self.get(data, 'temperature.unit')}",
             "power": f"{int(self.get(data, 'power_readings.power_draw', 0))}{self.get(data, 'power_readings.unit')}",
+            "avg_load": f"{avg_load}{self.get(data, 'utilization.unit')}",
+            "avg_temp": f"{avg_temp}{self.get(data, 'temperature.unit')}",
+            "avg_power": f"{avg_power}{self.get(data, 'power_readings.unit')}",
         }
 
 
