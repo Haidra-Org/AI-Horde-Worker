@@ -334,6 +334,13 @@ class Terminal:
         gpu = self.gpu.get_info()
         if gpu:
 
+            # Add some warning colours to free vram
+            vram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
+            if re.match(r'\d\d\d MB', gpu['vram_free']):
+                vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
+            elif re.match(r'(\d\d|\d) MB', gpu['vram_free']):
+                vram_colour = curses.color_pair(Terminal.COLOUR_RED)
+
             self.draw_line(self.main, row_gpu, gpu["product"])
 
             self.print(self.main, row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
@@ -345,7 +352,7 @@ class Terminal:
             self.print(self.main, row_gpu + 2, col_right, f"{gpu['pci_gen']}")
 
             self.print(self.main, row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
-            self.print(self.main, row_gpu + 3, col_mid, f"{gpu['vram_free']}")
+            self.print(self.main, row_gpu + 3, col_mid, f"{gpu['vram_free']}", vram_colour)
             self.print(self.main, row_gpu + 3, col_right, f"{gpu['pci_width']}")
 
         self.print(self.main, row_total + 1, col_mid, f"{self.total_kudos}")
