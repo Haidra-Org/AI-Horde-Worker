@@ -85,7 +85,7 @@ class Terminal:
         self.show_debug = False
         self.show_dev = False
         self.last_key = None
-        self.pause_display = False
+        self.pause_log = False
         self.output = DequeOutputCollector()
         self.stdout = DequeOutputCollector()
         self.worker_name = worker_name
@@ -287,7 +287,7 @@ class Terminal:
         # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
         # ║                        Total Workers: 1000        Total Threads: 1000       ║
         # ║                                                                             ║
-        # ║             (m)aintenance mode  (s)ource file  (d)ebug  (p)ause log  (q)uit ║
+        # ║                       (m)aintenance  (s)ource  (d)ebug  (p)ause log  (q)uit ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
         self.status.erase()
 
@@ -387,8 +387,8 @@ class Terminal:
         self.status.addstr(row_horde + 2, col_right, f"{self.thread_count}")
 
         inputs = [
-            "(m)aintenance mode",
-            "(s)ource file",
+            "(m)aintenance",
+            "(s)ource",
             "(d)ebug",
             "(p)ause log",
             "(q)uit",
@@ -398,12 +398,12 @@ class Terminal:
         x = self.print_switch(y, x, inputs[0], self.maintenance_mode)
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
-        x = self.print_switch(y, x, inputs[3], self.pause_display)
+        x = self.print_switch(y, x, inputs[3], self.pause_log)
         x = self.print_switch(y, x, inputs[4], False)
         self.status.refresh()
 
     def print_log(self):
-        if self.pause_display:
+        if self.pause_log:
             return
 
         termrows = self.height - self.status_height
@@ -498,7 +498,7 @@ class Terminal:
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
         elif x == ord("p"):
-            self.pause_display = not self.pause_display
+            self.pause_log = not self.pause_log
 
     def load_worker_id(self):
         if not self.worker_name:
