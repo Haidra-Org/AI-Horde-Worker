@@ -11,6 +11,7 @@ import threading
 import time
 from collections import deque
 
+import psutil
 import requests
 import yaml
 
@@ -110,6 +111,7 @@ class Terminal:
         self.error_count = 0
         self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
+        self.cpu_average = []
 
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
@@ -249,12 +251,32 @@ class Terminal:
         self.print(self.main, y, x, label, colour)
         return x + len(label) + 2
 
+    def get_free_ram(self):
+        mem = psutil.virtual_memory().free
+        percent = 100 - int(psutil.virtual_memory().percent)
+        mem /= 1048576
+        unit = "MB"
+        if mem >= 1024:
+            mem /= 1024
+            unit = "GB"
+        mem = int(mem)
+        return f"{mem} {unit} ({percent}%)"
+
+    def get_cpu_usage(self):
+        cpu = psutil.cpu_percent()
+        self.cpu_average.append(cpu)
+        self.cpu_average = self.cpu_average[-(self.gpu.samples_per_second * 60 * 5) :]
+        avg_cpu = int(sum(self.cpu_average) / len(self.cpu_average))
+        cpu = f"{int(cpu)}%".ljust(3)
+        return f"{cpu} ({avg_cpu}%)"
+
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
         # ║ Uptime: 0:14:35       Jobs Completed: 6             Performance: 0.3 MPS    ║
         # ║ Models: 174           Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║                             Warnings: 9999               Errors: 100        ║
+        # ║                             Free RAM: 2 GB (99%)       CPU Load: 99% (99%)  ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
         # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
@@ -277,9 +299,10 @@ class Terminal:
 
         # Define rows on which sections start
         row_local = 0
-        row_gpu = row_local + 4
+        row_gpu = row_local + 5
         row_total = row_gpu + 4
         row_horde = row_total + 3
+        self.status_height = row_horde + 6
 
         def label(y, x, label):
             self.print(self.main, y, x - len(label) - 1, label)
@@ -296,9 +319,11 @@ class Terminal:
         label(row_local + 1, col_mid, "Jobs Completed:")
         label(row_local + 2, col_mid, "Kudos Per Hour:")
         label(row_local + 3, col_mid, "Warnings:")
+        label(row_local + 4, col_mid, "Free RAM:")
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Error:")
+        label(row_local + 4, col_right, "CPU Load:")
 
         label(row_gpu + 1, col_left, "Load:")
         label(row_gpu + 2, col_left, "Temp:")
@@ -332,6 +357,18 @@ class Terminal:
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
 
+        # Add some warning colours to free ram
+        ram = self.get_free_ram()
+        ram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
+        if re.match(r'\d{3,4} MB', ram):
+            ram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
+        elif re.match(r'(\d{1,2}) MB', ram):
+            ram_colour = curses.color_pair(Terminal.COLOUR_RED)
+
+        # self.print(self.main, row_local+3, col_left, f"")
+        self.print(self.main, row_local + 4, col_mid, f"{self.get_free_ram()}", ram_colour)
+        self.print(self.main, row_local + 4, col_right, f"{self.get_cpu_usage()}")
+
         gpu = self.gpu.get_info()
         if gpu:
 
@@ -339,7 +376,7 @@ class Terminal:
             vram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
             if re.match(r'\d\d\d MB', gpu['vram_free']):
                 vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
-            elif re.match(r'(\d\d|\d) MB', gpu['vram_free']):
+            elif re.match(r'(\d{1,2}) MB', gpu['vram_free']):
                 vram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
             self.draw_line(self.main, row_gpu, gpu["product"])
