@@ -21,14 +21,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         bump_version_scheme: norelease
-        use_github_release_notes: true
+        use_github_release_notes: false
     - name: "✏️ Generate release changelog"
-      if: ${{ steps.release.outputs.version != '' }}
+      # if: ${{ steps.release.outputs.version != '' }}
       uses: heinrichreimer/github-changelog-generator-action@v2.3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: "💾 Commit new version"
-      if: ${{ steps.release.outputs.version != '' }}
+      # if: ${{ steps.release.outputs.version != '' }}
       run: |
           echo "${{ steps.release.outputs }}"
           echo "${{ steps.release.outputs.version }}"
