@@ -46,4 +46,4 @@ jobs:
       uses: tsickert/discord-webhook@v5.3.0
       with:
         webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        content: "New version of AI Horde Worker has been released: ${{ steps.release.outputs.version }}"
+        content: "New version of AI Horde Worker has been released: ${{ steps.release.outputs.version }}. Changelog: https://github.com/db0/AI-Horde-Worker/releases/tag/${{ steps.release.outputs.version }}"
