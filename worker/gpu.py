@@ -1,5 +1,6 @@
 import contextlib
 import os
+import json
 
 from pynvml.smi import nvidia_smi
 
@@ -81,4 +82,4 @@ class GPUInfo:
 
 if __name__ == "__main__":
     gpu = GPUInfo()
-    print(gpu.get_info())
+    print(json.dumps(gpu.get_info(), indent=4))
