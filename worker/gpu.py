@@ -10,7 +10,7 @@ class GPUInfo:
         self.avg_temp = []
         self.avg_power = []
         # Average period in samples, default 10 samples per second, period 5 minutes
-        self.average_length = 10 * 60 * 5
+        self.samples_per_second = 10
         # Look out for device env var hack
         self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
 
@@ -55,9 +55,9 @@ class GPUInfo:
         self.avg_load.append(int(self.get(data, "utilization.gpu_util", 0)))
         self.avg_temp.append(int(self.get(data, "temperature.gpu_temp", 0)))
         self.avg_power.append(int(self.get(data, "power_readings.power_draw", 0)))
-        self.avg_load = self.avg_load[-self.average_length :]
-        self.avg_power = self.avg_power[-self.average_length :]
-        self.avg_temp = self.avg_temp[-self.average_length :]
+        self.avg_load = self.avg_load[-(self.samples_per_second * 60 * 5) :]
+        self.avg_power = self.avg_power[-(self.samples_per_second * 60 * 5) :]
+        self.avg_temp = self.avg_temp[-(self.samples_per_second * 60 * 5) :]
         avg_load = int(sum(self.avg_load) / len(self.avg_load))
         avg_power = int(sum(self.avg_power) / len(self.avg_power))
         avg_temp = int(sum(self.avg_temp) / len(self.avg_temp))

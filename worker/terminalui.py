@@ -106,6 +106,7 @@ class Terminal:
         self.last_minute_mps = 0
         self.queue_time = 0
         self.gpu = gpu.GPUInfo()
+        self.gpu.samples_per_second = 5
         self.error_count = 0
         self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
@@ -560,7 +561,7 @@ class Terminal:
             while True:
                 if self.poll():
                     return
-                time.sleep(0.2)
+                time.sleep(1 / self.gpu.samples_per_second)
         except KeyboardInterrupt:
             return
         finally:
