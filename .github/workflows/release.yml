@@ -30,9 +30,13 @@ jobs:
     - name: "💾 Commit new version"
       # if: ${{ steps.release.outputs.version != '' }}
       run: |
-          echo "${{ steps.release.outputs }}"
-          echo "${{ steps.release.outputs.version }}"
-          echo "${{ steps.release.outputs.major_version }}"
+          major=$(echo ${{ steps.release.outputs.version }} | cut -d '.' -f 1)
+          minor=$(echo ${{ steps.release.outputs.version }} | cut -d '.' -f 2)
+          patch=$(echo ${{ steps.release.outputs.version }} | cut -d '.' -f 3)
+
+          echo "major=$major"
+          echo "minor=$minor"
+          echo "patch=$patch"      
     #       sed -i 's/^version = ".*"/version = "${{ steps.release.outputs.version }}"/g' ./pyproject.toml
     #       sed -i 's/version = .*/version = "${{ steps.release.outputs.version }}"/g' ./setup.cfg
     #       sed -i 's/version=".*"/version="${{ steps.release.outputs.version }}"/g' ./setup.py
