@@ -1,0 +1,48 @@
+name: AI Horde worker new release
+
+on:
+  push:
+    branches:
+      - cicd
+
+jobs:
+  build-n-publish:
+    name: AI Horde Worker new release
+    runs-on: ubuntu-latest
+    steps:
+    - name: "✔️ Checkout"
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: "📣 Release on push"
+      id: release
+      uses: rymndhng/release-on-push-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        bump_version_scheme: norelease
+        use_github_release_notes: true
+    - name: "✏️ Generate release changelog"
+      if: ${{ steps.release.outputs.version != '' }}
+      uses: heinrichreimer/github-changelog-generator-action@v2.3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: "💾 Commit new version"
+      if: ${{ steps.release.outputs.version != '' }}
+      run: |
+          echo "${{ steps.release.outputs }}"
+          echo "${{ steps.release.outputs.version }}"
+          echo "${{ steps.release.outputs.major_version }}"
+    #       sed -i 's/^version = ".*"/version = "${{ steps.release.outputs.version }}"/g' ./pyproject.toml
+    #       sed -i 's/version = .*/version = "${{ steps.release.outputs.version }}"/g' ./setup.cfg
+    #       sed -i 's/version=".*"/version="${{ steps.release.outputs.version }}"/g' ./setup.py
+    #       git config user.email github-actions@github.com
+    #       git config user.name github-actions
+    #       git commit -am 'version incremented'
+    #       git push
+    # - name: "Inform with Discord Webhook"
+    #   if: ${{ steps.release.outputs.version != '' }}
+    #   uses: tsickert/discord-webhook@v5.3.0
+    #   with:
+    #     webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+    #     content: "New version of nataili has been published to pypi: ${{ steps.release.outputs.version }}"
