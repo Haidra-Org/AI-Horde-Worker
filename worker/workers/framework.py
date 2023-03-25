@@ -35,9 +35,13 @@ class WorkerFramework:
 
         # Setup UI if requested
         if self.bridge_data.enable_terminal_ui:
-            ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
-            self.ui = threading.Thread(target=ui.run, daemon=True)
-            self.ui.start()
+            # Don't allow this if auto-downloading is not enabled as how will the user see download prompts?
+            if not self.bridge_data.always_download:
+                logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
+            else:
+                ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+                self.ui = threading.Thread(target=ui.run, daemon=True)
+                self.ui.start()
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
