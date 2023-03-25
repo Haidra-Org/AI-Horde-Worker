@@ -6,7 +6,6 @@ import curses
 import locale
 import os
 import re
-import sys
 import textwrap
 import threading
 import time
