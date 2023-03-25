@@ -129,7 +129,7 @@ class TerminalUI:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
-    JOBDONE_REGEX = re.compile(r".*Generation for id.*finished successfully")
+    JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
 
     ART = {
         "top_left": "╓",
@@ -622,15 +622,25 @@ class TerminalUI:
         if not r.ok:
             return
         data = r.json()
+
+        worker_type = data.get("type", "unknown")
         self.maintenance_mode = data.get("maintenance_mode", False)
+        self.total_worker_kudos = data.get("kudos_details", {}).get("generated", 0)
+        if self.total_worker_kudos is not None:
+            self.total_worker_kudos = int(self.total_worker_kudos)
         self.total_jobs = data.get("requests_fulfilled", 0)
         self.total_kudos = int(data.get("kudos_rewards", 0))
-        self.total_worker_kudos = int(data.get("kudos_details", {}).get("generated", 0))
-        self.performance = data.get("performance").replace("megapixelsteps per second", "MPS")
+        perf = data.get("performance", "0").replace("No requests fulfilled yet", "0")
         self.threads = data.get("threads", 0)
-        self.total_failed_jobs = data.get("uncompleted_jobs", 0)
         self.total_uptime = data.get("uptime", 0)
-        self.total_models = len(data.get("models", []))
+        self.total_failed_jobs = data.get("uncompleted_jobs", 0)
+
+        if worker_type == "image":
+            self.performance = perf.replace("megapixelsteps per second", "MPS")
+            self.total_models = len(data.get("models", []))
+        elif worker_type == "interrogation":
+            self.performance = perf.replace("seconds per form", "SPF")
+            self.total_models = 0
 
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
