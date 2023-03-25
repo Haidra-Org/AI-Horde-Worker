@@ -210,7 +210,7 @@ CONTROL_WORD_ADJUSTMENTS = [
         ],
     },
     {
-        "control": ("shota", 0.205),
+        "control": ("shota", 0.21),
         "adjustments": [
             ("teen", 0.005),
             ("teens", 0.005),

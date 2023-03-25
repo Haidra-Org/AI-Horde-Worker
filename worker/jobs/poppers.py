@@ -203,6 +203,7 @@ class InterrogationPopper(JobPopper):
             "threads": self.bridge_data.max_threads,
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
+            "max_tiles": self.bridge_data.max_power,
         }
         logger.debug(self.pop_payload)
 
