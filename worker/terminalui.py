@@ -155,16 +155,9 @@ class Terminal:
         self.output.set_size(self.height)
 
     def initialise_main_window(self):
-        self.main = curses.initscr()
-        # Don't each key presses
-        curses.noecho()
-        # Respond on keydown
-        curses.cbreak()
+        # getch doesn't block
         self.main.nodelay(True)
-        # Determine terminal size
-        self.height, self.width = self.main.getmaxyx()
-        self.main.keypad(True)
-        curses.curs_set(0)
+        # Define colours
         curses.start_color()
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -173,21 +166,14 @@ class Terminal:
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        # Suppress all output to stdout
         sys.stdout = self.stdout
-        self.main.clear()
-        self.main.refresh()
 
     def resize(self):
         # Determine terminal size
         curses.update_lines_cols()
+        # Determine terminal size
         self.height, self.width = self.main.getmaxyx()
-
-    def finalise(self):
-        curses.nocbreak()
-        self.main.keypad(False)
-        curses.echo()
-        curses.curs_set(1)
-        curses.endwin()
 
     def print(self, win, y, x, text, colour=None):
         # Ensure we're going to fit
@@ -593,7 +579,6 @@ class Terminal:
         elif x == ord("a"):
             self.audio_alerts = not self.audio_alerts
         elif x == ord("q"):
-            self.finalise()
             return True
         elif x == ord("m"):
             self.maintenance_mode = not self.maintenance_mode
@@ -610,7 +595,8 @@ class Terminal:
         self.print_log()
         self.main.refresh()
 
-    def run(self):
+    def main_loop(self, stdscr):
+        self.main = stdscr
         try:
             self.initialise()
             while True:
@@ -619,8 +605,9 @@ class Terminal:
                 time.sleep(1 / self.gpu.samples_per_second)
         except KeyboardInterrupt:
             return
-        finally:
-            self.finalise()
+
+    def run(self):
+        curses.wrapper(self.main_loop)
 
 
 if __name__ == "__main__":
