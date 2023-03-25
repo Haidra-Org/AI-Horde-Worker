@@ -3,7 +3,7 @@ name: AI Horde worker new release
 on:
   push:
     branches:
-      - cicd
+      - master
 
 jobs:
   build-n-publish:
@@ -20,37 +20,30 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        bump_version_scheme: patch
+        bump_version_scheme: norelease
         use_github_release_notes: true
     - name: "✏️ Generate release changelog"
-      # if: ${{ steps.release.outputs.version != '' }}
+      if: ${{ steps.release.outputs.version != '' }}
       uses: heinrichreimer/github-changelog-generator-action@v2.3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: "💾 Commit new version"
-      # if: ${{ steps.release.outputs.version != '' }}
+      if: ${{ steps.release.outputs.version != '' }}
       run: |
           version=${{ steps.release.outputs.version }}
           major=$(echo ${version#v} | cut -d '.' -f 1)
           minor=$(echo ${version} | cut -d '.' -f 2)
           patch=$(echo ${version} | cut -d '.' -f 3)
 
-          echo "version=$version"
-          echo "major=$major"
-          echo "minor=$minor"
-          echo "patch=$patch"      
           sed -i "s/^BRIDGE_VERSION = .*/BRIDGE_VERSION = ${major}/g" ./worker/consts.py
           sed -i "s/^RELEASE = f\"{BRIDGE_VERSION}.*\"/RELEASE = f\"{BRIDGE_VERSION}.${minor}.${patch}\"/g" ./worker/consts.py
-          head -5 ./worker/consts.py
-    #       sed -i 's/version = .*/version = "${{ steps.release.outputs.version }}"/g' ./setup.cfg
-    #       sed -i 's/version=".*"/version="${{ steps.release.outputs.version }}"/g' ./setup.py
-    #       git config user.email github-actions@github.com
-    #       git config user.name github-actions
-    #       git commit -am 'version incremented'
-    #       git push
-    # - name: "Inform with Discord Webhook"
-    #   if: ${{ steps.release.outputs.version != '' }}
-    #   uses: tsickert/discord-webhook@v5.3.0
-    #   with:
-    #     webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-    #     content: "New version of nataili has been published to pypi: ${{ steps.release.outputs.version }}"
+          git config user.email github-actions@github.com
+          git config user.name github-actions
+          git commit -am 'version incremented'
+          git push
+    - name: "Inform with Discord Webhook"
+      if: ${{ steps.release.outputs.version != '' }}
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        content: "New version of AI Horde Worker has been released: ${{ steps.release.outputs.version }}"
