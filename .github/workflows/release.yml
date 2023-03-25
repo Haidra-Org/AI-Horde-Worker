@@ -20,8 +20,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        bump_version_scheme: norelease
-        use_github_release_notes: false
+        bump_version_scheme: patch
+        use_github_release_notes: true
     - name: "✏️ Generate release changelog"
       # if: ${{ steps.release.outputs.version != '' }}
       uses: heinrichreimer/github-changelog-generator-action@v2.3
