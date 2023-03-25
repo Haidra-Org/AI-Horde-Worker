@@ -136,7 +136,7 @@ class TerminalUI:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
-        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
     )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
@@ -597,7 +597,7 @@ class TerminalUI:
                 colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = TerminalUI.COLOUR_RED
-            elif cat == "INIT":
+            elif cat == "INIT" or cat == "INIT_OK":
                 colour = TerminalUI.COLOUR_MAGENTA
             elif cat == "WARNING":
                 colour = TerminalUI.COLOUR_YELLOW
