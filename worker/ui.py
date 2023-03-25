@@ -89,12 +89,12 @@ class GPUInfo:
             gpu_util = 0
 
         try:
-            gpu_temp = self.get(data, "temperature.gpu_temp", 0)
+            gpu_temp = int(self.get(data, "temperature.gpu_temp", 0))
         except ValueError:
             gpu_temp = 0
 
         try:
-            gpu_power = self.get(data, "power_readings.power_draw", 0)
+            gpu_power = int(self.get(data, "power_readings.power_draw", 0))
         except ValueError:
             gpu_power = 0
 
