@@ -16,8 +16,7 @@ from math import trunc
 import psutil
 import requests
 import yaml
-
-import worker.gpu as gpu
+from pynvml.smi import nvidia_smi
 
 
 class DequeOutputCollector:
@@ -36,7 +35,82 @@ class DequeOutputCollector:
         pass
 
 
-class Terminal:
+class GPUInfo:
+    def __init__(self):
+        self.avg_load = []
+        self.avg_temp = []
+        self.avg_power = []
+        # Average period in samples, default 10 samples per second, period 5 minutes
+        self.samples_per_second = 10
+        # Look out for device env var hack
+        self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
+
+    # Return a value from the given dictionary supporting dot notation
+    def get(self, data, key, default=""):
+        # Handle nested structures
+        path = key.split(".")
+
+        if len(path) == 1:
+            # Simple case
+            return data[key] if key in data else default
+        # Nested case
+        walkdata = data
+        for element in path:
+            if element in walkdata:
+                walkdata = walkdata[element]
+            else:
+                walkdata = ""
+                break
+        return walkdata
+
+    def _get_gpu_data(self):
+        with contextlib.suppress(Exception):
+            nvsmi = nvidia_smi.getInstance()
+            data = nvsmi.DeviceQuery()
+            return data.get("gpu", [None])[self.device]
+
+    def _mem(self, raw):
+        unit = "GB"
+        mem = raw / 1024
+        if mem < 1:
+            unit = "MB"
+            raw *= 1024
+        return f"{int(mem)} {unit}"
+
+    def get_info(self):
+        data = self._get_gpu_data()
+        if not data:
+            return
+
+        # Calculate averages
+        self.avg_load.append(int(self.get(data, "utilization.gpu_util", 0)))
+        self.avg_temp.append(int(self.get(data, "temperature.gpu_temp", 0)))
+        self.avg_power.append(int(self.get(data, "power_readings.power_draw", 0)))
+        self.avg_load = self.avg_load[-(self.samples_per_second * 60 * 5) :]
+        self.avg_power = self.avg_power[-(self.samples_per_second * 60 * 5) :]
+        self.avg_temp = self.avg_temp[-(self.samples_per_second * 60 * 5) :]
+        avg_load = int(sum(self.avg_load) / len(self.avg_load))
+        avg_power = int(sum(self.avg_power) / len(self.avg_power))
+        avg_temp = int(sum(self.avg_temp) / len(self.avg_temp))
+
+        return {
+            "product": self.get(data, "product_name", "unknown"),
+            "pci_gen": self.get(data, "pci.pci_gpu_link_info.pcie_gen.current_link_gen", "?"),
+            "pci_width": self.get(data, "pci.pci_gpu_link_info.link_widths.current_link_width", "?"),
+            "fan_speed": f"{self.get(data, 'fan_speed')}{self.get(data, 'fan_speed_unit')}",
+            "vram_total": f"{self._mem(self.get(data, 'fb_memory_usage.total', '0'))}",
+            "vram_used": f"{self._mem(self.get(data, 'fb_memory_usage.used', '0'))}",
+            "vram_free": f"{self._mem(self.get(data, 'fb_memory_usage.free', '0'))}",
+            "load": f"{self.get(data, 'utilization.gpu_util')}{self.get(data, 'utilization.unit')}",
+            "temp": f"{self.get(data, 'temperature.gpu_temp')}{self.get(data, 'temperature.unit')}",
+            "power": f"{int(self.get(data, 'power_readings.power_draw', 0))}{self.get(data, 'power_readings.unit')}",
+            "avg_load": f"{avg_load}{self.get(data, 'utilization.unit')}",
+            "avg_temp": f"{avg_temp}{self.get(data, 'temperature.unit')}",
+            "avg_power": f"{avg_power}{self.get(data, 'power_readings.unit')}",
+        }
+
+
+class TerminalUI:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
@@ -111,7 +185,7 @@ class Terminal:
         self.queued_mps = 0
         self.last_minute_mps = 0
         self.queue_time = 0
-        self.gpu = gpu.GPUInfo()
+        self.gpu = GPUInfo()
         self.gpu.samples_per_second = 5
         self.error_count = 0
         self.warning_count = 0
@@ -134,12 +208,12 @@ class Terminal:
     def load_log(self):
         while line := self.input.readline():
             ignore = False
-            for skip in Terminal.JUNK:
+            for skip in TerminalUI.JUNK:
                 if skip.lower() in line.lower():
                     ignore = True
             if ignore:
                 continue
-            if regex := Terminal.REGEX.match(line):
+            if regex := TerminalUI.REGEX.match(line):
                 if not self.show_debug and regex.group(1) == "DEBUG":
                     continue
                 if regex.group(1) == "ERROR":
@@ -147,9 +221,9 @@ class Terminal:
                 elif regex.group(1) == "WARNING":
                     self.warning_count += 1
                 self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
-            if regex := Terminal.KUDOS_REGEX.match(line):
+            if regex := TerminalUI.KUDOS_REGEX.match(line):
                 self.kudos_per_hour = int(regex.group(1))
-            if regex := Terminal.JOBDONE_REGEX.match(line):
+            if regex := TerminalUI.JOBDONE_REGEX.match(line):
                 self.jobs_done += 1
                 self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
 
@@ -195,7 +269,7 @@ class Terminal:
             win,
             y,
             0,
-            Terminal.ART["left-join"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["right-join"],
+            TerminalUI.ART["left-join"] + TerminalUI.ART["horizontal"] * (width - 2) + TerminalUI.ART["right-join"],
         )
         self.print(win, y, 2, label)
 
@@ -207,17 +281,19 @@ class Terminal:
             self.main,
             0,
             0,
-            Terminal.ART["top_left"] + Terminal.ART["horizontal"] * (width - 2) + Terminal.ART["top_right"],
+            TerminalUI.ART["top_left"] + TerminalUI.ART["horizontal"] * (width - 2) + TerminalUI.ART["top_right"],
         )
 
         # Draw the side borders
         for y in range(1, height - 1):
-            self.print(self.main, y, 0, Terminal.ART["vertical"])
-            self.print(self.main, y, width - 1, Terminal.ART["vertical"])
+            self.print(self.main, y, 0, TerminalUI.ART["vertical"])
+            self.print(self.main, y, width - 1, TerminalUI.ART["vertical"])
 
         # Draw the bottom border
-        self.print(self.main, height - 1, 0, Terminal.ART["bottom_left"] + Terminal.ART["horizontal"] * (width - 2))
-        self.print(self.main, height - 1, width - 1, Terminal.ART["bottom_right"])
+        self.print(
+            self.main, height - 1, 0, TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2)
+        )
+        self.print(self.main, height - 1, width - 1, TerminalUI.ART["bottom_right"])
 
     def seconds_to_timestring(self, seconds):
         hours = int(seconds // 3600)
@@ -240,9 +316,9 @@ class Terminal:
 
     def print_switch(self, y, x, label, switch):
         if switch:
-            colour = curses.color_pair(Terminal.COLOUR_CYAN)
+            colour = curses.color_pair(TerminalUI.COLOUR_CYAN)
         else:
-            colour = curses.color_pair(Terminal.COLOUR_WHITE)
+            colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
         self.print(self.main, y, x, label, colour)
         return x + len(label) + 2
 
@@ -353,14 +429,14 @@ class Terminal:
 
         # Add some warning colours to free ram
         ram = self.get_free_ram()
-        ram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
+        ram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
         if re.match(r"\d{3,4} MB", ram):
-            ram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
+            ram_colour = curses.color_pair(TerminalUI.COLOUR_MAGENTA)
         elif re.match(r"(\d{1,2}) MB", ram):
-            if self.audio_alerts and time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+            if self.audio_alerts and time.time() - self.last_audio_alert > TerminalUI.ALERT_INTERVAL:
                 self.last_audio_alert = time.time()
                 curses.beep()
-            ram_colour = curses.color_pair(Terminal.COLOUR_RED)
+            ram_colour = curses.color_pair(TerminalUI.COLOUR_RED)
 
         # self.print(self.main, row_local+3, col_left, f"")
         self.print(self.main, row_local + 4, col_mid, f"{self.get_free_ram()}", ram_colour)
@@ -370,14 +446,14 @@ class Terminal:
         if gpu:
 
             # Add some warning colours to free vram
-            vram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
+            vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
-                vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
+                vram_colour = curses.color_pair(TerminalUI.COLOUR_MAGENTA)
             elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
-                if self.audio_alerts and time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+                if self.audio_alerts and time.time() - self.last_audio_alert > TerminalUI.ALERT_INTERVAL:
                     self.last_audio_alert = time.time()
                     curses.beep()
-                vram_colour = curses.color_pair(Terminal.COLOUR_RED)
+                vram_colour = curses.color_pair(TerminalUI.COLOUR_RED)
 
             self.draw_line(self.main, row_gpu, gpu["product"])
 
@@ -428,7 +504,7 @@ class Terminal:
         linecount = 0
         maxrows = 0
         for i, fullline in enumerate(reversed(output)):
-            line = fullline.split(Terminal.DELIM)[-1:][0]
+            line = fullline.split(TerminalUI.DELIM)[-1:][0]
             # 21 is the timestamp length
             linecount += len(textwrap.wrap(line, self.width - 21))
             if self.show_module:
@@ -457,26 +533,26 @@ class Terminal:
         while y < self.height and inputrow < len(output):
 
             # Print any log info we have
-            cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
-            colour = Terminal.COLOUR_WHITE
+            cat, nextwhen, source, msg = output[inputrow].split(TerminalUI.DELIM)
+            colour = TerminalUI.COLOUR_WHITE
             if cat == "DEBUG":
-                colour = Terminal.COLOUR_WHITE
+                colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
-                colour = Terminal.COLOUR_RED
+                colour = TerminalUI.COLOUR_RED
             elif cat == "INIT":
-                colour = Terminal.COLOUR_MAGENTA
+                colour = TerminalUI.COLOUR_MAGENTA
             elif cat == "WARNING":
-                colour = Terminal.COLOUR_YELLOW
+                colour = TerminalUI.COLOUR_YELLOW
 
             # Timestamp
             when = nextwhen if nextwhen != last_timestamp else ""
             last_timestamp = nextwhen
             length = len(last_timestamp) + 2
-            self.print(self.main, y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
+            self.print(self.main, y, 1, f"{when}", curses.color_pair(TerminalUI.COLOUR_GREEN))
 
             # Source file name
             if self.show_module:
-                self.print(self.main, y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
+                self.print(self.main, y, length, f"{source}", curses.color_pair(TerminalUI.COLOUR_GREEN))
                 y += 1
                 if y > self.height:
                     break
@@ -495,7 +571,7 @@ class Terminal:
             return
         workers_url = f"{self.url}/api/v2/workers"
         try:
-            r = requests.get(workers_url, headers={"client-agent": Terminal.CLIENT_AGENT})
+            r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
         except requests.exceptions.RequestException:
             return
         if r.ok:
@@ -507,7 +583,7 @@ class Terminal:
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
             return
-        header = {"apikey": self.apikey, "client-agent": Terminal.CLIENT_AGENT}
+        header = {"apikey": self.apikey, "client-agent": TerminalUI.CLIENT_AGENT}
         payload = {"maintenance": enabled, "name": self.worker_name}
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         requests.put(worker_URL, json=payload, headers=header)
@@ -519,7 +595,7 @@ class Terminal:
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         try:
-            r = requests.get(worker_URL, headers={"client-agent": Terminal.CLIENT_AGENT})
+            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT})
         except requests.exceptions.RequestException:
             return
         if not r.ok:
@@ -538,7 +614,7 @@ class Terminal:
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
         try:
-            r = requests.get(url, headers={"client-agent": Terminal.CLIENT_AGENT})
+            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
         except requests.exceptions.RequestException:
             return
         if not r.ok:
@@ -552,7 +628,7 @@ class Terminal:
         self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
-        if time.time() - self.last_stats_refresh > Terminal.REMOTE_STATS_REFRESH:
+        if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
             threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
@@ -621,7 +697,7 @@ class Terminal:
 
 
 if __name__ == "__main__":
-    # From the project root: runtime.cmd python -m worker.terminalui
+    # From the project root: runtime.cmd python -m worker.ui
     # This will connect to the currently running worker via it's log file,
     # very useful for development or connecting to a worker running as a background
     # service.
@@ -636,5 +712,5 @@ if __name__ == "__main__":
             workername = config.get("worker_name", "")
             apikey = config.get("api_key", "")
 
-    term = Terminal(workername, apikey)
+    term = TerminalUI(workername, apikey)
     term.run()

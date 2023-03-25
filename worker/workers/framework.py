@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
 
-from worker.terminalui import Terminal
+from worker.ui import TerminalUI
 
 
 class WorkerFramework:
@@ -35,7 +35,7 @@ class WorkerFramework:
 
         # Setup UI if requested
         if self.bridge_data.enable_terminal_ui:
-            ui = Terminal(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+            ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
             self.ui = threading.Thread(target=ui.run, daemon=True)
             self.ui.start()
 
