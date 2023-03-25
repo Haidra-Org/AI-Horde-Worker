@@ -6,6 +6,6 @@ pyyaml
 unidecode
 regex
 rembg
-windows-curses; sys_platform == 'win32'
 pynvml
 psutil
+windows-curses; sys_platform == 'win32'
