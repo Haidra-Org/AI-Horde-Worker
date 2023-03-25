@@ -39,7 +39,9 @@ jobs:
           echo "major=$major"
           echo "minor=$minor"
           echo "patch=$patch"      
-    #       sed -i 's/^version = ".*"/version = "${{ steps.release.outputs.version }}"/g' ./pyproject.toml
+          sed -i 's/^BRIDGE_VERSION = .*/BRIDGE_VERSION = ${major}/g' ./worker/consts.py
+          sed -i 's/^RELEASE = f"{BRIDGE_VERSION}.*"/RELEASE = f"{BRIDGE_VERSION}.${minor}.${patch}"/g' ./worker/consts.py
+          head -5 ./worker/consts.py
     #       sed -i 's/version = .*/version = "${{ steps.release.outputs.version }}"/g' ./setup.cfg
     #       sed -i 's/version=".*"/version="${{ steps.release.outputs.version }}"/g' ./setup.py
     #       git config user.email github-actions@github.com
