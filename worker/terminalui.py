@@ -1,5 +1,6 @@
 # curses.py
 # A simple terminal worker UI
+# Supports audio alerts on low VRAM / RAM and toggling worker maintenance mode.
 import contextlib
 import curses
 import locale
@@ -157,6 +158,8 @@ class Terminal:
     def initialise_main_window(self):
         # getch doesn't block
         self.main.nodelay(True)
+        # Hide cursor
+        curses.curs_set(0)
         # Define colours
         curses.start_color()
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
@@ -284,7 +287,6 @@ class Terminal:
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
         # Define three colums centres
-
         col_left = 10
         col_mid = self.width // 2
         col_right = self.width - 12
@@ -355,10 +357,9 @@ class Terminal:
         if re.match(r"\d{3,4} MB", ram):
             ram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
         elif re.match(r"(\d{1,2}) MB", ram):
-            if self.audio_alerts:
-                if time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
-                    self.last_audio_alert = time.time()
-                    curses.beep()
+            if self.audio_alerts and time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+                self.last_audio_alert = time.time()
+                curses.beep()
             ram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
         # self.print(self.main, row_local+3, col_left, f"")
@@ -373,10 +374,9 @@ class Terminal:
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
                 vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
             elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
-                if self.audio_alerts:
-                    if time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
-                        self.last_audio_alert = time.time()
-                        curses.beep()
+                if self.audio_alerts and time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+                    self.last_audio_alert = time.time()
+                    curses.beep()
                 vram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
             self.draw_line(self.main, row_gpu, gpu["product"])
@@ -422,14 +422,9 @@ class Terminal:
         x = self.print_switch(y, x, inputs[4], self.audio_alerts)
         x = self.print_switch(y, x, inputs[5], False)
 
-    def print_log(self):
-
-        termrows = self.height - self.status_height
-        if not self.pause_log:
-            self.load_log()
-        output = list(self.output.deque)
-
+    def fit_output_to_term(self, output):
         # How many lines of output can we fit, after line wrapping?
+        termrows = self.height - self.status_height
         linecount = 0
         maxrows = 0
         for i, fullline in enumerate(reversed(output)):
@@ -441,13 +436,26 @@ class Terminal:
             if linecount > termrows:
                 maxrows = i
                 break
+        # Truncate the output so it fits
         output = output[-maxrows:]
+        return output
+
+    def print_log(self):
+
+        if not self.pause_log:
+            self.load_log()
+
+        output = list(self.output.deque)
+        if not output:
+            return
+
+        output = self.fit_output_to_term(output)
 
         y = self.status_height
         inputrow = 0
-        termrows += self.status_height
         last_timestamp = ""
-        while y < termrows and inputrow < len(output):
+        while y < self.height and inputrow < len(output):
+
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(Terminal.DELIM)
             colour = Terminal.COLOUR_WHITE
@@ -459,26 +467,28 @@ class Terminal:
                 colour = Terminal.COLOUR_MAGENTA
             elif cat == "WARNING":
                 colour = Terminal.COLOUR_YELLOW
+
             # Timestamp
             when = nextwhen if nextwhen != last_timestamp else ""
             last_timestamp = nextwhen
             length = len(last_timestamp) + 2
             self.print(self.main, y, 1, f"{when}", curses.color_pair(Terminal.COLOUR_GREEN))
-            # Module
+
+            # Source file name
             if self.show_module:
                 self.print(self.main, y, length, f"{source}", curses.color_pair(Terminal.COLOUR_GREEN))
                 y += 1
-                if y > termrows:
+                if y > self.height:
                     break
-            # Message
+
+            # Actual log message
             text = textwrap.wrap(msg, self.width - length)
             for line in text:
                 self.print(self.main, y, length, line, curses.color_pair(colour))
                 y += 1
-                if y > termrows:
+                if y > self.height:
                     break
             inputrow += 1
-            self.main.clrtoeol()
 
     def load_worker_id(self):
         if not self.worker_name:
