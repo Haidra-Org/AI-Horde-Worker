@@ -360,9 +360,9 @@ class Terminal:
         # Add some warning colours to free ram
         ram = self.get_free_ram()
         ram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
-        if re.match(r'\d{3,4} MB', ram):
+        if re.match(r"\d{3,4} MB", ram):
             ram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
-        elif re.match(r'(\d{1,2}) MB', ram):
+        elif re.match(r"(\d{1,2}) MB", ram):
             ram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
         # self.print(self.main, row_local+3, col_left, f"")
@@ -374,9 +374,9 @@ class Terminal:
 
             # Add some warning colours to free vram
             vram_colour = curses.color_pair(Terminal.COLOUR_WHITE)
-            if re.match(r'\d\d\d MB', gpu['vram_free']):
+            if re.match(r"\d\d\d MB", gpu["vram_free"]):
                 vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
-            elif re.match(r'(\d{1,2}) MB', gpu['vram_free']):
+            elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
                 vram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
             self.draw_line(self.main, row_gpu, gpu["product"])
