@@ -413,7 +413,7 @@ class TerminalUI:
         label(row_local + 4, col_mid, "Free RAM:")
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
-        label(row_local + 3, col_right, "Error:")
+        label(row_local + 3, col_right, "Errors:")
         label(row_local + 4, col_right, "CPU Load:")
 
         label(row_gpu + 1, col_left, "Load:")
