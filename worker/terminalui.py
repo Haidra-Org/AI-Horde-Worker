@@ -10,6 +10,7 @@ import textwrap
 import threading
 import time
 from collections import deque
+from math import trunc
 
 import psutil
 import requests
@@ -253,21 +254,21 @@ class Terminal:
 
     def get_free_ram(self):
         mem = psutil.virtual_memory().free
-        percent = 100 - int(psutil.virtual_memory().percent)
+        percent = 100 - trunc(psutil.virtual_memory().percent)
         mem /= 1048576
         unit = "MB"
         if mem >= 1024:
             mem /= 1024
             unit = "GB"
-        mem = int(mem)
+        mem = trunc(mem)
         return f"{mem} {unit} ({percent}%)"
 
     def get_cpu_usage(self):
         cpu = psutil.cpu_percent()
         self.cpu_average.append(cpu)
         self.cpu_average = self.cpu_average[-(self.gpu.samples_per_second * 60 * 5) :]
-        avg_cpu = int(sum(self.cpu_average) / len(self.cpu_average))
-        cpu = f"{int(cpu)}%".ljust(3)
+        avg_cpu = trunc(sum(self.cpu_average) / len(self.cpu_average))
+        cpu = f"{trunc(cpu)}%".ljust(3)
         return f"{cpu} ({avg_cpu}%)"
 
     def print_status(self):
