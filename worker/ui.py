@@ -83,9 +83,24 @@ class GPUInfo:
             return
 
         # Calculate averages
-        self.avg_load.append(int(self.get(data, "utilization.gpu_util", 0)))
-        self.avg_temp.append(int(self.get(data, "temperature.gpu_temp", 0)))
-        self.avg_power.append(int(self.get(data, "power_readings.power_draw", 0)))
+        try:
+            gpu_util = int(self.get(data, "utilization.gpu_util", 0))
+        except ValueError:
+            gpu_util = 0
+
+        try:
+            gpu_temp = self.get(data, "temperature.gpu_temp", 0)
+        except ValueError:
+            gpu_temp = 0
+
+        try:
+            gpu_power = self.get(data, "power_readings.power_draw", 0)
+        except ValueError:
+            gpu_power = 0
+
+        self.avg_load.append(gpu_util)
+        self.avg_temp.append(gpu_temp)
+        self.avg_power.append(gpu_power)
         self.avg_load = self.avg_load[-(self.samples_per_second * 60 * 5) :]
         self.avg_power = self.avg_power[-(self.samples_per_second * 60 * 5) :]
         self.avg_temp = self.avg_temp[-(self.samples_per_second * 60 * 5) :]
@@ -101,9 +116,9 @@ class GPUInfo:
             "vram_total": f"{self._mem(self.get(data, 'fb_memory_usage.total', '0'))}",
             "vram_used": f"{self._mem(self.get(data, 'fb_memory_usage.used', '0'))}",
             "vram_free": f"{self._mem(self.get(data, 'fb_memory_usage.free', '0'))}",
-            "load": f"{self.get(data, 'utilization.gpu_util')}{self.get(data, 'utilization.unit')}",
-            "temp": f"{self.get(data, 'temperature.gpu_temp')}{self.get(data, 'temperature.unit')}",
-            "power": f"{int(self.get(data, 'power_readings.power_draw', 0))}{self.get(data, 'power_readings.unit')}",
+            "load": f"{gpu_util}{self.get(data, 'utilization.unit')}",
+            "temp": f"{gpu_temp}{self.get(data, 'temperature.unit')}",
+            "power": f"{gpu_power}{self.get(data, 'power_readings.unit')}",
             "avg_load": f"{avg_load}{self.get(data, 'utilization.unit')}",
             "avg_temp": f"{avg_temp}{self.get(data, 'temperature.unit')}",
             "avg_power": f"{avg_power}{self.get(data, 'power_readings.unit')}",
@@ -202,8 +217,14 @@ class TerminalUI:
         self.get_remote_worker_info()
 
     def open_log(self):
-        self.input = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
-        self.input.seek(0, os.SEEK_END)
+        # We try a couple of times, log rotiation, etc
+        for _ in range(2):
+            try:
+                self.input = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
+                self.input.seek(0, os.SEEK_END)
+                break
+            except OSError:
+                time.sleep(1)
 
     def load_log(self):
         while line := self.input.readline():
