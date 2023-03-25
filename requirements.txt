@@ -6,3 +6,6 @@ pyyaml
 unidecode
 regex
 rembg
+pynvml
+psutil
+windows-curses; sys_platform == 'win32'

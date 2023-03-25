@@ -1,9 +1,12 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
+
+from worker.ui import TerminalUI
 
 
 class WorkerFramework:
@@ -19,6 +22,7 @@ class WorkerFramework:
         self.consecutive_executor_restarts = 0
         self.consecutive_failed_jobs = 0
         self.executor = None
+        self.ui = None
         self.reload_data()
         logger.stats("Starting new stats session")
         # These two should be filled in by the extending classes
@@ -28,6 +32,13 @@ class WorkerFramework:
     @logger.catch(reraise=True)
     def start(self):
         self.exit_rc = 1
+
+        # Setup UI if requested
+        if self.bridge_data.enable_terminal_ui:
+            ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+            self.ui = threading.Thread(target=ui.run, daemon=True)
+            self.ui.start()
+
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False
             self.consecutive_failed_jobs = 0
@@ -37,6 +48,9 @@ class WorkerFramework:
                         self.executor.shutdown(wait=False)
                         break
                     try:
+                        if self.ui and not self.ui.is_alive():
+                            # UI Exited, we should probably exit
+                            raise KeyboardInterrupt()
                         self.process_jobs()
                     except KeyboardInterrupt:
                         self.should_stop = True
