@@ -65,6 +65,9 @@ class Terminal:
 
     DELIM = "::::"
 
+    # Number of seconds between audio alerts
+    ALERT_INTERVAL = 5
+
     JUNK = [
         "Result = False",
         "Result = True",
@@ -113,6 +116,8 @@ class Terminal:
         self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
         self.cpu_average = []
+        self.audio_alerts = False
+        self.last_audio_alert = 0
 
     def initialise(self):
         locale.setlocale(locale.LC_ALL, "")
@@ -289,7 +294,7 @@ class Terminal:
         # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
         # ║                        Total Workers: 1000        Total Threads: 1000       ║
         # ║                                                                             ║
-        # ║                       (m)aintenance  (s)ource  (d)ebug  (p)ause log  (q)uit ║
+        # ║            (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (q)uit  ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
         # Define three colums centres
@@ -364,6 +369,10 @@ class Terminal:
         if re.match(r"\d{3,4} MB", ram):
             ram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
         elif re.match(r"(\d{1,2}) MB", ram):
+            if self.audio_alerts:
+                if time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+                    self.last_audio_alert = time.time()
+                    curses.beep()
             ram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
         # self.print(self.main, row_local+3, col_left, f"")
@@ -378,6 +387,10 @@ class Terminal:
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
                 vram_colour = curses.color_pair(Terminal.COLOUR_MAGENTA)
             elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
+                if self.audio_alerts:
+                    if time.time() - self.last_audio_alert > Terminal.ALERT_INTERVAL:
+                        self.last_audio_alert = time.time()
+                        curses.beep()
                 vram_colour = curses.color_pair(Terminal.COLOUR_RED)
 
             self.draw_line(self.main, row_gpu, gpu["product"])
@@ -411,6 +424,7 @@ class Terminal:
             "(s)ource",
             "(d)ebug",
             "(p)ause log",
+            "(a)udio alerts",
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
@@ -419,7 +433,8 @@ class Terminal:
         x = self.print_switch(y, x, inputs[1], self.show_module)
         x = self.print_switch(y, x, inputs[2], self.show_debug)
         x = self.print_switch(y, x, inputs[3], self.pause_log)
-        x = self.print_switch(y, x, inputs[4], False)
+        x = self.print_switch(y, x, inputs[4], self.audio_alerts)
+        x = self.print_switch(y, x, inputs[5], False)
 
     def print_log(self):
 
@@ -575,6 +590,8 @@ class Terminal:
             self.show_debug = not self.show_debug
         elif x == ord("s"):
             self.show_module = not self.show_module
+        elif x == ord("a"):
+            self.audio_alerts = not self.audio_alerts
         elif x == ord("q"):
             self.finalise()
             return True
