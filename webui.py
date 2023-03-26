@@ -18,7 +18,7 @@ class DotDict(dict):
     def __getattr__(self, attr):
         if attr in self:
             return self[attr]
-        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
+        return ""
 
     def __setattr__(self, attr, value):
         self[attr] = value
