@@ -599,7 +599,7 @@ class WebUI:
                     with gr.Column():
                         max_threads = gr.Slider(
                             1,
-                            20,
+                            8,
                             step=1,
                             label=self._label("threads"),
                             value=config.max_threads,
