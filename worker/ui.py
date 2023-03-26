@@ -6,6 +6,7 @@ import curses
 import locale
 import os
 import re
+import sys
 import textwrap
 import threading
 import time
@@ -15,7 +16,7 @@ from math import trunc
 import psutil
 import requests
 import yaml
-from loguru import logger
+from nataili.util.logger import config, logger
 from pynvml.smi import nvidia_smi
 
 
@@ -222,10 +223,19 @@ class TerminalUI:
         self.last_audio_alert = 0
 
     def initialise(self):
+        # Suppress stdout / stderr
+        sys.stderr = os.devnull
+        sys.stdout = os.devnull
         if self.use_log_file:
             self.open_log()
         else:
-            # Hook loguru output
+            # Remove all loguru sinks
+            logger.remove()
+            handlers = [sink for sink in config["handlers"] if type(sink["sink"]) is str]
+            # Re-initialise loguru
+            newconfig = {"handlers": handlers}
+            logger.configure(**newconfig)
+            # Add our own handler
             logger.add(self.input, level="DEBUG")
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
@@ -776,9 +786,9 @@ if __name__ == "__main__":
     # Grab worker name and apikey if available
     if os.path.isfile("bridgeData.yaml"):
         with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
-            config = yaml.safe_load(configfile)
-            workername = config.get("worker_name", "")
-            apikey = config.get("api_key", "")
+            configdata = yaml.safe_load(configfile)
+            workername = configdata.get("worker_name", "")
+            apikey = configdata.get("api_key", "")
 
     term = TerminalUI(workername, apikey)
     # Standalone UI we need to inspect the log file
