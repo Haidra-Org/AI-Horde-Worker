@@ -16,12 +16,14 @@ from tqdm import tqdm
 LOG_FILE = "logs/bridge*.log"
 
 # TIME PERIODS
+#TODO: Use Enums
 PERIOD_ALL = 0
 PERIOD_TODAY = 1
 PERIOD_YESTERDAY = 2
 PERIOD_HORDE_DAY = 3
 PERIOD_HORDE_MONTH = 4
 PERIOD_KUDOS_HOUR = 5
+PERIOD_TEXT_HORDE_MONTH = 6
 
 # regex to identify model lines
 REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d).*Starting generation: (.*) @")
@@ -58,11 +60,12 @@ class LogStats:
             lines += 1
         return lines
 
-    def download_stats(self, period):
+    def download_stats(self, period, model_type="img"):
         self.unused_models = []  # not relevant
 
-        req = requests.get("https://stablehorde.net/api/v2/stats/img/models", verify=False)
+        req = requests.get(f"https://stablehorde.net/api/v2/stats/{model_type}/models", verify=False)
         self.used_models = req.json()[period] if req.ok else {}
+
 
     def parse_log(self):
         self.used_models = {}
@@ -80,6 +83,9 @@ class LogStats:
             return
         elif self.period == PERIOD_HORDE_MONTH:
             self.download_stats("month")
+            return
+        elif self.period == PERIOD_TEXT_HORDE_MONTH:
+            self.download_stats("month","text")
             return
 
         # Identify all log files and total number of log lines
@@ -155,6 +161,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
     )
+    parser.add_argument(
+        "-x", "--textmonth", help="Show statistics for the entire horde for the month for the text models", action="store_true"
+    )
     args = vars(parser.parse_args())
 
     period = PERIOD_ALL
@@ -166,6 +175,8 @@ if __name__ == "__main__":
         period = PERIOD_HORDE_DAY
     elif args["hordemonth"]:
         period = PERIOD_HORDE_MONTH
+    elif args["textmonth"]:
+        period = PERIOD_TEXT_HORDE_MONTH
     elif args["kudos"]:
         period = PERIOD_KUDOS_HOUR
 

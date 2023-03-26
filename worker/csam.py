@@ -258,6 +258,7 @@ whitespace_converter = re.compile(r"([^\w\s]|_)")
 def check_for_csam(clip_model, image, prompt, model_info=None):
     """This is the post-processing function,
     it takes the model name, and the image, and returns the post processed image"""
+    # return False, [], {}
     if not model_info:
         model_info = {}
     model_nsfw = model_info.get("nsfw", False)
