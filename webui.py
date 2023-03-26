@@ -5,6 +5,7 @@ import datetime
 import math
 import os
 import shutil
+import sys
 import time
 
 import gradio as gr
@@ -212,6 +213,17 @@ class WebUI:
                 return key
 
     def reload_config(self):
+
+        # Sanity check, to ensure Tazlin doesn't give me a hard time
+        # about this corner case [jug]
+        if os.path.exists("bridgeData.py"):
+            print(
+                "You have a very old config file. Please run your worker "
+                "at least once to update to the new format and then try again "
+                "with this webUI",
+                file=sys.stderr,
+            )
+            exit(1)
 
         if not os.path.exists(WebUI.CONFIG_FILE):
             # Create it from the template
