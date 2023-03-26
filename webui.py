@@ -28,7 +28,7 @@ class DotDict(dict):
             del self[attr]
         else:
             raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
-        
+
     def default(self, attr, value):
         if attr not in self:
             self[attr] = value
