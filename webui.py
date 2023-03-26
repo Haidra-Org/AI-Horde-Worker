@@ -1,6 +1,7 @@
 # webui.py
 # Simple web configuration for horde worker
 import argparse
+import math
 import os
 import shutil
 
@@ -165,7 +166,8 @@ class WebUI:
         },
         "max_power": {
             "label": "Maximum Image Size",
-            "info": "This number derives the maximum image size your worker can generate. "
+            "info": "This is the maximum image size your worker can generate. Start small at 512x512. "
+            "Larger images use a significant amount of VRAM, if you go too large your worker will crash. "
             "Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)",
         },
         "models_to_load": {
@@ -344,6 +346,13 @@ class WebUI:
         r = requests.put(worker_URL, json=payload, headers=header)
         return r.json()
 
+    def _imgsize(self, value):
+        try:
+            pixels = int(math.sqrt(64 * 64 * 8 * value))
+        except ValueError:
+            pixels = 0
+        return f"Maximum image size of approximately {pixels}x{pixels}"
+
     def initialise(self):
         config = self.reload_config()
 
@@ -401,12 +410,15 @@ class WebUI:
                         )
                         max_power = gr.Slider(
                             2,
-                            288,
+                            128,
                             step=2,
                             label=self._label("max_power"),
                             value=config.max_power,
                             info=self._info("max_power"),
                         )
+                        slider_desc = gr.Markdown("Change the Slider above to see max image size")
+                        # Hook the slider on change event to display image size
+                        max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
                         priority_usernames = gr.Textbox(
                             label=self._label("priority_usernames"),
                             value=existing_priority_usernames,
