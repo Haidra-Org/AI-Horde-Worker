@@ -429,15 +429,16 @@ class WebUI:
                             type="password",
                             info=self._info("api_key"),
                         )
+                        slider_desc = gr.Markdown("Maximum Image Size")
                         max_power = gr.Slider(
                             2,
                             128,
                             step=2,
                             label=self._label("max_power"),
+                            show_label=False,
                             value=config.max_power,
                             info=self._info("max_power"),
                         )
-                        slider_desc = gr.Markdown("Change the Slider above to see max image size")
                         # Hook the slider on change event to display image size
                         max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
                         priority_usernames = gr.Textbox(
