@@ -786,9 +786,9 @@ if __name__ == "__main__":
     # Grab worker name and apikey if available
     if os.path.isfile("bridgeData.yaml"):
         with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
-            config = yaml.safe_load(configfile)
-            workername = config.get("worker_name", "")
-            apikey = config.get("api_key", "")
+            configdata = yaml.safe_load(configfile)
+            workername = configdata.get("worker_name", "")
+            apikey = configdata.get("api_key", "")
 
     term = TerminalUI(workername, apikey)
     # Standalone UI we need to inspect the log file
