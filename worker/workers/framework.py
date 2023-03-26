@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
 
+from worker.stats import bridge_stats
 from worker.ui import TerminalUI
 
 
@@ -23,6 +24,7 @@ class WorkerFramework:
         self.consecutive_failed_jobs = 0
         self.executor = None
         self.ui = None
+        self.last_stats_time = time.time()
         self.reload_data()
         logger.stats("Starting new stats session")
         # These two should be filled in by the extending classes
@@ -172,6 +174,13 @@ class WorkerFramework:
                 job_thread.cancel()
             self.should_restart = True
             return
+
+        # Check periodically if any interesting stats should be announced
+        if self.bridge_data.stats_output_frequency and time.time() - self.last_stats_time > min(
+            self.bridge_data.stats_output_frequency, 30
+        ):
+            self.last_stats_time = time.time()
+            logger.info(f"Estimated average kudos per hour: {bridge_stats.stats.get('kudos_per_hour', 0)}")
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
