@@ -441,11 +441,6 @@ class WebUI:
                             value=existing_priority_usernames,
                             info=self._info("priority_usernames"),
                         )
-                        enable_terminal_ui = gr.Checkbox(
-                            label=self._label("enable_terminal_ui"),
-                            value=config.enable_terminal_ui,
-                            info=self._info("enable_terminal_ui"),
-                        )
 
                 with gr.Tab("Enable Features"):
                     with gr.Column():
@@ -628,6 +623,11 @@ class WebUI:
 
                 with gr.Tab("Advanced"):
                     with gr.Column():
+                        enable_terminal_ui = gr.Checkbox(
+                            label=self._label("enable_terminal_ui"),
+                            value=config.enable_terminal_ui,
+                            info=self._info("enable_terminal_ui"),
+                        )
                         horde_url = gr.Textbox(
                             label=self._label("horde_url"),
                             value=config.horde_url,
