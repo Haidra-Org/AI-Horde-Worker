@@ -12,8 +12,6 @@ import gradio as gr
 import requests
 import yaml
 
-style = ""
-
 
 # Helper class to access dictionaries
 class DotDict(dict):
@@ -407,7 +405,13 @@ class WebUI:
         if len(existing_censorlist) > 0 and existing_censorlist[-1] == ",":
             existing_censorlist = existing_censorlist[:-1]
 
-        with gr.Blocks(css=style) as self.app:
+        # Load css if it exists
+        css = ""
+        if os.path.exists("webui.css"):
+            with open("webui.css", "rt", encoding="utf-8", errors="ignore") as cssfile:
+                css = cssfile.read()
+
+        with gr.Blocks(css=css) as self.app:
             gr.Markdown("# AI Horde Worker Configuration")
 
             with gr.Row():
