@@ -1,6 +1,7 @@
 # webui.py
 # Simple web configuration for horde worker
 import argparse
+import datetime
 import math
 import os
 import shutil
@@ -267,6 +268,8 @@ class WebUI:
                 config[cfgkey] = models_to_load if cfgkey == "models_to_load" else value
         with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
             yaml.safe_dump(dict(config), configfile)
+
+        return f"Configuration Saved at {datetime.datetime.now()}"
 
     def download_models(self, model_location):
         models = None
@@ -632,44 +635,49 @@ class WebUI:
                 # gr.Button(value="Toggle Maintenance Mode", variant="primary").click(
                 #     update_worker_mode, inputs=[worker_name, worker_ID, maintenance_mode, api_key], outputs=system
                 # )
-                gr.Button(value="Save Configuration", variant="primary").click(
-                    self.save_config,
-                    inputs={
-                        allow_controlnet,
-                        allow_img2img,
-                        allow_painting,
-                        allow_post_processing,
-                        allow_unsafe_ip,
-                        always_download,
-                        api_key,
-                        blacklist,
-                        censor_nsfw,
-                        censorlist,
-                        disable_voodoo,
-                        dynamic_models,
-                        enable_model_cache,
-                        enable_terminal_ui,
-                        forms,
-                        horde_url,
-                        low_vram_mode,
-                        max_models_to_download,
-                        max_power,
-                        max_threads,
-                        models_to_load,
-                        models_to_skip,
-                        nataili_cache_home,
-                        nsfw,
-                        number_of_dynamic_models,
-                        priority_usernames,
-                        queue_size,
-                        ray_temp_dir,
-                        require_upfront_kudos,
-                        special_models_to_load,
-                        special_top_models_to_load,
-                        stats_output_frequency,
-                        worker_name,
-                    },
-                )
+                submit = gr.Button(value="Save Configuration", variant="primary")
+            with gr.Row():
+                message = gr.Markdown("")
+
+            submit.click(
+                self.save_config,
+                inputs={
+                    allow_controlnet,
+                    allow_img2img,
+                    allow_painting,
+                    allow_post_processing,
+                    allow_unsafe_ip,
+                    always_download,
+                    api_key,
+                    blacklist,
+                    censor_nsfw,
+                    censorlist,
+                    disable_voodoo,
+                    dynamic_models,
+                    enable_model_cache,
+                    enable_terminal_ui,
+                    forms,
+                    horde_url,
+                    low_vram_mode,
+                    max_models_to_download,
+                    max_power,
+                    max_threads,
+                    models_to_load,
+                    models_to_skip,
+                    nataili_cache_home,
+                    nsfw,
+                    number_of_dynamic_models,
+                    priority_usernames,
+                    queue_size,
+                    ray_temp_dir,
+                    require_upfront_kudos,
+                    special_models_to_load,
+                    special_top_models_to_load,
+                    stats_output_frequency,
+                    worker_name,
+                },
+                outputs=[message],
+            )
 
     def run(self, share, nobrowser, lan):
         server_name = "0.0.0.0" if lan else None
