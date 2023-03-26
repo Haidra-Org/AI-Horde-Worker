@@ -39,7 +39,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_payload = self.pop["payload"]
         self.r2_upload = self.pop.get("r2_upload", False)
         self.clip_model = None
-        self.last_stats_time = time.monotonic()
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -466,12 +465,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
-        if (
-            self.bridge_data.stats_output_frequency
-            and time.monotonic() - self.last_stats_time > self.bridge_data.stats_output_frequency
-        ):
-            self.last_stats_time = time.monotonic()
-            logger.info(f"Estimated average kudos per hour: {bridge_stats.stats['kudos_per_hour']}")
 
 
 def count_parentheses(s):

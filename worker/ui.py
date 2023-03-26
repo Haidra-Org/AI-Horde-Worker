@@ -16,6 +16,7 @@ from math import trunc
 import psutil
 import requests
 import yaml
+from nataili.util.logger import config, logger
 from pynvml.smi import nvidia_smi
 
 
@@ -32,6 +33,13 @@ class DequeOutputCollector:
             self.deque.popleft()
 
     def flush(self):
+        pass
+
+    def isatty(self):
+        # No, we are not a TTY
+        return False
+
+    def close(self):
         pass
 
 
@@ -128,6 +136,9 @@ class GPUInfo:
 class TerminalUI:
 
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
+    LOGURU_REGEX = re.compile(
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
+    )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
 
@@ -175,8 +186,10 @@ class TerminalUI:
         self.show_debug = False
         self.last_key = None
         self.pause_log = False
+        self.use_log_file = False
+        self.log_file = None
+        self.input = DequeOutputCollector()
         self.output = DequeOutputCollector()
-        self.stdout = DequeOutputCollector()
         self.worker_name = worker_name
         self.apikey = apikey
         self.worker_id = self.load_worker_id()
@@ -210,38 +223,75 @@ class TerminalUI:
         self.last_audio_alert = 0
 
     def initialise(self):
+        # Suppress stdout / stderr
+        sys.stderr = os.devnull
+        sys.stdout = os.devnull
+        if self.use_log_file:
+            self.open_log()
+        else:
+            # Remove all loguru sinks
+            logger.remove()
+            handlers = [sink for sink in config["handlers"] if type(sink["sink"]) is str]
+            # Re-initialise loguru
+            newconfig = {"handlers": handlers}
+            logger.configure(**newconfig)
+            # Add our own handler
+            logger.add(self.input, level="DEBUG")
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
         self.resize()
-        self.open_log()
         self.get_remote_worker_info()
 
     def open_log(self):
         # We try a couple of times, log rotiation, etc
         for _ in range(2):
             try:
-                self.input = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
-                self.input.seek(0, os.SEEK_END)
+                self.log_file = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
+                self.log_file.seek(0, os.SEEK_END)
                 break
             except OSError:
                 time.sleep(1)
 
     def load_log(self):
-        while line := self.input.readline():
+        if self.use_log_file:
+            while line := self.log_file.readline():
+                self.input.write(line)
+        self.load_log_queue()
+
+    def parse_log_line(self, line):
+        if self.use_log_file:
+            if regex := TerminalUI.REGEX.match(line):
+                if not self.show_debug and regex.group(1) == "DEBUG":
+                    return
+                if regex.group(1) == "ERROR":
+                    self.error_count += 1
+                elif regex.group(1) == "WARNING":
+                    self.warning_count += 1
+                return f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}"
+        else:
+            if regex := TerminalUI.LOGURU_REGEX.match(line):
+                if not self.show_debug and regex.group(2) == "DEBUG":
+                    return
+                if regex.group(2) == "ERROR":
+                    self.error_count += 1
+                elif regex.group(2) == "WARNING":
+                    self.warning_count += 1
+                return f"{regex.group(2)}::::{regex.group(1)}::::{regex.group(3)}::::{regex.group(4)}"
+
+    def load_log_queue(self):
+        lines = list(self.input.deque)
+        self.input.deque.clear()
+        for line in lines:
             ignore = False
             for skip in TerminalUI.JUNK:
                 if skip.lower() in line.lower():
                     ignore = True
             if ignore:
                 continue
-            if regex := TerminalUI.REGEX.match(line):
-                if not self.show_debug and regex.group(1) == "DEBUG":
-                    continue
-                if regex.group(1) == "ERROR":
-                    self.error_count += 1
-                elif regex.group(1) == "WARNING":
-                    self.warning_count += 1
-                self.output.write(f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}")
+            log_line = self.parse_log_line(line)
+            if not log_line:
+                continue
+            self.output.write(log_line)
             if regex := TerminalUI.KUDOS_REGEX.match(line):
                 self.kudos_per_hour = int(regex.group(1))
             if regex := TerminalUI.JOBDONE_REGEX.match(line):
@@ -264,8 +314,6 @@ class TerminalUI:
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-        # Suppress all output to stdout
-        sys.stdout = self.stdout
 
     def resize(self):
         # Determine terminal size
@@ -541,7 +589,6 @@ class TerminalUI:
 
         if not self.pause_log:
             self.load_log()
-
         output = list(self.output.deque)
         if not output:
             return
@@ -560,7 +607,7 @@ class TerminalUI:
                 colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = TerminalUI.COLOUR_RED
-            elif cat == "INIT":
+            elif cat == "INIT" or cat == "INIT_OK":
                 colour = TerminalUI.COLOUR_MAGENTA
             elif cat == "WARNING":
                 colour = TerminalUI.COLOUR_YELLOW
@@ -739,9 +786,11 @@ if __name__ == "__main__":
     # Grab worker name and apikey if available
     if os.path.isfile("bridgeData.yaml"):
         with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
-            config = yaml.safe_load(configfile)
-            workername = config.get("worker_name", "")
-            apikey = config.get("api_key", "")
+            configdata = yaml.safe_load(configfile)
+            workername = configdata.get("worker_name", "")
+            apikey = configdata.get("api_key", "")
 
     term = TerminalUI(workername, apikey)
+    # Standalone UI we need to inspect the log file
+    term.use_log_file = True
     term.run()

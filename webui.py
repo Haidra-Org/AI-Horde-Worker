@@ -1,496 +1,735 @@
+# webui.py
+# Simple web configuration for horde worker
+import argparse
+import datetime
+import math
+import os
+import shutil
+import sys
+import time
+
 import gradio as gr
 import requests
 import yaml
-from nataili.util.logger import logger
 
-from worker.bridge_data.interrogation import InterrogationBridgeData
-from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-
-style = """
-#has-over .svelte-1xipan2 {display : none;}
-#has-over:hover .svelte-1xipan2 {display : block;}
-#has-over{z-index: 50;}
-.svelte-1xipan2{
-    z-index:100;
-    position: absolute;
-    top:-10px;
-    left:-12px;
-    color:white;
-    background: #1F2937;
-    border: 1px solid #384151;
-    border-radius: 9px;
-    z-index: 1000;
-    transform: translateY(-100%);
-    padding: 10px;
-    padding-top:0;
-    color: white;
-    width:250px;
-    white-space: pre;
-    width: auto;
-}
-div.svelte-1fwqiwq{
-    overflow: initial!important;
-}
-"""
-
-worker_name_info = """
-This is a the name of your worker. It needs to be unique to the whole horde
-NOTE: You cannot run a interrogation and a stable diffusion worker with the same name"""
-api_key_info = """This is your Stable Horde API Key"""
-priority_usernames_info = """
-These users (in format username#id e.g. residentchiefnz#3966) will be prioritized over all other workers.
-Note: You do not need to add your own name to this list"""
-max_power_info = """
-This number derives the maximum image size your worker can generate.
-Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)"""
-queue_size_info = """
-This number determines the number of extra jobs that are collected.
-When the worker requests jobs it will request 1 job per thread plus this number"""
-max_threads_info = """
-This determines how many jobs will be processed simultaneously.
-Each job requires extra VRAM and will slow the speed of generations.
-This should be set to provide generations at a minumum of 0.6 megapixels per second
-Expected limit per VRAM size: 6Gb = 1 thread, 6-8Gb = 2 threads, 8-12Gb = 3 threads, 12Gb - 24Gb = 4 threads"""
-censor_nsfw_info = """
-If this is true and Enable NSFW is false, the worker will accept NSFW requests, but send back a censored image"""
-blacklist_info = """
-Any words in here that match a prompt will result in that job not being picked up by this worker"""
-censorlist_info = """
-Any words in here that match a prompt will always result in a censored image being returned"""
-enable_dynamic_models_info = """
-In addition to the models in "Models to Load" being loaded, the worker will also load models that in high demand"""
-max_models_to_download_info = """
-This number is the maximum number of models that the worker will download and run.
-Having a high number here will fill up your hard drive.
-NOTE: This includes the safety checker and the post-processors"""
-models_to_skip_info = """
-These models will never be downloaded to the worker, even if Enable Dynamic Models is selected"""
-models_to_load_info = """
-This determines which models to always have available from this worker.
-Each model takes between 2 and 8Gb of VRAM"""
+style = ""
 
 
-def Process_Input_List(list):
-    output = []
-    if list != "":
-        temp = list.split(",")
-        for item in temp:
-            trimmed_item = item.strip()
-            output.append(trimmed_item)
-    return output
+# Helper class to access dictionaries
+class DotDict(dict):
+    def __getattr__(self, attr):
+        if attr in self:
+            return self[attr]
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
+
+    def __setattr__(self, attr, value):
+        self[attr] = value
+
+    def __delattr__(self, attr):
+        if attr in self:
+            del self[attr]
+        else:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{attr}'")
 
 
-def Update_Bridge(
-    horde_url="https://stablehorde.net",
-    worker_name=None,
-    api_key="000000000000",
-    priority_usernames=None,
-    max_power=8,
-    queue_size=0,
-    max_threads=1,
-    nsfw=True,
-    censor_nsfw=False,
-    blacklist="",
-    censorlist="",
-    allow_img2img=True,
-    allow_painting=True,
-    allow_unsafe_ip=True,
-    allow_post_processing=True,
-    allow_controlnet=True,
-    require_upfront_kudos=False,
-    dynamic_models=True,
-    number_of_dynamic_models=3,
-    max_models_to_download=10,
-    models_to_load=None,
-    models_to_skip=None,
-    forms=None,
-):
-    priority_usernames_list = Process_Input_List(priority_usernames)
-    blacklist_list = Process_Input_List(blacklist)
-    censorlist_list = Process_Input_List(censorlist)
+class WebUI:
 
-    data = {
-        "horde_url": horde_url,
-        "worker_name": worker_name,
-        "api_key": api_key,
-        "priority_usernames": priority_usernames_list,
-        "max_power": max_power,
-        "queue_size": queue_size,
-        "max_threads": max_threads,
-        "nsfw": nsfw,
-        "censor_nsfw": censor_nsfw,
-        "blacklist": blacklist_list,
-        "censorlist": censorlist_list,
-        "allow_img2img": allow_img2img,
-        "allow_painting": allow_painting,
-        "allow_unsafe_ip": allow_unsafe_ip,
-        "allow_post_processing": allow_post_processing,
-        "allow_controlnet": allow_controlnet,
-        "require_upfront_kudos": require_upfront_kudos,
-        "dynamic_models": dynamic_models,
-        "number_of_dynamic_models": number_of_dynamic_models,
-        "max_models_to_download": max_models_to_download,
-        "models_to_load": models_to_load,
-        "models_to_skip": models_to_skip,
-        "forms": forms,
+    CONFIG_FILE = "bridgeData.yaml"
+
+    # This formally maps config item key name to gradio label and info.
+    # The reverse lookup is also done, gradio label to config item key name.
+    INFO = {
+        "worker_name": {
+            "label": "Worker Name",
+            "info": "This is a the name of your worker. It needs to be unique to the whole horde. "
+            "You cannot run different workers with the same name. It will be publicly visible.",
+        },
+        "api_key": {
+            "label": "API Key",
+            "info": "This is your Stable Horde API Key. You can get one free at " "https://stablehorde.net/register ",
+        },
+        "low_vram_mode": {
+            "label": "Enable low vram mode",
+            "info": "It may help worker stability to disable this if you run multiple threads.",
+        },
+        "horde_url": {
+            "label": "The URL of the horde API server.",
+            "info": "Don't change this unless you know exactly what you are doing.",
+        },
+        "stats_output_frequency": {
+            "label": "Stats Output Frequency",
+            "info": "How often, in seconds, that statistics such as kudos per hour are output to "
+            "the display by the worker.",
+        },
+        "threads": {
+            "label": "Number of Threads",
+            "info": "Most workers leave this at 1. "
+            "This determines how many jobs will be processed simultaneously. "
+            "Each job requires extra VRAM and will slow the speed of generations. "
+            "This should be set to provide generations at a minumum speed of 0.6 megapixels per second. "
+            "Expected max per VRAM size: 6Gb = 1 thread, 6-8Gb = 2 threads, 8-12Gb = 3 threads, "
+            "12Gb - 24Gb = 4 threads",
+        },
+        "queue_size": {
+            "label": "Job Queue Size",
+            "info": "This number determines the number of extra jobs that are collected. "
+            "When the worker requests jobs it will request 1 job per thread plus this number. ",
+        },
+        "allow_unsafe_ip": {"label": "Allow requests from suspicious IP addresses", "info": ""},
+        "require_upfront_kudos": {"label": "Accept requests only from users with kudos", "info": ""},
+        "blacklist": {
+            "label": "Blacklisted Words (Separate with commas)",
+            "info": "Any words in here that match a prompt will result in that job not being "
+            "accepted by this worker.",
+        },
+        "censorlist": {
+            "label": "Censored Words (Separate with commas)",
+            "info": "Any words in here that match a prompt will always result in a censored image " "being returned.",
+        },
+        "nsfw": {"label": "Enable NSFW", "info": "Allow your worker to accept jobs that contain NSFW " "content."},
+        "censor_nsfw": {
+            "label": "Censor NSFW images",
+            "info": "If this is true and Enable NSFW is false, the worker will accept NSFW requests, "
+            "but send back a censored image",
+        },
+        "nataili_cache_home": {
+            "label": "Nataili Model Directory",
+            "info": "Downloaded models files " "are stored here.",
+        },
+        "ray_temp_dir": {
+            "label": "Model Cache Directory",
+            "info": "Model cache data is stored here. Downloaded models are processed and copies stored "
+            "here to make loading the models faster whilst the worker is running. You can prevent "
+            "this behaviour with the 'Disable all model caching' setting below.",
+        },
+        "enable_model_cache": {
+            "label": "Enable persistent disk model cache",
+            "info": "By default the model cache uses some RAM and disk to cache models, and deletes the "
+            "cache every time the worker starts up. You can reduce your RAM usage and speed up worker "
+            "startup times by selecting this option. Good if you have fast disks.",
+        },
+        "disable_voodoo": {
+            "label": "Disable all model caching",
+            "info": "Completely disable model caching in RAM or on disk and load all models directly "
+            "into VRAM and keep them there. Requires that all loaded models fit in VRAM. "
+            "Good if you have slow disks, but don't load more models than will fit in your VRAM!",
+        },
+        "always_download": {
+            "label": "Automatically download required models",
+            "info": "Download any required models without asking you first.",
+        },
+        "dynamic_models": {
+            "label": "Enable dynamic models",
+            "info": "In addition to any other models you have selected to load, you can select this to "
+            "have your worker automatically load whatever models are in high demand on the horde right "
+            "now. This constantly checks what models are in highest demand and loads them.",
+        },
+        "number_of_dynamic_models": {
+            "label": "Number of Models to Dynamically Load",
+            "info": "This number of high demand models will be dynamically loaded, in addition to any "
+            "other models you have selected to load.",
+        },
+        "max_models_to_download": {
+            "label": "Maximum Number of Models to Download",
+            "info": "This number is the maximum number of models that the worker will download and run. "
+            "Each model can take between 2 GB to 8 GB, ensure you have enough storage space available. "
+            "This number includes system models such as the safety checker and the post-processors, so "
+            "don't set it too low!",
+        },
+        "forms": {
+            "label": "Alchemy Worker Features",
+            "info": "Enable or disable the different types of requests accepted by this worker if you"
+            "run an Alchemy worker (image interrogation and upscaling worker)",
+        },
+        "allow_img2img": {
+            "label": "Allow img2img requests",
+            "info": "Enable or disable the processing of img2img jobs.",
+        },
+        "allow_painting": {
+            "label": "Allow inpainting requests",
+            "info": "Enable or disable the processing of inpainting jobs.",
+        },
+        "allow_post_processing": {
+            "label": "Allow requests requiring post-processing",
+            "info": "Enable or disable the processing of jobs that also require post-processing.",
+        },
+        "allow_controlnet": {
+            "label": "Allow requests requiring ControlNet",
+            "info": "Enable or disable the processing of jobs that also require ControlNet.",
+        },
+        "enable_terminal_ui": {
+            "label": "Enable Terminal UI",
+            "info": "Display helpful information about the worker in the terminal when the worker is " "running.",
+        },
+        "priority_usernames": {
+            "label": "Priority Usernames (Separate with commas)",
+            "info": "These users will be prioritized over all others when submitting jobs. "
+            "Enter in format username#id e.g. residentchiefnz#3966. You do not need "
+            "to add your own name to this list",
+        },
+        "max_power": {
+            "label": "Maximum Image Size",
+            "info": "This is the maximum image size your worker can generate. Start small at 512x512. "
+            "Larger images use a significant amount of VRAM, if you go too large your worker will crash. "
+            "Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)",
+        },
+        "models_to_load": {
+            "label": "Individual Models To Load",
+            "info": "You can select individual models to load here. These are loaded in addition to "
+            "any other models you have selected, such as 'Top 5' and dynamic models.",
+        },
+        "models_to_skip": {
+            "label": "Models To Skip",
+            "info": "Any model you select here will NEVER be downloaded to your worker, regardless of "
+            "any other model loading settings. Use this to completely exclude a model from your worker.",
+        },
+        "special_models_to_load": {
+            "label": "Loading Groups of Models",
+            "info": "You can select groups of models here. 'All Models' loads all possible models. "
+            "The other options load different subsets of models based on style. You can select "
+            "more than one.",
+        },
+        "special_top_models_to_load": {
+            "label": "Automatically Loading Popular Models",
+            "info": "Choose to automatically load the top 'n' most popular models of the day.",
+        },
     }
-    with open("bridgeData.yaml", "wt", encoding="utf-8") as configfile:
-        yaml.safe_dump(data, configfile)
-    data["api_key"] = "**********"
-    return yaml.dump(data)
 
+    def __init__(self):
+        self.app = None
 
-def download_models(model_location):
-    models = None
-    try:
-        r = requests.get(model_location)
-        models = r.json()
-        print("Models downloaded successfully")
-    except Exception:
-        print("Failed to load models")
-    return models
+    def _label(self, name):
+        if name in WebUI.INFO:
+            return WebUI.INFO[name]["label"]
 
+    def _info(self, name):
+        if name in WebUI.INFO:
+            return f"{WebUI.INFO[name]['info']} [{name}]"
 
-def load_models():
-    remote_models = "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
-    latest_models = download_models(remote_models)
+    # Label to config item name
+    def _cfg(self, label):
+        for key, value in WebUI.INFO.items():
+            if value["label"] == label:
+                return key
 
-    available_models = [
-        model
-        for model in latest_models
-        if model
-        not in [
-            "RealESRGAN_x4plus",
-            "RealESRGAN_x4plus_anime_6B",
-            "GFPGAN",
-            "CodeFormers",
-            "LDSR",
-            "BLIP",
-            "BLIP_Large",
-            "ViT-L/14",
-            "ViT-g-14",
-            "ViT-H-14",
-            "diffusers_stable_diffusion",
-            "safety_checker",
+    def reload_config(self):
+
+        # Sanity check, to ensure Tazlin doesn't give me a hard time
+        # about this corner case [jug]
+        if os.path.exists("bridgeData.py"):
+            print(
+                "You have a very old config file. Please run your worker "
+                "at least once to update to the new format and then try again "
+                "with this webUI",
+                file=sys.stderr,
+            )
+            exit(1)
+
+        if not os.path.exists(WebUI.CONFIG_FILE):
+            # Create it from the template
+            shutil.copy("bridgeData_template.yaml", WebUI.CONFIG_FILE)
+
+        with open(WebUI.CONFIG_FILE, "rt", encoding="utf-8") as configfile:
+            data = yaml.safe_load(configfile)
+
+        return DotDict(data)
+
+    def process_input_list(self, list):
+        output = []
+        if list != "":
+            temp = list.split(",")
+            for item in temp:
+                trimmed_item = item.strip()
+                output.append(trimmed_item)
+        return output
+
+    def save_config(self, args):
+        args = DotDict(args)
+
+        # Grab the existing config file contents
+        config = self.reload_config()
+
+        # Merge values which require some pre-processing
+        donekeys = []
+        models_to_load = []
+        for key, value in args.items():
+            cfgkey = self._cfg(key.label)
+            if cfgkey == "priority_usernames":
+                config.priority_usernames = self.process_input_list(value)
+                donekeys.append(key)
+            elif cfgkey == "blacklist":
+                config.blacklist = self.process_input_list(value)
+                donekeys.append(key)
+            elif cfgkey == "censorlist":
+                config.censorlist = self.process_input_list(value)
+                donekeys.append(key)
+            elif cfgkey == "special_models_to_load":
+                models_to_load.extend(value)
+                donekeys.append(key)
+            elif cfgkey == "special_top_models_to_load":
+                if value and value != "None":
+                    models_to_load.append(value)
+                    donekeys.append(key)
+            elif cfgkey == "models_to_load":
+                models_to_load.extend(value)
+
+        # Merge the settings we have been passed into the old config,
+        # don't remove anything we don't understand
+        for key, value in args.items():
+            if key not in donekeys:
+                cfgkey = self._cfg(key.label)
+                config[cfgkey] = models_to_load if cfgkey == "models_to_load" else value
+        with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
+            yaml.safe_dump(dict(config), configfile)
+
+        return f"Configuration Saved at {datetime.datetime.now()}"
+
+    def download_models(self, model_location):
+        models = None
+        try:
+            r = requests.get(model_location)
+            models = r.json()
+            print("Models downloaded successfully")
+        except Exception:
+            print("Failed to load models")
+        return models
+
+    def load_models(self):
+        remote_models = (
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+        )
+        latest_models = self.download_models(remote_models)
+
+        available_models = [
+            model
+            for model in latest_models
+            if model
+            not in [
+                "RealESRGAN_x4plus",
+                "RealESRGAN_x4plus_anime_6B",
+                "GFPGAN",
+                "CodeFormers",
+                "LDSR",
+                "BLIP",
+                "BLIP_Large",
+                "ViT-L/14",
+                "ViT-g-14",
+                "ViT-H-14",
+                "diffusers_stable_diffusion",
+                "safety_checker",
+            ]
         ]
-    ]
-    return sorted(available_models, key=str.casefold)
+        return sorted(available_models, key=str.casefold)
 
+    def load_workerID(self, worker_name):
+        workerID = ""
+        workers_URL = "https://stablehorde.net/api/v2/workers"
+        r = requests.get(workers_URL)
+        worker_json = r.json()
+        for item in worker_json:
+            if item["name"] == worker_name:
+                workerID = item["id"]
+        return workerID
 
-def load_workerID(worker_name):
-    workerID = ""
-    workers_URL = "https://stablehorde.net/api/v2/workers"
-    r = requests.get(workers_URL)
-    worker_json = r.json()
-    for item in worker_json:
-        if item["name"] == worker_name:
-            workerID = item["id"]
-    return workerID
+    def load_worker_mode(self, worker_name):
+        worker_mode = False
+        workers_URL = "https://stablehorde.net/api/v2/workers"
+        r = requests.get(workers_URL)
+        worker_json = r.json()
+        for item in worker_json:
+            if item["name"] == worker_name:
+                worker_mode = item["maintenance_mode"]
+        return worker_mode
 
+    def load_worker_stats(self, worker_name):
+        worker_stats = ""
+        workers_URL = "https://stablehorde.net/api/v2/workers"
+        r = requests.get(workers_URL)
+        worker_json = r.json()
+        for item in worker_json:
+            if item["name"] == worker_name:
+                worker_stats += "Current MPS:  " + str(item["performance"]).split()[0] + " MPS\n"
+                worker_stats += "Total Kudos Earned:  " + str(item["kudos_rewards"]) + "\n"
+                worker_stats += "Total Jobs Completed:  " + str(item["requests_fulfilled"])
+        return worker_stats
 
-def load_worker_mode(worker_name):
-    worker_mode = False
-    workers_URL = "https://stablehorde.net/api/v2/workers"
-    r = requests.get(workers_URL)
-    worker_json = r.json()
-    for item in worker_json:
-        if item["name"] == worker_name:
-            worker_mode = item["maintenance_mode"]
-    return worker_mode
+    def update_worker_mode(self, worker_name, worker_id, current_mode, apikey):
+        header = {"apikey": apikey}
+        payload = {"maintenance": False, "name": worker_name}
+        if current_mode == "False":
+            payload = {"maintenance": True, "name": worker_name}
+        worker_URL = f"https://stablehorde.net/api/v2/workers/{worker_id}"
+        requests.put(worker_URL, json=payload, headers=header)
+        state = "enabled" if payload["maintenance"] else "disabled"
+        return f"Maintenance mode is being {state}, this may take up to 30 seconds to update here. Please wait."
 
+    def _imgsize(self, value):
+        try:
+            pixels = int(math.sqrt(64 * 64 * 8 * value))
+        except ValueError:
+            pixels = 0
+        return f"Maximum image size of approximately {pixels}x{pixels}"
 
-def load_worker_stats(worker_name):
-    worker_stats = ""
-    workers_URL = "https://stablehorde.net/api/v2/workers"
-    r = requests.get(workers_URL)
-    worker_json = r.json()
-    for item in worker_json:
-        if item["name"] == worker_name:
-            worker_stats += "Current MPS:  " + str(item["performance"]).split()[0] + " MPS\n"
-            worker_stats += "Total Kudos Earned:  " + str(item["kudos_rewards"]) + "\n"
-            worker_stats += "Total Jobs Completed:  " + str(item["requests_fulfilled"])
-    return worker_stats
+    def initialise(self):
+        config = self.reload_config()
 
+        model_list = self.load_models()
+        # Seperate out the magic constants
+        models_to_load_all = []
+        models_to_load_top = "None"
+        models_to_load_individual = []
+        for model in config.models_to_load:
+            if model and model.lower().startswith("top "):
+                models_to_load_top = model.title()
+            elif model and model.lower().startswith("all "):
+                models_to_load_all.append(model.title())
+            else:
+                models_to_load_individual.append(model)
 
-def update_worker_mode(worker_name, worker_id, current_mode, apikey):
-    header = {"apikey": apikey}
-    payload = {"maintenance": False, "name": worker_name}
-    if current_mode == "False":
-        payload = {"maintenance": True, "name": worker_name}
-    worker_URL = f"https://stablehorde.net/api/v2/workers/{worker_id}"
-    r = requests.put(worker_URL, json=payload, headers=header)
-    return r.json()
+        existing_priority_usernames = ""
+        for item in config.priority_usernames:
+            existing_priority_usernames += item
+            existing_priority_usernames += ","
+        if len(existing_priority_usernames) > 0 and existing_priority_usernames[-1] == ",":
+            existing_priority_usernames = existing_priority_usernames[:-1]
 
+        existing_blacklist = ""
+        for item in config.blacklist:
+            existing_blacklist += item
+            existing_blacklist += ","
+        if len(existing_blacklist) > 0 and existing_blacklist[-1] == ",":
+            existing_blacklist = existing_blacklist[:-1]
 
-def Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data):
-    stable_diffusion_bridge_data.reload_data()
-    interrogation_bridge_data.reload_data()
+        existing_censorlist = ""
+        for item in config.censorlist:
+            existing_censorlist += item
+            existing_censorlist += ","
+        if len(existing_censorlist) > 0 and existing_censorlist[-1] == ",":
+            existing_censorlist = existing_censorlist[:-1]
 
-    model_list = load_models()
-    current_model_list = stable_diffusion_bridge_data.model_names
-    if stable_diffusion_bridge_data.dynamic_models:
-        current_model_list = stable_diffusion_bridge_data.predefined_models
-    current_model_list = list(set(current_model_list))
-    existing_priority_usernames = ""
-    for item in stable_diffusion_bridge_data.priority_usernames:
-        existing_priority_usernames += item
-        existing_priority_usernames += ","
-    if len(existing_priority_usernames) > 0 and existing_priority_usernames[-1] == ",":
-        existing_priority_usernames = existing_priority_usernames[:-1]
+        with gr.Blocks(css=style) as self.app:
+            gr.Markdown("# AI Horde Worker Configuration")
 
-    existing_blacklist = ""
-    for item in stable_diffusion_bridge_data.blacklist:
-        existing_blacklist += item
-        existing_blacklist += ","
-    if len(existing_blacklist) > 0 and existing_blacklist[-1] == ",":
-        existing_blacklist = existing_blacklist[:-1]
-
-    existing_censorlist = ""
-    for item in stable_diffusion_bridge_data.censorlist:
-        existing_censorlist += item
-        existing_censorlist += ","
-    if len(existing_censorlist) > 0 and existing_censorlist[-1] == ",":
-        existing_censorlist = existing_censorlist[:-1]
-
-    with gr.Blocks(css=style) as WebUI:
-        horde_url = gr.Textbox("https://stablehorde.net", visible=False)
-        gr.Markdown("# Welcome to the Stable Horde Bridge Configurator")
-        with gr.Column():
             with gr.Row():
-                worker_ID = gr.TextArea(label="Worker ID", lines=1, interactive=False)
-                maintenance_mode = gr.TextArea(label="Current Maintenance Mode Status", lines=1, interactive=False)
-                worker_stats = gr.TextArea(label="Worker Statistics", lines=3, interactive=False)
+
+                with gr.Tab("Basic Settings"):
+                    with gr.Column():
+                        worker_name = gr.Textbox(
+                            label=self._label("worker_name"),
+                            value=config.worker_name,
+                            info=self._info("worker_name"),
+                        )
+                        api_key = gr.Textbox(
+                            label=self._label("api_key"),
+                            value=config.api_key,
+                            type="password",
+                            info=self._info("api_key"),
+                        )
+                        max_power = gr.Slider(
+                            2,
+                            128,
+                            step=2,
+                            label=self._label("max_power"),
+                            value=config.max_power,
+                            info=self._info("max_power"),
+                        )
+                        slider_desc = gr.Markdown("Change the Slider above to see max image size")
+                        # Hook the slider on change event to display image size
+                        max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
+                        priority_usernames = gr.Textbox(
+                            label=self._label("priority_usernames"),
+                            value=existing_priority_usernames,
+                            info=self._info("priority_usernames"),
+                        )
+
+                with gr.Tab("Enable Features"):
+                    with gr.Column():
+                        allow_img2img = gr.Checkbox(
+                            label=self._label("allow_img2img"),
+                            value=config.allow_img2img,
+                            info=self._info("allow_img2img"),
+                        )
+                        allow_painting = gr.Checkbox(
+                            label=self._label("allow_painting"),
+                            value=config.allow_painting,
+                            info=self._info("allow_painting"),
+                        )
+                        allow_post_processing = gr.Checkbox(
+                            label=self._label("allow_post_processing"),
+                            value=config.allow_post_processing,
+                            info=self._info("allow_post_processing"),
+                        )
+                        allow_controlnet = gr.Checkbox(
+                            label=self._label("allow_controlnet"),
+                            value=config.allow_controlnet,
+                            info=self._info("allow_controlnet"),
+                        )
+                        forms = gr.CheckboxGroup(
+                            label=self._label("forms"),
+                            choices=["caption", "nsfw", "interrogation", "post-process"],
+                            value=config.forms,
+                            info=self._info("forms"),
+                        )
+
+                with gr.Tab("Models To Load"):
+                    with gr.Row():
+                        special_models_to_load = gr.CheckboxGroup(
+                            choices=[
+                                "All Models",
+                                "All Realistic Models",
+                                "All Anime Models",
+                                "All Generalist Models",
+                                "All Furry Models",
+                                "All Artistic Models",
+                                "All Other Models",
+                            ],
+                            label=self._label("special_models_to_load"),
+                            value=models_to_load_all,
+                            info=self._info("special_models_to_load"),
+                        )
+                    with gr.Row():
+                        special_top_models_to_load = gr.Radio(
+                            choices=[
+                                "None",
+                                "Top 1",
+                                "Top 2",
+                                "Top 3",
+                                "Top 4",
+                                "Top 5",
+                                "Top 6",
+                                "Top 7",
+                                "Top 8",
+                                "Top 9",
+                                "Top 10",
+                            ],
+                            label=self._label("special_top_models_to_load"),
+                            value=models_to_load_top,
+                            info=self._info("special_top_models_to_load"),
+                        )
+                    with gr.Row():
+                        with gr.Column():
+                            models_to_load = gr.CheckboxGroup(
+                                choices=model_list,
+                                label=self._label("models_to_load"),
+                                value=models_to_load_individual,
+                                info=self._info("models_to_load"),
+                            )
+
+                with gr.Tab("Models to Skip"):
+                    with gr.Column():
+                        models_to_skip = gr.CheckboxGroup(
+                            choices=model_list,
+                            label=self._label("models_to_skip"),
+                            value=config.models_to_skip,
+                            info=self._info("models_to_skip"),
+                        )
+
+                with gr.Tab("Model Management"):
+                    with gr.Column():
+                        always_download = gr.Checkbox(
+                            label=self._label("always_download"),
+                            value=config.always_download,
+                            info=self._info("always_download"),
+                        )
+                        enable_model_cache = gr.Checkbox(
+                            label=self._label("enable_model_cache"),
+                            value=config.enable_model_cache,
+                            info=self._info("enable_model_cache"),
+                        )
+                        disable_voodoo = gr.Checkbox(
+                            label=self._label("disable_voodoo"),
+                            value=config.disable_voodoo,
+                            info=self._info("disable_voodoo"),
+                        )
+                        max_models_to_download = gr.Number(
+                            label=self._label("max_models_to_download"),
+                            value=config.max_models_to_download,
+                            precision=0,
+                            info=self._info("max_models_to_download"),
+                        )
+                        dynamic_models = gr.Checkbox(
+                            label=self._label("dynamic_models"),
+                            value=config.dynamic_models,
+                            info=self._info("dynamic_models"),
+                        )
+                        number_of_dynamic_models = gr.Number(
+                            label=self._label("number_of_dynamic_models"),
+                            value=config.number_of_dynamic_models,
+                            precision=0,
+                            info=self._info("number_of_dynamic_models"),
+                        )
+                        nataili_cache_home = gr.Textbox(
+                            label=self._label("nataili_cache_home"),
+                            value=config.nataili_cache_home,
+                            info=self._info("nataili_cache_home"),
+                        )
+                        ray_temp_dir = gr.Textbox(
+                            label=self._label("ray_temp_dir"),
+                            value=config.ray_temp_dir,
+                            info=self._info("ray_temp_dir"),
+                        )
+
+                with gr.Tab("Security"):
+                    with gr.Column():
+                        allow_unsafe_ip = gr.Checkbox(
+                            label=self._label("allow_unsafe_ip"),
+                            value=config.allow_unsafe_ip,
+                            info=self._info("allow_unsafe_ip"),
+                        )
+                        require_upfront_kudos = gr.Checkbox(
+                            label=self._label("require_upfront_kudos"),
+                            value=config.require_upfront_kudos,
+                            info=self._info("require_upfront_kudos"),
+                        )
+                        blacklist = gr.Textbox(
+                            label=self._label("blacklist"),
+                            value=existing_blacklist,
+                            info=self._info("blacklist"),
+                        )
+                        censorlist = gr.Textbox(
+                            label=self._label("censorlist"),
+                            value=existing_censorlist,
+                            info=self._info("censorlist"),
+                        )
+                        nsfw = gr.Checkbox(
+                            label=self._label("nsfw"),
+                            value=config.nsfw,
+                            info=self._info("nsfw"),
+                        )
+                        censor_nsfw = gr.Checkbox(
+                            label=self._label("censor_nsfw"),
+                            value=config.censor_nsfw,
+                            info=self._info("censor_nsfw"),
+                        )
+
+                with gr.Tab("Performance"):
+                    with gr.Column():
+                        max_threads = gr.Slider(
+                            1,
+                            8,
+                            step=1,
+                            label=self._label("threads"),
+                            value=config.max_threads,
+                            info=self._info("threads"),
+                        )
+                        queue_size = gr.Slider(
+                            0,
+                            2,
+                            step=1,
+                            label=self._label("queue_size"),
+                            value=config.queue_size,
+                            info=self._info("queue_size"),
+                        )
+
+                with gr.Tab("Advanced"):
+                    with gr.Column():
+                        enable_terminal_ui = gr.Checkbox(
+                            label=self._label("enable_terminal_ui"),
+                            value=config.enable_terminal_ui,
+                            info=self._info("enable_terminal_ui"),
+                        )
+                        horde_url = gr.Textbox(
+                            label=self._label("horde_url"),
+                            value=config.horde_url,
+                            info=self._info("horde_url"),
+                        )
+                        low_vram_mode = gr.Checkbox(
+                            label=self._label("low_vram_mode"),
+                            value=config.low_vram_mode,
+                            info=self._info("low_vram_mode"),
+                        )
+                        stats_output_frequency = gr.Number(
+                            label=self._label("stats_output_frequency"),
+                            value=config.stats_output_frequency,
+                            precision=0,
+                            info=self._info("stats_output_frequency"),
+                        )
+
+                with gr.Tab("Worker Control"):
+                    with gr.Column():
+                        gr.Markdown(
+                            "Enable maintenance mode to prevent this worker fetching any more jobs to process. "
+                            "Jobs that you submit yourself will still be picked up by your worker even if maintenance "
+                            "mode is enabled."
+                        )
+                        maint_button = gr.Button(value="Toggle Maintenance Mode", variant="secondary")
+                        maint_message = gr.Markdown("")
+                        worker_id = gr.Textbox(label="Worker ID")
+                        maintenance_mode = gr.Textbox(label="Current Maintenance Mode Status")
+                        self.app.load(self.load_workerID, inputs=worker_name, outputs=worker_id, every=15)
+                        self.app.load(self.load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+
+                        maint_button.click(
+                            self.update_worker_mode,
+                            inputs=[worker_name, worker_id, maintenance_mode, api_key],
+                            outputs=[maint_message],
+                        )
+
             with gr.Row():
-                worker_name = gr.Textbox(
-                    label="Worker Name",
-                    value=stable_diffusion_bridge_data.worker_name,
-                    elem_id="has-over",
-                    info=worker_name_info,
-                )
-                api_key = gr.Textbox(
-                    label="API Key",
-                    value=stable_diffusion_bridge_data.api_key,
-                    type="password",
-                    elem_id="has-over",
-                    info=api_key_info,
-                )
-                priority_usernames = gr.Textbox(
-                    label="Priority Usernames",
-                    value=existing_priority_usernames,
-                    elem_id="has-over",
-                    info=priority_usernames_info,
-                )
+                submit = gr.Button(value="Save Configuration", variant="primary")
             with gr.Row():
-                max_threads = gr.Slider(
-                    1,
-                    20,
-                    step=1,
-                    label="Number of Threads",
-                    value=stable_diffusion_bridge_data.max_threads,
-                    elem_id="has-over",
-                    info=max_threads_info,
-                )
+                message = gr.Markdown("")
 
-                queue_size = gr.Slider(
-                    0,
-                    2,
-                    step=1,
-                    label="Queue Size",
-                    value=stable_diffusion_bridge_data.queue_size,
-                    elem_id="has-over",
-                    info=queue_size_info,
-                )
-                allow_unsafe_ip = gr.Checkbox(
-                    label="Allow Requests From Suspicious IP Addresses",
-                    value=stable_diffusion_bridge_data.allow_unsafe_ip,
-                )
-                require_upfront_kudos = gr.Checkbox(
-                    label="Require Users To Have Kudos Before Processing",
-                    value=stable_diffusion_bridge_data.require_upfront_kudos,
-                )
-        with gr.Tab("Image Generation"):
-            with gr.Tab("Image Generation"):
-                with gr.Row():
-                    max_power = gr.Slider(
-                        2,
-                        288,
-                        step=2,
-                        label="Max Power",
-                        value=stable_diffusion_bridge_data.max_power,
-                        elem_id="has-over",
-                        info=max_power_info,
-                    )
-
-                    allow_img2img = gr.Checkbox(
-                        label="Allow img2img Requests", value=stable_diffusion_bridge_data.allow_img2img
-                    )
-                    allow_painting = gr.Checkbox(
-                        label="Allow Inpainting Requests", value=stable_diffusion_bridge_data.allow_painting
-                    )
-                    allow_post_processing = gr.Checkbox(
-                        label="Allow Requests Requiring Post-Processing",
-                        value=stable_diffusion_bridge_data.allow_post_processing,
-                    )
-                    allow_controlnet = gr.Checkbox(
-                        label="Allow Requests Requiring ControlNet",
-                        value=stable_diffusion_bridge_data.allow_controlnet,
-                    )
-            with gr.Tab("NSFW"):
-                with gr.Row():
-                    nsfw = gr.Checkbox(label="Enable NSFW", value=stable_diffusion_bridge_data.nsfw)
-                    censor_nsfw = gr.Checkbox(
-                        label="Censor NSFW Images",
-                        value=stable_diffusion_bridge_data.censor_nsfw,
-                        elem_id="has-over",
-                        info=censor_nsfw_info,
-                    )
-
-                blacklist = gr.Textbox(
-                    label="Blacklisted Words or Phrases - Seperate with commas",
-                    value=existing_blacklist,
-                    elem_id="has-over",
-                    info=blacklist_info,
-                )
-
-                censorlist = gr.Textbox(
-                    label="Censored Words or Phrases - Seperate with commas",
-                    value=existing_censorlist,
-                    elem_id="has-over",
-                    info=censorlist_info,
-                )
-
-            with gr.Tab("Model Manager"):
-                with gr.Row():
-                    dynamic_models = gr.Checkbox(
-                        label="Enable Dynamic Models",
-                        value=stable_diffusion_bridge_data.dynamic_models,
-                        elem_id="has-over",
-                        info=enable_dynamic_models_info,
-                    )
-
-                    number_of_dynamic_models = gr.Number(
-                        label="Number of Models To Be Dynamically Loading",
-                        value=stable_diffusion_bridge_data.number_of_dynamic_models,
-                        precision=0,
-                    )
-                    max_models_to_download = gr.Number(
-                        label="Maximum Number of Models To Download",
-                        value=stable_diffusion_bridge_data.max_models_to_download,
-                        precision=0,
-                        elem_id="has-over",
-                        info=max_models_to_download_info,
-                    )
-                models_to_load = gr.CheckboxGroup(
-                    choices=model_list,
-                    label="Models To Load (Not affected by dynamic models)",
-                    value=current_model_list,
-                    elem_id="has-over",
-                    info=models_to_load_info,
-                )
-                models_to_skip = gr.CheckboxGroup(
-                    choices=model_list,
-                    label="Models To Skip",
-                    value=stable_diffusion_bridge_data.models_to_skip,
-                    elem_id="has-over",
-                    info=models_to_skip_info,
-                )
-
-        with gr.Tab("Image Interrogation"):
-            forms = gr.CheckboxGroup(
-                label="Interrogation Modes",
-                choices=["caption", "nsfw", "interrogation"],
-                value=interrogation_bridge_data.forms,
-            )
-        with gr.Row():
-            system = gr.TextArea(label="System Messages", lines=1, interactive=False)
-        with gr.Row():
-            gr.Button(value="Toggle Maintenance Mode", variant="primary").click(
-                update_worker_mode, inputs=[worker_name, worker_ID, maintenance_mode, api_key], outputs=system
-            )
-            gr.Button(value="Update Bridge", variant="Primary").click(
-                Update_Bridge,
-                inputs=[
-                    horde_url,
-                    worker_name,
-                    api_key,
-                    priority_usernames,
-                    max_power,
-                    queue_size,
-                    max_threads,
-                    nsfw,
-                    censor_nsfw,
-                    blacklist,
-                    censorlist,
+            submit.click(
+                self.save_config,
+                inputs={
+                    allow_controlnet,
                     allow_img2img,
                     allow_painting,
-                    allow_unsafe_ip,
                     allow_post_processing,
-                    allow_controlnet,
-                    require_upfront_kudos,
+                    allow_unsafe_ip,
+                    always_download,
+                    api_key,
+                    blacklist,
+                    censor_nsfw,
+                    censorlist,
+                    disable_voodoo,
                     dynamic_models,
-                    number_of_dynamic_models,
+                    enable_model_cache,
+                    enable_terminal_ui,
+                    forms,
+                    horde_url,
+                    low_vram_mode,
                     max_models_to_download,
+                    max_power,
+                    max_threads,
                     models_to_load,
                     models_to_skip,
-                    forms,
-                ],
-                outputs=system,
+                    nataili_cache_home,
+                    nsfw,
+                    number_of_dynamic_models,
+                    priority_usernames,
+                    queue_size,
+                    ray_temp_dir,
+                    require_upfront_kudos,
+                    special_models_to_load,
+                    special_top_models_to_load,
+                    stats_output_frequency,
+                    worker_name,
+                },
+                outputs=[message],
             )
-        gr.Markdown(
-            f"""
-## Definitions
 
-### Worker Name
-{worker_name_info}
+        self.app.queue()
 
-### API Key
-{api_key_info}
-### Priority Usernames
-{priority_usernames_info}
-
-### Max Power
-{max_power_info}
-
-### Queue Size
-{queue_size_info}
-
-### Max Threads
-{max_threads_info}
-
-### Censor NSFW
-{censor_nsfw_info}
-
-### Blacklist
-{blacklist_info}
-
-### Censorlist
-{censorlist_info}
-
-### Enable Dynamic Models
-{enable_dynamic_models_info}
-
-### Max Models To Download
-{max_models_to_download_info}
-
-### Models To Skip
-{models_to_skip_info}
-
-### Models To Load
-{models_to_load_info}"""
+    def run(self, share, nobrowser, lan):
+        server_name = "0.0.0.0" if lan else None
+        self.initialise()
+        self.app.launch(
+            quiet=True, share=share, inbrowser=not nobrowser, server_name=server_name, prevent_thread_lock=True
         )
-
-        WebUI.queue()
-        WebUI.load(load_workerID, inputs=worker_name, outputs=worker_ID, every=15)
-        WebUI.load(load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
-        WebUI.load(load_worker_stats, inputs=worker_name, outputs=worker_stats, every=15)
-    try:
-        WebUI.launch(share=True)
-    except KeyboardInterrupt:
-        print("CTRL+C Pressed --> Shutdown Server")
+        while True:
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
-    logger.init("Bridge WebUI", status="Initializing")
-    stable_diffusion_bridge_data = StableDiffusionBridgeData()
-    interrogation_bridge_data = InterrogationBridgeData()
-    Start_WebUI(stable_diffusion_bridge_data, interrogation_bridge_data)
+
+    # Check args
+    parser = argparse.ArgumentParser(description="Horde Web Configuration")
+    parser.add_argument("--share", action="store_true", help="Create a public URL")
+    parser.add_argument("--no-browser", action="store_true", help="Don't open automatically in a web browser")
+    parser.add_argument("--lan", action="store_true", help="Allow access on the local network")
+    args = parser.parse_args()
+
+    ui = WebUI()
+    ui.run(args.share, args.no_browser, args.lan)
