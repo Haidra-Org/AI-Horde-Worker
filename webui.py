@@ -5,6 +5,7 @@ import datetime
 import math
 import os
 import shutil
+import time
 
 import gradio as gr
 import requests
@@ -346,8 +347,9 @@ class WebUI:
         if current_mode == "False":
             payload = {"maintenance": True, "name": worker_name}
         worker_URL = f"https://stablehorde.net/api/v2/workers/{worker_id}"
-        r = requests.put(worker_URL, json=payload, headers=header)
-        return r.json()
+        requests.put(worker_URL, json=payload, headers=header)
+        state = "enabled" if payload["maintenance"] else "disabled"
+        return f"Maintenance mode is being {state}, this may take up to 30 seconds to update here. Please wait."
 
     def _imgsize(self, value):
         try:
@@ -631,10 +633,27 @@ class WebUI:
                             info=self._info("stats_output_frequency"),
                         )
 
+                with gr.Tab("Worker Control"):
+                    with gr.Column():
+                        gr.Markdown(
+                            "Enable maintenance mode to prevent this worker fetching any more jobs to process. "
+                            "Jobs that you submit yourself will still be picked up by your worker even if maintenance "
+                            "mode is enabled."
+                        )
+                        maint_button = gr.Button(value="Toggle Maintenance Mode", variant="secondary")
+                        maint_message = gr.Markdown("")
+                        worker_id = gr.Textbox(label="Worker ID")
+                        maintenance_mode = gr.Textbox(label="Current Maintenance Mode Status")
+                        self.app.load(self.load_workerID, inputs=worker_name, outputs=worker_id, every=15)
+                        self.app.load(self.load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+
+                        maint_button.click(
+                            self.update_worker_mode,
+                            inputs=[worker_name, worker_id, maintenance_mode, api_key],
+                            outputs=[maint_message],
+                        )
+
             with gr.Row():
-                # gr.Button(value="Toggle Maintenance Mode", variant="primary").click(
-                #     update_worker_mode, inputs=[worker_name, worker_ID, maintenance_mode, api_key], outputs=system
-                # )
                 submit = gr.Button(value="Save Configuration", variant="primary")
             with gr.Row():
                 message = gr.Markdown("")
@@ -679,10 +698,16 @@ class WebUI:
                 outputs=[message],
             )
 
+        self.app.queue()
+
     def run(self, share, nobrowser, lan):
         server_name = "0.0.0.0" if lan else None
         self.initialise()
-        self.app.launch(quiet=True, share=share, inbrowser=not nobrowser, server_name=server_name)
+        self.app.launch(
+            quiet=True, share=share, inbrowser=not nobrowser, server_name=server_name, prevent_thread_lock=True
+        )
+        while True:
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
