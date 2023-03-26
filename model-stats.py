@@ -16,7 +16,7 @@ from tqdm import tqdm
 LOG_FILE = "logs/bridge*.log"
 
 # TIME PERIODS
-#TODO: Use Enums
+# TODO: Use Enums
 PERIOD_ALL = 0
 PERIOD_TODAY = 1
 PERIOD_YESTERDAY = 2
@@ -66,7 +66,6 @@ class LogStats:
         req = requests.get(f"https://stablehorde.net/api/v2/stats/{model_type}/models", verify=False)
         self.used_models = req.json()[period] if req.ok else {}
 
-
     def parse_log(self):
         self.used_models = {}
         # Grab any statically loaded models
@@ -85,7 +84,7 @@ class LogStats:
             self.download_stats("month")
             return
         elif self.period == PERIOD_TEXT_HORDE_MONTH:
-            self.download_stats("month","text")
+            self.download_stats("month", "text")
             return
 
         # Identify all log files and total number of log lines
@@ -162,7 +161,10 @@ if __name__ == "__main__":
         "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
     )
     parser.add_argument(
-        "-x", "--textmonth", help="Show statistics for the entire horde for the month for the text models", action="store_true"
+        "-x",
+        "--textmonth",
+        help="Show statistics for the entire horde for the month for the text models",
+        action="store_true",
     )
     args = vars(parser.parse_args())
 
