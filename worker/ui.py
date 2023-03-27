@@ -495,7 +495,7 @@ class TerminalUI:
         self.print(self.main, row_local + 2, col_mid, f"{self.kudos_per_hour}")
         self.print(self.main, row_local + 2, col_right, f"{self.jobs_per_hour}")
 
-        self.print(self.main, row_local+3, col_left, f"{self.threads}")
+        self.print(self.main, row_local + 3, col_left, f"{self.threads}")
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
 
