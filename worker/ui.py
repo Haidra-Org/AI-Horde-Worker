@@ -221,11 +221,13 @@ class TerminalUI:
         self.cpu_average = []
         self.audio_alerts = False
         self.last_audio_alert = 0
+        self.stdout = DequeOutputCollector()
+        self.stderr = DequeOutputCollector()
 
     def initialise(self):
         # Suppress stdout / stderr
-        sys.stderr = os.devnull
-        sys.stdout = os.devnull
+        sys.stderr = self.stderr
+        sys.stdout = self.stdout
         if self.use_log_file:
             self.open_log()
         else:
