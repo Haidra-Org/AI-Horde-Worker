@@ -21,7 +21,7 @@ from pynvml.smi import nvidia_smi
 
 
 class DequeOutputCollector:
-    def __init__(self):
+    def __init__(self) -> None:
         self.deque = deque()
 
     def write(self, s):
@@ -44,7 +44,7 @@ class DequeOutputCollector:
 
 
 class GPUInfo:
-    def __init__(self):
+    def __init__(self) -> None:
         self.avg_load = []
         self.avg_temp = []
         self.avg_power = []
@@ -88,7 +88,7 @@ class GPUInfo:
     def get_info(self):
         data = self._get_gpu_data()
         if not data:
-            return
+            return None
 
         # Calculate averages
         try:
@@ -134,10 +134,9 @@ class GPUInfo:
 
 
 class TerminalUI:
-
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
-        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$",
     )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
@@ -176,7 +175,7 @@ class TerminalUI:
 
     CLIENT_AGENT = "terminalui:1:db0"
 
-    def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
+    def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net") -> None:
         self.url = url
         self.main = None
         self.width = 0
@@ -248,7 +247,7 @@ class TerminalUI:
         # We try a couple of times, log rotiation, etc
         for _ in range(2):
             try:
-                self.log_file = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
+                self.log_file = open("logs/bridge.log", encoding="utf-8", errors="ignore")
                 self.log_file.seek(0, os.SEEK_END)
                 break
             except OSError:
@@ -264,21 +263,22 @@ class TerminalUI:
         if self.use_log_file:
             if regex := TerminalUI.REGEX.match(line):
                 if not self.show_debug and regex.group(1) == "DEBUG":
-                    return
+                    return None
                 if regex.group(1) == "ERROR":
                     self.error_count += 1
                 elif regex.group(1) == "WARNING":
                     self.warning_count += 1
                 return f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}"
-        else:
-            if regex := TerminalUI.LOGURU_REGEX.match(line):
-                if not self.show_debug and regex.group(2) == "DEBUG":
-                    return
-                if regex.group(2) == "ERROR":
-                    self.error_count += 1
-                elif regex.group(2) == "WARNING":
-                    self.warning_count += 1
-                return f"{regex.group(2)}::::{regex.group(1)}::::{regex.group(3)}::::{regex.group(4)}"
+            return None
+        elif regex := TerminalUI.LOGURU_REGEX.match(line):
+            if not self.show_debug and regex.group(2) == "DEBUG":
+                return None
+            if regex.group(2) == "ERROR":
+                self.error_count += 1
+            elif regex.group(2) == "WARNING":
+                self.warning_count += 1
+            return f"{regex.group(2)}::::{regex.group(1)}::::{regex.group(3)}::::{regex.group(4)}"
+        return None
 
     def load_log_queue(self):
         lines = list(self.input.deque)
@@ -362,7 +362,10 @@ class TerminalUI:
 
         # Draw the bottom border
         self.print(
-            self.main, height - 1, 0, TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2)
+            self.main,
+            height - 1,
+            0,
+            TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2),
         )
         self.print(self.main, height - 1, width - 1, TerminalUI.ART["bottom_right"])
 
@@ -515,7 +518,6 @@ class TerminalUI:
 
         gpu = self.gpu.get_info()
         if gpu:
-
             # Add some warning colours to free vram
             vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
@@ -588,7 +590,6 @@ class TerminalUI:
         return output
 
     def print_log(self):
-
         if not self.pause_log:
             self.load_log()
         output = list(self.output.deque)
@@ -601,7 +602,6 @@ class TerminalUI:
         inputrow = 0
         last_timestamp = ""
         while y < self.height and inputrow < len(output):
-
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(TerminalUI.DELIM)
             colour = TerminalUI.COLOUR_WHITE
@@ -609,7 +609,7 @@ class TerminalUI:
                 colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = TerminalUI.COLOUR_RED
-            elif cat == "INIT" or cat == "INIT_OK":
+            elif cat in ["INIT", "INIT_OK"]:
                 colour = TerminalUI.COLOUR_MAGENTA
             elif cat == "WARNING":
                 colour = TerminalUI.COLOUR_YELLOW
@@ -638,17 +638,19 @@ class TerminalUI:
 
     def load_worker_id(self):
         if not self.worker_name:
-            return
+            return None
         workers_url = f"{self.url}/api/v2/workers"
         try:
             r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
         except requests.exceptions.RequestException:
-            return
+            return None
         if r.ok:
             worker_json = r.json()
-            for item in worker_json:
-                if item["name"] == self.worker_name:
-                    return item["id"]
+            return next(
+                (item["id"] for item in worker_json if item["name"] == self.worker_name),
+                None,
+            )
+        return None
 
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
@@ -718,7 +720,7 @@ class TerminalUI:
         if not os.path.exists(head_file):
             return ""
         try:
-            with open(head_file, "r") as f:
+            with open(head_file) as f:
                 head_contents = f.read().strip()
 
             if not head_contents.startswith("ref:"):
@@ -726,7 +728,7 @@ class TerminalUI:
 
             ref_path = os.path.join(".git", *head_contents[5:].split("/"))
 
-            with open(ref_path, "r") as f:
+            with open(ref_path) as f:
                 commit_hash = f.read().strip()
 
             return commit_hash
@@ -738,19 +740,25 @@ class TerminalUI:
         self.last_key = x
         if x == curses.KEY_RESIZE:
             self.resize()
+            return None
         elif x == ord("d"):
             self.show_debug = not self.show_debug
+            return None
         elif x == ord("s"):
             self.show_module = not self.show_module
+            return None
         elif x == ord("a"):
             self.audio_alerts = not self.audio_alerts
+            return None
         elif x == ord("q"):
             return True
         elif x == ord("m"):
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
+            return None
         elif x == ord("p"):
             self.pause_log = not self.pause_log
+            return None
 
     def poll(self):
         if self.get_input():
@@ -760,6 +768,7 @@ class TerminalUI:
         self.print_status()
         self.print_log()
         self.main.refresh()
+        return None
 
     def main_loop(self, stdscr):
         self.main = stdscr
@@ -787,7 +796,7 @@ if __name__ == "__main__":
 
     # Grab worker name and apikey if available
     if os.path.isfile("bridgeData.yaml"):
-        with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
+        with open("bridgeData.yaml", encoding="utf-8", errors="ignore") as configfile:
             configdata = yaml.safe_load(configfile)
             workername = configdata.get("worker_name", "")
             apikey = configdata.get("api_key", "")

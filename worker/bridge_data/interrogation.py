@@ -11,13 +11,13 @@ from worker.consts import POST_PROCESSORS_NATAILI_MODELS
 class InterrogationBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(args)
         self.forms = os.environ.get("HORDE_INTERROGATION_FORMS", "caption").split(",")
         self.model_names = []
 
     @logger.catch(reraise=True)
-    def reload_data(self):
+    def reload_data(self) -> None:
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()

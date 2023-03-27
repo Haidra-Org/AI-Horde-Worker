@@ -8,7 +8,7 @@ class BridgeStats:
 
     stats = {}  # Deliberately on class level
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.startup_time = 0
 
     def update_inference_stats(self, model_name, kudos):

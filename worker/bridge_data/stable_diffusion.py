@@ -16,7 +16,7 @@ from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 class StableDiffusionBridgeData(BridgeDataTemplate):
     """Configuration object"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(args)
         self._last_top_n_refresh = 0
         self._last_model_db_refresh = 0
@@ -55,15 +55,14 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.nataili_cache_home = "./nataili/compvis/"
         os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
         # Disable low vram mode
-        if hasattr(self, "low_vram_mode"):
-            if not self.low_vram_mode:
-                os.environ["LOW_VRAM_MODE"] = "0"
+        if hasattr(self, "low_vram_mode") and not self.low_vram_mode:
+            os.environ["LOW_VRAM_MODE"] = "0"
         # Where the ray temp dir and/or model cache are located
         if hasattr(self, "ray_temp_dir"):
             os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
 
     @logger.catch(reraise=True)
-    def reload_data(self):
+    def reload_data(self) -> None:
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
@@ -134,10 +133,10 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 status="Joining Horde",
             )
 
-    def check_extra_conditions_for_download_choice(self):
+    def check_extra_conditions_for_download_choice(self) -> bool:
         return self.dynamic_models or self.always_download
 
-    def _is_valid_stable_diffusion_model(self, model_name):
+    def _is_valid_stable_diffusion_model(self, model_name) -> bool:
         if model_name in ["safety_checker", "LDSR"]:
             return False
 
@@ -148,7 +147,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
     # Get all models directly from the server, not from nataili, as nataili
     # may not be loaded, e.g. in webui.
-    def get_all_models(self, style=""):
+    def get_all_models(self, style: str = "") -> list[str]:
         # Recognise some magic style constants
         nsfw = None
         if style:
@@ -175,7 +174,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         logger.info("Refreshing the list of all available models")
         data = requests.get(
-            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json",
         ).json()
 
         # Get all interesting models
@@ -194,7 +193,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             # Add to the list of models to load
             models.append(model["name"])
 
-        models = sorted(list(set(models)))
+        models = sorted(set(models))
 
         # Move the standard SD model to the top of the list
         if "stable_diffusion" in models:
@@ -216,7 +215,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         return models
 
     # Get the top n most popular models from the horde server
-    def get_top_n_models(self, top_n, period="day"):
+    def get_top_n_models(self, top_n: int, period: str = "day") -> list[str]:
         model_list = []
 
         # Never refresh more than once per hour

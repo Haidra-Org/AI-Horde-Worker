@@ -33,7 +33,7 @@ KUDOS_REGEX = re.compile(r".*(\d\d\d\d-\d\d-\d\d \d\d:\d\d).* and contributed fo
 
 
 class LogStats:
-    def __init__(self, period=PERIOD_ALL, logfile=LOG_FILE):
+    def __init__(self, period=PERIOD_ALL, logfile=LOG_FILE) -> None:
         self.used_models = {}
         self.unused_models = {}
         self.logfile = logfile
@@ -69,7 +69,7 @@ class LogStats:
     def parse_log(self):
         self.used_models = {}
         # Grab any statically loaded models
-        with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
+        with open("bridgeData.yaml", encoding="utf-8", errors="ignore") as configfile:
             config = yaml.safe_load(configfile)
         self.unused_models = config["models_to_load"]
         # Models to exclude
@@ -91,7 +91,7 @@ class LogStats:
         total_log_lines = sum(self.get_num_lines(logfile) for logfile in glob.glob(self.logfile))
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
-            with open(logfile, "rt", encoding="UTF-8", errors="ignore") as infile:
+            with open(logfile, encoding="UTF-8", errors="ignore") as infile:
                 for line in infile:
                     # Grab the lines we're interested in for models
                     if regex := REGEX.match(line):
@@ -158,7 +158,10 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--horde", help="Show statistics for the entire horde for the day", action="store_true")
     parser.add_argument("-k", "--kudos", help="Show statistics for the kudos per hour", action="store_true")
     parser.add_argument(
-        "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
+        "-m",
+        "--hordemonth",
+        help="Show statistics for the entire horde for the month",
+        action="store_true",
     )
     parser.add_argument(
         "-x",

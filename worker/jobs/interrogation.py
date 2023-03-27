@@ -20,7 +20,7 @@ from worker.post_process import post_process
 class InterrogationHordeJob(HordeJobFramework):
     """Get and process an image interrogation job from the horde"""
 
-    def __init__(self, mm, bd, pop):
+    def __init__(self, mm, bd, pop) -> None:
         super().__init__(mm, bd, pop)
         self.current_form = self.pop["form"]
         self.current_id = self.pop["id"]
@@ -31,7 +31,7 @@ class InterrogationHordeJob(HordeJobFramework):
         self.result = None
 
     @logger.catch(reraise=True)
-    def start_job(self):
+    def start_job(self) -> None:
         """Starts a Stable Diffusion job from a pop request"""
         logger.debug("Starting job in threadpool for model: {}", self.current_form)
         super().start_job()
@@ -49,7 +49,8 @@ class InterrogationHordeJob(HordeJobFramework):
             feature_extractor = CLIPFeatureExtractor()
             image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
             _, has_nsfw_concept = safety_checker(
-                clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
+                clip_input=image_features.pixel_values,
+                images=[np.asarray(self.image)],
             )
             self.result = has_nsfw_concept and True in has_nsfw_concept
         elif self.current_form in KNOWN_POST_PROCESSORS:
@@ -71,7 +72,7 @@ class InterrogationHordeJob(HordeJobFramework):
                     self.image = post_process(self.current_form, self.image, self.model_manager, strength=strength)
                 self.result = "R2"
             except (AssertionError, RuntimeError) as err:
-                logger.error(
+                logger.exception(
                     "Post-Processor form '{}' encountered an error when working on image . Skipping! {}",
                     self.current_form,
                     err,
@@ -89,7 +90,8 @@ class InterrogationHordeJob(HordeJobFramework):
                     "num_beams": self.current_payload.get("num_beams", 7),
                     "min_length": self.current_payload.get("min_length", 20),
                     "max_length": self.current_payload.get(
-                        "max_length", self.current_payload.get("min_length", 20) + 30
+                        "max_length",
+                        self.current_payload.get("min_length", 20) + 30,
                     ),
                     "top_p": self.current_payload.get("top_p", 0.9),
                     "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
@@ -100,7 +102,8 @@ class InterrogationHordeJob(HordeJobFramework):
                 )
                 payload_kwargs = {
                     "rank": self.current_payload.get(
-                        "rank", True
+                        "rank",
+                        True,
                     ),  # TODO: Change after payload onboards rank/similarity
                     "similarity": self.current_payload.get("similarity", False),
                     "top_count": self.current_payload.get("top_count", 5),  # TODO: Add to payload
@@ -108,12 +111,12 @@ class InterrogationHordeJob(HordeJobFramework):
             try:
                 self.result = interrogator(self.image, **payload_kwargs)
             except RuntimeError as err:
-                logger.error(
+                logger.exception(
                     "Something went wrong when processing request. "
                     "Please check your trace.log file for the full stack trace. "
                     f"Form: {self.current_form}. "
                     f"Payload: {payload_kwargs}."
-                    f"URL: {self.pop['source_image']}."
+                    f"URL: {self.pop['source_image']}.",
                 )
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
@@ -124,11 +127,11 @@ class InterrogationHordeJob(HordeJobFramework):
         interrogator = None
         self.start_submit_thread()
 
-    def submit_job(self, endpoint="/api/v2/interrogate/submit"):
+    def submit_job(self, endpoint: str = "/api/v2/interrogate/submit") -> None:
         """Submits the job to the server to earn our kudos."""
         super().submit_job(endpoint=endpoint)
 
-    def prepare_submit_payload(self):
+    def prepare_submit_payload(self) -> None:
         # images, seed, info, stats = txt2img(**self.current_payload)
         self.submit_dict = {"id": self.current_id}
         if self.current_form == "caption":
@@ -149,7 +152,7 @@ class InterrogationHordeJob(HordeJobFramework):
         logger.debug([self.current_form in KNOWN_POST_PROCESSORS, self.current_form, KNOWN_POST_PROCESSORS])
         logger.debug(self.submit_dict)
 
-    def calculate_upscale_chunks(self):
+    def calculate_upscale_chunks(self) -> int:
         width, height = self.image.size
 
         tiles_x = (width + 511) // 512

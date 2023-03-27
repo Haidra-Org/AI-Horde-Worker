@@ -3,6 +3,7 @@ import copy
 import json
 import time
 from io import BytesIO
+from typing import Any
 
 import requests
 from nataili.util.logger import logger
@@ -15,7 +16,7 @@ class JobPopper:
     retry_interval = 1
     BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
-    def __init__(self, mm, bd):
+    def __init__(self, mm, bd) -> None:
         self.model_manager = mm
         self.bridge_data = copy.deepcopy(bd)
         self.pop = None
@@ -23,7 +24,7 @@ class JobPopper:
         # This should be set by the extending class
         self.endpoint = None
 
-    def horde_pop(self):
+    def horde_pop(self) -> list | None:
         """Get a job from the horde"""
         try:
             # logger.debug(self.headers)
@@ -40,41 +41,41 @@ class JobPopper:
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)
-            return
+            return None
         except TypeError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
             time.sleep(2)
-            return
+            return None
         except requests.exceptions.ReadTimeout:
             logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
             time.sleep(2)
-            return
+            return None
         except requests.exceptions.InvalidHeader:
             logger.warning(
                 f"Server {self.bridge_data.horde_url} Something is wrong with the API key you are sending. "
-                "Please check your bridgeData api_key variable. Waiting 10 seconds..."
+                "Please check your bridgeData api_key variable. Waiting 10 seconds...",
             )
             time.sleep(10)
-            return
+            return None
 
         try:
             self.pop = pop_req.json()  # I'll use it properly later
         except json.decoder.JSONDecodeError:
-            logger.error(
+            logger.exception(
                 f"Could not decode response from {self.bridge_data.horde_url} as json. "
-                "Please inform its administrator!"
+                "Please inform its administrator!",
             )
             time.sleep(2)
-            return
+            return None
         if not pop_req.ok:
             logger.warning(f"{self.pop['message']} ({pop_req.status_code})")
             if "errors" in self.pop:
                 logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
             time.sleep(2)
-            return
+            return None
         return [self.pop]
 
-    def report_skipped_info(self):
+    def report_skipped_info(self) -> None:
         job_skipped_info = self.pop.get("skipped")
         if job_skipped_info and len(job_skipped_info):
             self.skipped_info = f" Skipped Info: {job_skipped_info}."
@@ -83,7 +84,7 @@ class JobPopper:
         logger.info(f"Server {self.bridge_data.horde_url} has no valid generations for us to do.{self.skipped_info}")
         time.sleep(self.retry_interval)
 
-    def download_image_data(self, image_url):
+    def download_image_data(self, image_url: str) -> bytes | None:
         """Returns the image data, not a PIL"""
         try:
             with requests.get(image_url, stream=True, timeout=2) as r:
@@ -107,19 +108,19 @@ class JobPopper:
             return None
         return img_data
 
-    def convert_image_data_to_pil(self, img_data):
+    def convert_image_data_to_pil(self, img_data: bytes):
         try:
             return Image.open(BytesIO(img_data)).convert("RGB")
         except UnidentifiedImageError as e:
-            logger.error(f"Error when creating image: {e}.")
+            logger.exception(f"Error when creating image: {e}.")
             return None
         except UnboundLocalError as e:
-            logger.error(f"Error when creating image: {e}.")
+            logger.exception(f"Error when creating image: {e}.")
             return None
 
 
 class StableDiffusionPopper(JobPopper):
-    def __init__(self, mm, bd):
+    def __init__(self, mm, bd) -> None:
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
         self.available_models = self.model_manager.get_loaded_models_names()
@@ -151,12 +152,12 @@ class StableDiffusionPopper(JobPopper):
             "bridge_agent": self.BRIDGE_AGENT,
         }
 
-    def horde_pop(self):
+    def horde_pop(self) -> list[Any | None] | None:
         if not super().horde_pop():
-            return
+            return None
         if not self.pop.get("id"):
             self.report_skipped_info()
-            return
+            return None
         # In the stable diffusion popper, the whole return is always a single payload, so we return it as a list
         self.pop["source_image"] = self.download_source(self.pop.get("source_image"))
         self.pop["source_mask"] = self.download_source(self.pop.get("source_mask"))
@@ -171,17 +172,15 @@ class StableDiffusionPopper(JobPopper):
                 if not img:
                     logger.error("Non-image data when downloading image! Ignoring")
                 return img
-            else:
-                logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
-                return None
-        else:
-            base64_bytes = source_img.encode("utf-8")
-            img_bytes = base64.b64decode(base64_bytes)
-            return Image.open(BytesIO(img_bytes))
+            logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
+            return None
+        base64_bytes = source_img.encode("utf-8")
+        img_bytes = base64.b64decode(base64_bytes)
+        return Image.open(BytesIO(img_bytes))
 
 
 class InterrogationPopper(JobPopper):
-    def __init__(self, mm, bd):
+    def __init__(self, mm, bd) -> None:
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/interrogate/pop"
         available_forms = []
@@ -207,12 +206,12 @@ class InterrogationPopper(JobPopper):
         }
         logger.debug(self.pop_payload)
 
-    def horde_pop(self):
+    def horde_pop(self) -> list[Any | None] | None:
         if not super().horde_pop():
-            return
+            return None
         if not self.pop.get("forms"):
             self.report_skipped_info()
-            return
+            return None
         # In the interrogation popper, the forms key contains an array of payloads to execute
         current_image_url = None
         non_faulted_forms = []
@@ -240,17 +239,17 @@ class InterrogationPopper(JobPopper):
                                     current_image_url = None
                                     continue
                 except Exception as err:
-                    logger.error(err)
+                    logger.exception(err)
                     current_image_url = None
                     continue
             try:
                 form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
                 non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
-                logger.error(f"Error when creating image: {e}. Url {current_image_url}")
+                logger.exception(f"Error when creating image: {e}. Url {current_image_url}")
                 continue
             except UnboundLocalError as e:
-                logger.error(f"Error when creating image: {e}. Url {current_image_url}")
+                logger.exception(f"Error when creating image: {e}. Url {current_image_url}")
                 continue
         logger.debug(f"Popped {len(non_faulted_forms)} interrogation forms")
         # TODO: Report back to the horde with faulted images

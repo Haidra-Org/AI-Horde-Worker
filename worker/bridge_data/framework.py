@@ -16,7 +16,7 @@ from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
 class BridgeDataTemplate:
     """Configuration object"""
 
-    def __init__(self, args):
+    def __init__(self, args) -> None:
         random.seed()
         # I have to pass the args from the extended class, as the framework class doesn't
         # know what kind of polymorphism this worker is using
@@ -54,14 +54,14 @@ class BridgeDataTemplate:
     def load_config(self):
         # YAML config
         if os.path.exists(BRIDGE_CONFIG_FILE):
-            with open(BRIDGE_CONFIG_FILE, "rt", encoding="utf-8", errors="ignore") as configfile:
+            with open(BRIDGE_CONFIG_FILE, encoding="utf-8", errors="ignore") as configfile:
                 config = yaml.safe_load(configfile)
                 # Map the config's values directly into this instance's properties
                 for key, value in config.items():
                     setattr(self, key, value)
             return True  # loaded
         # fall back to try old python bridge data
-        elif os.path.exists("bridgeData.py"):
+        if os.path.exists("bridgeData.py"):
             try:
                 import bridgeData as bd
 
@@ -79,7 +79,7 @@ class BridgeDataTemplate:
                     if key.startswith("__") or type(value) not in [str, int, bool, list]:
                         continue
                     config[key] = value
-                with open(BRIDGE_CONFIG_FILE, "wt", encoding="utf-8") as configfile:
+                with open(BRIDGE_CONFIG_FILE, "w", encoding="utf-8") as configfile:
                     yaml.safe_dump(config, configfile)
                 try:
                     os.rename("bridgeData.py", "bridgeData.py-old")
@@ -89,9 +89,10 @@ class BridgeDataTemplate:
                 return True  # loaded
             except (ImportError, AttributeError) as err:
                 logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
+        return None
 
     @logger.catch(reraise=True)
-    def reload_data(self):
+    def reload_data(self) -> None:
         """Reloads configuration data"""
         previous_api_key = self.api_key
         self.load_config()
@@ -127,7 +128,7 @@ class BridgeDataTemplate:
                 self.username = "N/A"
 
     @logger.catch(reraise=True)
-    def check_models(self, model_manager):
+    def check_models(self, model_manager) -> None:
         """Check to see if we have the models needed"""
         if self.models_reloading:
             return
@@ -141,14 +142,14 @@ class BridgeDataTemplate:
             if not model_info:
                 logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
-                    "Please check your configuration. Aborting!"
+                    "Please check your configuration. Aborting!",
                 )
                 self.model_names.remove(model)
                 continue
             if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
                 logger.warning(
                     f"Model requested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
-                    "Please upgrade your bridge. Skipping."
+                    "Please upgrade your bridge. Skipping.",
                 )
                 self.model_names.remove(model)
                 continue
@@ -178,7 +179,7 @@ class BridgeDataTemplate:
                 y: Download {not_found_models} (default).\n\
                 n: Abort and exit\n\
                 all: Download all basic models (This can take a significant amount of time and bandwidth)\n\
-                Please select an option: "
+                Please select an option: ",
                 )
             if choice not in ["y", "Y", "", "yes", "all", "a"]:
                 sys.exit(1)
@@ -191,7 +192,7 @@ class BridgeDataTemplate:
                     if not model_manager.download_model(model):
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
-                            "checksum."
+                            "checksum.",
                         )
                         self.model_names.remove(model)
             model_manager.init()
@@ -202,22 +203,22 @@ class BridgeDataTemplate:
                 logger.init_ok("Bridge Config", status="OK")
         elif input(
             "You do not appear to have a bridgeData configuration file. "
-            "Would you like to create it from the template now? (y/n)"
+            "Would you like to create it from the template now? (y/n)",
         ) in ["y", "Y", "", "yes"]:
-            with open("bridgeData_template.yaml", "r") as firstfile, open("bridgeData.yaml", "a") as secondfile:
+            with open("bridgeData_template.yaml") as firstfile, open("bridgeData.yaml", "a") as secondfile:
                 for line in firstfile:
                     secondfile.write(line)
             logger.message(
                 "bridgeData.yaml created. Bridge will exit. "
-                "Please edit bridgeData.yaml with your setup and restart the worker"
+                "Please edit bridgeData.yaml with your setup and restart the worker",
             )
             sys.exit(2)
 
-    def check_extra_conditions_for_download_choice(self):
+    def check_extra_conditions_for_download_choice(self) -> bool:
         """Extend if any condition on the specifics for this bridge_data will force a 'y' result"""
         return False
 
-    def reload_models(self, model_manager):
+    def reload_models(self, model_manager) -> None:
         """Reloads models - Note this is IN A THREAD"""
         if self.models_reloading:
             return
@@ -227,7 +228,7 @@ class BridgeDataTemplate:
         thread.start()
 
     @logger.catch(reraise=True)
-    def _reload_models(self, model_manager):
+    def _reload_models(self, model_manager) -> None:
         for model in model_manager.get_loaded_models_names():
             if model not in self.model_names:
                 logger.init(f"{model}", status="Unloading")

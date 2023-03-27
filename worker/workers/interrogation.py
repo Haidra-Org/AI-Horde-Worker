@@ -7,7 +7,7 @@ from worker.workers.framework import WorkerFramework
 
 
 class InterrogationWorker(WorkerFramework):
-    def __init__(self, this_model_manager, this_bridge_data):
+    def __init__(self, this_model_manager, this_bridge_data) -> None:
         super().__init__(this_model_manager, this_bridge_data)
         self.PopperClass = InterrogationPopper
         self.JobClass = InterrogationHordeJob

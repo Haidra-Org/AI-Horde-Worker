@@ -25,7 +25,7 @@ from worker.stats import bridge_stats
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
 
-    def __init__(self, mm, bd, pop):
+    def __init__(self, mm, bd, pop) -> None:
         super().__init__(mm, bd, pop)
         self.current_model = None
         self.upload_quality = 95
@@ -62,9 +62,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
+        use_nsfw_censor = False
         censor_image = None
         censor_reason = None
-        use_nsfw_censor = False
         if self.bridge_data.censor_nsfw and not self.bridge_data.nsfw:
             use_nsfw_censor = True
             censor_image = self.bridge_data.censor_image_sfw_worker
@@ -109,7 +109,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     gen_payload["sampler_name"] = "k_euler"
                 if gen_payload["sampler_name"] == "DDIM" and source_mask is not None:
                     logger.warning(
-                        f"DDIM cannot be used with a mask for {self.current_model}. Falling back to k_euler."
+                        f"DDIM cannot be used with a mask for {self.current_model}. Falling back to k_euler.",
                     )
                     gen_payload["sampler_name"] = "k_euler"
                 if gen_payload["sampler_name"] == "DDIM" and self.current_model == "pix2pix":
@@ -172,7 +172,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                             self.model_manager.models[self.current_model].get("baseline"),
                             source_processing,
                             req_type,
-                        ]
+                        ],
                     )
                     self.current_model = available_model
                     logger.warning(
@@ -190,7 +190,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
                 logger.error(
                     "Received an non-inpainting request for inpainting model. This shouldn't happen. "
-                    f"Inform the developer. Current payload {self.pop}"
+                    f"Inform the developer. Current payload {self.pop}",
                 )
                 self.status = JobStatus.FAULTED
                 self.start_submit_thread()
@@ -213,7 +213,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
             logger.error(
                 "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
-                f"Inform the developer. Current payload {self.pop}"
+                f"Inform the developer. Current payload {self.pop}",
             )
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
@@ -225,7 +225,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             else:
                 req_type = "img2img"
         logger.debug(
-            f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work..."
+            f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work...",
         )
         try:
             safety_checker = (
@@ -240,7 +240,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 img_mask = source_mask
                 if img_mask.size != img_source.size:
                     logger.warning(
-                        f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}"
+                        f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}",
                     )
                     img_mask = img_mask.resize(img_source.size)
         except KeyError:
@@ -256,7 +256,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         except binascii.Error:
             logger.error(
                 "Source image received for img2img is cannot be base64 decoded (binascii.Error). "
-                "Falling back to text2img!"
+                "Falling back to text2img!",
             )
             req_type = "txt2img"
             if "denoising_strength" in gen_payload:
@@ -347,7 +347,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"{self.current_payload['width']}x{self.current_payload['height']} "
                 f"for {self.current_payload.get('ddim_steps',50)} steps. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
-                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights"
+                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
             )
             time_state = time.time()
             try:
@@ -362,7 +362,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # Generation is ok
             logger.info(
                 f"Generation for id {self.current_id} finished successfully"
-                f" in {round(time.time() - time_state,1)} seconds."
+                f" in {round(time.time() - time_state,1)} seconds.",
             )
         except Exception as err:
             stack_payload = gen_payload
@@ -372,7 +372,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.error(
                 "Something went wrong when processing request. "
                 "Please check your trace.log file for the full stack trace. "
-                f"Payload: {stack_payload}"
+                f"Payload: {stack_payload}",
             )
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
