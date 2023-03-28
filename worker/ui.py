@@ -16,7 +16,7 @@ from math import trunc
 import psutil
 import requests
 import yaml
-from nataili.util.logger import config, logger
+from worker.logger import config, logger
 from pynvml.smi import nvidia_smi
 
 
