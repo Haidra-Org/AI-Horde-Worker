@@ -41,6 +41,9 @@ flake8_args = [
 isort_args = [
     "isort",
 ]
+ruff_args = [
+    "ruff",
+]
 
 if args.fix:
     print("fix requested")
@@ -49,10 +52,13 @@ else:
 
     black_args.extend(("--check", "--diff"))
     isort_args.extend(("--check-only", "--diff"))
+    ruff_args.extend("check")
+
 lint_processes = [
     black_args,
     isort_args,
     flake8_args,
+    ruff_args,
 ]
 
 for process_args in lint_processes:
