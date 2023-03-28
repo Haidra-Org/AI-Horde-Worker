@@ -8,10 +8,30 @@ profile = "black"
 known_third_party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
 
 [tool.pylint.FORMAT]
-max-line-length=500
+max-line-length = 500
 
 [tool.ruff]
-line-length = 500
+select = ["ALL"]
+ignore = [
+    "D",
+    "N",
+    "BLE",
+    "ERA",
+    "INP",
+    "FBT",
+    "PTH",
+    "ANN101",
+    "C90",
+    "E501",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
+    "S101",
+    "S102",
+    "T20",
+]
 
 [build-system]
 requires = ["setuptools>=64.0"]
@@ -20,12 +40,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "horde_bridge"
 version = "1.0.0"
-authors = [
-    { name="db0", email="mail@dbzer0.com" },
-]
+authors = [{ name = "db0", email = "mail@dbzer0.com" }]
 description = "Stable Horde Bridge"
 readme = "README.md"
-license = { file="LICENSE" }
+license = { file = "LICENSE" }
 dynamic = ["dependencies"]
 requires-python = ">=3.8"
 classifiers = [
@@ -39,7 +57,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/db0/AI-Horde-Worker"
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.packages]
 find = {}

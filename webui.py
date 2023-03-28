@@ -417,37 +417,36 @@ class WebUI:
             gr.Markdown("# AI Horde Worker Configuration")
 
             with gr.Row():
-                with gr.Tab("Basic Settings"):
-                    with gr.Column():
-                        worker_name = gr.Textbox(
-                            label=self._label("worker_name"),
-                            value=config.worker_name,
-                            info=self._info("worker_name"),
-                        )
-                        api_key = gr.Textbox(
-                            label=self._label("api_key"),
-                            value=config.api_key,
-                            type="password",
-                            info=self._info("api_key"),
-                        )
-                        slider_desc = gr.Markdown("Maximum Image Size")
-                        config.default("max_power", 8)
-                        max_power = gr.Slider(
-                            2,
-                            128,
-                            step=2,
-                            label=self._label("max_power"),
-                            show_label=False,
-                            value=config.max_power,
-                            info=self._info("max_power"),
-                        )
-                        # Hook the slider on change event to display image size
-                        max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
-                        priority_usernames = gr.Textbox(
-                            label=self._label("priority_usernames"),
-                            value=existing_priority_usernames,
-                            info=self._info("priority_usernames"),
-                        )
+                with gr.Tab("Basic Settings"), gr.Column():
+                    worker_name = gr.Textbox(
+                        label=self._label("worker_name"),
+                        value=config.worker_name,
+                        info=self._info("worker_name"),
+                    )
+                    api_key = gr.Textbox(
+                        label=self._label("api_key"),
+                        value=config.api_key,
+                        type="password",
+                        info=self._info("api_key"),
+                    )
+                    slider_desc = gr.Markdown("Maximum Image Size")
+                    config.default("max_power", 8)
+                    max_power = gr.Slider(
+                        2,
+                        128,
+                        step=2,
+                        label=self._label("max_power"),
+                        show_label=False,
+                        value=config.max_power,
+                        info=self._info("max_power"),
+                    )
+                    # Hook the slider on change event to display image size
+                    max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
+                    priority_usernames = gr.Textbox(
+                        label=self._label("priority_usernames"),
+                        value=existing_priority_usernames,
+                        info=self._info("priority_usernames"),
+                    )
 
                 with gr.Tab("Enable Features"), gr.Column():
                     config.default("allow_img2img", True)
