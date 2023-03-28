@@ -2,7 +2,7 @@
 import traceback
 
 import requests
-from nataili.util.logger import logger
+from worker.logger import logger
 
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob

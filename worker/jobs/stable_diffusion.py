@@ -11,7 +11,7 @@ from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
-from nataili.util.logger import logger
+from worker.logger import logger
 from PIL import UnidentifiedImageError
 
 from worker import csam

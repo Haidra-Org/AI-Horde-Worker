@@ -1,5 +1,5 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-from nataili.util.logger import logger
+from worker.logger import logger
 
 from worker.jobs.interrogation import InterrogationHordeJob
 from worker.jobs.poppers import InterrogationPopper

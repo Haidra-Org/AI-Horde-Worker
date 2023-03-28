@@ -8,7 +8,7 @@ import rembg
 import requests
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
-from nataili.util.logger import logger
+from worker.logger import logger
 from transformers import CLIPFeatureExtractor
 
 from worker.consts import KNOWN_POST_PROCESSORS, KNOWN_UPSCALERS

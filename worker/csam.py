@@ -3,7 +3,7 @@ import time
 
 import regex as re
 from nataili.clip.interrogate import Interrogator
-from nataili.util.logger import logger
+from worker.logger import logger
 from unidecode import unidecode
 
 UNDERAGE_CONTEXT = {

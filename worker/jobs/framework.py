@@ -6,7 +6,7 @@ import threading
 import time
 
 import requests
-from nataili.util.logger import logger
+from worker.logger import logger
 
 from worker.enums import JobStatus
 

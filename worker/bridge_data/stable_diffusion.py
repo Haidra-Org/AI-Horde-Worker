@@ -5,7 +5,7 @@ import time
 
 import requests
 from nataili import enable_ray_alternative
-from nataili.util.logger import logger
+from worker.logger import logger
 from PIL import Image
 
 from worker.argparser.stable_diffusion import args
