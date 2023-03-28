@@ -11,6 +11,8 @@ Reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled"
 IF EXIST CONDA GOTO WORKAROUND_END
 umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
 :WORKAROUND_END
+git clone git@github.com:comfyanonymous/ComfyUI.git
 umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
 umamba run -r conda -n windows python -s -m pip install -r requirements.txt
+umamba run -r conda -n windows python -s -m pip install -r ComfyUI/requirements.txt
 echo If there are no errors above everything should be correctly installed (If not, try running update_runtime.cmd as admin).
