@@ -418,10 +418,10 @@ class TerminalUI:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
-        # ║ Uptime: 0:14:35       Jobs Completed: 6             Performance: 0.3 MPS    ║
-        # ║ Models: 174           Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
-        # ║                             Warnings: 9999               Errors: 100        ║
-        # ║                             Free RAM: 2 GB (99%)       CPU Load: 99% (99%)  ║
+        # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS    ║
+        # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
+        # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
+        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)                            ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
         # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
@@ -437,7 +437,7 @@ class TerminalUI:
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
         # Define three colums centres
-        col_left = 10
+        col_left = 12
         col_mid = self.width // 2
         col_right = self.width - 12
 
@@ -460,6 +460,8 @@ class TerminalUI:
 
         label(row_local + 1, col_left, "Uptime:")
         label(row_local + 2, col_left, "Models:")
+        label(row_local + 3, col_left, "Threads:")
+        label(row_local + 4, col_left, "CPU Load:")
         label(row_local + 1, col_mid, "Jobs Completed:")
         label(row_local + 2, col_mid, "Kudos Per Hour:")
         label(row_local + 3, col_mid, "Warnings:")
@@ -467,7 +469,6 @@ class TerminalUI:
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Errors:")
-        label(row_local + 4, col_right, "CPU Load:")
 
         label(row_gpu + 1, col_left, "Load:")
         label(row_gpu + 2, col_left, "Temp:")
@@ -497,7 +498,7 @@ class TerminalUI:
         self.print(self.main, row_local + 2, col_mid, f"{self.kudos_per_hour}")
         self.print(self.main, row_local + 2, col_right, f"{self.jobs_per_hour}")
 
-        # self.print(self.main, row_local+3, col_left, f"")
+        self.print(self.main, row_local + 3, col_left, f"{self.threads}")
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
 
@@ -512,9 +513,8 @@ class TerminalUI:
                 curses.beep()
             ram_colour = curses.color_pair(TerminalUI.COLOUR_RED)
 
-        # self.print(self.main, row_local+3, col_left, f"")
+        self.print(self.main, row_local + 4, col_left, f"{self.get_cpu_usage()}")
         self.print(self.main, row_local + 4, col_mid, f"{self.get_free_ram()}", ram_colour)
-        self.print(self.main, row_local + 4, col_right, f"{self.get_cpu_usage()}")
 
         gpu = self.gpu.get_info()
         if gpu:
