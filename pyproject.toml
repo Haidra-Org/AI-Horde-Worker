@@ -7,6 +7,10 @@ select = [
     "A",    # flake8-builtins
     "I",    # isort 
     # "S",    # Bandit
+    "F",    # pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+
 
     "YTT",  # flake8-2020
     # "BLE",    # flake8-blind-except
