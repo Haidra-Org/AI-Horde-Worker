@@ -175,7 +175,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                         ],
                     )
                     self.current_model = available_model
-                    logger.warning(
+                    logger.info(
                         "Model stable_diffusion_inpainting chosen for txt2img or img2img gen, "
                         + f"switching to {self.current_model} instead."
                     )
