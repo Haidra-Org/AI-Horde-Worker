@@ -55,7 +55,7 @@ class WorkerFramework:
                     try:
                         if self.ui and not self.ui.is_alive():
                             # UI Exited, we should probably exit
-                            raise KeyboardInterrupt()
+                            raise KeyboardInterrupt
                         self.process_jobs()
                     except KeyboardInterrupt:
                         self.should_stop = True

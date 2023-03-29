@@ -193,7 +193,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             # Add to the list of models to load
             models.append(model["name"])
 
-        models = sorted(list(set(models)))
+        models = sorted(set(models))
 
         # Move the standard SD model to the top of the list
         if "stable_diffusion" in models:
