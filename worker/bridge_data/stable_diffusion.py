@@ -175,7 +175,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         logger.info("Refreshing the list of all available models")
         data = requests.get(
-            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json",
         ).json()
 
         # Get all interesting models

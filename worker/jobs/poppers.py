@@ -52,7 +52,7 @@ class JobPopper:
         except requests.exceptions.InvalidHeader:
             logger.warning(
                 f"Server {self.bridge_data.horde_url} Something is wrong with the API key you are sending. "
-                "Please check your bridgeData api_key variable. Waiting 10 seconds..."
+                "Please check your bridgeData api_key variable. Waiting 10 seconds...",
             )
             time.sleep(10)
             return
@@ -62,7 +62,7 @@ class JobPopper:
         except json.decoder.JSONDecodeError:
             logger.error(
                 f"Could not decode response from {self.bridge_data.horde_url} as json. "
-                "Please inform its administrator!"
+                "Please inform its administrator!",
             )
             time.sleep(2)
             return

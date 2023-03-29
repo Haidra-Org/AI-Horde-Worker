@@ -158,7 +158,10 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--horde", help="Show statistics for the entire horde for the day", action="store_true")
     parser.add_argument("-k", "--kudos", help="Show statistics for the kudos per hour", action="store_true")
     parser.add_argument(
-        "-m", "--hordemonth", help="Show statistics for the entire horde for the month", action="store_true"
+        "-m",
+        "--hordemonth",
+        help="Show statistics for the entire horde for the month",
+        action="store_true",
     )
     parser.add_argument(
         "-x",

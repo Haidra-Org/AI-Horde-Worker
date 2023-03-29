@@ -134,10 +134,9 @@ class GPUInfo:
 
 
 class TerminalUI:
-
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
-        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$",
     )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
@@ -362,7 +361,10 @@ class TerminalUI:
 
         # Draw the bottom border
         self.print(
-            self.main, height - 1, 0, TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2)
+            self.main,
+            height - 1,
+            0,
+            TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2),
         )
         self.print(self.main, height - 1, width - 1, TerminalUI.ART["bottom_right"])
 
@@ -515,7 +517,6 @@ class TerminalUI:
 
         gpu = self.gpu.get_info()
         if gpu:
-
             # Add some warning colours to free vram
             vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
@@ -588,7 +589,6 @@ class TerminalUI:
         return output
 
     def print_log(self):
-
         if not self.pause_log:
             self.load_log()
         output = list(self.output.deque)
@@ -601,7 +601,6 @@ class TerminalUI:
         inputrow = 0
         last_timestamp = ""
         while y < self.height and inputrow < len(output):
-
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(TerminalUI.DELIM)
             colour = TerminalUI.COLOUR_WHITE

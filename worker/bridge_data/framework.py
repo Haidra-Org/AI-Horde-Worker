@@ -141,14 +141,14 @@ class BridgeDataTemplate:
             if not model_info:
                 logger.warning(
                     f"Model name requested {model} in bridgeData is unknown to us. "
-                    "Please check your configuration. Aborting!"
+                    "Please check your configuration. Aborting!",
                 )
                 self.model_names.remove(model)
                 continue
             if int(model_info.get("min_bridge_version", 0)) > BRIDGE_VERSION:
                 logger.warning(
                     f"Model requested {model} in bridgeData is not supported in bridge version {BRIDGE_VERSION}. "
-                    "Please upgrade your bridge. Skipping."
+                    "Please upgrade your bridge. Skipping.",
                 )
                 self.model_names.remove(model)
                 continue
@@ -178,7 +178,7 @@ class BridgeDataTemplate:
                 y: Download {not_found_models} (default).\n\
                 n: Abort and exit\n\
                 all: Download all basic models (This can take a significant amount of time and bandwidth)\n\
-                Please select an option: "
+                Please select an option: ",
                 )
             if choice not in ["y", "Y", "", "yes", "all", "a"]:
                 sys.exit(1)
@@ -191,7 +191,7 @@ class BridgeDataTemplate:
                     if not model_manager.download_model(model):
                         logger.message(
                             "Something went wrong when downloading the model and it does not fit the expected "
-                            "checksum."
+                            "checksum.",
                         )
                         self.model_names.remove(model)
             model_manager.init()
@@ -202,14 +202,14 @@ class BridgeDataTemplate:
                 logger.init_ok("Bridge Config", status="OK")
         elif input(
             "You do not appear to have a bridgeData configuration file. "
-            "Would you like to create it from the template now? (y/n)"
+            "Would you like to create it from the template now? (y/n)",
         ) in ["y", "Y", "", "yes"]:
             with open("bridgeData_template.yaml", "r") as firstfile, open("bridgeData.yaml", "a") as secondfile:
                 for line in firstfile:
                     secondfile.write(line)
             logger.message(
                 "bridgeData.yaml created. Bridge will exit. "
-                "Please edit bridgeData.yaml with your setup and restart the worker"
+                "Please edit bridgeData.yaml with your setup and restart the worker",
             )
             sys.exit(2)
 
