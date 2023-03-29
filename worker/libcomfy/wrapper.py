@@ -1,19 +1,19 @@
 # comfy.py
 # Wrapper around comfy to allow usage by the horde worker.
-import os
-import json
-import glob
-import sys
-import re
-from loguru import logger
 import copy
+import glob
+import json
+import os
+import re
+import sys
+
+from loguru import logger
 
 sys.path.append("ComfyUI")
 from ComfyUI import execution
 
 
-class ComfyWrapper():
-
+class ComfyWrapper:
     def __init__(self):
         self.pipelines = {}
 
@@ -25,7 +25,7 @@ class ComfyWrapper():
 
     def _this_dir(self, filename):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
-    
+
     def _load_node(self, filename):
         try:
             execution.nodes.load_custom_node(self._this_dir(filename))
@@ -33,7 +33,7 @@ class ComfyWrapper():
             logger.error(f"Failed to load custom pipeline node: {filename}")
             return
         logger.debug(f"Loaded custom pipeline node: {filename}")
-        
+
     def _load_custom_nodes(self):
         self._load_node("node_model_loader.py")
 
@@ -51,7 +51,7 @@ class ComfyWrapper():
 
     def _set(self, dct, **kwargs):
         for key, value in kwargs.items():
-            keys = key.split('.')
+            keys = key.split(".")
             current = dct
 
             for k in keys[:-1]:
@@ -67,11 +67,11 @@ class ComfyWrapper():
         if pipeline_name not in self.pipelines:
             logger.error(f"Unknown inference pipeline: {pipeline_name}")
             return
-        
+
         # Grab a copy of the pipeline
         pipeline = copy.copy(self.pipelines[pipeline_name])
         # Set the pipeline parameters
-        self._set(pipeline, **params)        
+        self._set(pipeline, **params)
         # Run it!
         exec = execution.PromptExecutor(self)
         # Load our custom nodes
@@ -96,4 +96,3 @@ class ComfyWrapper():
 if __name__ == "__main__":
     job = ComfyWrapper()
     job.test()
-
