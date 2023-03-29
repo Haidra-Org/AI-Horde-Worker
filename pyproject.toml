@@ -9,6 +9,7 @@ select = [
     # "S",    # Bandit
 
     "YTT",  # flake8-2020
+    # "BLE",    # flake8-blind-except
     # "B",    # flake8-bugbear
     "COM",  # flake8-commas
     "C4",   # flake8-comprehensions
