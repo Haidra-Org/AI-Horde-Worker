@@ -49,8 +49,8 @@ else:
     ruff_args.append("check")
 
 lint_processes = [
-    black_args,
     ruff_args,
+    black_args,
 ]
 
 for process_args in lint_processes:
