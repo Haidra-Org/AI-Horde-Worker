@@ -7,13 +7,13 @@ from io import BytesIO
 
 import rembg
 import requests
+from PIL import UnidentifiedImageError
+
 from nataili import InvalidModelCacheException
 from nataili.stable_diffusion.compvis import CompVis
 from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
 from nataili.stable_diffusion.diffusers.inpainting import inpainting
 from nataili.util.logger import logger
-from PIL import UnidentifiedImageError
-
 from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus

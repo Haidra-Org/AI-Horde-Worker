@@ -16,9 +16,11 @@ select = [
     "PIE",  # flake8-pie
     # "T20",  # flake8-print
     # "UP",   # pyupgrade
+    "RET",  # flake8-return
     # "SLF",  # flake8-self
-    # "ARG",  # flake8-unused-arguments
-    # "PTH"  # flake8-use-pathlib
+    "SIM",  # flake8-simplify
+    "ARG",  # flake8-unused-arguments
+    "RUF100"
 ]
 ignore = [
     "A002", # Argument `x` is shadowing a python builtin

@@ -5,7 +5,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from nataili.util.logger import logger
-
 from worker.stats import bridge_stats
 from worker.ui import TerminalUI
 

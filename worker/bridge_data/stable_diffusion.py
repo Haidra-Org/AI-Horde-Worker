@@ -4,10 +4,10 @@ import re
 import time
 
 import requests
-from nataili import enable_ray_alternative
-from nataili.util.logger import logger
 from PIL import Image
 
+from nataili import enable_ray_alternative
+from nataili.util.logger import logger
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
@@ -55,9 +55,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.nataili_cache_home = "./nataili/compvis/"
         os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
         # Disable low vram mode
-        if hasattr(self, "low_vram_mode"):
-            if not self.low_vram_mode:
-                os.environ["LOW_VRAM_MODE"] = "0"
+        if hasattr(self, "low_vram_mode") and not self.low_vram_mode:
+            os.environ["LOW_VRAM_MODE"] = "0"
         # Where the ray temp dir and/or model cache are located
         if hasattr(self, "ray_temp_dir"):
             os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir

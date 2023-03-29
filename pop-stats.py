@@ -44,12 +44,12 @@ class LogStats:
         return adate
 
     def get_num_lines(self, file_path):
-        fp = open(file_path, "r+")
-        buf = mmap.mmap(fp.fileno(), 0)
-        lines = 0
-        while buf.readline():
-            lines += 1
-        return lines
+        with open(file_path, "r+") as fp:
+            buf = mmap.mmap(fp.fileno(), 0)
+            lines = 0
+            while buf.readline():
+                lines += 1
+            return lines
 
     def parse_log(self):
         # Identify all log files and total number of log lines

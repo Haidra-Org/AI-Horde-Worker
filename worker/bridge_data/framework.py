@@ -7,9 +7,9 @@ import threading
 
 import requests
 import yaml
+
 from nataili import disable_voodoo
 from nataili.util.logger import logger
-
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
 
 
@@ -61,7 +61,7 @@ class BridgeDataTemplate:
                     setattr(self, key, value)
             return True  # loaded
         # fall back to try old python bridge data
-        elif os.path.exists("bridgeData.py"):
+        if os.path.exists("bridgeData.py"):
             try:
                 import bridgeData as bd
 
@@ -89,6 +89,7 @@ class BridgeDataTemplate:
                 return True  # loaded
             except (ImportError, AttributeError) as err:
                 logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
+        return None
 
     @logger.catch(reraise=True)
     def reload_data(self):

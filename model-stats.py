@@ -53,12 +53,12 @@ class LogStats:
         return adate
 
     def get_num_lines(self, file_path):
-        fp = open(file_path, "r+")
-        buf = mmap.mmap(fp.fileno(), 0)
-        lines = 0
-        while buf.readline():
-            lines += 1
-        return lines
+        with open(file_path, "r+") as fp:
+            buf = mmap.mmap(fp.fileno(), 0)
+            lines = 0
+            while buf.readline():
+                lines += 1
+            return lines
 
     def download_stats(self, period, model_type="img"):
         self.unused_models = []  # not relevant
@@ -80,10 +80,10 @@ class LogStats:
         if self.period == PERIOD_HORDE_DAY:
             self.download_stats("day")
             return
-        elif self.period == PERIOD_HORDE_MONTH:
+        if self.period == PERIOD_HORDE_MONTH:
             self.download_stats("month")
             return
-        elif self.period == PERIOD_TEXT_HORDE_MONTH:
+        if self.period == PERIOD_TEXT_HORDE_MONTH:
             self.download_stats("month", "text")
             return
 

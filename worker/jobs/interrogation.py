@@ -6,11 +6,11 @@ from io import BytesIO
 import numpy as np
 import rembg
 import requests
+from transformers import CLIPFeatureExtractor
+
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
 from nataili.util.logger import logger
-from transformers import CLIPFeatureExtractor
-
 from worker.consts import KNOWN_POST_PROCESSORS, KNOWN_UPSCALERS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework

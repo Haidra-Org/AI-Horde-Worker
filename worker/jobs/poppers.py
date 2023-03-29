@@ -5,9 +5,9 @@ import time
 from io import BytesIO
 
 import requests
-from nataili.util.logger import logger
 from PIL import Image, UnidentifiedImageError
 
+from nataili.util.logger import logger
 from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_NATAILI_MODELS
 
 
@@ -40,22 +40,22 @@ class JobPopper:
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)
-            return
+            return None
         except TypeError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 2 seconds...")
             time.sleep(2)
-            return
+            return None
         except requests.exceptions.ReadTimeout:
             logger.warning(f"Server {self.bridge_data.horde_url} timed out during pop. Waiting 2 seconds...")
             time.sleep(2)
-            return
+            return None
         except requests.exceptions.InvalidHeader:
             logger.warning(
                 f"Server {self.bridge_data.horde_url} Something is wrong with the API key you are sending. "
                 "Please check your bridgeData api_key variable. Waiting 10 seconds...",
             )
             time.sleep(10)
-            return
+            return None
 
         try:
             self.pop = pop_req.json()  # I'll use it properly later
@@ -65,13 +65,13 @@ class JobPopper:
                 "Please inform its administrator!",
             )
             time.sleep(2)
-            return
+            return None
         if not pop_req.ok:
             logger.warning(f"{self.pop['message']} ({pop_req.status_code})")
             if "errors" in self.pop:
                 logger.warning(f"Detailed Request Errors: {self.pop['errors']}")
             time.sleep(2)
-            return
+            return None
         return [self.pop]
 
     def report_skipped_info(self):
@@ -153,10 +153,10 @@ class StableDiffusionPopper(JobPopper):
 
     def horde_pop(self):
         if not super().horde_pop():
-            return
+            return None
         if not self.pop.get("id"):
             self.report_skipped_info()
-            return
+            return None
         # In the stable diffusion popper, the whole return is always a single payload, so we return it as a list
         self.pop["source_image"] = self.download_source(self.pop.get("source_image"))
         self.pop["source_mask"] = self.download_source(self.pop.get("source_mask"))
@@ -171,13 +171,13 @@ class StableDiffusionPopper(JobPopper):
                 if not img:
                     logger.error("Non-image data when downloading image! Ignoring")
                 return img
-            else:
-                logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
-                return None
-        else:
-            base64_bytes = source_img.encode("utf-8")
-            img_bytes = base64.b64decode(base64_bytes)
-            return Image.open(BytesIO(img_bytes))
+
+            logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
+            return None
+
+        base64_bytes = source_img.encode("utf-8")
+        img_bytes = base64.b64decode(base64_bytes)
+        return Image.open(BytesIO(img_bytes))
 
 
 class InterrogationPopper(JobPopper):
@@ -209,10 +209,10 @@ class InterrogationPopper(JobPopper):
 
     def horde_pop(self):
         if not super().horde_pop():
-            return
+            return None
         if not self.pop.get("forms"):
             self.report_skipped_info()
-            return
+            return None
         # In the interrogation popper, the forms key contains an array of payloads to execute
         current_image_url = None
         non_faulted_forms = []

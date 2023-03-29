@@ -9,7 +9,6 @@ from worker.argparser.stable_diffusion import args
 
 from nataili.model_manager.super import ModelManager
 from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
-
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.workers.stable_diffusion import StableDiffusionWorker
 

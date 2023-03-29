@@ -202,16 +202,19 @@ class WebUI:
     def _label(self, name):
         if name in WebUI.INFO:
             return WebUI.INFO[name]["label"]
+        return None
 
     def _info(self, name):
         if name in WebUI.INFO:
             return f"{WebUI.INFO[name]['info']} [{name}]"
+        return None
 
     # Label to config item name
     def _cfg(self, label):
         for key, value in WebUI.INFO.items():
             if value["label"] == label:
                 return key
+        return None
 
     def reload_config(self):
         # Sanity check, to ensure Tazlin doesn't give me a hard time
@@ -420,71 +423,69 @@ class WebUI:
             gr.Markdown("# AI Horde Worker Configuration")
 
             with gr.Row():
-                with gr.Tab("Basic Settings"):
-                    with gr.Column():
-                        worker_name = gr.Textbox(
-                            label=self._label("worker_name"),
-                            value=config.worker_name,
-                            info=self._info("worker_name"),
-                        )
-                        api_key = gr.Textbox(
-                            label=self._label("api_key"),
-                            value=config.api_key,
-                            type="password",
-                            info=self._info("api_key"),
-                        )
-                        slider_desc = gr.Markdown("Maximum Image Size")
-                        config.default("max_power", 8)
-                        max_power = gr.Slider(
-                            2,
-                            128,
-                            step=2,
-                            label=self._label("max_power"),
-                            show_label=False,
-                            value=config.max_power,
-                            info=self._info("max_power"),
-                        )
-                        # Hook the slider on change event to display image size
-                        max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
-                        priority_usernames = gr.Textbox(
-                            label=self._label("priority_usernames"),
-                            value=existing_priority_usernames,
-                            info=self._info("priority_usernames"),
-                        )
+                with gr.Tab("Basic Settings"), gr.Column():
+                    worker_name = gr.Textbox(
+                        label=self._label("worker_name"),
+                        value=config.worker_name,
+                        info=self._info("worker_name"),
+                    )
+                    api_key = gr.Textbox(
+                        label=self._label("api_key"),
+                        value=config.api_key,
+                        type="password",
+                        info=self._info("api_key"),
+                    )
+                    slider_desc = gr.Markdown("Maximum Image Size")
+                    config.default("max_power", 8)
+                    max_power = gr.Slider(
+                        2,
+                        128,
+                        step=2,
+                        label=self._label("max_power"),
+                        show_label=False,
+                        value=config.max_power,
+                        info=self._info("max_power"),
+                    )
+                    # Hook the slider on change event to display image size
+                    max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
+                    priority_usernames = gr.Textbox(
+                        label=self._label("priority_usernames"),
+                        value=existing_priority_usernames,
+                        info=self._info("priority_usernames"),
+                    )
 
-                with gr.Tab("Enable Features"):
-                    with gr.Column():
-                        config.default("allow_img2img", True)
-                        allow_img2img = gr.Checkbox(
-                            label=self._label("allow_img2img"),
-                            value=config.allow_img2img,
-                            info=self._info("allow_img2img"),
-                        )
-                        config.default("allow_painting", True)
-                        allow_painting = gr.Checkbox(
-                            label=self._label("allow_painting"),
-                            value=config.allow_painting,
-                            info=self._info("allow_painting"),
-                        )
-                        config.default("allow_post_processing", True)
-                        allow_post_processing = gr.Checkbox(
-                            label=self._label("allow_post_processing"),
-                            value=config.allow_post_processing,
-                            info=self._info("allow_post_processing"),
-                        )
-                        config.default("allow_controlnet", True)
-                        allow_controlnet = gr.Checkbox(
-                            label=self._label("allow_controlnet"),
-                            value=config.allow_controlnet,
-                            info=self._info("allow_controlnet"),
-                        )
-                        config.default("forms", [])
-                        forms = gr.CheckboxGroup(
-                            label=self._label("forms"),
-                            choices=["caption", "nsfw", "interrogation", "post-process"],
-                            value=config.forms,
-                            info=self._info("forms"),
-                        )
+                with gr.Tab("Enable Features"), gr.Column():
+                    config.default("allow_img2img", True)
+                    allow_img2img = gr.Checkbox(
+                        label=self._label("allow_img2img"),
+                        value=config.allow_img2img,
+                        info=self._info("allow_img2img"),
+                    )
+                    config.default("allow_painting", True)
+                    allow_painting = gr.Checkbox(
+                        label=self._label("allow_painting"),
+                        value=config.allow_painting,
+                        info=self._info("allow_painting"),
+                    )
+                    config.default("allow_post_processing", True)
+                    allow_post_processing = gr.Checkbox(
+                        label=self._label("allow_post_processing"),
+                        value=config.allow_post_processing,
+                        info=self._info("allow_post_processing"),
+                    )
+                    config.default("allow_controlnet", True)
+                    allow_controlnet = gr.Checkbox(
+                        label=self._label("allow_controlnet"),
+                        value=config.allow_controlnet,
+                        info=self._info("allow_controlnet"),
+                    )
+                    config.default("forms", [])
+                    forms = gr.CheckboxGroup(
+                        label=self._label("forms"),
+                        choices=["caption", "nsfw", "interrogation", "post-process"],
+                        value=config.forms,
+                        info=self._info("forms"),
+                    )
 
                 with gr.Tab("Models To Load"):
                     with gr.Row():
@@ -521,183 +522,176 @@ class WebUI:
                             value=models_to_load_top,
                             info=self._info("special_top_models_to_load"),
                         )
-                    with gr.Row():
-                        with gr.Column():
-                            models_to_load = gr.CheckboxGroup(
-                                choices=model_list,
-                                label=self._label("models_to_load"),
-                                value=models_to_load_individual,
-                                info=self._info("models_to_load"),
-                            )
-
-                with gr.Tab("Models to Skip"):
-                    with gr.Column():
-                        config.default("models_to_skip", [])
-                        models_to_skip = gr.CheckboxGroup(
+                    with gr.Row(), gr.Column():
+                        models_to_load = gr.CheckboxGroup(
                             choices=model_list,
-                            label=self._label("models_to_skip"),
-                            value=config.models_to_skip,
-                            info=self._info("models_to_skip"),
+                            label=self._label("models_to_load"),
+                            value=models_to_load_individual,
+                            info=self._info("models_to_load"),
                         )
 
-                with gr.Tab("Model Management"):
-                    with gr.Column():
-                        config.default("always_download", True)
-                        always_download = gr.Checkbox(
-                            label=self._label("always_download"),
-                            value=config.always_download,
-                            info=self._info("always_download"),
-                        )
-                        config.default("enable_model_cache", False)
-                        enable_model_cache = gr.Checkbox(
-                            label=self._label("enable_model_cache"),
-                            value=config.enable_model_cache,
-                            info=self._info("enable_model_cache"),
-                        )
-                        config.default("disable_voodoo", False)
-                        disable_voodoo = gr.Checkbox(
-                            label=self._label("disable_voodoo"),
-                            value=config.disable_voodoo,
-                            info=self._info("disable_voodoo"),
-                        )
-                        config.default("max_models_to_download", 10)
-                        max_models_to_download = gr.Number(
-                            label=self._label("max_models_to_download"),
-                            value=config.max_models_to_download,
-                            precision=0,
-                            info=self._info("max_models_to_download"),
-                        )
-                        config.default("dynamic_models", True)
-                        dynamic_models = gr.Checkbox(
-                            label=self._label("dynamic_models"),
-                            value=config.dynamic_models,
-                            info=self._info("dynamic_models"),
-                        )
-                        config.default("number_of_dynamic_models", 3)
-                        number_of_dynamic_models = gr.Number(
-                            label=self._label("number_of_dynamic_models"),
-                            value=config.number_of_dynamic_models,
-                            precision=0,
-                            info=self._info("number_of_dynamic_models"),
-                        )
-                        config.default("nataili_cache_home", "./")
-                        nataili_cache_home = gr.Textbox(
-                            label=self._label("nataili_cache_home"),
-                            value=config.nataili_cache_home,
-                            info=self._info("nataili_cache_home"),
-                        )
-                        config.default("ray_temp_dir", "./ray")
-                        ray_temp_dir = gr.Textbox(
-                            label=self._label("ray_temp_dir"),
-                            value=config.ray_temp_dir,
-                            info=self._info("ray_temp_dir"),
-                        )
+                with gr.Tab("Models to Skip"), gr.Column():
+                    config.default("models_to_skip", [])
+                    models_to_skip = gr.CheckboxGroup(
+                        choices=model_list,
+                        label=self._label("models_to_skip"),
+                        value=config.models_to_skip,
+                        info=self._info("models_to_skip"),
+                    )
 
-                with gr.Tab("Security"):
-                    with gr.Column():
-                        config.default("allow_unsafe_ip", False)
-                        allow_unsafe_ip = gr.Checkbox(
-                            label=self._label("allow_unsafe_ip"),
-                            value=config.allow_unsafe_ip,
-                            info=self._info("allow_unsafe_ip"),
-                        )
-                        config.default("require_upfront_kudos", False)
-                        require_upfront_kudos = gr.Checkbox(
-                            label=self._label("require_upfront_kudos"),
-                            value=config.require_upfront_kudos,
-                            info=self._info("require_upfront_kudos"),
-                        )
-                        blacklist = gr.Textbox(
-                            label=self._label("blacklist"),
-                            value=existing_blacklist,
-                            info=self._info("blacklist"),
-                        )
-                        censorlist = gr.Textbox(
-                            label=self._label("censorlist"),
-                            value=existing_censorlist,
-                            info=self._info("censorlist"),
-                        )
-                        config.default("nsfw", True)
-                        nsfw = gr.Checkbox(
-                            label=self._label("nsfw"),
-                            value=config.nsfw,
-                            info=self._info("nsfw"),
-                        )
-                        config.default("censor_nsfw", False)
-                        censor_nsfw = gr.Checkbox(
-                            label=self._label("censor_nsfw"),
-                            value=config.censor_nsfw,
-                            info=self._info("censor_nsfw"),
-                        )
+                with gr.Tab("Model Management"), gr.Column():
+                    config.default("always_download", True)
+                    always_download = gr.Checkbox(
+                        label=self._label("always_download"),
+                        value=config.always_download,
+                        info=self._info("always_download"),
+                    )
+                    config.default("enable_model_cache", False)
+                    enable_model_cache = gr.Checkbox(
+                        label=self._label("enable_model_cache"),
+                        value=config.enable_model_cache,
+                        info=self._info("enable_model_cache"),
+                    )
+                    config.default("disable_voodoo", False)
+                    disable_voodoo = gr.Checkbox(
+                        label=self._label("disable_voodoo"),
+                        value=config.disable_voodoo,
+                        info=self._info("disable_voodoo"),
+                    )
+                    config.default("max_models_to_download", 10)
+                    max_models_to_download = gr.Number(
+                        label=self._label("max_models_to_download"),
+                        value=config.max_models_to_download,
+                        precision=0,
+                        info=self._info("max_models_to_download"),
+                    )
+                    config.default("dynamic_models", True)
+                    dynamic_models = gr.Checkbox(
+                        label=self._label("dynamic_models"),
+                        value=config.dynamic_models,
+                        info=self._info("dynamic_models"),
+                    )
+                    config.default("number_of_dynamic_models", 3)
+                    number_of_dynamic_models = gr.Number(
+                        label=self._label("number_of_dynamic_models"),
+                        value=config.number_of_dynamic_models,
+                        precision=0,
+                        info=self._info("number_of_dynamic_models"),
+                    )
+                    config.default("nataili_cache_home", "./")
+                    nataili_cache_home = gr.Textbox(
+                        label=self._label("nataili_cache_home"),
+                        value=config.nataili_cache_home,
+                        info=self._info("nataili_cache_home"),
+                    )
+                    config.default("ray_temp_dir", "./ray")
+                    ray_temp_dir = gr.Textbox(
+                        label=self._label("ray_temp_dir"),
+                        value=config.ray_temp_dir,
+                        info=self._info("ray_temp_dir"),
+                    )
 
-                with gr.Tab("Performance"):
-                    with gr.Column():
-                        config.default("threads", 1)
-                        max_threads = gr.Slider(
-                            1,
-                            8,
-                            step=1,
-                            label=self._label("threads"),
-                            value=config.max_threads,
-                            info=self._info("threads"),
-                        )
-                        config.default("queue_size", 1)
-                        queue_size = gr.Slider(
-                            0,
-                            2,
-                            step=1,
-                            label=self._label("queue_size"),
-                            value=config.queue_size,
-                            info=self._info("queue_size"),
-                        )
+                with gr.Tab("Security"), gr.Column():
+                    config.default("allow_unsafe_ip", False)
+                    allow_unsafe_ip = gr.Checkbox(
+                        label=self._label("allow_unsafe_ip"),
+                        value=config.allow_unsafe_ip,
+                        info=self._info("allow_unsafe_ip"),
+                    )
+                    config.default("require_upfront_kudos", False)
+                    require_upfront_kudos = gr.Checkbox(
+                        label=self._label("require_upfront_kudos"),
+                        value=config.require_upfront_kudos,
+                        info=self._info("require_upfront_kudos"),
+                    )
+                    blacklist = gr.Textbox(
+                        label=self._label("blacklist"),
+                        value=existing_blacklist,
+                        info=self._info("blacklist"),
+                    )
+                    censorlist = gr.Textbox(
+                        label=self._label("censorlist"),
+                        value=existing_censorlist,
+                        info=self._info("censorlist"),
+                    )
+                    config.default("nsfw", True)
+                    nsfw = gr.Checkbox(
+                        label=self._label("nsfw"),
+                        value=config.nsfw,
+                        info=self._info("nsfw"),
+                    )
+                    config.default("censor_nsfw", False)
+                    censor_nsfw = gr.Checkbox(
+                        label=self._label("censor_nsfw"),
+                        value=config.censor_nsfw,
+                        info=self._info("censor_nsfw"),
+                    )
 
-                with gr.Tab("Advanced"):
-                    with gr.Column():
-                        config.default("enable_terminal_ui", False)
-                        enable_terminal_ui = gr.Checkbox(
-                            label=self._label("enable_terminal_ui"),
-                            value=config.enable_terminal_ui,
-                            info=self._info("enable_terminal_ui"),
-                        )
-                        config.default("horde_url", "https://stablehorde.net/")
-                        horde_url = gr.Textbox(
-                            label=self._label("horde_url"),
-                            value=config.horde_url,
-                            info=self._info("horde_url"),
-                        )
-                        config.default("low_vram_mode", True)
-                        low_vram_mode = gr.Checkbox(
-                            label=self._label("low_vram_mode"),
-                            value=config.low_vram_mode,
-                            info=self._info("low_vram_mode"),
-                        )
-                        config.default("stats_output_frequency", 30)
-                        stats_output_frequency = gr.Number(
-                            label=self._label("stats_output_frequency"),
-                            value=config.stats_output_frequency,
-                            precision=0,
-                            info=self._info("stats_output_frequency"),
-                        )
+                with gr.Tab("Performance"), gr.Column():
+                    config.default("threads", 1)
+                    max_threads = gr.Slider(
+                        1,
+                        8,
+                        step=1,
+                        label=self._label("threads"),
+                        value=config.max_threads,
+                        info=self._info("threads"),
+                    )
+                    config.default("queue_size", 1)
+                    queue_size = gr.Slider(
+                        0,
+                        2,
+                        step=1,
+                        label=self._label("queue_size"),
+                        value=config.queue_size,
+                        info=self._info("queue_size"),
+                    )
 
-                with gr.Tab("Worker Control"):
-                    with gr.Column():
-                        gr.Markdown(
-                            "Enable maintenance mode to prevent this worker fetching any more jobs to process. "
-                            "Jobs that you submit yourself will still be picked up by your worker even if maintenance "
-                            "mode is enabled.",
-                        )
-                        maint_button = gr.Button(value="Toggle Maintenance Mode", variant="secondary")
-                        maint_message = gr.Markdown("")
-                        worker_id = gr.Textbox(label="Worker ID")
-                        maintenance_mode = gr.Textbox(label="Current Maintenance Mode Status")
-                        self.app.load(self.load_workerID, inputs=worker_name, outputs=worker_id, every=15)
-                        self.app.load(self.load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+                with gr.Tab("Advanced"), gr.Column():
+                    config.default("enable_terminal_ui", False)
+                    enable_terminal_ui = gr.Checkbox(
+                        label=self._label("enable_terminal_ui"),
+                        value=config.enable_terminal_ui,
+                        info=self._info("enable_terminal_ui"),
+                    )
+                    config.default("horde_url", "https://stablehorde.net/")
+                    horde_url = gr.Textbox(
+                        label=self._label("horde_url"),
+                        value=config.horde_url,
+                        info=self._info("horde_url"),
+                    )
+                    config.default("low_vram_mode", True)
+                    low_vram_mode = gr.Checkbox(
+                        label=self._label("low_vram_mode"),
+                        value=config.low_vram_mode,
+                        info=self._info("low_vram_mode"),
+                    )
+                    config.default("stats_output_frequency", 30)
+                    stats_output_frequency = gr.Number(
+                        label=self._label("stats_output_frequency"),
+                        value=config.stats_output_frequency,
+                        precision=0,
+                        info=self._info("stats_output_frequency"),
+                    )
 
-                        maint_button.click(
-                            self.update_worker_mode,
-                            inputs=[worker_name, worker_id, maintenance_mode, api_key],
-                            outputs=[maint_message],
-                        )
+                with gr.Tab("Worker Control"), gr.Column():
+                    gr.Markdown(
+                        "Enable maintenance mode to prevent this worker fetching any more jobs to process. "
+                        "Jobs that you submit yourself will still be picked up by your worker even if maintenance "
+                        "mode is enabled.",
+                    )
+                    maint_button = gr.Button(value="Toggle Maintenance Mode", variant="secondary")
+                    maint_message = gr.Markdown("")
+                    worker_id = gr.Textbox(label="Worker ID")
+                    maintenance_mode = gr.Textbox(label="Current Maintenance Mode Status")
+                    self.app.load(self.load_workerID, inputs=worker_name, outputs=worker_id, every=15)
+                    self.app.load(self.load_worker_mode, inputs=worker_name, outputs=maintenance_mode, every=15)
+
+                    maint_button.click(
+                        self.update_worker_mode,
+                        inputs=[worker_name, worker_id, maintenance_mode, api_key],
+                        outputs=[maint_message],
+                    )
 
             with gr.Row():
                 submit = gr.Button(value="Save Configuration", variant="primary")

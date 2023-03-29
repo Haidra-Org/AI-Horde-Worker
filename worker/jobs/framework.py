@@ -6,8 +6,8 @@ import threading
 import time
 
 import requests
-from nataili.util.logger import logger
 
+from nataili.util.logger import logger
 from worker.enums import JobStatus
 
 
@@ -141,16 +141,15 @@ class HordeJobFramework:
                         )
                         self.status = JobStatus.FAULTED
                         break
-                    else:
-                        logger.warning(
-                            f"During gen submit, server {self.bridge_data.horde_url} "
-                            f"responded with status code {submit_req.status_code}: "
-                            f"{submit['message']}. Waiting for 2 seconds...  (Retry {self.loop_retry}/10)",
-                        )
-                        if "errors" in submit:
-                            logger.warning(f"Detailed Request Errors: {submit['errors']}")
-                        time.sleep(2)
-                        continue
+                    logger.warning(
+                        f"During gen submit, server {self.bridge_data.horde_url} "
+                        f"responded with status code {submit_req.status_code}: "
+                        f"{submit['message']}. Waiting for 2 seconds...  (Retry {self.loop_retry}/10)",
+                    )
+                    if "errors" in submit:
+                        logger.warning(f"Detailed Request Errors: {submit['errors']}")
+                    time.sleep(2)
+                    continue
                 logger.info(
                     f'Submitted job with id {self.current_id} and contributed for {submit_req.json()["reward"]}. '
                     f"Job took {round(time.time() - self.start_time,1)} seconds since queued "
