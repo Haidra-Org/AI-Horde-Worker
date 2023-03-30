@@ -1,3 +1,6 @@
+# node_model_loader.py
+# Simple proof of concept custom node to load models.
+# We shall expand this to actually integrate with the horde model manager.
 import os
 
 import comfy

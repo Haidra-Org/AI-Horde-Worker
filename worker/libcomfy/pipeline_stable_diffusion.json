@@ -20,10 +20,10 @@
              "prompt",
              0
           ],
-          "sampler_name":"euler",
-          "scheduler":"normal",
-          "seed":8566257,
-          "steps":20
+          "sampler_name":"",
+          "scheduler":"",
+          "seed":0,
+          "steps":0
        }
     },
     "model_loader":{
@@ -47,7 +47,7 @@
              "model_loader",
              1
           ],
-          "text":"masterpiece best quality girl"
+          "text":""
        }
     },
     "negative_prompt":{
@@ -57,7 +57,7 @@
              "model_loader",
              1
           ],
-          "text":"bad hands"
+          "text":""
        }
     },
     "vae":{
@@ -73,10 +73,9 @@
           ]
        }
     },
-    "save_image":{
-       "class_type":"SaveImage",
+    "output_image":{
+       "class_type":"HordeImageOutput",
        "inputs":{
-          "filename_prefix":"ComfyUI",
           "images":[
              "vae",
              0

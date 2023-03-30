@@ -5,11 +5,11 @@ import glob
 import json
 import os
 import re
-import sys
+from io import BytesIO
+from PIL import Image
 
 from loguru import logger
 
-sys.path.append("ComfyUI")
 from ComfyUI import execution
 
 
@@ -35,7 +35,9 @@ class ComfyWrapper:
         logger.debug(f"Loaded custom pipeline node: {filename}")
 
     def _load_custom_nodes(self):
-        self._load_node("node_model_loader.py")
+        files = glob.glob(self._this_dir("node_*.py"))
+        for file in files:
+            self._load_node(os.path.basename(file))
 
     def _load_pipelines(self):
         files = glob.glob(self._this_dir("pipeline_*.json"))
@@ -49,18 +51,26 @@ class ComfyWrapper:
             except (OSError, ValueError):
                 logger.error(f"Invalid inference pipeline file: {file}")
 
+    # Inject parameters into a pre-configured pipeline
+    # We allow "inputs" to be missing from the key name, if it is we insert it.
     def _set(self, dct, **kwargs):
         for key, value in kwargs.items():
             keys = key.split(".")
+            if "inputs" not in keys:
+                keys.insert(1, "inputs")
             current = dct
 
             for k in keys[:-1]:
                 if k not in current:
-                    current[k] = {}
-                current = current[k]
+                    logger.error(f"Attempt to set unknown pipeline parameter {key}")
+                    break
+                else:
+                    current = current[k]
 
             current[keys[-1]] = value
 
+    # Execute the named pipeline and pass the pipeline the parameter provided.
+    # For the horde we assume the pipeline returns an array of images.
     def run_pipeline(self, pipeline_name, params):
 
         # Sanity
@@ -78,20 +88,38 @@ class ComfyWrapper:
         self._load_custom_nodes()
         exec.execute(pipeline)
 
+        # From the horde point of view, let us assume the output we are interested in
+        # is always in a HordeImageOutput node named "output_image". This is an array of
+        # dicts of the form:
+        # [ {
+        #     "imagedata": <BytesIO>,
+        #     "type": "PNG"
+        #   },
+        # ]
+        # See node_image_output.py
+        return exec.outputs["output_image"]["images"]
+
     # A simple test function for early development testing
+    # Runs the "stable_diffusion" pipeline and create an image named "HORDE-IMAGE.png"
     def test(self):
         params = {
-            "sampler.inputs.seed": 12345,
-            "sampler.inputs.cfg": 7.5,
-            "sampler.inputs.scheduler": "karras",
-            "sampler.inputs.sampler_name": "dpmpp_2m",
-            "sampler.inputs.steps": 25,
-            "prompt.inputs.text": "a closeup photo of a confused dog",
-            "negative_prompt.inputs.text": "cat",
-            "model_loader.inputs.ckpt_name": "model_1_5.ckpt",
+            "sampler.seed": 12345,
+            "sampler.cfg": 7.5,
+            "sampler.scheduler": "karras",
+            "sampler.sampler_name": "dpmpp_2m",
+            "sampler.steps": 25,
+            "prompt.text": "a closeup photo of a confused dog",
+            "negative_prompt.text": "cat, black and white, deformed",
+            "model_loader.ckpt_name": "model_1_5.ckpt",
+            "empty_latent_image.width": 768,
+            "empty_latent_image.height": 768,
         }
-        self.run_pipeline("stable_diffusion", params)
+        images = self.run_pipeline("stable_diffusion", params)
 
+        # XXX for proof of concept development we just save the image to a file        
+        image = Image.open(images[0]["imagedata"])
+        image.save("HORDE-IMAGE.png")
+        
 
 if __name__ == "__main__":
     job = ComfyWrapper()
