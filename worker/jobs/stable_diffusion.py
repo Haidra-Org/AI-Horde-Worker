@@ -48,7 +48,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.status == JobStatus.FAULTED:
             self.start_submit_thread()
             return
-        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3)
+        self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3) + 10
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
         self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
