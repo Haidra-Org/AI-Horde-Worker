@@ -18,7 +18,7 @@ class StableDiffusionWorker(WorkerFramework):
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
         loaded_models = len(self.model_manager.compvis.get_loaded_models_names()) + len(
-            self.model_manager.diffusers.get_loaded_models_names()
+            self.model_manager.diffusers.get_loaded_models_names(),
         )
         can_do = loaded_models > 0
         if not can_do:
@@ -27,12 +27,12 @@ class StableDiffusionWorker(WorkerFramework):
 
     # We want this to be extendable as well
     def add_job_to_queue(self):
-        if job := super().add_job_to_queue():
+        job = super().add_job_to_queue()
+        if job and job.current_model not in self.bridge_data.model_names:
             # The job sends the current models loaded in the MM to
             # the horde. That model might end up unloaded if it's dynamic
             # so we need to ensure it will be there next iteration.
-            if job.current_model not in self.bridge_data.model_names:
-                self.bridge_data.model_names.append(job.current_model)
+            self.bridge_data.model_names.append(job.current_model)
 
     def pop_job(self):
         return super().pop_job()

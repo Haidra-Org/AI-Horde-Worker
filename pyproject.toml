@@ -1,17 +1,43 @@
 [tool.black]
 line-length = 119
 
-[tool.isort]
-py_version = 38
-line_length = 119
-profile = "black"
-known_third_party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
-
-[tool.pylint.FORMAT]
-max-line-length=500
-
 [tool.ruff]
-line-length = 500
+line-length = 119
+select = [
+    "A",    # flake8-builtins
+    "I",    # isort 
+    # "S",    # Bandit
+    "F",    # pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+
+
+    "YTT",  # flake8-2020
+    # "BLE",    # flake8-blind-except
+    # "B",    # flake8-bugbear
+    "COM",  # flake8-commas
+    "C4",   # flake8-comprehensions
+    # "G",    # flake8-logging-format
+    "INP",  # flake8-no-pep420
+    "PIE",  # flake8-pie
+    # "T20",  # flake8-print
+    # "UP",   # pyupgrade
+    "RSE",  # flake8-raise 
+    "RET",  # flake8-return
+    # "SLF",  # flake8-self
+    "SIM",  # flake8-simplify
+    "ARG",  # flake8-unused-arguments
+    # "TRY",  # tryceratops 
+    "RUF100"
+]
+ignore = [
+    "A002", # Argument `x` is shadowing a python builtin
+    "A003", # Class attribute `x` is shadowing a python builtin
+]
+
+[tool.ruff.isort]
+known-third-party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
+
 
 [build-system]
 requires = ["setuptools>=64.0"]

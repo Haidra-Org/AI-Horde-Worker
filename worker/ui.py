@@ -88,7 +88,7 @@ class GPUInfo:
     def get_info(self):
         data = self._get_gpu_data()
         if not data:
-            return
+            return None
 
         # Calculate averages
         try:
@@ -134,10 +134,9 @@ class GPUInfo:
 
 
 class TerminalUI:
-
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
-        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$",
     )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
@@ -248,7 +247,8 @@ class TerminalUI:
         # We try a couple of times, log rotiation, etc
         for _ in range(2):
             try:
-                self.log_file = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")
+                self.log_file = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")  # noqa: SIM115
+                # FIXME @jug this probably could be reworked
                 self.log_file.seek(0, os.SEEK_END)
                 break
             except OSError:
@@ -264,21 +264,23 @@ class TerminalUI:
         if self.use_log_file:
             if regex := TerminalUI.REGEX.match(line):
                 if not self.show_debug and regex.group(1) == "DEBUG":
-                    return
+                    return None
                 if regex.group(1) == "ERROR":
                     self.error_count += 1
                 elif regex.group(1) == "WARNING":
                     self.warning_count += 1
                 return f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}"
-        else:
-            if regex := TerminalUI.LOGURU_REGEX.match(line):
-                if not self.show_debug and regex.group(2) == "DEBUG":
-                    return
-                if regex.group(2) == "ERROR":
-                    self.error_count += 1
-                elif regex.group(2) == "WARNING":
-                    self.warning_count += 1
-                return f"{regex.group(2)}::::{regex.group(1)}::::{regex.group(3)}::::{regex.group(4)}"
+            return None
+
+        if regex := TerminalUI.LOGURU_REGEX.match(line):
+            if not self.show_debug and regex.group(2) == "DEBUG":
+                return None
+            if regex.group(2) == "ERROR":
+                self.error_count += 1
+            elif regex.group(2) == "WARNING":
+                self.warning_count += 1
+            return f"{regex.group(2)}::::{regex.group(1)}::::{regex.group(3)}::::{regex.group(4)}"
+        return None
 
     def load_log_queue(self):
         lines = list(self.input.deque)
@@ -344,7 +346,7 @@ class TerminalUI:
         )
         self.print(win, y, 2, label)
 
-    def draw_box(self, y, x, width, height):
+    def draw_box(self, y, x, width, height):  # noqa: ARG002
         # An attempt to work cross platform, box() doesn't.
 
         # Draw the top border
@@ -362,7 +364,10 @@ class TerminalUI:
 
         # Draw the bottom border
         self.print(
-            self.main, height - 1, 0, TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2)
+            self.main,
+            height - 1,
+            0,
+            TerminalUI.ART["bottom_left"] + TerminalUI.ART["horizontal"] * (width - 2),
         )
         self.print(self.main, height - 1, width - 1, TerminalUI.ART["bottom_right"])
 
@@ -386,10 +391,7 @@ class TerminalUI:
         return f"{hours}:{minutes:02}:{seconds:02}"
 
     def print_switch(self, y, x, label, switch):
-        if switch:
-            colour = curses.color_pair(TerminalUI.COLOUR_CYAN)
-        else:
-            colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
+        colour = curses.color_pair(TerminalUI.COLOUR_CYAN) if switch else curses.color_pair(TerminalUI.COLOUR_WHITE)
         self.print(self.main, y, x, label, colour)
         return x + len(label) + 2
 
@@ -515,7 +517,6 @@ class TerminalUI:
 
         gpu = self.gpu.get_info()
         if gpu:
-
             # Add some warning colours to free vram
             vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
@@ -584,11 +585,9 @@ class TerminalUI:
                 maxrows = i
                 break
         # Truncate the output so it fits
-        output = output[-maxrows:]
-        return output
+        return output[-maxrows:]
 
     def print_log(self):
-
         if not self.pause_log:
             self.load_log()
         output = list(self.output.deque)
@@ -601,7 +600,6 @@ class TerminalUI:
         inputrow = 0
         last_timestamp = ""
         while y < self.height and inputrow < len(output):
-
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(TerminalUI.DELIM)
             colour = TerminalUI.COLOUR_WHITE
@@ -638,17 +636,19 @@ class TerminalUI:
 
     def load_worker_id(self):
         if not self.worker_name:
-            return
+            return None
         workers_url = f"{self.url}/api/v2/workers"
         try:
             r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
         except requests.exceptions.RequestException:
-            return
+            return None
         if r.ok:
             worker_json = r.json()
             for item in worker_json:
                 if item["name"] == self.worker_name:
                     return item["id"]
+            return None
+        return None
 
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
@@ -752,6 +752,8 @@ class TerminalUI:
         elif x == ord("p"):
             self.pause_log = not self.pause_log
 
+        return None
+
     def poll(self):
         if self.get_input():
             return True
@@ -760,6 +762,7 @@ class TerminalUI:
         self.print_status()
         self.print_log()
         self.main.refresh()
+        return None
 
     def main_loop(self, stdscr):
         self.main = stdscr
