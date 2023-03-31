@@ -16,9 +16,8 @@ from math import trunc
 import psutil
 import requests
 import yaml
-from pynvml.smi import nvidia_smi
-
 from nataili.util.logger import config, logger
+from pynvml.smi import nvidia_smi
 
 
 class DequeOutputCollector:

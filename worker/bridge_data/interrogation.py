@@ -2,6 +2,7 @@
 import os
 
 from nataili.util.logger import logger
+
 from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import POST_PROCESSORS_NATAILI_MODELS

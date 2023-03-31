@@ -4,10 +4,10 @@ import re
 import time
 
 import requests
-from PIL import Image
-
 from nataili import enable_ray_alternative
 from nataili.util.logger import logger
+from PIL import Image
+
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS

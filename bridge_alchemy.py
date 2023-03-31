@@ -3,6 +3,7 @@
 from worker.argparser.interrogation import args  # isort: skip
 from nataili.model_manager.super import ModelManager
 from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
+
 from worker.bridge_data.interrogation import InterrogationBridgeData
 from worker.workers.interrogation import InterrogationWorker
 
