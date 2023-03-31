@@ -46,7 +46,7 @@ else:
     print("fix not requested")
 
     black_args.extend(("--check", "--diff"))
-    ruff_args.append("check")
+    ruff_args.append("--diff")
 
 lint_processes = [
     ruff_args,
