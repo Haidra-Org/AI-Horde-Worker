@@ -16,9 +16,7 @@ import yaml
 # Helper class to access dictionaries
 class DotDict(dict):
     def __getattr__(self, attr):
-        if attr in self:
-            return self[attr]
-        return None
+        return self[attr] if attr in self else None
 
     def __setattr__(self, attr, value):
         self[attr] = value
@@ -200,21 +198,17 @@ class WebUI:
         self.app = None
 
     def _label(self, name):
-        if name in WebUI.INFO:
-            return WebUI.INFO[name]["label"]
-        return None
+        return WebUI.INFO[name]["label"] if name in WebUI.INFO else None
 
     def _info(self, name):
-        if name in WebUI.INFO:
-            return f"{WebUI.INFO[name]['info']} [{name}]"
-        return None
+        return f"{WebUI.INFO[name]['info']} [{name}]" if name in WebUI.INFO else None
 
     # Label to config item name
     def _cfg(self, label):
-        for key, value in WebUI.INFO.items():
-            if value["label"] == label:
-                return key
-        return None
+        return next(
+            (key for key, value in WebUI.INFO.items() if value["label"] == label),
+            None,
+        )
 
     def reload_config(self):
         # Sanity check, to ensure Tazlin doesn't give me a hard time

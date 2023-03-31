@@ -607,7 +607,7 @@ class TerminalUI:
                 colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = TerminalUI.COLOUR_RED
-            elif cat == "INIT" or cat == "INIT_OK":
+            elif cat in ["INIT", "INIT_OK"]:
                 colour = TerminalUI.COLOUR_MAGENTA
             elif cat == "WARNING":
                 colour = TerminalUI.COLOUR_YELLOW
@@ -644,10 +644,10 @@ class TerminalUI:
             return None
         if r.ok:
             worker_json = r.json()
-            for item in worker_json:
-                if item["name"] == self.worker_name:
-                    return item["id"]
-            return None
+            return next(
+                (item["id"] for item in worker_json if item["name"] == self.worker_name),
+                None,
+            )
         return None
 
     def set_maintenance_mode(self, enabled):
