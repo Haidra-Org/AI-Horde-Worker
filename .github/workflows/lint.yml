@@ -21,4 +21,4 @@ jobs:
         run: python -m pip install -r requirements.dev.txt
 
       - name: Run lint and static type checks
-        run: python ${GITHUB_WORKSPACE}/style.py
+        run: bash ${GITHUB_WORKSPACE}/style.sh
