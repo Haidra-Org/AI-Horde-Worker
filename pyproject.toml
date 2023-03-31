@@ -35,6 +35,9 @@ ignore = [
     "A003", # Class attribute `x` is shadowing a python builtin
 ]
 
+[tool.ruff.isort]
+known-third-party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
+
 
 [build-system]
 requires = ["setuptools>=64.0"]

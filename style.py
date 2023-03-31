@@ -1,7 +1,6 @@
 import argparse
 import glob
 import os
-import pathlib
 import subprocess
 import sys
 
@@ -28,10 +27,6 @@ if args.debug:
     print(f"working out of {workingDirectory}")
     print(f"style.py located at {thisFilePath}")
 os.chdir(workingDirectory)
-
-if pathlib.Path("nataili").exists():
-    print("You have a 'nataili' folder, this will confuse ruff! Please remove it.")
-    sys.exit(1)
 
 src = [
     "worker",
