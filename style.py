@@ -1,11 +1,37 @@
 import argparse
 import glob
 import os
+import pathlib
 import subprocess
 import sys
 
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument(
+    "--fix",
+    action="store_true",
+    required=False,
+    help="Fix issues which can be fixed automatically",
+)
+arg_parser.add_argument(
+    "--debug",
+    action="store_true",
+    required=False,
+    help="Show some extra information for debugging purposes",
+)
+args = arg_parser.parse_args()
+
 # Set the working directory to where this script is located
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+thisFilePath = os.path.abspath(__file__)
+workingDirectory = os.path.dirname(thisFilePath)
+
+if args.debug:
+    print(f"working out of {workingDirectory}")
+    print(f"style.py located at {thisFilePath}")
+os.chdir(workingDirectory)
+
+if pathlib.Path("nataili").exists():
+    print("You have a 'nataili' folder, this will confuse ruff! Please remove it.")
+    sys.exit(1)
 
 src = [
     "worker",
@@ -22,14 +48,6 @@ src.extend(root_folder_src)
 
 src = [item for item in src if item not in ignore_src]
 
-arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument(
-    "--fix",
-    action="store_true",
-    required=False,
-    help="Fix issues which can be fixed automatically",
-)
-args = arg_parser.parse_args()
 
 black_args = [
     "black",
@@ -53,10 +71,16 @@ lint_processes = [
     black_args,
 ]
 
+if args.debug:
+    for process in lint_processes:
+        VERSION_COMMAND = process[0] + " --version"
+        subprocess.run(VERSION_COMMAND, shell=True, check=True)
+        print()
+
 for process_args in lint_processes:
     process_args.extend(src)
 
-    COMMAND = "python -m "
+    COMMAND = "python -s -m "
     COMMAND += " ".join(process_args)
     print(f"\nRunning {COMMAND}")
     try:
