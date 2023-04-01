@@ -67,15 +67,14 @@ lint_processes = [
 
 if args.debug:
     for process in lint_processes:
-        VERSION_COMMAND = process[0] + " --version"
+        VERSION_COMMAND = f"{process[0]} --version"
         subprocess.run(VERSION_COMMAND, shell=True, check=True)
         print()
 
 for process_args in lint_processes:
     process_args.extend(src)
 
-    COMMAND = "python -s -m "
-    COMMAND += " ".join(process_args)
+    COMMAND = "python -s -m " + " ".join(process_args)
     print(f"\nRunning {COMMAND}")
     try:
         subprocess.run(COMMAND, shell=True, check=True)

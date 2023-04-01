@@ -53,17 +53,13 @@ class LogStats:
 
     def parse_log(self):
         # Identify all log files and total number of log lines
-        total_log_lines = 0
-        for logfile in glob.glob(self.logfile):
-            total_log_lines += self.get_num_lines(logfile)
-
+        total_log_lines = sum(self.get_num_lines(logfile) for logfile in glob.glob(self.logfile))
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
             with open(logfile, "rt") as infile:
                 for line in infile:
                     # Grab the lines we're interested in
-                    regex = REGEX.match(line)
-                    if regex:
+                    if regex := REGEX.match(line):
                         if self.period and self.get_date() not in regex.group(1):
                             continue
 
@@ -81,10 +77,7 @@ class LogStats:
         # Parse our log file if we haven't done that yet
         self.parse_log()
 
-        total = 0
-        for k, v in self.data.items():
-            total += v[1]
-
+        total = sum(v[1] for k, v in self.data.items())
         print(f"Average node pop times (out of {total} pops in total)")
         for k, v in self.data.items():
             print(f"{k.split(':')[0]:15} {round(v[0]/v[1], 2)} secs {v[1]:-8} jobs from this node")
