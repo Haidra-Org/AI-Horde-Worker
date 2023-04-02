@@ -1,5 +1,6 @@
 """This is the bridge, It connects the horde with the ML processing"""
 import os
+import hordelib.install
 
 # isort: off
 # We need to import the argparser first, as it sets the necessry Switches
@@ -11,7 +12,7 @@ from worker.model_manager.hyper import ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-# from worker.workers.stable_diffusion import StableDiffusionWorker
+from worker.workers.stable_diffusion import StableDiffusionWorker
 
 
 def check_for_old_dir():
