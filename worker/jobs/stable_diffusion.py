@@ -7,10 +7,7 @@ from io import BytesIO
 
 import rembg
 import requests
-from nataili import InvalidModelCacheException
-from nataili.stable_diffusion.compvis import CompVis
-from nataili.stable_diffusion.diffusers.depth2img import Depth2Img
-from nataili.stable_diffusion.diffusers.inpainting import inpainting
+from hordelib.horde import HordeLib
 from worker.logger import logger
 from PIL import UnidentifiedImageError
 
@@ -294,18 +291,19 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     disable_voodoo=self.bridge_data.disable_voodoo,
                 )
             else:
-                generator = CompVis(
-                    model=self.model_manager.loaded_models[self.current_model],
-                    model_name=self.current_model,
-                    model_baseline=model_baseline,
-                    output_dir="bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    safety_checker=safety_checker,
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo,
-                    control_net_manager=self.model_manager.controlnet or None,
-                )
+                generator = HordeLib()
+                # generator = CompVis(
+                #     model=self.model_manager.loaded_models[self.current_model],
+                #     model_name=self.current_model,
+                #     model_baseline=model_baseline,
+                #     output_dir="bridge_generations",
+                #     load_concepts=True,
+                #     concepts_dir="models/custom/sd-concepts-library",
+                #     safety_checker=safety_checker,
+                #     filter_nsfw=use_nsfw_censor,
+                #     disable_voodoo=self.bridge_data.disable_voodoo,
+                #     control_net_manager=self.model_manager.controlnet or None,
+                # )
         else:
             # These variables do not exist in the outpainting implementation
             if "save_grid" in gen_payload:
@@ -351,7 +349,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             try:
-                generator.generate(**gen_payload)
+                self.image = generator.text_to_image(**gen_payload)
             except InvalidModelCacheException:
                 # There is no recovering from this right now, remove the model and fault the job
                 # The model will be re-cached and re-loaded on the next job that uses this model.
@@ -380,27 +378,27 @@ class StableDiffusionHordeJob(HordeJobFramework):
             generator = None
             self.start_submit_thread()
             return
-        self.image = generator.images[0]["image"]
-        self.seed = generator.images[0]["seed"]
-        if generator.images[0].get("censored", False):
-            logger.info(f"Image censored with reason: {censor_reason}")
-            self.image = censor_image
-            self.censored = "censored"
+        # self.image = generator.images[0]["image"]
+        # self.seed = generator.images[0]["seed"]
+        # if generator.images[0].get("censored", False):
+        #     logger.info(f"Image censored with reason: {censor_reason}")
+        #     self.image = censor_image
+        #     self.censored = "censored"
         # We unload the generator from RAM
         generator = None
 
         # Run the CSAM Checker
-        if not self.censored:
-            is_csam, similarities, similarity_hits = csam.check_for_csam(
-                clip_model=self.clip_model,
-                image=self.image,
-                prompt=self.current_payload["prompt"],
-                model_info=self.model_manager.models[self.current_model],
-            )
-            if self.clip_model and is_csam:
-                logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
-                self.image = self.bridge_data.censor_image_csam
-                self.censored = "csam"
+        # if not self.censored:
+        #     is_csam, similarities, similarity_hits = csam.check_for_csam(
+        #         clip_model=self.clip_model,
+        #         image=self.image,
+        #         prompt=self.current_payload["prompt"],
+        #         model_info=self.model_manager.models[self.current_model],
+        #     )
+        #     if self.clip_model and is_csam:
+        #         logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
+        #         self.image = self.bridge_data.censor_image_csam
+        #         self.censored = "csam"
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
