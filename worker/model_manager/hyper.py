@@ -1,14 +1,12 @@
 import torch
 
 from worker.logger import logger
-from nataili.util.voodoo import initialise_voodoo
+# from nataili.util.voodoo import initialise_voodoo
 
 
 class ModelManager:
     """
-    Horde-specific SuperModelManager class.
-    Note: This class is only intended for Stable Horde worker.
-    New development should use the individual model managers instead.
+    Contains links to all the other MM classes
     """
 
     def __init__(
@@ -24,7 +22,7 @@ class ModelManager:
         codeformer: bool = False,
         controlnet: bool = False,
     ):
-        initialise_voodoo()
+        # initialise_voodoo()
         if aitemplate:
             from nataili.model_manager.aitemplate import AITemplateModelManager
 

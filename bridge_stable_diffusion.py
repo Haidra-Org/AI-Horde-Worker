@@ -7,7 +7,7 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
-from worker.model_manager import ModelManager
+from worker.model_manager import hyper as ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData

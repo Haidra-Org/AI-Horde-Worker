@@ -48,12 +48,12 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
         if not hasattr(self, "nataili_cache_home"):
-            self.nataili_cache_home = os.environ.get("NATAILI_CACHE_HOME", "./")
+            self.nataili_cache_home = os.environ.get("AIWORKER_CACHE_HOME", "./")
         # If any workers got a bad default path from an old bridgeData_template.yaml, continue
         # to use that original bad path to avoid making a mess with duplicating models.
         if self.nataili_cache_home == "./" and os.path.exists("./nataili/compvis/nataili/compvis"):
             self.nataili_cache_home = "./nataili/compvis/"
-        os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
+        os.environ["AIWORKER_CACHE_HOME"] = self.nataili_cache_home
         # Disable low vram mode
         if hasattr(self, "low_vram_mode"):
             if not self.low_vram_mode:
