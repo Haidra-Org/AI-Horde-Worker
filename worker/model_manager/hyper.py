@@ -267,6 +267,7 @@ class ModelManager:
         :param string: If True, returns concatenated string of model names
         Returns a list of the loaded model names
         """
+        return ["Deliberate"] # Debug
         if string:
             return ", ".join(self.loaded_models.keys())
         return list(self.loaded_models.keys())

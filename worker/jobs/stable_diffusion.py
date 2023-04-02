@@ -11,11 +11,11 @@ from hordelib.horde import HordeLib
 from worker.logger import logger
 from PIL import UnidentifiedImageError
 
-from worker import csam
+# from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
-from worker.post_process import post_process
+# from worker.post_process import post_process
 from worker.stats import bridge_stats
 
 
@@ -258,11 +258,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
             req_type = "txt2img"
             if "denoising_strength" in gen_payload:
                 del gen_payload["denoising_strength"]
-        if self.current_model not in self.model_manager.loaded_models:
-            logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
-            self.status = JobStatus.FAULTED
-            self.start_submit_thread()
-            return
+        # if self.current_model not in self.model_manager.loaded_models:
+        #     logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
+        #     self.status = JobStatus.FAULTED
+        #     self.start_submit_thread()
+        #     return
         if req_type in {"img2img", "txt2img"}:
             if req_type == "img2img":
                 gen_payload["init_img"] = img_source
@@ -349,7 +349,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             try:
-                self.image = generator.text_to_image(**gen_payload)
+                gen_payload["model"] = "Deliberate.ckpt"
+                logger.debug(gen_payload)
+                self.image = generator.text_to_image(gen_payload)
+                self.seed = int(self.current_payload["seed"])
+                logger.info(self.image)
             except InvalidModelCacheException:
                 # There is no recovering from this right now, remove the model and fault the job
                 # The model will be re-cached and re-loaded on the next job that uses this model.

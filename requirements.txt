@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cu117
 # nataili>=0.2.9019
-hordelib>=0.0.6
+hordelib>=0.0.8
 xformers
 gradio
 pyyaml
