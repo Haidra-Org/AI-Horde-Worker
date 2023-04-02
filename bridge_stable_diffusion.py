@@ -8,7 +8,9 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
-from worker.model_manager.hyper import ModelManager
+from hordelib import model_manager as hordelib_mm
+
+from hordelib.model_manager.hyper import ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
@@ -58,6 +60,7 @@ def main():
         codeformer=True,
         controlnet=True,
     )
+    hordelib_mm = model_manager
     try:
         worker = StableDiffusionWorker(model_manager, bridge_data)
         worker.start()
