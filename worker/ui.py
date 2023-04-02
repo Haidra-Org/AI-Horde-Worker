@@ -417,7 +417,7 @@ class TerminalUI:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
-        # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS    ║
+        # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
         # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)                            ║
@@ -685,7 +685,7 @@ class TerminalUI:
         self.total_failed_jobs = data.get("uncompleted_jobs", 0)
 
         if worker_type == "image":
-            self.performance = perf.replace("megapixelsteps per second", "MPS")
+            self.performance = perf.replace("megapixelsteps per second", "MPS/s")
             self.total_models = len(data.get("models", []))
         elif worker_type == "interrogation":
             self.performance = perf.replace("seconds per form", "SPF")
