@@ -18,8 +18,8 @@ class CodeFormerModelManager(BaseModelManager):
         self.download_reference = download_reference
         self.path = f"{get_cache_directory()}/codeformer"
         self.models_db_name = "codeformer"
-        self.gfpgan = GfpganModelManager()
-        self.esrgan = EsrganModelManager()
+        # self.gfpgan = GfpganModelManager()
+        # self.esrgan = EsrganModelManager()
         self.models_path = self.pkg / f"{self.models_db_name}.json"
         self.remote_db = (
             f"https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/{self.models_db_name}.json"

@@ -9,11 +9,11 @@ import transformers.utils.hub
 from omegaconf import OmegaConf
 from torch import nn
 
-import ldm.modules.encoders.modules
-from ldm.util import instantiate_from_config
+# import ldm.modules.encoders.modules
+# from ldm.util import instantiate_from_config
 # from nataili import enable_ray_alternative
 from worker.cache import get_cache_directory
-# from worker.model_manager.base import BaseModelManager
+from worker.model_manager.base import BaseModelManager
 
 from worker.logger import logger
 # from nataili.util.voodoo import get_model_cache_filename, have_model_cache, push_model_to_plasma

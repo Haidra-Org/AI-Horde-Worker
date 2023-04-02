@@ -2,7 +2,7 @@ import safetensors.torch
 import torch
 from omegaconf import OmegaConf
 
-from ldm.util import instantiate_from_config
+# from ldm.util import instantiate_from_config
 from worker.cache import get_cache_directory
 from worker.model_manager.base import BaseModelManager
 

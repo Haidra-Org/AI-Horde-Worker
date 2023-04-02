@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from omegaconf import OmegaConf
 from torch import nn
 
-from ldm.util import instantiate_from_config
+# from ldm.util import instantiate_from_config
 from worker.model_manager.base import BaseModelManager
 from worker.logger import logger
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
 
-from nataili import disable_progress
+from worker import disable_progress
 from worker.logger import logger
 
 if sys.version_info < (3, 9):

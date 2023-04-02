@@ -4,7 +4,7 @@ import re
 import time
 
 import requests
-from nataili import enable_ray_alternative
+# from nataili import enable_ray_alternative
 from worker.logger import logger
 from PIL import Image
 
@@ -71,8 +71,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
 
-        if hasattr(self, "enable_model_cache"):
-            enable_ray_alternative.active = self.enable_model_cache
+        # if hasattr(self, "enable_model_cache"):
+        #     enable_ray_alternative.active = self.enable_model_cache
 
         # Check for magic constants and expand them
         top_n = 0
@@ -115,8 +115,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
-        if args.enable_model_cache:
-            enable_ray_alternative.activate()
+        # if args.enable_model_cache:
+        #     enable_ray_alternative.activate()
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):

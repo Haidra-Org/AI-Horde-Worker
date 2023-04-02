@@ -7,11 +7,11 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
-from worker.model_manager import hyper as ModelManager
+from worker.model_manager.hyper import ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
-from worker.workers.stable_diffusion import StableDiffusionWorker
+# from worker.workers.stable_diffusion import StableDiffusionWorker
 
 
 def check_for_old_dir():

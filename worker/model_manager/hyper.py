@@ -1,7 +1,7 @@
 import torch
 
 from worker.logger import logger
-# from nataili.util.voodoo import initialise_voodoo
+# from worker.util.voodoo import initialise_voodoo
 
 
 class ModelManager:
@@ -24,61 +24,61 @@ class ModelManager:
     ):
         # initialise_voodoo()
         if aitemplate:
-            from nataili.model_manager.aitemplate import AITemplateModelManager
+            from worker.model_manager.aitemplate import AITemplateModelManager
 
             self.aitemplate = AITemplateModelManager()
         else:
             self.aitemplate = None
         if blip:
-            from nataili.model_manager.blip import BlipModelManager
+            from worker.model_manager.blip import BlipModelManager
 
             self.blip = BlipModelManager()
         else:
             self.blip = None
         if clip:
-            from nataili.model_manager.clip import ClipModelManager
+            from worker.model_manager.clip import ClipModelManager
 
             self.clip = ClipModelManager()
         else:
             self.clip = None
         if compvis:
-            from nataili.model_manager.compvis import CompVisModelManager
+            from worker.model_manager.compvis import CompVisModelManager
 
             self.compvis = CompVisModelManager()
         else:
             self.compvis = None
         if diffusers:
-            from nataili.model_manager.diffusers import DiffusersModelManager
+            from worker.model_manager.diffusers import DiffusersModelManager
 
             self.diffusers = DiffusersModelManager()
         else:
             self.diffusers = None
         if esrgan:
-            from nataili.model_manager.esrgan import EsrganModelManager
+            from worker.model_manager.esrgan import EsrganModelManager
 
             self.esrgan = EsrganModelManager()
         else:
             self.esrgan = None
         if gfpgan:
-            from nataili.model_manager.gfpgan import GfpganModelManager
+            from worker.model_manager.gfpgan import GfpganModelManager
 
             self.gfpgan = GfpganModelManager()
         else:
             self.gfpgan = None
         if safety_checker:
-            from nataili.model_manager.safety_checker import SafetyCheckerModelManager
+            from worker.model_manager.safety_checker import SafetyCheckerModelManager
 
             self.safety_checker = SafetyCheckerModelManager()
         else:
             self.safety_checker = None
         if codeformer:
-            from nataili.model_manager.codeformer import CodeFormerModelManager
+            from worker.model_manager.codeformer import CodeFormerModelManager
 
             self.codeformer = CodeFormerModelManager()
         else:
             self.codeformer = None
         if controlnet:
-            from nataili.model_manager.controlnet import ControlNetModelManager
+            from worker.model_manager.controlnet import ControlNetModelManager
 
             self.controlnet = ControlNetModelManager()
         else:

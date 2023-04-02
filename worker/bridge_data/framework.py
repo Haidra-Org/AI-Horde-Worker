@@ -7,7 +7,7 @@ import threading
 
 import requests
 import yaml
-from nataili import disable_voodoo
+# from nataili import disable_voodoo
 from worker.logger import logger
 
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
@@ -49,7 +49,8 @@ class BridgeDataTemplate:
         self.models_reloading = False
         self.max_models_to_download = 10
 
-        self.disable_voodoo = disable_voodoo.active
+        self.disable_voodoo = True
+        # self.disable_voodoo = disable_voodoo.active
 
     def load_config(self):
         # YAML config
