@@ -1,4 +1,5 @@
 """Get and process a job from the horde"""
+import contextlib
 import copy
 import json
 import sys
@@ -151,12 +152,10 @@ class HordeJobFramework:
                     time.sleep(2)
                     continue
                 reward = submit_req.json()["reward"]
-                try:
-                    reward = round(float(reward), 2)
-                except ValueError:
-                    pass
+                with contextlib.suppress(ValueError):
+                    reward = f"{float(reward):.1f}"
                 logger.info(
-                    f'Submitted job with id {self.current_id} and contributed for {reward}. '
+                    f"Submitted job with id {self.current_id} and contributed for {reward}. "
                     f"Job took {round(time.time() - self.start_time,1)} seconds since queued "
                     f"and {round(time.time() - self.process_time,1)} since start.",
                 )
