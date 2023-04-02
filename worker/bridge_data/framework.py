@@ -235,7 +235,7 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model, voodoo=not self.disable_voodoo)
+                success = model_manager.load(model)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True

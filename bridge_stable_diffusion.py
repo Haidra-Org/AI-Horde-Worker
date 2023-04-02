@@ -8,7 +8,7 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
-from hordelib import model_manager as hordelib_mm
+from hordelib import set_horde_model_manager
 
 from hordelib.model_manager.hyper import ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
@@ -51,16 +51,16 @@ def main():
 
     bridge_data = StableDiffusionBridgeData()
     model_manager = ModelManager(
-        clip=True,
+        # clip=True,
         compvis=True,
-        diffusers=True,
-        esrgan=True,
-        gfpgan=True,
-        safety_checker=True,
-        codeformer=True,
-        controlnet=True,
+        # diffusers=True,
+        # esrgan=True,
+        # gfpgan=True,
+        # safety_checker=True,
+        # codeformer=True,
+        # controlnet=True,
     )
-    hordelib_mm = model_manager
+    set_horde_model_manager(model_manager)
     try:
         worker = StableDiffusionWorker(model_manager, bridge_data)
         worker.start()

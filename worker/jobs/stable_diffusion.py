@@ -349,7 +349,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             try:
-                gen_payload["model"] = "Deliberate.ckpt"
+                gen_payload["model"] = self.current_model
                 logger.debug(gen_payload)
                 self.image = generator.text_to_image(gen_payload)
                 self.seed = int(self.current_payload["seed"])
