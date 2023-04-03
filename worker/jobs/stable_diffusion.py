@@ -11,7 +11,7 @@ from hordelib.horde import HordeLib
 from worker.logger import logger
 from PIL import UnidentifiedImageError
 
-# from worker import csam
+from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
