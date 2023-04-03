@@ -2,7 +2,7 @@
 import time
 
 import regex as re
-from nataili.clip.interrogate import Interrogator
+from hordelib.clip.interrogate import Interrogator
 from worker.logger import logger
 from unidecode import unidecode
 

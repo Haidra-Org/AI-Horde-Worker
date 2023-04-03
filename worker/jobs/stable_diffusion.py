@@ -392,17 +392,17 @@ class StableDiffusionHordeJob(HordeJobFramework):
         generator = None
 
         # Run the CSAM Checker
-        # if not self.censored:
-        #     is_csam, similarities, similarity_hits = csam.check_for_csam(
-        #         clip_model=self.clip_model,
-        #         image=self.image,
-        #         prompt=self.current_payload["prompt"],
-        #         model_info=self.model_manager.models[self.current_model],
-        #     )
-        #     if self.clip_model and is_csam:
-        #         logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
-        #         self.image = self.bridge_data.censor_image_csam
-        #         self.censored = "csam"
+        if not self.censored:
+            is_csam, similarities, similarity_hits = csam.check_for_csam(
+                clip_model=self.clip_model,
+                image=self.image,
+                prompt=self.current_payload["prompt"],
+                model_info=self.model_manager.models[self.current_model],
+            )
+            if self.clip_model and is_csam:
+                logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
+                self.image = self.bridge_data.censor_image_csam
+                self.censored = "csam"
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
