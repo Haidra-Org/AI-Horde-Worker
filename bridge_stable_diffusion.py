@@ -8,9 +8,8 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
-from hordelib import set_horde_model_manager
+from hordelib.horde import SharedModelManager
 
-from hordelib.model_manager.hyper import ModelManager
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
@@ -50,7 +49,8 @@ def main():
         logger.warning("DeprecationWarning: `--skip_md5` has been deprecated. Please use `--skip_checksum` instead.")
 
     bridge_data = StableDiffusionBridgeData()
-    model_manager = ModelManager(
+    SharedModelManager()
+    SharedModelManager.loadModelManagers(
         clip=True,
         compvis=True,
         # diffusers=True,
@@ -60,9 +60,9 @@ def main():
         # codeformer=True,
         # controlnet=True,
     )
-    set_horde_model_manager(model_manager)
+    logger.debug(SharedModelManager.manager.clip.path)
     try:
-        worker = StableDiffusionWorker(model_manager, bridge_data)
+        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
         worker.start()
     except KeyboardInterrupt:
         logger.info("Keyboard Interrupt Received. Ending Process")
