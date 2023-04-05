@@ -1,8 +1,7 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-from worker.logger import logger
-
 from worker.jobs.interrogation import InterrogationHordeJob
 from worker.jobs.poppers import InterrogationPopper
+from worker.logger import logger
 from worker.workers.framework import WorkerFramework
 
 

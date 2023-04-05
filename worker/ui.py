@@ -16,8 +16,9 @@ from math import trunc
 import psutil
 import requests
 import yaml
-from worker.logger import config, logger
 from pynvml.smi import nvidia_smi
+
+from worker.logger import config, logger
 
 
 class DequeOutputCollector:
@@ -134,7 +135,6 @@ class GPUInfo:
 
 
 class TerminalUI:
-
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
         r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$"
@@ -515,7 +515,6 @@ class TerminalUI:
 
         gpu = self.gpu.get_info()
         if gpu:
-
             # Add some warning colours to free vram
             vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
             if re.match(r"\d\d\d MB", gpu["vram_free"]):
@@ -588,7 +587,6 @@ class TerminalUI:
         return output
 
     def print_log(self):
-
         if not self.pause_log:
             self.load_log()
         output = list(self.output.deque)
@@ -601,7 +599,6 @@ class TerminalUI:
         inputrow = 0
         last_timestamp = ""
         while y < self.height and inputrow < len(output):
-
             # Print any log info we have
             cat, nextwhen, source, msg = output[inputrow].split(TerminalUI.DELIM)
             colour = TerminalUI.COLOUR_WHITE

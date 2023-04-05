@@ -35,7 +35,6 @@ class DotDict(dict):
 
 
 class WebUI:
-
     CONFIG_FILE = "bridgeData.yaml"
 
     # This formally maps config item key name to gradio label and info.
@@ -215,7 +214,6 @@ class WebUI:
                 return key
 
     def reload_config(self):
-
         # Sanity check, to ensure Tazlin doesn't give me a hard time
         # about this corner case [jug]
         if os.path.exists("bridgeData.py"):
@@ -422,7 +420,6 @@ class WebUI:
             gr.Markdown("# AI Horde Worker Configuration")
 
             with gr.Row():
-
                 with gr.Tab("Basic Settings"):
                     with gr.Column():
                         worker_name = gr.Textbox(
@@ -760,7 +757,6 @@ class WebUI:
 
 
 if __name__ == "__main__":
-
     # Check args
     parser = argparse.ArgumentParser(description="Horde Web Configuration")
     parser.add_argument("--share", action="store_true", help="Create a public URL")

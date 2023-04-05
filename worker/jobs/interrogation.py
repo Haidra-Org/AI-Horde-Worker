@@ -8,12 +8,12 @@ import rembg
 import requests
 from nataili.blip.caption import Caption
 from nataili.clip.interrogate import Interrogator
-from worker.logger import logger
 from transformers import CLIPFeatureExtractor
 
 from worker.consts import KNOWN_POST_PROCESSORS, KNOWN_UPSCALERS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
+from worker.logger import logger
 from worker.post_process import post_process
 
 

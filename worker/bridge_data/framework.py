@@ -7,10 +7,11 @@ import threading
 
 import requests
 import yaml
-# from nataili import disable_voodoo
-from worker.logger import logger
 
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
+
+# from nataili import disable_voodoo
+from worker.logger import logger
 
 
 class BridgeDataTemplate:

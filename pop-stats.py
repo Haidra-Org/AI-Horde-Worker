@@ -52,7 +52,6 @@ class LogStats:
         return lines
 
     def parse_log(self):
-
         # Identify all log files and total number of log lines
         total_log_lines = 0
         for logfile in glob.glob(self.logfile):
