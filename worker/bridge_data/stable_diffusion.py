@@ -120,7 +120,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
-        self.model_names.append("safety_checker")
+        self.model_names.insert(0,"safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
             self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
