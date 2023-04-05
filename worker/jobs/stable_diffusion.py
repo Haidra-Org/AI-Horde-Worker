@@ -60,16 +60,24 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # We allow a generation a plentiful 3 seconds per step before we consider it stale
         # Generate Image
         # logger.info([self.current_id,self.current_payload])
+        censor_image = None
+        censor_reason = None
         use_nsfw_censor = False
         if self.bridge_data.censor_nsfw and not self.bridge_data.nsfw:
             use_nsfw_censor = True
+            censor_image = self.bridge_data.censor_image_sfw_worker
+            censor_reason = "SFW worker"
         censorlist_prompt = self.current_payload["prompt"]
         if "###" in censorlist_prompt:
             censorlist_prompt, _censorlist_negprompt = censorlist_prompt.split("###", 1)
         if any(word in censorlist_prompt for word in self.bridge_data.censorlist):
             use_nsfw_censor = True
+            censor_image = self.bridge_data.censor_image_censorlist
+            censor_reason = "Censorlist"
         elif self.current_payload.get("use_nsfw_censor", False):
             use_nsfw_censor = True
+            censor_image = self.bridge_data.censor_image_sfw_request
+            censor_reason = "Requested"
         # use_gfpgan = self.current_payload.get("use_gfpgan", True)
         # use_real_esrgan = self.current_payload.get("use_real_esrgan", False)
         source_processing = self.pop.get("source_processing")
@@ -383,7 +391,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
         #     self.censored = "censored"
         # We unload the generator from RAM
         generator = None
-
+        if use_nsfw_censor:
+            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
+            feature_extractor = CLIPFeatureExtractor()
+            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
+            _, has_nsfw_concept = safety_checker(
+                clip_input=image_features.pixel_values,
+                images=[np.asarray(self.image)],
+            )
+            if has_nsfw_concept and True in has_nsfw_concept:
+                logger.info(f"Image censored with reason: {censor_reason}")
+                self.image = censor_image
+                self.censored = "censored"
         # Run the CSAM Checker
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
