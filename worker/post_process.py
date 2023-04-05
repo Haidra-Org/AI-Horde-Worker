@@ -2,6 +2,7 @@
 from nataili.codeformers import codeformers
 from nataili.esrgan import esrgan
 from nataili.gfpgan import gfpgan
+
 from worker.logger import logger
 
 KNOWN_POST_PROCESSORS = {

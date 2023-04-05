@@ -8,13 +8,14 @@ from io import BytesIO
 import rembg
 import requests
 from hordelib.horde import HordeLib
-from worker.logger import logger
 from PIL import UnidentifiedImageError
 
 from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
+from worker.logger import logger
+
 # from worker.post_process import post_process
 from worker.stats import bridge_stats
 

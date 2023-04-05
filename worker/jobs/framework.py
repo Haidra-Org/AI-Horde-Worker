@@ -6,9 +6,9 @@ import threading
 import time
 
 import requests
-from worker.logger import logger
 
 from worker.enums import JobStatus
+from worker.logger import logger
 
 
 class HordeJobFramework:

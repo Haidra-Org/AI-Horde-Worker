@@ -1,10 +1,9 @@
 """This is the bridge, It connects the horde with the ML processing"""
 # This needs to load first as it sets the disable_voodoo switches
 from worker.argparser.interrogation import args  # isort: skip
-from worker.model_manager import ModelManager
-from worker.logger import logger, quiesce_logger, set_logger_verbosity
-
 from worker.bridge_data.interrogation import InterrogationBridgeData
+from worker.logger import logger, quiesce_logger, set_logger_verbosity
+from worker.model_manager import ModelManager
 from worker.workers.interrogation import InterrogationWorker
 
 if __name__ == "__main__":

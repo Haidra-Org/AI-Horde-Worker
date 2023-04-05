@@ -1,11 +1,10 @@
 """The configuration of the bridge"""
 import os
 
-from worker.logger import logger
-
 from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import POST_PROCESSORS_NATAILI_MODELS
+from worker.logger import logger
 
 
 class InterrogationBridgeData(BridgeDataTemplate):

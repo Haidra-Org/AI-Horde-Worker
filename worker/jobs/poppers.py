@@ -5,10 +5,10 @@ import time
 from io import BytesIO
 
 import requests
-from worker.logger import logger
 from PIL import Image, UnidentifiedImageError
 
 from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_NATAILI_MODELS
+from worker.logger import logger
 
 
 class JobPopper:

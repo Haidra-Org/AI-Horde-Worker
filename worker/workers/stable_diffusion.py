@@ -2,10 +2,10 @@
 import traceback
 
 import requests
-from worker.logger import logger
 
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
+from worker.logger import logger
 from worker.workers.framework import WorkerFramework
 
 
