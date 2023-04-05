@@ -417,71 +417,69 @@ class WebUI:
             gr.Markdown("# AI Horde Worker Configuration")
 
             with gr.Row():
-                with gr.Tab("Basic Settings"):
-                    with gr.Column():
-                        worker_name = gr.Textbox(
-                            label=self._label("worker_name"),
-                            value=config.worker_name,
-                            info=self._info("worker_name"),
-                        )
-                        api_key = gr.Textbox(
-                            label=self._label("api_key"),
-                            value=config.api_key,
-                            type="password",
-                            info=self._info("api_key"),
-                        )
-                        slider_desc = gr.Markdown("Maximum Image Size")
-                        config.default("max_power", 8)
-                        max_power = gr.Slider(
-                            2,
-                            128,
-                            step=2,
-                            label=self._label("max_power"),
-                            show_label=False,
-                            value=config.max_power,
-                            info=self._info("max_power"),
-                        )
-                        # Hook the slider on change event to display image size
-                        max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
-                        priority_usernames = gr.Textbox(
-                            label=self._label("priority_usernames"),
-                            value=existing_priority_usernames,
-                            info=self._info("priority_usernames"),
-                        )
+                with gr.Tab("Basic Settings"), gr.Column():
+                    worker_name = gr.Textbox(
+                        label=self._label("worker_name"),
+                        value=config.worker_name,
+                        info=self._info("worker_name"),
+                    )
+                    api_key = gr.Textbox(
+                        label=self._label("api_key"),
+                        value=config.api_key,
+                        type="password",
+                        info=self._info("api_key"),
+                    )
+                    slider_desc = gr.Markdown("Maximum Image Size")
+                    config.default("max_power", 8)
+                    max_power = gr.Slider(
+                        2,
+                        128,
+                        step=2,
+                        label=self._label("max_power"),
+                        show_label=False,
+                        value=config.max_power,
+                        info=self._info("max_power"),
+                    )
+                    # Hook the slider on change event to display image size
+                    max_power.change(fn=self._imgsize, inputs=max_power, outputs=slider_desc)
+                    priority_usernames = gr.Textbox(
+                        label=self._label("priority_usernames"),
+                        value=existing_priority_usernames,
+                        info=self._info("priority_usernames"),
+                    )
 
-                with gr.Tab("Enable Features"):
-                    with gr.Column():
-                        config.default("allow_img2img", True)
-                        allow_img2img = gr.Checkbox(
-                            label=self._label("allow_img2img"),
-                            value=config.allow_img2img,
-                            info=self._info("allow_img2img"),
-                        )
-                        config.default("allow_painting", True)
-                        allow_painting = gr.Checkbox(
-                            label=self._label("allow_painting"),
-                            value=config.allow_painting,
-                            info=self._info("allow_painting"),
-                        )
-                        config.default("allow_post_processing", True)
-                        allow_post_processing = gr.Checkbox(
-                            label=self._label("allow_post_processing"),
-                            value=config.allow_post_processing,
-                            info=self._info("allow_post_processing"),
-                        )
-                        config.default("allow_controlnet", True)
-                        allow_controlnet = gr.Checkbox(
-                            label=self._label("allow_controlnet"),
-                            value=config.allow_controlnet,
-                            info=self._info("allow_controlnet"),
-                        )
-                        config.default("forms", [])
-                        forms = gr.CheckboxGroup(
-                            label=self._label("forms"),
-                            choices=["caption", "nsfw", "interrogation", "post-process"],
-                            value=config.forms,
-                            info=self._info("forms"),
-                        )
+                with gr.Tab("Enable Features"), gr.Column():
+                    config.default("allow_img2img", True)
+                    allow_img2img = gr.Checkbox(
+                        label=self._label("allow_img2img"),
+                        value=config.allow_img2img,
+                        info=self._info("allow_img2img"),
+                    )
+                    config.default("allow_painting", True)
+                    allow_painting = gr.Checkbox(
+                        label=self._label("allow_painting"),
+                        value=config.allow_painting,
+                        info=self._info("allow_painting"),
+                    )
+                    config.default("allow_post_processing", True)
+                    allow_post_processing = gr.Checkbox(
+                        label=self._label("allow_post_processing"),
+                        value=config.allow_post_processing,
+                        info=self._info("allow_post_processing"),
+                    )
+                    config.default("allow_controlnet", True)
+                    allow_controlnet = gr.Checkbox(
+                        label=self._label("allow_controlnet"),
+                        value=config.allow_controlnet,
+                        info=self._info("allow_controlnet"),
+                    )
+                    config.default("forms", [])
+                    forms = gr.CheckboxGroup(
+                        label=self._label("forms"),
+                        choices=["caption", "nsfw", "interrogation", "post-process"],
+                        value=config.forms,
+                        info=self._info("forms"),
+                    )
 
                 with gr.Tab("Models To Load"):
                     with gr.Row():
