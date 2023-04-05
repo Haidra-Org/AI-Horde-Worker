@@ -55,7 +55,7 @@ class WorkerFramework:
                     try:
                         if self.ui and not self.ui.is_alive():
                             # UI Exited, we should probably exit
-                            raise KeyboardInterrupt()
+                            raise KeyboardInterrupt
                         self.process_jobs()
                     except KeyboardInterrupt:
                         self.should_stop = True
@@ -141,14 +141,14 @@ class WorkerFramework:
                     logger.exception(job_thread.exception())
                 if self.consecutive_executor_restarts > 0:
                     logger.critical(
-                        "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!"
+                        "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!",
                     )
                     self.should_stop = True
                     return
                 self.consecutive_failed_jobs += 1
                 if self.consecutive_failed_jobs >= 5:
                     logger.critical(
-                        "Too many consecutive jobs have failed. " "Restarting thread executor and hope we recover..."
+                        "Too many consecutive jobs have failed. " "Restarting thread executor and hope we recover...",
                     )
                     self.should_restart = True
                     self.consecutive_executor_restarts += 1
@@ -176,7 +176,8 @@ class WorkerFramework:
 
         # Check periodically if any interesting stats should be announced
         if self.bridge_data.stats_output_frequency and time.time() - self.last_stats_time > min(
-            self.bridge_data.stats_output_frequency, 30
+            self.bridge_data.stats_output_frequency,
+            30,
         ):
             self.last_stats_time = time.time()
             logger.info(f"Estimated average kudos per hour: {bridge_stats.stats.get('kudos_per_hour', 0)}")

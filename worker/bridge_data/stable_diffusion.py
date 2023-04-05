@@ -56,9 +56,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.nataili_cache_home = "./nataili/compvis/"
         os.environ["AIWORKER_CACHE_HOME"] = self.nataili_cache_home
         # Disable low vram mode
-        if hasattr(self, "low_vram_mode"):
-            if not self.low_vram_mode:
-                os.environ["LOW_VRAM_MODE"] = "0"
+        if hasattr(self, "low_vram_mode") and not self.low_vram_mode:
+            os.environ["LOW_VRAM_MODE"] = "0"
         # Where the ray temp dir and/or model cache are located
         if hasattr(self, "ray_temp_dir"):
             os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
@@ -176,7 +175,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         logger.info("Refreshing the list of all available models")
         data = requests.get(
-            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json",
         ).json()
 
         # Get all interesting models
@@ -195,7 +194,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             # Add to the list of models to load
             models.append(model["name"])
 
-        models = sorted(list(set(models)))
+        models = sorted(set(models))
 
         # Move the standard SD model to the top of the list
         if "stable_diffusion" in models:

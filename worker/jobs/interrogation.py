@@ -49,7 +49,8 @@ class InterrogationHordeJob(HordeJobFramework):
             feature_extractor = CLIPFeatureExtractor()
             image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
             _, has_nsfw_concept = safety_checker(
-                clip_input=image_features.pixel_values, images=[np.asarray(self.image)]
+                clip_input=image_features.pixel_values,
+                images=[np.asarray(self.image)],
             )
             self.result = has_nsfw_concept and True in has_nsfw_concept
         elif self.current_form in KNOWN_POST_PROCESSORS:
@@ -89,7 +90,8 @@ class InterrogationHordeJob(HordeJobFramework):
                     "num_beams": self.current_payload.get("num_beams", 7),
                     "min_length": self.current_payload.get("min_length", 20),
                     "max_length": self.current_payload.get(
-                        "max_length", self.current_payload.get("min_length", 20) + 30
+                        "max_length",
+                        self.current_payload.get("min_length", 20) + 30,
                     ),
                     "top_p": self.current_payload.get("top_p", 0.9),
                     "repetition_penalty": self.current_payload.get("repetition_penalty", 1.4),
@@ -100,7 +102,8 @@ class InterrogationHordeJob(HordeJobFramework):
                 )
                 payload_kwargs = {
                     "rank": self.current_payload.get(
-                        "rank", True
+                        "rank",
+                        True,
                     ),  # TODO: Change after payload onboards rank/similarity
                     "similarity": self.current_payload.get("similarity", False),
                     "top_count": self.current_payload.get("top_count", 5),  # TODO: Add to payload
@@ -113,7 +116,7 @@ class InterrogationHordeJob(HordeJobFramework):
                     "Please check your trace.log file for the full stack trace. "
                     f"Form: {self.current_form}. "
                     f"Payload: {payload_kwargs}."
-                    f"URL: {self.pop['source_image']}."
+                    f"URL: {self.pop['source_image']}.",
                 )
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)

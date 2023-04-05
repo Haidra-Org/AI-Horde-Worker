@@ -351,7 +351,7 @@ def check_for_csam(clip_model, image, prompt, model_info=None):
                         "model_tweaks": model_tweaks.get(u_c),
                         "critical": True,
                     },
-                )
+                ),
             )
     found_lewd = [
         {
