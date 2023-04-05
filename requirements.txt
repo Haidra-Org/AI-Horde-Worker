@@ -11,3 +11,8 @@ rembg
 pynvml
 psutil
 windows-curses; sys_platform == 'win32'
+loguru
+GitPython
+clip-anytorch
+diffusers
+omegaconf

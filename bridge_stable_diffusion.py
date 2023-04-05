@@ -1,5 +1,6 @@
 """This is the bridge, It connects the horde with the ML processing"""
 import os
+
 # import hordelib.install
 
 # isort: off
@@ -10,9 +11,8 @@ from worker.argparser.stable_diffusion import args
 
 from hordelib.horde import SharedModelManager
 
-from worker.logger import logger, quiesce_logger, set_logger_verbosity
-
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
+from worker.logger import logger, quiesce_logger, set_logger_verbosity
 from worker.workers.stable_diffusion import StableDiffusionWorker
 
 
@@ -56,7 +56,7 @@ def main():
         # diffusers=True,
         # esrgan=True,
         # gfpgan=True,
-        # safety_checker=True,
+        safety_checker=True,
         # codeformer=True,
         # controlnet=True,
     )
