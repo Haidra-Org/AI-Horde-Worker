@@ -9,6 +9,8 @@ from worker.argparser.stable_diffusion import args
 
 # isort: on
 
+import hordelib
+hordelib.initialise()
 from hordelib.horde import SharedModelManager
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
@@ -53,7 +55,7 @@ def main():
         clip=True,
         compvis=True,
         # diffusers=True,
-        # esrgan=True,
+        esrgan=True,
         # gfpgan=True,
         safety_checker=True,
         # codeformer=True,
