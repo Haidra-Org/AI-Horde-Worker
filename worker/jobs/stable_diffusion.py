@@ -39,6 +39,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.current_payload = self.pop["payload"]
         self.r2_upload = self.pop.get("r2_upload", False)
         self.clip_model = None
+        self.hordelib = HordeLib()
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -284,17 +285,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     del gen_payload["control_type"]
                     del gen_payload["init_as_control"]
                     del gen_payload["return_control_map"]
-                generator = Depth2Img(
-                    pipe=self.model_manager.loaded_models[self.current_model]["model"],
-                    device=self.model_manager.loaded_models[self.current_model]["device"],
-                    output_dir="bridge_generations",
-                    load_concepts=True,
-                    concepts_dir="models/custom/sd-concepts-library",
-                    filter_nsfw=use_nsfw_censor,
-                    disable_voodoo=self.bridge_data.disable_voodoo,
-                )
+                generator = self.hordelib.text_to_image
+                # generator = Depth2Img(
+                #     pipe=self.model_manager.loaded_models[self.current_model]["model"],
+                #     device=self.model_manager.loaded_models[self.current_model]["device"],
+                #     output_dir="bridge_generations",
+                #     load_concepts=True,
+                #     concepts_dir="models/custom/sd-concepts-library",
+                #     filter_nsfw=use_nsfw_censor,
+                #     disable_voodoo=self.bridge_data.disable_voodoo,
+                # )
             else:
-                generator = HordeLib()
+                generator = self.hordelib.text_to_image
                 # generator = CompVis(
                 #     model=self.model_manager.loaded_models[self.current_model],
                 #     model_name=self.current_model,
@@ -335,13 +337,14 @@ class StableDiffusionHordeJob(HordeJobFramework):
             gen_payload["inpaint_img"] = img_source
             if img_mask:
                 gen_payload["inpaint_mask"] = img_mask
-            generator = inpainting(
-                self.model_manager.loaded_models[self.current_model]["model"],
-                self.model_manager.loaded_models[self.current_model]["device"],
-                "bridge_generations",
-                filter_nsfw=use_nsfw_censor,
-                disable_voodoo=self.bridge_data.disable_voodoo,
-            )
+            generator = self.hordelib.text_to_image
+            # generator = inpainting(
+            #     self.model_manager.loaded_models[self.current_model]["model"],
+            #     self.model_manager.loaded_models[self.current_model]["device"],
+            #     "bridge_generations",
+            #     filter_nsfw=use_nsfw_censor,
+            #     disable_voodoo=self.bridge_data.disable_voodoo,
+            # )
         try:
             logger.info(
                 f"Starting generation for id {self.current_id}: {self.current_model} @ "
@@ -354,7 +357,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             try:
                 gen_payload["model"] = self.current_model
                 logger.debug(gen_payload)
-                self.image = generator.text_to_image(gen_payload)
+                self.image = generator(gen_payload)
                 self.seed = int(self.current_payload["seed"])
                 logger.info(self.image)
             except InvalidModelCacheException:
@@ -382,7 +385,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
             self.status = JobStatus.FAULTED
-            generator = None
             self.start_submit_thread()
             return
         # self.image = generator.images[0]["image"]
@@ -392,7 +394,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         #     self.image = censor_image
         #     self.censored = "censored"
         # We unload the generator from RAM
-        generator = None
         if use_nsfw_censor:
             safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
             feature_extractor = CLIPFeatureExtractor()
