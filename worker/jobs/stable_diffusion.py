@@ -12,6 +12,7 @@ from PIL import UnidentifiedImageError
 from transformers import CLIPFeatureExtractor
 
 from hordelib.horde import HordeLib
+from hordelib.safety_checker import is_image_nsfw
 from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
 from worker.enums import JobStatus
@@ -354,20 +355,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
             )
             time_state = time.time()
-            try:
-                gen_payload["model"] = self.current_model
-                logger.debug(gen_payload)
-                self.image = generator(gen_payload)
-                self.seed = int(self.current_payload["seed"])
-                logger.info(self.image)
-            except InvalidModelCacheException:
-                # There is no recovering from this right now, remove the model and fault the job
-                # The model will be re-cached and re-loaded on the next job that uses this model.
-                self.model_manager.unload_model(self.current_model)
-                logger.warning(f"Unloaded model {self.current_model}")
-                raise
-
-            # Generation is ok
+            gen_payload["model"] = self.current_model
+            logger.debug(gen_payload)
+            self.image = generator(gen_payload)
+            self.seed = int(self.current_payload["seed"])
+            logger.info(self.image)
             logger.info(
                 f"Generation for id {self.current_id} finished successfully"
                 f" in {round(time.time() - time_state,1)} seconds.",
@@ -387,25 +379,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        # self.image = generator.images[0]["image"]
-        # self.seed = generator.images[0]["seed"]
-        # if generator.images[0].get("censored", False):
-        #     logger.info(f"Image censored with reason: {censor_reason}")
-        #     self.image = censor_image
-        #     self.censored = "censored"
-        # We unload the generator from RAM
-        if use_nsfw_censor:
-            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
-            feature_extractor = CLIPFeatureExtractor()
-            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
-            _, has_nsfw_concept = safety_checker(
-                clip_input=image_features.pixel_values,
-                images=[np.asarray(self.image)],
-            )
-            if has_nsfw_concept and True in has_nsfw_concept:
-                logger.info(f"Image censored with reason: {censor_reason}")
-                self.image = censor_image
-                self.censored = "censored"
+        if use_nsfw_censor and is_image_nsfw(self.image):
+            logger.info(f"Image censored with reason: {censor_reason}")
+            self.image = censor_image
+            self.censored = "censored"
         # Run the CSAM Checker
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
