@@ -6,7 +6,6 @@ from base64 import binascii
 from io import BytesIO
 
 import numpy as np
-import rembg
 import requests
 from PIL import UnidentifiedImageError
 from transformers import CLIPFeatureExtractor
@@ -19,7 +18,7 @@ from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.logger import logger
 
-# from worker.post_process import post_process
+from worker.post_process import post_process
 from worker.stats import bridge_stats
 
 
@@ -270,23 +269,23 @@ class StableDiffusionHordeJob(HordeJobFramework):
         #     return
         if req_type in {"img2img", "txt2img"}:
             if req_type == "img2img":
-                gen_payload["init_img"] = img_source
+                gen_payload["source_image"] = img_source
                 if img_mask:
-                    gen_payload["init_mask"] = img_mask
+                    gen_payload["source_mask"] = img_mask
             if self.current_model == "Stable Diffusion 2 Depth":
                 if "save_grid" in gen_payload:
                     del gen_payload["save_grid"]
                 if "sampler_name" in gen_payload:
                     del gen_payload["sampler_name"]
-                if "init_mask" in gen_payload:
-                    del gen_payload["init_mask"]
+                if "source_mask" in gen_payload:
+                    del gen_payload["source_mask"]
                 if "tiling" in gen_payload:
                     del gen_payload["tiling"]
                 if "control_type" in gen_payload:
                     del gen_payload["control_type"]
                     del gen_payload["init_as_control"]
                     del gen_payload["return_control_map"]
-                generator = self.hordelib.text_to_image
+                generator = self.hordelib.basic_inference
                 # generator = Depth2Img(
                 #     pipe=self.model_manager.loaded_models[self.current_model]["model"],
                 #     device=self.model_manager.loaded_models[self.current_model]["device"],
@@ -297,7 +296,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 #     disable_voodoo=self.bridge_data.disable_voodoo,
                 # )
             else:
-                generator = self.hordelib.text_to_image
+                generator = self.hordelib.basic_inference
                 # generator = CompVis(
                 #     model=self.model_manager.loaded_models[self.current_model],
                 #     model_name=self.current_model,
@@ -338,7 +337,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             gen_payload["inpaint_img"] = img_source
             if img_mask:
                 gen_payload["inpaint_mask"] = img_mask
-            generator = self.hordelib.text_to_image
+            generator = self.hordelib.basic_inference
             # generator = inpainting(
             #     self.model_manager.loaded_models[self.current_model]["model"],
             #     self.model_manager.loaded_models[self.current_model]["device"],
@@ -356,6 +355,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             gen_payload["model"] = self.current_model
+            gen_payload["source_processing"] = req_type
             logger.debug(gen_payload)
             self.image = generator(gen_payload)
             self.seed = int(self.current_payload["seed"])
@@ -403,21 +403,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
-                if post_processor == "strip_background":
-                    session = rembg.new_session("u2net")
-                    self.image = rembg.remove(
-                        self.image,
-                        session=session,
-                        only_mask=False,
-                        alpha_matting=10,
-                        alpha_matting_foreground_threshold=240,
-                        alpha_matting_background_threshold=10,
-                        alpha_matting_erode_size=10,
-                    )
-                    del session
-                else:
-                    strength = self.current_payload.get("facefixer_strength", 0.5)
-                    self.image = post_process(post_processor, self.image, self.model_manager, strength=strength)
+                strength = self.current_payload.get("facefixer_strength", 0.5)
+                self.image = post_process(post_processor, self.image, strength=strength)
             except (AssertionError, RuntimeError) as err:
                 logger.warning(
                     "Post-Processor '{}' encountered an error when working on image . Skipping! {}",

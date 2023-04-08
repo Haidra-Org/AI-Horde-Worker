@@ -1,6 +1,5 @@
 """Arg parsing for the main script."""
 import argparse
-
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument(
     "-p",

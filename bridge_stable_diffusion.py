@@ -1,5 +1,6 @@
 """This is the bridge, It connects the horde with the ML processing"""
 import os
+import sys
 
 # import hordelib.install
 
@@ -10,6 +11,7 @@ from worker.argparser.stable_diffusion import args
 # isort: on
 
 import hordelib
+# We need to remove these, to avoid comfyUI trying to use them
 hordelib.initialise()
 from hordelib.horde import SharedModelManager
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
