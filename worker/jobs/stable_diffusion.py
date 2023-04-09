@@ -5,10 +5,8 @@ import traceback
 from base64 import binascii
 from io import BytesIO
 
-import numpy as np
 import requests
 from PIL import UnidentifiedImageError
-from transformers import CLIPFeatureExtractor
 
 from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
