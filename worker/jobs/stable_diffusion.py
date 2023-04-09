@@ -2,7 +2,6 @@
 import base64
 import time
 import traceback
-from base64 import binascii
 from io import BytesIO
 
 import requests
@@ -113,12 +112,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 # If the received image is unreadable, we continue as text2img
                 except UnidentifiedImageError:
                     logger.error("Source image received for img2img is unreadable. Falling back to text2img!")
-                    req_type = "txt2img"
-                except binascii.Error:
-                    logger.error(
-                        "Source image received for img2img is cannot be base64 decoded (binascii.Error). "
-                        "Falling back to text2img!",
-                    )
                     req_type = "txt2img"
                 gen_payload["source_mask"] = source_mask
             if "denoising_strength" in self.current_payload and source_image:

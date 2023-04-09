@@ -197,7 +197,6 @@ class BridgeDataTemplate:
                             "checksum.",
                         )
                         self.model_names.remove(model)
-            model_manager.init()
         if not self.initialized:
             logger.init_ok("Models", status="OK")
         if os.path.exists("bridgeData.py") or os.path.exists(BRIDGE_CONFIG_FILE):
