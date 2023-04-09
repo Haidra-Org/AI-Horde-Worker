@@ -109,7 +109,11 @@ class JobPopper:
 
     def convert_image_data_to_pil(self, img_data):
         try:
-            return Image.open(BytesIO(img_data)).convert("RGBA")
+            img = Image.open(BytesIO(img_data))
+            if len(img.split()) == 4:
+                return img.convert("RGBA")
+            else:
+                return img.convert("RGB")
         except UnidentifiedImageError as e:
             logger.error(f"Error when creating image: {e}.")
             return None
@@ -244,7 +248,11 @@ class InterrogationPopper(JobPopper):
                     current_image_url = None
                     continue
             try:
-                form["image"] = Image.open(BytesIO(img_data)).convert("RGBA")
+                img = Image.open(BytesIO(img_data))
+                if len(img.split()) == 4:
+                    form["image"] = img.convert("RGBA")
+                else:
+                    form["image"] = img.convert("RGB")
                 non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
                 logger.error(f"Error when creating image: {e}. Url {current_image_url}")
