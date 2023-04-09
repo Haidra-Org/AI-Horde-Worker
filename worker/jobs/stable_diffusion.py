@@ -94,9 +94,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "seed": self.current_payload["seed"],
                 "tiling": self.current_payload["tiling"],
                 "n_iter": 1,
-                "batch_size": 1,
-                "save_individual_images": False,
-                "save_grid": False,
             }
             # These params might not always exist in the horde payload
             if "ddim_steps" in self.current_payload:
@@ -260,8 +257,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 if source_mask:
                     gen_payload["source_mask"] = source_mask
             if self.current_model == "Stable Diffusion 2 Depth":
-                if "save_grid" in gen_payload:
-                    del gen_payload["save_grid"]
                 if "sampler_name" in gen_payload:
                     del gen_payload["sampler_name"]
                 if "source_mask" in gen_payload:
@@ -298,8 +293,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 # )
         else:
             # These variables do not exist in the outpainting implementation
-            if "save_grid" in gen_payload:
-                del gen_payload["save_grid"]
             if "sampler_name" in gen_payload:
                 del gen_payload["sampler_name"]
             if "denoising_strength" in gen_payload:
