@@ -142,8 +142,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         req_type = "txt2img"
         # TODO: Fix img2img for SD2
         if source_image:
-            img_source = None
-            img_mask = None
             if source_processing == "img2img":
                 req_type = "img2img"
             elif source_processing == "inpainting":
@@ -227,21 +225,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
             f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work...",
         )
         try:
-            (
-                self.model_manager.loaded_models["safety_checker"]["model"]
-                if "safety_checker" in self.model_manager.loaded_models
-                else None
-            )
-
-            if source_image:
-                img_source = source_image
             if source_mask:
-                img_mask = source_mask
-                if img_mask.size != img_source.size:
-                    logger.warning(
-                        f"Source image/mask mismatch. Resizing mask from {img_mask.size} to {img_source.size}",
+                if source_mask.size != source_image.size:
+                    logger.info(
+                        f"Source image/mask mismatch. Resizing mask from {source_mask.size} to {source_image.size}",
                     )
-                    img_mask = img_mask.resize(img_source.size)
+                    source_mask = source_mask.resize(source_image.size)
         except KeyError:
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
@@ -267,9 +256,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
         #     return
         if req_type in {"img2img", "txt2img"}:
             if req_type == "img2img":
-                gen_payload["source_image"] = img_source
-                if img_mask:
-                    gen_payload["source_mask"] = img_mask
+                gen_payload["source_image"] = source_image
+                if source_mask:
+                    gen_payload["source_mask"] = source_mask
             if self.current_model == "Stable Diffusion 2 Depth":
                 if "save_grid" in gen_payload:
                     del gen_payload["save_grid"]
@@ -322,19 +311,19 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del gen_payload["init_as_control"]
                 del gen_payload["return_control_map"]
             # We prevent sending an inpainting without mask or transparency, as it will crash us.
-            if img_mask is None:
+            if source_mask is None:
                 try:
-                    if img_source.mode == "P":
-                        img_source.convert("RGBA")
-                    _red, _green, _blue, _alpha = img_source.split()
+                    if source_image.mode == "P":
+                        source_image.convert("RGBA")
+                    _red, _green, _blue, _alpha = source_image.split()
                 except ValueError:
                     logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
                     self.status = JobStatus.FAULTED
                     self.start_submit_thread()
                     return
-            gen_payload["inpaint_img"] = img_source
-            if img_mask:
-                gen_payload["inpaint_mask"] = img_mask
+            gen_payload["inpaint_img"] = source_image
+            if source_mask:
+                gen_payload["inpaint_mask"] = source_mask
             generator = self.hordelib.basic_inference
             # generator = inpainting(
             #     self.model_manager.loaded_models[self.current_model]["model"],
