@@ -8,7 +8,7 @@ from PIL import Image
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 
 # from nataili import enable_ray_alternative
 from worker.logger import logger
@@ -123,7 +123,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.model_names.insert(0,"safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
-            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
+            self.model_names += list(POST_PROCESSORS_HORDELIB_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
@@ -141,7 +141,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if model_name in ["safety_checker", "LDSR"]:
             return False
 
-        if model_name in POST_PROCESSORS_NATAILI_MODELS or model_name in KNOWN_INTERROGATORS:
+        if model_name in POST_PROCESSORS_HORDELIB_MODELS or model_name in KNOWN_INTERROGATORS:
             return False
 
         return model_name not in self.models_to_skip

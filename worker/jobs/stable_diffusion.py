@@ -13,7 +13,7 @@ from transformers import CLIPFeatureExtractor
 from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
 from worker import csam
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.logger import logger
@@ -164,7 +164,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             for available_model in self.available_models:
                 if (
                     "_inpainting" not in available_model
-                    and available_model not in POST_PROCESSORS_NATAILI_MODELS | KNOWN_INTERROGATORS
+                    and available_model not in POST_PROCESSORS_HORDELIB_MODELS | KNOWN_INTERROGATORS
                     and available_model in self.model_manager.compvis.get_loaded_models_names()
                 ):
                     logger.debug(
