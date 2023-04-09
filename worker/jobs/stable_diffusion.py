@@ -91,34 +91,38 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "prompt": self.current_payload["prompt"],
                 "height": self.current_payload["height"],
                 "width": self.current_payload["width"],
+                "ddim_steps": self.current_payload["ddim_steps"],
+                "sampler_name": self.current_payload["sampler_name"],
+                "cfg_scale": self.current_payload["cfg_scale"],
                 "seed": self.current_payload["seed"],
                 "tiling": self.current_payload["tiling"],
+                "karras": self.current_payload["karras"],
                 "n_iter": 1,
             }
             # These params might not always exist in the horde payload
-            if "ddim_steps" in self.current_payload:
-                gen_payload["ddim_steps"] = self.current_payload["ddim_steps"]
-            if "sampler_name" in self.current_payload:
-                gen_payload["sampler_name"] = self.current_payload["sampler_name"]
-                if gen_payload["sampler_name"] == "dpmsolver" and "stable diffusion 2" not in model_baseline:
-                    logger.warning(f"dpmsolver cannot be used with {self.current_model}. Falling back to k_euler.")
-                    gen_payload["sampler_name"] = "k_euler"
-                if gen_payload["sampler_name"] == "DDIM" and source_mask is not None:
-                    logger.warning(
-                        f"DDIM cannot be used with a mask for {self.current_model}. Falling back to k_euler.",
+            if source_image:
+                gen_payload["source_image"] = source_image
+            if source_image and source_mask:
+                # We need to ensure the source_mask is ok
+                try:
+                    if source_mask.size != source_image.size:
+                        logger.info(
+                            f"Source image/mask mismatch. Resizing mask from {source_mask.size} to {source_image.size}",
+                        )
+                        source_mask = source_mask.resize(source_image.size)
+                # If the received image is unreadable, we continue as text2img
+                except UnidentifiedImageError:
+                    logger.error("Source image received for img2img is unreadable. Falling back to text2img!")
+                    req_type = "txt2img"
+                except binascii.Error:
+                    logger.error(
+                        "Source image received for img2img is cannot be base64 decoded (binascii.Error). "
+                        "Falling back to text2img!",
                     )
-                    gen_payload["sampler_name"] = "k_euler"
-                if gen_payload["sampler_name"] == "DDIM" and self.current_model == "pix2pix":
-                    logger.warning(f"DDIM cannot be used with {self.current_model}. Falling back to k_euler_a.")
-                    gen_payload["sampler_name"] = "k_euler_a"
-            if "cfg_scale" in self.current_payload:
-                gen_payload["cfg_scale"] = self.current_payload["cfg_scale"]
-            if "ddim_eta" in self.current_payload:
-                gen_payload["ddim_eta"] = self.current_payload["ddim_eta"]
+                    req_type = "txt2img"
+                gen_payload["source_mask"] = source_mask
             if "denoising_strength" in self.current_payload and source_image:
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-            if self.current_payload.get("karras", False) and gen_payload["sampler_name"] != "dpmsolver":
-                gen_payload["sampler_name"] = gen_payload.get("sampler_name", "k_euler_a") + "_karras"
             if "hires_fix" in self.current_payload and not source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
             if (
@@ -137,26 +141,17 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         # logger.debug(gen_payload)
         req_type = "txt2img"
-        # TODO: Fix img2img for SD2
         if source_image:
             if source_processing == "img2img":
                 req_type = "img2img"
             elif source_processing == "inpainting":
                 req_type = "inpainting"
-            elif source_processing == "outpainting":
-                req_type = "outpainting"
-            if gen_payload["sampler_name"] == "dpmsolver":
-                logger.warning("dpmsolver cannot handle img2img. Falling back to k_euler")
-                gen_payload["sampler_name"] = "k_euler"
-        # Prevent inpainting from picking text2img and img2img gens (as those go via compvis pipelines)
-        if "_inpainting" in self.current_model and req_type not in [
-            "inpainting",
-            "outpainting",
-        ]:
+        # Prevent inpainting from picking text2img requests
+        if req_type == "txt2img" and self.is_inpainting_model(self.current_model):
             # Try to find any other compvis model to do text2img or img2img
             for available_model in self.available_models:
                 if (
-                    "_inpainting" not in available_model
+                    self.is_inpainting_model(available_model)
                     and available_model not in POST_PROCESSORS_HORDELIB_MODELS | KNOWN_INTERROGATORS
                     and available_model in self.model_manager.compvis.get_loaded_models_names()
                 ):
@@ -174,14 +169,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                         + f"switching to {self.current_model} instead.",
                     )
                     break
-
             # if the model persists as inpainting for text2img or img2img, we abort.
-            if "_inpainting" in self.current_model:
-                # We remove the base64 from the prompt to avoid flooding the output on the error
-                if isinstance(self.pop.get("source_image", ""), str) and len(self.pop.get("source_image", "")) > 10:
-                    self.pop["source_image"] = len(self.pop.get("source_image", ""))
-                if isinstance(self.pop.get("source_mask", ""), str) and len(self.pop.get("source_mask", "")) > 10:
-                    self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+            if self.is_inpainting_model(self.current_model):
                 logger.error(
                     "Received an non-inpainting request for inpainting model. This shouldn't happen. "
                     f"Inform the developer. Current payload {self.pop}",
@@ -189,31 +178,17 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.status = JobStatus.FAULTED
                 self.start_submit_thread()
                 return
-                # TODO: Send faulted
-        # Reject jobs for SD2Depth/pix2pix if not img2img
-        if self.current_model in ["Stable Diffusion 2 Depth", "pix2pix"] and req_type != "img2img":
-            # We remove the base64 from the prompt to avoid flooding the output on the error
-            if (
-                source_image is not None
-                and isinstance(self.pop.get("source_image", ""), str)
-                and len(self.pop.get("source_image", "")) > 10
-            ):
-                self.pop["source_image"] = len(self.pop.get("source_image", ""))
-            if (
-                source_mask is not None
-                and isinstance(self.pop.get("source_mask", ""), str)
-                and len(self.pop.get("source_mask", "")) > 10
-            ):
-                self.pop["source_mask"] = len(self.pop.get("source_mask", ""))
+        # Reject jobs for pix2pix if not img2img
+        if self.current_model in ["pix2pix"] and req_type != "img2img":
             logger.error(
-                "Received an non-img2img request for SD2Depth or Pix2Pix model. This shouldn't happen. "
+                "Received an non-img2img request for Pix2Pix model. This shouldn't happen. "
                 f"Inform the developer. Current payload {self.pop}",
             )
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        if "_inpainting" not in self.current_model and req_type == "inpainting":
-            # Try to use default inpainting model if available
+        # If a request came for inpainting but they specified an non-inpainting model, try to use default inpainting model if available.
+        if not self.is_inpainting_model(self.current_model) and req_type == "inpainting":
             if "stable_diffusion_inpainting" in self.available_models:
                 self.current_model = "stable_diffusion_inpainting"
             else:
@@ -221,110 +196,15 @@ class StableDiffusionHordeJob(HordeJobFramework):
         logger.debug(
             f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work...",
         )
-        try:
-            if source_mask:
-                if source_mask.size != source_image.size:
-                    logger.info(
-                        f"Source image/mask mismatch. Resizing mask from {source_mask.size} to {source_image.size}",
-                    )
-                    source_mask = source_mask.resize(source_image.size)
-        except KeyError:
-            self.status = JobStatus.FAULTED
-            self.start_submit_thread()
-            return
-        # If the received image is unreadable, we continue as text2img
-        except UnidentifiedImageError:
-            logger.error("Source image received for img2img is unreadable. Falling back to text2img!")
-            req_type = "txt2img"
-            if "denoising_strength" in gen_payload:
-                del gen_payload["denoising_strength"]
-        except binascii.Error:
-            logger.error(
-                "Source image received for img2img is cannot be base64 decoded (binascii.Error). "
-                "Falling back to text2img!",
-            )
-            req_type = "txt2img"
-            if "denoising_strength" in gen_payload:
-                del gen_payload["denoising_strength"]
-        # if self.current_model not in self.model_manager.loaded_models:
-        #     logger.error(f"Required model {self.current_model} appears to be not loaded. Dynamic model? Aborting...")
-        #     self.status = JobStatus.FAULTED
-        #     self.start_submit_thread()
-        #     return
-        if req_type in {"img2img", "txt2img"}:
-            if req_type == "img2img":
-                gen_payload["source_image"] = source_image
-                if source_mask:
-                    gen_payload["source_mask"] = source_mask
-            if self.current_model == "Stable Diffusion 2 Depth":
-                if "sampler_name" in gen_payload:
-                    del gen_payload["sampler_name"]
-                if "source_mask" in gen_payload:
-                    del gen_payload["source_mask"]
-                if "tiling" in gen_payload:
-                    del gen_payload["tiling"]
-                if "control_type" in gen_payload:
-                    del gen_payload["control_type"]
-                    del gen_payload["init_as_control"]
-                    del gen_payload["return_control_map"]
-                generator = self.hordelib.basic_inference
-                # generator = Depth2Img(
-                #     pipe=self.model_manager.loaded_models[self.current_model]["model"],
-                #     device=self.model_manager.loaded_models[self.current_model]["device"],
-                #     output_dir="bridge_generations",
-                #     load_concepts=True,
-                #     concepts_dir="models/custom/sd-concepts-library",
-                #     filter_nsfw=use_nsfw_censor,
-                #     disable_voodoo=self.bridge_data.disable_voodoo,
-                # )
-            else:
-                generator = self.hordelib.basic_inference
-                # generator = CompVis(
-                #     model=self.model_manager.loaded_models[self.current_model],
-                #     model_name=self.current_model,
-                #     model_baseline=model_baseline,
-                #     output_dir="bridge_generations",
-                #     load_concepts=True,
-                #     concepts_dir="models/custom/sd-concepts-library",
-                #     safety_checker=safety_checker,
-                #     filter_nsfw=use_nsfw_censor,
-                #     disable_voodoo=self.bridge_data.disable_voodoo,
-                #     control_net_manager=self.model_manager.controlnet or None,
-                # )
-        else:
-            # These variables do not exist in the outpainting implementation
-            if "sampler_name" in gen_payload:
-                del gen_payload["sampler_name"]
-            if "denoising_strength" in gen_payload:
-                del gen_payload["denoising_strength"]
-            if "tiling" in gen_payload:
-                del gen_payload["tiling"]
-            if "control_type" in gen_payload:
-                del gen_payload["control_type"]
-                del gen_payload["init_as_control"]
-                del gen_payload["return_control_map"]
-            # We prevent sending an inpainting without mask or transparency, as it will crash us.
-            if source_mask is None:
-                try:
-                    if source_image.mode == "P":
-                        source_image.convert("RGBA")
-                    _red, _green, _blue, _alpha = source_image.split()
-                except ValueError:
-                    logger.warning("inpainting image doesn't have an alpha channel. Aborting gen")
-                    self.status = JobStatus.FAULTED
-                    self.start_submit_thread()
-                    return
-            gen_payload["inpaint_img"] = source_image
-            if source_mask:
-                gen_payload["inpaint_mask"] = source_mask
-            generator = self.hordelib.basic_inference
-            # generator = inpainting(
-            #     self.model_manager.loaded_models[self.current_model]["model"],
-            #     self.model_manager.loaded_models[self.current_model]["device"],
-            #     "bridge_generations",
-            #     filter_nsfw=use_nsfw_censor,
-            #     disable_voodoo=self.bridge_data.disable_voodoo,
-            # )
+        if req_type == "inpainting" and source_mask is None:
+            try:
+                if source_image.mode == "P":
+                    source_image.convert("RGBA")
+                _red, _green, _blue, _alpha = source_image.split()
+            except ValueError:
+                logger.warning("inpainting image doesn't have an alpha channel. This shouldn't happen. Continue processing without any mask.")
+        # This might change if we add more pipelines later.
+        generator = self.hordelib.basic_inference
         try:
             logger.info(
                 f"Starting generation for id {self.current_id}: {self.current_model} @ "
@@ -427,6 +307,9 @@ class StableDiffusionHordeJob(HordeJobFramework):
     def post_submit_tasks(self, submit_req):
         bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
 
+    # TODO: Probably fits better in the MM
+    def is_inpainting_model(self, model_name):
+        return self.model_manager.models[model_name].get("style") == "inpainting"
 
 def count_parentheses(s):
     open_p = False
