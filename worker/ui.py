@@ -83,7 +83,7 @@ class GPUInfo:
         if mem < 1:
             unit = "MB"
             raw *= 1024
-        return f"{int(mem)} {unit}"
+        return f"{round(mem)} {unit}"
 
     def get_info(self):
         data = self._get_gpu_data()
