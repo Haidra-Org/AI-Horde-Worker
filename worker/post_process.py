@@ -46,12 +46,12 @@ def strip_background(payload):
 
 # At the bottom, as we need to define the method first
 KNOWN_POST_PROCESSORS = {
-    # "GFPGAN": hordelib.???,
     "RealESRGAN_x4plus": hordelib.image_upscale,
     "RealESRGAN_x2plus": hordelib.image_upscale,
     "RealESRGAN_x4plus_anime_6B": hordelib.image_upscale,
     "NMKD_Siax": hordelib.image_upscale,
     "4x_AnimeSharp": hordelib.image_upscale,
     "strip_background": strip_background,
-    # "CodeFormers": hordelib.???,
+    "GFPGAN": hordelib.image_facefix,
+    "CodeFormers": hordelib.image_facefix,
 }
