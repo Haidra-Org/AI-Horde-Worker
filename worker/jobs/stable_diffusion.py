@@ -201,7 +201,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # logger.debug(gen_payload)
             self.image = generator(gen_payload)
             self.seed = int(self.current_payload["seed"])
-            logger.info(self.image)
             logger.info(
                 f"Generation for id {self.current_id} finished successfully"
                 f" in {round(time.time() - time_state,1)} seconds.",

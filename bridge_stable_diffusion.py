@@ -56,12 +56,12 @@ def main():
     SharedModelManager.loadModelManagers(
         clip=True,
         compvis=True,
-        # diffusers=True,
+        diffusers=True,
         esrgan=True,
-        # gfpgan=True,
+        gfpgan=True,
         safety_checker=True,
-        # codeformer=True,
-        # controlnet=True,
+        codeformer=True,
+        controlnet=True,
     )
     logger.debug(SharedModelManager.manager.clip.path)
     try:
