@@ -102,17 +102,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             if source_image:
                 gen_payload["source_image"] = source_image
             if source_image and source_mask:
-                # We need to ensure the source_mask is ok
-                try:
-                    if source_mask.size != source_image.size:
-                        logger.info(
-                            f"Source image/mask mismatch. Resizing mask from {source_mask.size} to {source_image.size}",
-                        )
-                        source_mask = source_mask.resize(source_image.size)
-                # If the received image is unreadable, we continue as text2img
-                except UnidentifiedImageError:
-                    logger.error("Source image received for img2img is unreadable. Falling back to text2img!")
-                    req_type = "txt2img"
                 gen_payload["source_mask"] = source_mask
             if "denoising_strength" in self.current_payload and source_image:
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
@@ -209,7 +198,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             time_state = time.time()
             gen_payload["model"] = self.current_model
             gen_payload["source_processing"] = req_type
-            logger.debug(gen_payload)
+            # logger.debug(gen_payload)
             self.image = generator(gen_payload)
             self.seed = int(self.current_payload["seed"])
             logger.info(self.image)
@@ -229,6 +218,18 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
+            self.status = JobStatus.FAULTED
+            self.start_submit_thread()
+            return
+        if self.image is None:
+            stack_payload = gen_payload
+            stack_payload["request_type"] = req_type
+            stack_payload["model"] = self.current_model
+            stack_payload["prompt"] = "PROMPT REDACTED"
+            logger.error(
+                "Something went wrong when processing request and image was returned as None. "
+                f"Payload: {stack_payload}",
+            )
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
