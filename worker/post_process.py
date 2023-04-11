@@ -1,9 +1,8 @@
 """Post process images"""
-from loguru import logger
 import rembg
-
 from hordelib.horde import HordeLib
 from hordelib.shared_model_manager import SharedModelManager
+from loguru import logger
 
 hordelib = HordeLib()
 
@@ -30,7 +29,7 @@ def post_process(model, image, strength):
     return pprocessor(payload)
 
 # TODO: move to hordelib or ComfyUI
-def strip_background(payload):    
+def strip_background(payload):
     session = rembg.new_session("u2net")
     image = rembg.remove(
         payload["source_image"],

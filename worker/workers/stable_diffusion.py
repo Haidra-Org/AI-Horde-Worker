@@ -18,7 +18,7 @@ class StableDiffusionWorker(WorkerFramework):
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
         loaded_models = len(self.model_manager.compvis.get_loaded_models_names()) + len(
-            self.model_manager.diffusers.get_loaded_models_names()
+            self.model_manager.diffusers.get_loaded_models_names(),
         )
         can_do = loaded_models > 0
         if not can_do:

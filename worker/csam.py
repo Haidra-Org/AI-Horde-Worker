@@ -2,9 +2,9 @@
 import time
 
 import regex as re
+from hordelib.clip.interrogate import Interrogator
 from unidecode import unidecode
 
-from hordelib.clip.interrogate import Interrogator
 from worker.logger import logger
 
 UNDERAGE_CONTEXT = {
