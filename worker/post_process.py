@@ -14,7 +14,7 @@ def post_process(model, image, strength):
         logger.warning(f"Post processor {model} is unknown. Returning original image")
         return image
 
-    if not SharedModelManager.manager.is_model_loaded(model):
+    if model != "strip_background" and not SharedModelManager.manager.is_model_loaded(model):
         logger.init(f"{model}", status="Loading")
         load_result = SharedModelManager.manager.load(model)
         if not load_result:
