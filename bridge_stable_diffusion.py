@@ -60,7 +60,6 @@ def main():
         codeformer=True,
         controlnet=True,
     )
-    logger.debug(SharedModelManager.manager.clip.path)
     try:
         worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
         worker.start()
