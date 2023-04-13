@@ -88,8 +88,9 @@ class WebUI:
         "nsfw": {"label": "Enable NSFW", "info": "Allow your worker to accept jobs that contain NSFW " "content."},
         "censor_nsfw": {
             "label": "Censor NSFW images",
-            "info": "If this is true and Enable NSFW is false, the worker will accept NSFW requests, "
-            "but send back a censored image",
+            "info": "If this is true, the worker will scan all resulting images for NSFW and censor any detected. "
+            "If this is false, the worker will only scan for NSFW on client request. "
+            "This does nothing is 'Enable NSFW' is set to True.",
         },
         "nataili_cache_home": {
             "label": "Nataili Model Directory",

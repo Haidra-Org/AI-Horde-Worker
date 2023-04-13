@@ -6,9 +6,9 @@ from io import BytesIO
 import numpy as np
 import rembg
 import requests
-from nataili.blip.caption import Caption
-from nataili.clip.interrogate import Interrogator
-from transformers import CLIPFeatureExtractor
+from hordelib.blip.caption import Caption
+from hordelib.clip.interrogate import Interrogator
+from hordelib.safety_checker import is_image_nsfw
 
 from worker.consts import KNOWN_POST_PROCESSORS, KNOWN_UPSCALERS
 from worker.enums import JobStatus
@@ -45,31 +45,11 @@ class InterrogationHordeJob(HordeJobFramework):
         payload_kwargs = {}
         logger.debug(f"Starting interrogation {self.current_id}")
         if self.current_form == "nsfw":
-            safety_checker = self.model_manager.loaded_models["safety_checker"]["model"]
-            feature_extractor = CLIPFeatureExtractor()
-            image_features = feature_extractor(self.image, return_tensors="pt").to("cpu")
-            _, has_nsfw_concept = safety_checker(
-                clip_input=image_features.pixel_values,
-                images=[np.asarray(self.image)],
-            )
-            self.result = has_nsfw_concept and True in has_nsfw_concept
+            self.result = is_image_nsfw(self.image)
         elif self.current_form in KNOWN_POST_PROCESSORS:
             try:
-                if self.current_form == "strip_background":
-                    session = rembg.new_session("u2net")
-                    self.image = rembg.remove(
-                        self.image,
-                        session=session,
-                        only_mask=False,
-                        alpha_matting=10,
-                        alpha_matting_foreground_threshold=240,
-                        alpha_matting_background_threshold=10,
-                        alpha_matting_erode_size=10,
-                    )
-                    del session
-                else:
-                    strength = self.current_payload.get("facefixer_strength", 0.5)
-                    self.image = post_process(self.current_form, self.image, self.model_manager, strength=strength)
+                strength = self.current_payload.get("facefixer_strength", 0.5)
+                self.image = post_process(self.current_form, self.image, strength=strength)
                 self.result = "R2"
             except (AssertionError, RuntimeError) as err:
                 logger.error(

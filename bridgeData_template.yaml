@@ -128,5 +128,5 @@ forms:
   - "caption"
   - "nsfw" # uses CPU
   # Heavier than the others, but rewards more kudos
-  #- "interrogation"
-  #- "post-process"
+  - "interrogation"
+  - "post-process"

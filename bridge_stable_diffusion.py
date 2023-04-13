@@ -49,7 +49,6 @@ def main():
         logger.warning("DeprecationWarning: `--skip_md5` has been deprecated. Please use `--skip_checksum` instead.")
 
     bridge_data = StableDiffusionBridgeData()
-    SharedModelManager()
     SharedModelManager.loadModelManagers(
         clip=True,
         compvis=True,

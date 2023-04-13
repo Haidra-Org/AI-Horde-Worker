@@ -3,6 +3,7 @@ RELEASE = f"{BRIDGE_VERSION}.3.7"
 BRIDGE_CONFIG_FILE = "bridgeData.yaml"
 KNOWN_UPSCALERS = {
     "RealESRGAN_x4plus",
+    # "RealESRGAN_x2plus",
     "RealESRGAN_x4plus_anime_6B",
     "NMKD_Siax",
     "4x_AnimeSharp",
