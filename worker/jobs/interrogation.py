@@ -43,7 +43,7 @@ class InterrogationHordeJob(HordeJobFramework):
         self.stale_time = time.time() + stale_buffer + 5
         interrogator = None
         payload_kwargs = {}
-        logger.debug(f"Starting interrogation {self.current_id}")
+        logger.info(f"Starting {self.current_form} alchemy {self.current_id}")
         if self.current_form == "nsfw":
             self.result = is_image_nsfw(self.image)
         elif self.current_form in KNOWN_POST_PROCESSORS:
