@@ -5,6 +5,5 @@ if [ ! -f "conda/envs/linux/bin/python" ]; then
  bin/micromamba create --no-shortcuts -r conda -n linux -f environment.yaml -y
 fi
 bin/micromamba create --no-shortcuts -r conda -n linux -f environment.yaml -y
-git clone git@github.com:comfyanonymous/ComfyUI.git
+bin/micromamba run -r conda -n windows python -s -m pip uninstall nataili
 bin/micromamba run -r conda -n linux python -s -m pip install -r requirements.txt
-bin/micromamba run -r conda -n linux python -s -m pip install -r ComfyUI/requirements.txt
