@@ -28,10 +28,6 @@ if args.debug:
     print(f"style.py located at {thisFilePath}")
 os.chdir(workingDirectory)
 
-src = [
-    "worker",
-]
-
 ignore_src = [
     "bridgeData_template.py",
     "bridgeData.py",
@@ -39,8 +35,7 @@ ignore_src = [
 
 root_folder_src = glob.glob("*.py")
 
-src.extend(root_folder_src)
-
+src = ["worker", *root_folder_src]
 src = [item for item in src if item not in ignore_src]
 
 
