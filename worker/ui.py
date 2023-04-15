@@ -13,6 +13,7 @@ import time
 from collections import deque
 from math import trunc
 
+import pkg_resources
 import psutil
 import requests
 import yaml
@@ -417,7 +418,7 @@ class TerminalUI:
 
     def print_status(self):
         # This is the design template: (80 columns)
-        # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
+        # ╔═AIDream-01════════════════════════════════════════════════(0.10.10)══000000═╗
         # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
@@ -457,6 +458,7 @@ class TerminalUI:
         self.draw_line(self.main, row_horde, "Entire Horde")
         self.print(self.main, row_local, 2, f"{self.worker_name}")
         self.print(self.main, row_local, self.width - 8, f"{self.commit_hash[:6]}")
+        self.print(self.main, row_local, self.width - 19, f"({self.get_hordelib_version()})")
 
         label(row_local + 1, col_left, "Uptime:")
         label(row_local + 2, col_left, "Models:")
@@ -778,6 +780,13 @@ class TerminalUI:
 
     def run(self):
         curses.wrapper(self.main_loop)
+
+    def get_hordelib_version(self):
+        try:
+            package_version = pkg_resources.get_distribution("hordelib").version
+            return package_version
+        except pkg_resources.DistributionNotFound:
+            return "Unknown"
 
 
 if __name__ == "__main__":
