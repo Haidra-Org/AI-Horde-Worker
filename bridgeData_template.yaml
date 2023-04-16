@@ -65,17 +65,11 @@ max_models_to_download: 10
 # Set to zero to disable stats output completely.
 stats_output_frequency: 30
 # The location in which stable diffusion ckpt models are stored
-nataili_cache_home: "./"
-# Enable or disable low vram mode. Leave enabled if unsure
-low_vram_mode: true
-# Enable or disable model caching. If you have a lot of models, enable this to reduce the worker startup time and reduce RAM usage.
-enable_model_cache: false
+cache_home: "./"
 # Always download models when required without prompting
 always_download: false
-# The location of the ray temp directly, also used for the model cache
-ray_temp_dir: "./ray"
-# If voodoo is disabled, caching models in RAM and on disk is disabled and models are loaded directly into VRAM. Total size of models loaded must fit in VRAM.
-disable_voodoo: false
+# The location of the temp directory, also used for the model cache
+temp_dir: "./tmp"
 # Enable the terminal GUI, which displays information about the worker and the horde.
 enable_terminal_ui: false
 

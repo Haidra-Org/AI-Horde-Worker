@@ -94,15 +94,6 @@ arg_parser.add_argument(
     help="If specified will dump the log to the specified file",
 )
 arg_parser.add_argument(
-    "--disable_voodoo",
-    action="store_true",
-    default=False,
-    help=(
-        "If specified this worker will not use voodooray to offload models into RAM and save VRAM"
-        " (useful for cloud providers)."
-    ),
-)
-arg_parser.add_argument(
     "--disable_xformers",
     action="store_true",
     default=False,
@@ -110,12 +101,6 @@ arg_parser.add_argument(
         "If specified this worker will not try use xformers to speed up generations."
         " This should normally be automatic, but in case you need to disable it manually, you can do so here."
     ),
-)
-arg_parser.add_argument(
-    "--disable_local_ray_temp",
-    action="store_true",
-    default=False,
-    help=("If specified this worker will make the system use the default ray path for temp files instead of local."),
 )
 arg_parser.add_argument(
     "--hf_token",
@@ -143,12 +128,6 @@ arg_parser.add_argument(
     action="store_true",
     default=False,
     help="If specified will not check the downloaded model sha256sum.",
-)
-arg_parser.add_argument(
-    "--enable_model_cache",
-    action="store_true",
-    default=False,
-    help="If specified will use an alternative to ray to cache models persistently.",
 )
 
 

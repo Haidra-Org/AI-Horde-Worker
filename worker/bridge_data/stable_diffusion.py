@@ -10,7 +10,6 @@ from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 
-# from nataili import enable_ray_alternative
 from worker.logger import logger
 
 
@@ -48,19 +47,19 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
-        if not hasattr(self, "nataili_cache_home"):
-            self.nataili_cache_home = os.environ.get("AIWORKER_CACHE_HOME", "./")
-        # If any workers got a bad default path from an old bridgeData_template.yaml, continue
-        # to use that original bad path to avoid making a mess with duplicating models.
-        if self.nataili_cache_home == "./" and os.path.exists("./nataili/compvis/nataili/compvis"):
-            self.nataili_cache_home = "./nataili/compvis/"
-        os.environ["AIWORKER_CACHE_HOME"] = self.nataili_cache_home
-        # Disable low vram mode
-        if hasattr(self, "low_vram_mode") and not self.low_vram_mode:
-            os.environ["LOW_VRAM_MODE"] = "0"
-        # Where the ray temp dir and/or model cache are located
+        if not hasattr(self, "cache_home"):
+            if not hasattr(self, "nataili_cache_home"):
+                self.cache_home = os.environ.get("AIWORKER_CACHE_HOME", "./")
+            else:
+                self.cache_home = self.nataili_cache_home
+        os.environ["AIWORKER_CACHE_HOME"] = self.cache_home
+        # Where the temp dir and/or model cache are located
         if hasattr(self, "ray_temp_dir"):
-            os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
+            self.temp_dir = self.ray_temp_dir
+        if hasattr(self, "temp_dir"):
+            os.environ["AIWORKER_TEMP_DIR"] = self.temp_dir
+        else:
+            os.environ["AIWORKER_TEMP_DIR"] = "./tmp"
 
     @logger.catch(reraise=True)
     def reload_data(self):
@@ -70,9 +69,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
 
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
-
-        # if hasattr(self, "enable_model_cache"):
-        #     enable_ray_alternative.active = self.enable_model_cache
 
         # Check for magic constants and expand them
         top_n = 0
@@ -115,8 +111,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
-        # if args.enable_model_cache:
-        #     enable_ray_alternative.activate()
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):

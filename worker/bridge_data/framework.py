@@ -10,7 +10,6 @@ import yaml
 
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
 
-# from nataili import disable_voodoo
 from worker.logger import logger
 
 
@@ -49,9 +48,6 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
         self.max_models_to_download = 10
-
-        self.disable_voodoo = True
-        # self.disable_voodoo = disable_voodoo.active
 
     def load_config(self):
         # YAML config
@@ -236,7 +232,11 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model)
+                success = None
+                if model == "safety_checker":
+                    success = model_manager.load(model, cpu_only=True)
+                else:
+                    success = model_manager.load(model)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True
