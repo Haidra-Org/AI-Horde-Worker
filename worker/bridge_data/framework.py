@@ -232,7 +232,11 @@ class BridgeDataTemplate:
                 model_manager.unload_model(model)
         for model in self.model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model)
+                success = None
+                if model == "safety_checker":
+                    success = model_manager.load(model, cpu_only=True)
+                else:
+                    success = model_manager.load(model)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True
