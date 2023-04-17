@@ -115,9 +115,9 @@ models_to_skip:
   #- "Zeipher Female Model"
   #- "Hentai Diffusion"
 
-## Interrogation Worker
+## Alchemist
 
-# The interrogation forms this worker can serve.
+# The alchemy forms this worker can serve.
 forms:
   - "caption"
   - "nsfw" # uses CPU
