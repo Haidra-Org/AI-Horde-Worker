@@ -3,8 +3,6 @@ import time
 import traceback
 from io import BytesIO
 
-import numpy as np
-import rembg
 import requests
 from hordelib.blip.caption import Caption
 from hordelib.clip.interrogate import Interrogator

@@ -167,7 +167,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        # If a request came for inpainting but they specified an non-inpainting model, try to use default inpainting model if available.
+        # If a request came for inpainting but they specified an non-inpainting model,
+        # try to use default inpainting model if available.
         if not self.is_inpainting_model(self.current_model) and req_type == "inpainting":
             if "stable_diffusion_inpainting" in self.available_models:
                 self.current_model = "stable_diffusion_inpainting"
@@ -182,7 +183,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     source_image.convert("RGBA")
                 _red, _green, _blue, _alpha = source_image.split()
             except ValueError:
-                logger.warning("inpainting image doesn't have an alpha channel. This shouldn't happen. Continue processing without any mask.")
+                logger.warning(
+                    (
+                        "inpainting image doesn't have an alpha channel. "
+                        "This shouldn't happen. Continue processing without any mask."
+                    ),
+                )
         # This might change if we add more pipelines later.
         generator = self.hordelib.basic_inference
         try:
@@ -301,6 +307,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
     # TODO: Probably fits better in the MM
     def is_inpainting_model(self, model_name):
         return self.model_manager.models[model_name].get("style") == "inpainting"
+
 
 def count_parentheses(s):
     open_p = False

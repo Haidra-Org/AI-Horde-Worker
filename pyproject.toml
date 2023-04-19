@@ -35,6 +35,11 @@ ignore = [
     "A003", # Class attribute `x` is shadowing a python builtin
 ]
 
+[tool.ruff.per-file-ignores]
+"bridge_alchemy.py" = ["E402"] # Module level import not at top of file
+"bridge_stable_diffusion.py" = ["E402"] # Module level import not at top of file
+
+
 [tool.ruff.isort]
 known-third-party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
 

@@ -6,7 +6,8 @@ from loguru import logger
 
 hordelib = HordeLib()
 
-def post_process(model, image, strength):
+
+def post_process(model, image, strength):  # noqa: ARG001
     """This is the post-processing function,
     it takes the model name, and the image, and returns the post processed image"""
     if model not in KNOWN_POST_PROCESSORS:
@@ -28,6 +29,7 @@ def post_process(model, image, strength):
     }
     return pprocessor(payload)
 
+
 # TODO: move to hordelib or ComfyUI
 def strip_background(payload):
     session = rembg.new_session("u2net")
@@ -41,7 +43,8 @@ def strip_background(payload):
         alpha_matting_erode_size=10,
     )
     del session
-    return image
+    return image  # noqa: RET504
+
 
 # At the bottom, as we need to define the method first
 KNOWN_POST_PROCESSORS = {

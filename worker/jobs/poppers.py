@@ -112,8 +112,8 @@ class JobPopper:
             img = Image.open(BytesIO(img_data))
             if len(img.split()) == 4:
                 return img.convert("RGBA")
-            else:
-                return img.convert("RGB")
+
+            return img.convert("RGB")
         except UnidentifiedImageError as e:
             logger.error(f"Error when creating image: {e}.")
             return None
