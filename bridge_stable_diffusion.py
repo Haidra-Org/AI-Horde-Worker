@@ -4,12 +4,14 @@ import os
 # isort: off
 # We need to import the argparser first, as it sets the necessry Switches
 from worker.argparser.stable_diffusion import args
-# isort: on
 
 import hordelib
+
 # We need to remove these, to avoid comfyUI trying to use them
 hordelib.initialise()
 from hordelib.horde import SharedModelManager
+
+# isort: on
 
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.logger import logger, quiesce_logger, set_logger_verbosity

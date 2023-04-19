@@ -99,7 +99,7 @@ class WebUI:
         "temp_dir": {
             "label": "Model Cache Directory",
             "info": "Model cache data is stored here. Downloaded models are processed and copies stored "
-            "here if you load too many models to fit in RAM and VRAM."
+            "here if you load too many models to fit in RAM and VRAM.",
         },
         "always_download": {
             "label": "Automatically download required models",

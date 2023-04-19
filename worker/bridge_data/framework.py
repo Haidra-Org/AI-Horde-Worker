@@ -9,7 +9,6 @@ import requests
 import yaml
 
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
-
 from worker.logger import logger
 
 
