@@ -81,7 +81,8 @@ class StableDiffusionWorker(WorkerFramework):
             new_dynamic_models,
         )
         # Ensure we don't unload currently queued models
-        self.bridge_data.model_names = list(set(total_models + running_models))
+        with self.bridge_data.mutex:
+            self.bridge_data.model_names = list(set(total_models + running_models))
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""

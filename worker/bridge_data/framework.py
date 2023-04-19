@@ -16,6 +16,8 @@ from worker.logger import logger
 class BridgeDataTemplate:
     """Configuration object"""
 
+    mutex = threading.Lock()
+
     def __init__(self, args):
         random.seed()
         # I have to pass the args from the extended class, as the framework class doesn't
@@ -226,11 +228,13 @@ class BridgeDataTemplate:
 
     @logger.catch(reraise=True)
     def _reload_models(self, model_manager):
+        with self.mutex:
+            model_names = self.model_names[:]
         for model in model_manager.get_loaded_models_names():
-            if model not in self.model_names:
+            if model not in model_names:
                 logger.init(f"{model}", status="Unloading")
                 model_manager.unload_model(model)
-        for model in self.model_names:
+        for model in model_names:
             if model not in model_manager.get_loaded_models_names():
                 success = None
                 if model == "safety_checker":
