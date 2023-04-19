@@ -38,7 +38,10 @@ class StableDiffusionWorker(WorkerFramework):
         return super().pop_job()
 
     def get_running_models(self):
-        return [job.current_model for job_thread, start_time, job in self.running_jobs]
+        running_job_models = [job.current_model for job_thread, start_time, job in self.running_jobs]
+        queued_jobs_models = [job.current_model for job in self.waiting_jobs]
+        all_job_models = list(set(running_job_models + queued_jobs_models))
+        return all_job_models
 
     def calculate_dynamic_models(self):
         all_models_data = requests.get(f"{self.bridge_data.horde_url}/api/v2/status/models", timeout=10).json()
