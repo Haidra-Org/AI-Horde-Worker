@@ -54,9 +54,9 @@ allow_post_processing: true
 # If your controlnet jobs crash by running out of CUDA VRAM, set this to false
 allow_controlnet: false # needs at least 12G VRAM
 # Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
-dynamic_models: true
+dynamic_models: false
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
-number_of_dynamic_models: 3
+number_of_dynamic_models: 0
 # The maximum amount of models to download dynamically for this worker. Increase this amount of you have plenty of space. Keep it low if you do not
 # When the amount of models downloaded reaches this amount, the dynamic list will only use dynamic models already downloaded
 # Therefore make sure you put some generalist and popular models in your models_to_load list if this number is small!
@@ -67,7 +67,7 @@ stats_output_frequency: 30
 # The location in which stable diffusion ckpt models are stored
 cache_home: "./"
 # Always download models when required without prompting
-always_download: false
+always_download: true
 # The location of the temp directory, also used for the model cache
 temp_dir: "./tmp"
 # Enable the terminal GUI, which displays information about the worker and the horde.
@@ -89,10 +89,11 @@ enable_terminal_ui: false
 #   "ALL SFW MODELS"  -  All models marked as being SFW
 #   "ALL NSFW MODELS"  -  All models marked as being NSFW
 models_to_load:
+  - "top 2"
   #- "ALL MODELS"
   #- "TOP 3"
-  - "stable_diffusion_2.1"
-  - "stable_diffusion"
+  #- "stable_diffusion_2.1"
+  #- "stable_diffusion"
   #- "Anything Diffusion"
   #- "Yiffy"
   #- "waifu_diffusion"
@@ -108,7 +109,7 @@ models_to_load:
 # The models in this list will not be loaded when they exist in the top models
 # This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
 models_to_skip:
-  - "stable_diffusion_inpainting"  # Inpainting is generally quite heavy along with other models for smaller GPUs.
+  #- "stable_diffusion_inpainting"  # Inpainting is generally quite heavy along with other models for smaller GPUs.
   #- "stable_diffusion_2.1",  # Stable diffusion 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
   #- "stable_diffusion_2.0",  # Same as Stable diffusion 2.1
   ## Popular NSFW models:

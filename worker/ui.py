@@ -659,7 +659,9 @@ class TerminalUI:
         header = {"apikey": self.apikey, "client-agent": TerminalUI.CLIENT_AGENT}
         payload = {"maintenance": enabled, "name": self.worker_name}
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
-        requests.put(worker_URL, json=payload, headers=header)
+        res = requests.put(worker_URL, json=payload, headers=header)
+        if not res.ok:
+            logger.error(f"Maintenance mode failed: {res.text}")
 
     def get_remote_worker_info(self):
         if not self.worker_id:

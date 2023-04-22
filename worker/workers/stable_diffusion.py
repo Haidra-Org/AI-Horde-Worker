@@ -44,6 +44,8 @@ class StableDiffusionWorker(WorkerFramework):
         return all_job_models
 
     def calculate_dynamic_models(self):
+        if self.bridge_data.models_reloading:
+            return
         all_models_data = requests.get(f"{self.bridge_data.horde_url}/api/v2/status/models", timeout=10).json()
         # We remove models with no queue from our list of models to load dynamically
         models_data = [md for md in all_models_data if md["queued"] > 0]
