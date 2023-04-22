@@ -40,8 +40,7 @@ class StableDiffusionWorker(WorkerFramework):
     def get_running_models(self):
         running_job_models = [job.current_model for job_thread, start_time, job in self.running_jobs]
         queued_jobs_models = [job.current_model for job in self.waiting_jobs]
-        all_job_models = list(set(running_job_models + queued_jobs_models))
-        return all_job_models
+        return list(set(running_job_models + queued_jobs_models))
 
     def calculate_dynamic_models(self):
         if self.bridge_data.models_reloading:

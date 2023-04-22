@@ -61,6 +61,13 @@ def main():
         codeformer=True,
         controlnet=True,
     )
+
+    if bridge_data.allow_controlnet:
+        annotators_preloaded_successfully = SharedModelManager.preloadAnnotators()
+        if not annotators_preloaded_successfully:
+            logger.error("Annotators failed to preload. ControlNet will not be available.", status="Error")
+            bridge_data.allow_controlnet = False
+
     try:
         worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
         worker.start()
