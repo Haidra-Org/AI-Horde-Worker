@@ -233,6 +233,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             except requests.exceptions.RequestException:
                 logger.warning("Failed to retrieve the most popular models data.")
             model_list = sorted(((models[model], model) for model in models), reverse=True)
+            model_list = [x for x in model_list if x[1] not in self.models_to_skip]
             self._top_n_model_names = model_list
             self._last_top_n_refresh = time.monotonic()
 
