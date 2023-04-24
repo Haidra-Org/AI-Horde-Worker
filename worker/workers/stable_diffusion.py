@@ -95,7 +95,6 @@ class StableDiffusionWorker(WorkerFramework):
         self.bridge_data.reload_models(self.model_manager)
 
     def reload_bridge_data(self):
-        super().reload_bridge_data()
         if self.bridge_data.dynamic_models:
             try:
                 self.calculate_dynamic_models()
@@ -104,3 +103,4 @@ class StableDiffusionWorker(WorkerFramework):
                 logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
+        super().reload_bridge_data()
