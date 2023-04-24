@@ -1,5 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cu118
-hordelib>=0.12.0
+hordelib>=0.13.0
 torch # We have to place it here otherwise it installs the CPU version
 gradio
 pyyaml
