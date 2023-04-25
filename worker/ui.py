@@ -657,7 +657,7 @@ class TerminalUI:
         if not self.apikey or not self.worker_id:
             return
         header = {"apikey": self.apikey, "client-agent": TerminalUI.CLIENT_AGENT}
-        payload = {"maintenance": enabled, "name": self.worker_name}
+        payload = {"maintenance": enabled}
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         res = requests.put(worker_URL, json=payload, headers=header)
         if not res.ok:
