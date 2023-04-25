@@ -1,7 +1,7 @@
 ## Common for all worker Types
 
 # The horde url
-horde_url: "https://stablehorde.net"
+horde_url: "https://aihorde.net"
 # Give a cool name to your instance
 worker_name: "My Awesome Instance"
 # The api_key identifies a unique user in the horde
@@ -105,7 +105,7 @@ models_to_load:
   #- "Knollingcase"
   #- "stable_diffusion_inpainting"
 
-# This is used when dynamic_models == True
+# This is used when dynamic_models == True or TOP n models are selected in models_to_load
 # The models in this list will not be loaded when they exist in the top models
 # This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
 models_to_skip:
