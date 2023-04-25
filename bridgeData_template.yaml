@@ -72,6 +72,21 @@ always_download: true
 temp_dir: "./tmp"
 # Enable the terminal GUI, which displays information about the worker and the horde.
 enable_terminal_ui: false
+# VRAM to leave unused, as a percentage or in MB. VRAM the worker can use will be used to load and cache models.
+# Note this NOT the amount of VRAM to use, it's the amount to KEEP FREE. So if something else starts using
+# VRAM the worker will attempt to release it to allow the other software to use it. 
+# Don't set this too high, or you will run out of vram when it can't be released fast enough.
+vram_to_leave_free: "40%"
+# RAM to leave unused, as a percentage or in MB. RAM the worker can use will be used to cache models. Same 
+# notes as for VRAM.
+# Don't set this too high or your OS will likely start using lots of swap space and everything will slow down.
+ram_to_leave_free: "40%"
+# Disable the disk cache. By default if RAM and VRAM are filled (up to the limits above) then models will
+# spill over in to a disk cache. If you don't want this to happen you can disable it here. Note that if you
+# disable disk cache and specify more models to load than will fit in memory your worker will endlessly cycle
+# loading and unloading models.
+disable_disk_cache: false
+
 
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
