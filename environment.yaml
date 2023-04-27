@@ -20,7 +20,12 @@ channels:
   - defaults
 # These should only contain the minimal essentials to get the binaries going, everything else is managed in requirements.txt to keep it universal.
 dependencies:
-  - cudatoolkit==11.8.0
+  - cudatoolkit~=11.8
   - git
   - pip
   - python==3.10
+  - cuda-libraries-dev~=11.8
+  - cudnn
+  - cuda-nvcc~=11.8
+  - cuda-nvtx~=11.8
+  - cuda-cupti~=11.8
