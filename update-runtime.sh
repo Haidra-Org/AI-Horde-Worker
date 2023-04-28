@@ -11,4 +11,5 @@ bin/micromamba run -r conda -n linux python -s -m pip uninstall triton
 bin/micromamba run -r conda -n linux python -s -m pip install --pre torch torchvision torchaudio torchtriton --extra-index-url https://download.pytorch.org/whl/nightly/cu118 --force
 #export export TORCH_CUDA_ARCH_LIST="8.9" # Set this according to your GPU
 ##The below can take quite a lot of time
-bin/micromamba run -r conda -n linux python -s -m pip install -U git+https://github.com/facebookresearch/xformers.git@main#egg=xformers 
+bin/micromamba run -r conda -n linux python -s -m pip install -U git+https://github.com/facebookresearch/xformers.git@main#egg=xformers  
+bin/micromamba run -r conda -n linux python -s -m pip install -U numba
