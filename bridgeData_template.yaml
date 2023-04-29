@@ -2,6 +2,7 @@
 
 # The horde url
 horde_url: "https://aihorde.net"
+kai_url: "http://localhost:5000"
 # Give a cool name to your instance
 worker_name: "My Awesome Instance"
 # The api_key identifies a unique user in the horde
@@ -124,6 +125,7 @@ models_to_load:
 # The models in this list will not be loaded when they exist in the top models
 # This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
 models_to_skip:
+  - "pix2pix"
   #- "stable_diffusion_inpainting"  # Inpainting is generally quite heavy along with other models for smaller GPUs.
   #- "stable_diffusion_2.1",  # Stable diffusion 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
   #- "stable_diffusion_2.0",  # Same as Stable diffusion 2.1

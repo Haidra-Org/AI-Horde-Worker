@@ -10,6 +10,7 @@ from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.logger import logger
+from hordelib.settings import UserSettings
 
 
 class StableDiffusionBridgeData(BridgeDataTemplate):
@@ -44,6 +45,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
         self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
+        self.ram_to_leave_free = os.environ.get("HORDE_RAM_TO_LEAVE_FREE", "50%")
+        self.vram_to_leave_free = os.environ.get("HORDE_VRAM_TO_LEAVE_FREE", "50%")
+        self.disable_disk_cache = os.environ.get("HORDE_DISABLE_DISK_CACHE", "false") == "true"
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
         if not hasattr(self, "cache_home"):
@@ -122,10 +126,14 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
                     f"Horde URL '{self.horde_url}'. Max Pixels {self.max_pixels}. "
-                    "Worker Type: Stable Diffusion"
+                    "Worker Type: Dreamer"
                 ),
                 status="Joining Horde",
             )
+        # Set hordelib settings
+        UserSettings.set_ram_to_leave_free_mb(self.ram_to_leave_free)
+        UserSettings.set_vram_to_leave_free_mb(self.vram_to_leave_free)
+        UserSettings.disable_disk_cache.active = self.disable_disk_cache
 
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models or self.always_download
