@@ -41,7 +41,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         if args.blacklist:
             self.blacklist = args.blacklist
         self.validate_kai()
-        if self.kai_available and (not self.initialized or previous_url != self.horde_url):
+        if self.kai_available and not self.initialized and previous_url != self.horde_url:
             logger.init(
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
