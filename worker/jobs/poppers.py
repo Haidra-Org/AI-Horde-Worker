@@ -9,6 +9,7 @@ from PIL import Image, UnidentifiedImageError
 
 from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.logger import logger
+from kai import KoboldAIClient
 
 
 class JobPopper:
@@ -182,6 +183,31 @@ class StableDiffusionPopper(JobPopper):
         base64_bytes = source_img.encode("utf-8")
         img_bytes = base64.b64decode(base64_bytes)
         return Image.open(BytesIO(img_bytes))
+
+
+
+class ScribePopper(JobPopper):
+    def __init__(self, bd):
+        super().__init__(None, bd)
+        self.endpoint = "/api/v2/generate/text/pop"
+        self.available_models = self.bridge_data.model_names
+        self.pop_payload = {
+            "name": self.bridge_data.worker_name,
+            "models": [self.bridge_data.model],
+            "max_length": self.bridge_data.max_length,
+            "max_context_length": self.bridge_data.max_context_length,
+            "priority_usernames": self.bridge_data.priority_usernames,
+            "softprompts": self.bridge_data.softprompts[self.bridge_data.model],
+            "bridge_agent": self.BRIDGE_AGENT,
+        }
+
+    def horde_pop(self):
+        if not super().horde_pop():
+            return None
+        if not self.pop.get("id"):
+            self.report_skipped_info()
+            return None
+        return [self.pop]
 
 
 class InterrogationPopper(JobPopper):

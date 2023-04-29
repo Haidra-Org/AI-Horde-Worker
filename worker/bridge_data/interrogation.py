@@ -37,7 +37,7 @@ class InterrogationBridgeData(BridgeDataTemplate):
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
                     f"Horde URL '{self.horde_url}'. Forms {self.forms}. "
-                    "Worker Type: Interrogation"
+                    "Worker Type: Alchemist"
                 ),
                 status="Joining Horde",
             )

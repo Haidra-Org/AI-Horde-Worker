@@ -122,7 +122,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
                     f"Horde URL '{self.horde_url}'. Max Pixels {self.max_pixels}. "
-                    "Worker Type: Stable Diffusion"
+                    "Worker Type: Dreamer"
                 ),
                 status="Joining Horde",
             )
