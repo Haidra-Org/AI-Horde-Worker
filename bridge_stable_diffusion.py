@@ -12,7 +12,6 @@ hordelib.initialise()
 from hordelib.horde import SharedModelManager
 
 # isort: on
-
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
 from worker.logger import logger, quiesce_logger, set_logger_verbosity
 from worker.workers.stable_diffusion import StableDiffusionWorker
