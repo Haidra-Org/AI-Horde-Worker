@@ -26,8 +26,8 @@ class ScribeHordeJob(HordeJobFramework):
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
         self.current_payload['quiet'] = True
-        self.requested_softprompt = self.current_payload['softprompt']
-        self.censored - None
+        self.requested_softprompt = self.current_payload.get('softprompt')
+        self.censored = None
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -66,7 +66,7 @@ class ScribeHordeJob(HordeJobFramework):
                     loop_retry += 1
                     time.sleep(3)
                     continue
-                if type(req_json) is not dict:
+                if type(gen_req.json()) is not dict:
                     logger.error(f'KAI instance {self.bridge_data.kai_url} API unexpected response on generate: {gen_req}. Retrying in 3 seconds...')
                     time.sleep(3)
                     loop_retry += 1

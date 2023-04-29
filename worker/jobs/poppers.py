@@ -9,7 +9,6 @@ from PIL import Image, UnidentifiedImageError
 
 from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.logger import logger
-from kai import KoboldAIClient
 
 
 class JobPopper:
@@ -187,13 +186,13 @@ class StableDiffusionPopper(JobPopper):
 
 
 class ScribePopper(JobPopper):
-    def __init__(self, bd):
-        super().__init__(None, bd)
+    def __init__(self, mm, bd):
+        super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/text/pop"
-        self.available_models = self.bridge_data.model_names
+        self.available_models = [self.bridge_data.model]
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
-            "models": [self.bridge_data.model],
+            "models": self.available_models,
             "max_length": self.bridge_data.max_length,
             "max_context_length": self.bridge_data.max_context_length,
             "priority_usernames": self.bridge_data.priority_usernames,

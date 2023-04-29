@@ -13,13 +13,13 @@ arg_parser.add_argument(
     required=False,
     help="List the words that you want to blacklist.",
 )
-arg_parser.add_argument(
-    "-m",
-    "--model",
-    action="store",
-    required=False,
-    help="Which model to run on this horde.",
-)
+# arg_parser.add_argument(
+#     "-m",
+#     "--model",
+#     action="store",
+#     required=False,
+#     help="Which model to run on this horde.",
+# )
 arg_parser.add_argument(
     "--kai_url",
     action="store",
@@ -28,5 +28,3 @@ arg_parser.add_argument(
 )
 
 args = arg_parser.parse_args()
-
-disable_xformers.toggle(args.disable_xformers)
