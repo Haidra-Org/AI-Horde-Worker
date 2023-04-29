@@ -1,11 +1,18 @@
 """Utility script to show available models."""
 
-# test_download_models
-from worker.model_manager import ModelManager
+
+# isort: off
+import hordelib
+hordelib.initialise()
+from hordelib.horde import SharedModelManager
+# isort: on
 
 if __name__ == "__main__":
     # TODO: huggingface_hub or some way to use token instead of username/password
-    mm = ModelManager(compvis=True)
+    SharedModelManager.loadModelManagers(
+        compvis=True,
+    )
+    mm = SharedModelManager.manager
 
     filtered_models = mm.compvis.get_filtered_models(type="ckpt")
     ppmodels = ""

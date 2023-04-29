@@ -2,6 +2,7 @@
 
 # The horde url
 horde_url: "https://aihorde.net"
+kai_url: "http://localhost:5000"
 # Give a cool name to your instance
 worker_name: "My Awesome Instance"
 # The api_key identifies a unique user in the horde

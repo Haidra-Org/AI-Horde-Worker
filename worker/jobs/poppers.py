@@ -184,6 +184,31 @@ class StableDiffusionPopper(JobPopper):
         return Image.open(BytesIO(img_bytes))
 
 
+
+class ScribePopper(JobPopper):
+    def __init__(self, mm, bd):
+        super().__init__(mm, bd)
+        self.endpoint = "/api/v2/generate/text/pop"
+        self.available_models = [self.bridge_data.model]
+        self.pop_payload = {
+            "name": self.bridge_data.worker_name,
+            "models": self.available_models,
+            "max_length": self.bridge_data.max_length,
+            "max_context_length": self.bridge_data.max_context_length,
+            "priority_usernames": self.bridge_data.priority_usernames,
+            "softprompts": self.bridge_data.softprompts[self.bridge_data.model],
+            "bridge_agent": self.BRIDGE_AGENT,
+        }
+
+    def horde_pop(self):
+        if not super().horde_pop():
+            return None
+        if not self.pop.get("id"):
+            self.report_skipped_info()
+            return None
+        return [self.pop]
+
+
 class InterrogationPopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
