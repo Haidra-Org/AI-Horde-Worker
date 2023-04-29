@@ -16,8 +16,8 @@ umamba run -r conda -n windows python -s -m pip uninstall nataili -y
 umamba run -r conda -n windows python -s -m pip install -r requirements.txt
 umamba run -r conda -n windows python -s -m pip uninstall triton -y
 umamba run -r conda -n windows python -s -m pip install --pre torch torchvision torchaudio torchtriton --extra-index-url https://download.pytorch.org/whl/nightly/cu118 --force
-#export TORCH_CUDA_ARCH_LIST="8.9" # Set this according to your GPU
-##The below can take quite a lot of time
+@REM SET TORCH_CUDA_ARCH_LIST="8.9" # Set this according to your GPU
+@REM The below can take quite a lot of time
 umamba run -r conda -n windows python -s -m pip install ninja
 umamba run -r conda -n windows python -s -m pip install -U git+https://github.com/facebookresearch/xformers.git@main#egg=xformers  
 umamba run -r conda -n windows python -s -m pip install -U numba
