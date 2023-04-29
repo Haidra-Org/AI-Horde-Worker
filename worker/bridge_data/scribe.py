@@ -74,8 +74,10 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         except requests.exceptions.JSONDecodeError:
             logger.error(f"Server {self.kai_url} is up but does not appear to be a KoboldAI server.")
             self.kai_available = False
+            return
         except requests.exceptions.ConnectionError:
             logger.error(f"Server {self.kai_url} is not reachable. Are you sure it's running?")
             self.kai_available = False
+            return
         self.kai_available = True
     

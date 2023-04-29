@@ -2,6 +2,7 @@
 import traceback
 
 import requests
+import time
 
 from worker.jobs.poppers import ScribePopper
 from worker.jobs.scribe import ScribeHordeJob
@@ -16,7 +17,11 @@ class ScribeWorker(WorkerFramework):
         self.JobClass = ScribeHordeJob
 
     def can_process_jobs(self):
-        return self.bridge_data.kai_available
+        kai_avail = self.bridge_data.kai_available
+        if not kai_avail:
+            # We do this to allow the worker to try and reload the config every 5 seconds until the KAI server is up
+            self.last_config_reload = time.time() - 55
+        return kai_avail
 
     # We want this to be extendable as well
     def add_job_to_queue(self):
