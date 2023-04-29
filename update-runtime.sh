@@ -5,9 +5,9 @@ if [ ! -f "conda/envs/linux/bin/python" ]; then
  bin/micromamba create --no-shortcuts -r conda -n linux -f environment.yaml -y
 fi
 bin/micromamba create --no-shortcuts -r conda -n linux -f environment.yaml -y
-bin/micromamba run -r conda -n linux python -s -m pip uninstall nataili
+bin/micromamba run -r conda -n linux python -s -m pip uninstall nataili -y
 bin/micromamba run -r conda -n linux python -s -m pip install -r requirements.txt
-bin/micromamba run -r conda -n linux python -s -m pip uninstall triton
+bin/micromamba run -r conda -n linux python -s -m pip uninstall triton -y
 bin/micromamba run -r conda -n linux python -s -m pip install --pre torch torchvision torchaudio torchtriton --extra-index-url https://download.pytorch.org/whl/nightly/cu118 --force
 #export TORCH_CUDA_ARCH_LIST="8.9" # Set this according to your GPU
 ##The below can take quite a lot of time

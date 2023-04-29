@@ -1,10 +1,10 @@
-This repository allows you to set up a AI Horde Worker to generate or alchemize images for others
+This repository allows you to set up a AI Horde Worker to generate or alchemize images and text for others
 
 # AI Horde Worker
 
 This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
-Alternatively you can become an interrogation worker which is much more lightweight and can even run on CPU (i.e. without a GPU)
+Alternatively you can become a Alchemist which is much more lightweight and can even run on CPU (i.e. without a GPU)
 
 To run the bridge, simply follow the instructions for your own OS
 
