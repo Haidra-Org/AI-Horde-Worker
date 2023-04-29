@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 from worker.logger import logger
 from worker.stats import bridge_stats
-from worker.ui import TerminalUI
 
 
 class WorkerFramework:
@@ -40,6 +39,7 @@ class WorkerFramework:
             if not self.bridge_data.always_download:
                 logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
             else:
+                from worker.ui import TerminalUI
                 ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
                 self.ui = threading.Thread(target=ui.run, daemon=True)
                 self.ui.start()
