@@ -32,7 +32,8 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
-
+        # KAI doesn't support multiple threads
+        self.max_threads = 1
         if args.kai_url:
             self.kai_url = args.kai_url
         if args.sfw:
