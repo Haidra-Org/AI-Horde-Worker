@@ -14,4 +14,4 @@ umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
 umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
 umamba run -r conda -n windows python -s -m pip uninstall nataili
 umamba run -r conda -n windows python -s -m pip install -r requirements.txt
-echo If there are no errors above everything should be correctly installed (If not, try running update_runtime.cmd as admin).
+echo If there are no errors above everything should be correctly installed (If not, try deleting the folder /conda/envs/ and try again).
