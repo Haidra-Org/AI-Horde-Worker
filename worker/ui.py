@@ -65,7 +65,7 @@ class TerminalUI:
     }
 
     # Refresh interval in seconds to call API for remote worker stats
-    REMOTE_STATS_REFRESH = 30
+    REMOTE_STATS_REFRESH = 15
 
     COLOUR_RED = 1
     COLOUR_GREEN = 2
