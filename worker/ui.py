@@ -623,7 +623,7 @@ class TerminalUI:
         self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
-        self.total_models = len(SharedModelManager.manager.loaded_models)
+        self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
