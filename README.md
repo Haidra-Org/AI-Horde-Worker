@@ -2,11 +2,9 @@ This repository allows you to set up a AI Horde Worker to generate or alchemize 
 
 # AI Horde Worker
 
-This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
+This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a Dreamer,Scribe or Alchemist for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
-Alternatively you can become a Alchemist which is much more lightweight and can even run on CPU (i.e. without a GPU)
-
-To run the bridge, simply follow the instructions for your own OS
+To run the bridge, simply follow the instructions for your own OS.
 
 # Installing
 
@@ -82,16 +80,19 @@ You can also edit this file using a text editor. We also provide a `bridgeData_t
 
 Start your worker, depending on which type your want.
 
-* If you want to generate Stable Diffusion images for others, run `horde-bridge`.
+* If you want to generate Stable Diffusion images, run `horde-bridge`.
 
     **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. 
     
-* If you want to interrogate images for other, run `horde-interrogation_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
+* If you want to alchemize images (image interrogation or post-processing), run `horde-alchemist-bridge`. This worker is very lightweight and you can even run it with fairly low-powered GPUs
 
-    **Warning:** This currently the interrogation worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
+    **Warning:** Currently the alchemist will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
 
-Remember that worker names have to be different between Stable Diffusion worker and Interrogation worker. If you want to start a different type of worker in the same install directory, ensure a new name by using the `--name` command line argument.
+* If you want to generate text, run `horde-scribe-bridge`. This VRAM required will vary with the size of the model you will load.
 
+    **Warning:** This requires that you download, set up and run a [KoboldAI Client](https://koboldai.org) with the model that you want to server, already loaded in it.
+
+Remember that worker names have to be different between worker types. If you want to start a different type of worker in the same install directory, ensure a new name by using the `--name` command line argument.
 
 ## Running with multiple GPUs
 
@@ -137,4 +138,4 @@ Use this approach if you downloaded the git repository as a zip file and extract
 * In the terminal in which it's running, simply press `Ctrl+C` together.
 
 # Model Usage
-Many models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+Many Stable Diffusion models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
