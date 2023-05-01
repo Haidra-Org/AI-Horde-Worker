@@ -4,13 +4,13 @@ import re
 import time
 
 import requests
+from hordelib.settings import UserSettings
 from PIL import Image
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.logger import logger
-from hordelib.settings import UserSettings
 
 
 class StableDiffusionBridgeData(BridgeDataTemplate):

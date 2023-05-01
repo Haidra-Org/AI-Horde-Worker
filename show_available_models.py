@@ -3,8 +3,11 @@
 
 # isort: off
 import hordelib
+
 hordelib.initialise()
-from hordelib.horde import SharedModelManager
+
+from hordelib.horde import SharedModelManager  # noqa: E402
+
 # isort: on
 
 if __name__ == "__main__":

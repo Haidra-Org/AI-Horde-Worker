@@ -184,7 +184,6 @@ class StableDiffusionPopper(JobPopper):
         return Image.open(BytesIO(img_bytes))
 
 
-
 class ScribePopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
