@@ -29,7 +29,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
-        if self.scribe_name and not self.args.worker_name:
+        if hasattr(self, "scribe_name") and not self.args.worker_name:
             self.worker_name = self.scribe_name
         # KAI doesn't support multiple threads
         self.max_threads = 1

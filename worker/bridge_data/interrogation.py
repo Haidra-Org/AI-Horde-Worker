@@ -20,7 +20,7 @@ class InterrogationBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
-        if self.alchemist_name and not self.args.worker_name:
+        if hasattr(self, "alchemist_name") and not self.args.worker_name:
             self.worker_name = self.alchemist_name
         if args.forms:
             self.forms = args.forms
