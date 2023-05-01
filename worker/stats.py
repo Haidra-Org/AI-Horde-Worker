@@ -35,10 +35,10 @@ class BridgeStats:
         # Calculate the total kudos
         total_kudos = sum(score for score, _ in self.kudos_record)
         # If period is less than an hour, extrapolate
-        if period < 3600 and period > 30:
-            total_kudos = total_kudos * (3600 / period)
-        else:
+        if period < 10:
             total_kudos = 0  # not enough measurements
+        else:
+            total_kudos = total_kudos * (3600 / period)
 
         if self.kudos_record:
             self.stats["kudos_per_hour"] = round(total_kudos)
