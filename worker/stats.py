@@ -30,7 +30,9 @@ class BridgeStats:
             self.stats["inference"][model_name]["count"] += 1
             self.stats["inference"][model_name]["kudos"] = round(self.stats["inference"][model_name]["kudos"] + kudos)
             stats_for_model = self.stats["inference"][model_name]
-            self.stats["inference"][model_name]["avg_kpr"] = round(stats_for_model["kudos"] / stats_for_model["count"], 2)
+            self.stats["inference"][model_name]["avg_kpr"] = round(
+                stats_for_model["kudos"] / stats_for_model["count"], 2
+            )
 
             # Remember the kudos we got awarded over the last hour
             now = time.time()
@@ -44,10 +46,7 @@ class BridgeStats:
             # Calculate the total kudos
             total_kudos = sum(score for score, _ in self.kudos_record)
             # If period is less than an hour, extrapolate
-            if period < 10:
-                total_kudos = 0  # not enough measurements
-            else:
-                total_kudos = total_kudos * (3600 / period)
+            total_kudos = 0 if period < 10 else total_kudos * (3600 / period)
 
             if self.kudos_record:
                 self.stats["kudos_per_hour"] = round(total_kudos)

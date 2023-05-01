@@ -1,9 +1,8 @@
 """This is the bridge, It connects the horde with the ML processing"""
-import os
-
 # isort: off
 # We need to import the argparser first, as it sets the necessary Switches
 from worker.argparser.scribe import args
+
 # isort: on
 
 from worker.bridge_data.scribe import KoboldAIBridgeData
