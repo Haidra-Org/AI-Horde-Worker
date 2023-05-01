@@ -69,7 +69,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
-
+        if self.dreamer_name and not self.args.worker_name:
+            self.worker_name = self.dreamer_name
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
 

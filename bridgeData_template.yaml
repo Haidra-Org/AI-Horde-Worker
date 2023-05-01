@@ -2,9 +2,8 @@
 
 # The horde url
 horde_url: "https://aihorde.net"
-kai_url: "http://localhost:5000"
 # Give a cool name to your instance
-worker_name: "My Awesome Instance"
+worker_name: "An Awesome AI Horde Worker"
 # The api_key identifies a unique user in the horde
 # Visit https://stablehorde.net/register to create one before you can join
 api_key: "0000000000"
@@ -26,8 +25,10 @@ require_upfront_kudos: false
 # If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
 # Note this ultimately overrides the models_to_load list
 
-## Stable Diffusion Worker
+## Dreamer (Stable Diffusion Worker)
 
+# The name to use when running a dreamer instance. Will default to `worker_name` if not set
+dreamer_name: "An Awesome Dreamer"
 # The amount of power your system can handle
 # 8 means 512*512. Each increase increases the possible resoluion by 64 pixes
 # So if you put this to 2 (the minimum, your SD can only generate 64x64 pixels
@@ -133,8 +134,22 @@ models_to_skip:
   #- "Zeipher Female Model"
   #- "Hentai Diffusion"
 
-## Alchemist
 
+## Scribe (LLM Worker)
+
+# The name to use when running a scribe worker. Will default to `worker_name` if not set
+scribe_name: "An Awesome Scribe"
+# The KoboldAI Client API URL
+kai_url: "http://localhost:5000"
+# The max amount of tokens to generate with this worker 
+max_length: 80
+# The max tokens to use from the prompt
+max_context_length: 1024
+
+## Alchemist (Image interrogation and post-processing)
+
+# The name to use when running an alchemist worker. Will default to `worker_name` if not set
+alchemist_name: "An Awesome Alchemist"
 # The alchemy forms this worker can serve.
 forms:
   - "caption"

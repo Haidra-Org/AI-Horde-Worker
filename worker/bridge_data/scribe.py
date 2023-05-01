@@ -16,8 +16,8 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         self.kai_available = False
         self.model = None
         self.kai_url = "http://localhost:5000"
-        self.max_length = 80
-        self.max_context_length = 1024
+        self.max_length = int(os.environ.get("HORDE_MAX_LENGTH", "80"))
+        self.max_context_length = int(os.environ.get("HORDE_MAX_CONTEXT_LENGTH", "1024"))
         self.softprompts = {}
         self.current_softprompt = None
 
@@ -29,6 +29,8 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
+        if self.scribe_name and not self.args.worker_name:
+            self.worker_name = self.scribe_name
         # KAI doesn't support multiple threads
         self.max_threads = 1
         # Tried to import hordelib stuff which the Scribe doesn't need
@@ -59,10 +61,11 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             # Normalize huggingface and local downloaded model names
             if "/" not in self.model:
                 self.model = self.model.replace("_", "/", 1)
-            req = requests.get(self.kai_url + "/api/latest/config/max_context_length")
-            self.max_context_length = req.json()["value"]
-            req = requests.get(self.kai_url + "/api/latest/config/max_length")
-            self.max_length = req.json()["value"]
+            # Now using the settings from the bridge explicitly
+            # req = requests.get(self.kai_url + "/api/latest/config/max_context_length")
+            # self.max_context_length = req.json()["value"]
+            # req = requests.get(self.kai_url + "/api/latest/config/max_length")
+            # self.max_length = req.json()["value"]
             if self.model not in self.softprompts:
                 req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
                 self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
