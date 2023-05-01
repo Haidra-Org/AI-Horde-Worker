@@ -56,7 +56,6 @@ class ScribeHordeJob(HordeJobFramework):
                     json={"value": self.requested_softprompt},
                 )
                 time.sleep(1)  # Wait a second to unload the softprompt
-            logger.debug(gen_payload)
             loop_retry = 0
             gen_success = False
             while not gen_success and loop_retry < 5:
