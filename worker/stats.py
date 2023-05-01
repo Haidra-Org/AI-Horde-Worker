@@ -1,8 +1,8 @@
 """Bridge Stats Tracker"""
 import json
+import threading
 import time
 from collections import deque
-import threading
 
 
 class BridgeStats:
@@ -31,7 +31,8 @@ class BridgeStats:
             self.stats["inference"][model_name]["kudos"] = round(self.stats["inference"][model_name]["kudos"] + kudos)
             stats_for_model = self.stats["inference"][model_name]
             self.stats["inference"][model_name]["avg_kpr"] = round(
-                stats_for_model["kudos"] / stats_for_model["count"], 2
+                stats_for_model["kudos"] / stats_for_model["count"],
+                2,
             )
 
             # Remember the kudos we got awarded over the last hour
