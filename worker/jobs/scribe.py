@@ -1,9 +1,7 @@
 """Get and process a job from the horde"""
-import base64
+import json
 import time
 import traceback
-import json
-from io import BytesIO
 
 import requests
 
@@ -53,7 +51,7 @@ class ScribeHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             if self.requested_softprompt != self.bridge_data.current_softprompt:
-                req = requests.put(self.bridge_data.kai_url + '/api/latest/config/soft_prompt/', json = {"value": self.requested_softprompt})
+                requests.put(self.bridge_data.kai_url + '/api/latest/config/soft_prompt/', json = {"value": self.requested_softprompt})
                 time.sleep(1) # Wait a second to unload the softprompt
             logger.debug(gen_payload)
             loop_retry = 0
@@ -75,10 +73,10 @@ class ScribeHordeJob(HordeJobFramework):
                     logger.debug(f'KAI instance {self.bridge_data.kai_url} Busy (attempt {loop_retry}). Will try again...')
                     time.sleep(3)
                     loop_retry += 1
-                    continue            
+                    continue
                 if gen_req.status_code == 422:
                     logger.error(
-                        f'KAI instance {self.bridge_data.kai_url} reported validation error.'
+                        f'KAI instance {self.bridge_data.kai_url} reported validation error.',
                     )
                     self.status = JobStatus.FAULTED
                     self.start_submit_thread()

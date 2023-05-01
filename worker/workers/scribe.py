@@ -1,12 +1,9 @@
 """This is the scribe worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-import traceback
 
-import requests
 import time
 
 from worker.jobs.poppers import ScribePopper
 from worker.jobs.scribe import ScribeHordeJob
-from worker.logger import logger
 from worker.workers.framework import WorkerFramework
 
 
@@ -25,7 +22,7 @@ class ScribeWorker(WorkerFramework):
 
     # We want this to be extendable as well
     def add_job_to_queue(self):
-        job = super().add_job_to_queue()
+        super().add_job_to_queue()
 
     def pop_job(self):
         return super().pop_job()

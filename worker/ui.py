@@ -295,6 +295,7 @@ class TerminalUI:
         self.start_time = time.time()
         self.jobs_done = 0
         self.kudos_per_hour = 0
+        self.pop_time = 0
         self.jobs_per_hour = 0
         self.total_kudos = "Pending"
         self.total_worker_kudos = "Pending"
@@ -343,7 +344,7 @@ class TerminalUI:
         # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
-        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)                            ║
+        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)      Job Fetch: 2.32s      ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
         # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
@@ -392,6 +393,7 @@ class TerminalUI:
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Errors:")
+        label(row_local + 4, col_right, "Job Fetch:")
 
         label(row_gpu + 1, col_left, "Load:")
         label(row_gpu + 2, col_left, "Temp:")
@@ -424,6 +426,7 @@ class TerminalUI:
         self.print(self.main, row_local + 3, col_left, f"{self.threads}")
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
+        self.print(self.main, row_local + 4, col_right, f"{self.pop_time} s")
 
         # Add some warning colours to free ram
         ram = self.get_free_ram()
@@ -634,7 +637,11 @@ class TerminalUI:
         self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
+        # Total models
         self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
+        # Recent job pop times
+        if "pop_time_avg_5_mins" in bridge_stats.stats:
+            self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()

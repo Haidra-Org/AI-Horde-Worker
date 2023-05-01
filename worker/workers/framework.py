@@ -175,7 +175,10 @@ class WorkerFramework:
             return
 
         # Check periodically if any interesting stats should be announced
-        if self.bridge_data.stats_output_frequency and (time.time() - self.last_stats_time) > self.bridge_data.stats_output_frequency:
+        if (
+            self.bridge_data.stats_output_frequency
+            and (time.time() - self.last_stats_time) > self.bridge_data.stats_output_frequency
+        ):
             self.last_stats_time = time.time()
             logger.info(f"Estimated average kudos per hour: {bridge_stats.stats.get('kudos_per_hour', 0)}")
 

@@ -1,5 +1,4 @@
 """This is the bridge, It connects the horde with the ML processing"""
-import os
 
 # isort: off
 # We need to import the argparser first, as it sets the necessary Switches

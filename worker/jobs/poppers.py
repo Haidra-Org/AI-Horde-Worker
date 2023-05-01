@@ -9,6 +9,7 @@ from PIL import Image, UnidentifiedImageError
 
 from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.logger import logger
+from worker.stats import bridge_stats
 
 
 class JobPopper:
@@ -37,6 +38,7 @@ class JobPopper:
             # logger.debug(self.pop_payload)
             node = pop_req.headers["horde-node"] if "horde-node" in pop_req.headers else "unknown"
             logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()} (node: {node})")
+            bridge_stats.update_pop_stats(node, pop_req.elapsed.total_seconds())
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)

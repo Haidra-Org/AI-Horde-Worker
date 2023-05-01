@@ -1,14 +1,11 @@
 """The configuration of the bridge"""
 import os
-import re
-import time
 
 import requests
-from PIL import Image
+from loguru import logger
 
 from worker.argparser.scribe import args
 from worker.bridge_data.framework import BridgeDataTemplate
-from loguru import logger
 
 
 class KoboldAIBridgeData(BridgeDataTemplate):
@@ -80,4 +77,3 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             self.kai_available = False
             return
         self.kai_available = True
-    
