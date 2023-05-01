@@ -55,8 +55,9 @@ class BridgeStats:
             self.stats["inference"][model_name]["count"] += 1
             self.stats["inference"][model_name]["kudos"] = round(self.stats["inference"][model_name]["kudos"] + kudos)
             stats_for_model = self.stats["inference"][model_name]
-            self.stats["inference"][model_name]["avg_kpr"] = (
-                round(stats_for_model["kudos"] / stats_for_model["count"], 2)
+            self.stats["inference"][model_name]["avg_kpr"] = round(
+                stats_for_model["kudos"] / stats_for_model["count"],
+                2,
             )
 
             # Remember the kudos we got awarded over the last hour

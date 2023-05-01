@@ -61,15 +61,18 @@ def main():
         controlnet=True,
     )
 
-    if bridge_data.allow_controlnet:
-        annotators_preloaded_successfully = SharedModelManager.preloadAnnotators()
+    try:
+        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
+
+        annotators_preloaded_successfully = False
+        if bridge_data.allow_controlnet:
+            annotators_preloaded_successfully = SharedModelManager.preloadAnnotators()
         if not annotators_preloaded_successfully:
             logger.error("Annotators failed to preload. ControlNet will not be available.", status="Error")
             bridge_data.allow_controlnet = False
 
-    try:
-        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
         worker.start()
+
     except KeyboardInterrupt:
         logger.info("Keyboard Interrupt Received. Ending Process")
     logger.init(f"{bridge_data.worker_name} Instance", status="Stopped")

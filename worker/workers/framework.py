@@ -40,6 +40,7 @@ class WorkerFramework:
                 logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
             else:
                 from worker.ui import TerminalUI
+
                 ui = TerminalUI(self.bridge_data)
                 self.ui = threading.Thread(target=ui.run, daemon=True)
                 self.ui.start()

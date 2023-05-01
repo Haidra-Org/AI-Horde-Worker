@@ -54,19 +54,19 @@ class KoboldAIBridgeData(BridgeDataTemplate):
     def validate_kai(self):
         logger.debug("Retrieving settings from KoboldAI Client...")
         try:
-            req = requests.get(self.kai_url + '/api/latest/model')
+            req = requests.get(self.kai_url + "/api/latest/model")
             self.model = req.json()["result"]
             # Normalize huggingface and local downloaded model names
             if "/" not in self.model:
-                self.model = self.model.replace('_', '/', 1)
-            req = requests.get(self.kai_url + '/api/latest/config/max_context_length')
+                self.model = self.model.replace("_", "/", 1)
+            req = requests.get(self.kai_url + "/api/latest/config/max_context_length")
             self.max_context_length = req.json()["value"]
-            req = requests.get(self.kai_url + '/api/latest/config/max_length')
+            req = requests.get(self.kai_url + "/api/latest/config/max_length")
             self.max_length = req.json()["value"]
             if self.model not in self.softprompts:
-                    req = requests.get(self.kai_url + '/api/latest/config/soft_prompts_list')
-                    self.softprompts[self.model] = [sp['value'] for sp in req.json()["values"]]
-            req = requests.get(self.kai_url + '/api/latest/config/soft_prompt')
+                req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
+                self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
+            req = requests.get(self.kai_url + "/api/latest/config/soft_prompt")
             self.current_softprompt = req.json()["value"]
         except requests.exceptions.JSONDecodeError:
             logger.error(f"Server {self.kai_url} is up but does not appear to be a KoboldAI server.")

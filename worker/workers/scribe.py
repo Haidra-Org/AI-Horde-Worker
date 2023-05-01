@@ -1,5 +1,4 @@
 """This is the scribe worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
-
 import time
 
 from worker.jobs.poppers import ScribePopper

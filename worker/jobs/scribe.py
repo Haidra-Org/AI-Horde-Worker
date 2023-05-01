@@ -23,8 +23,8 @@ class ScribeHordeJob(HordeJobFramework):
         self.current_model = self.bridge_data.model
         self.current_id = self.pop["id"]
         self.current_payload = self.pop["payload"]
-        self.current_payload['quiet'] = True
-        self.requested_softprompt = self.current_payload.get('softprompt')
+        self.current_payload["quiet"] = True
+        self.requested_softprompt = self.current_payload.get("softprompt")
         self.censored = None
 
     @logger.catch(reraise=True)
@@ -38,8 +38,8 @@ class ScribeHordeJob(HordeJobFramework):
         self.stale_time = time.time() + (self.current_payload.get("max_length", 80) / 2) + 10
         # These params will always exist in the payload from the horde
         gen_payload = self.current_payload
-        if 'width' in gen_payload or 'length' in gen_payload or 'steps' in gen_payload:
-            logger.error("Stable Diffusion payload detected. Aborting. ({})", err)
+        if "width" in gen_payload or "length" in gen_payload or "steps" in gen_payload:
+            logger.error(f"Stable Diffusion payload detected. Aborting. ({gen_payload})")
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
@@ -51,26 +51,40 @@ class ScribeHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             if self.requested_softprompt != self.bridge_data.current_softprompt:
-                requests.put(self.bridge_data.kai_url + '/api/latest/config/soft_prompt/', json = {"value": self.requested_softprompt})
-                time.sleep(1) # Wait a second to unload the softprompt
+                requests.put(
+                    self.bridge_data.kai_url + "/api/latest/config/soft_prompt/",
+                    json={"value": self.requested_softprompt},
+                )
+                time.sleep(1)  # Wait a second to unload the softprompt
             logger.debug(gen_payload)
             loop_retry = 0
             gen_success = False
             while not gen_success and loop_retry < 5:
                 try:
-                    gen_req = requests.post(self.bridge_data.kai_url + '/api/latest/generate/', json = self.current_payload, timeout=300)
+                    gen_req = requests.post(
+                        self.bridge_data.kai_url + "/api/latest/generate/",
+                        json=self.current_payload,
+                        timeout=300,
+                    )
                 except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
                     logger.error(f"Worker {self.bridge_data.kai_url} unavailable. Retrying in 3 seconds...")
                     loop_retry += 1
                     time.sleep(3)
                     continue
                 if type(gen_req.json()) is not dict:
-                    logger.error(f'KAI instance {self.bridge_data.kai_url} API unexpected response on generate: {gen_req}. Retrying in 3 seconds...')
+                    logger.error(
+                        (
+                            f"KAI instance {self.bridge_data.kai_url} API unexpected response on generate: {gen_req}. "
+                            "Retrying in 3 seconds..."
+                        ),
+                    )
                     time.sleep(3)
                     loop_retry += 1
                     continue
                 if gen_req.status_code == 503:
-                    logger.debug(f'KAI instance {self.bridge_data.kai_url} Busy (attempt {loop_retry}). Will try again...')
+                    logger.debug(
+                        f"KAI instance {self.bridge_data.kai_url} Busy (attempt {loop_retry}). Will try again...",
+                    )
                     time.sleep(3)
                     loop_retry += 1
                     continue
@@ -84,14 +98,24 @@ class ScribeHordeJob(HordeJobFramework):
                 try:
                     req_json = gen_req.json()
                 except json.decoder.JSONDecodeError:
-                    logger.error(f"Something went wrong when trying to generate on {self.bridge_data.kai_url}. Please check the health of the KAI worker. Retrying 3 seconds...")
+                    logger.error(
+                        (
+                            f"Something went wrong when trying to generate on {self.bridge_data.kai_url}. "
+                            "Please check the health of the KAI worker. Retrying 3 seconds...",
+                        ),
+                    )
                     loop_retry += 1
                     time.sleep(3)
                     continue
                 try:
                     self.text = req_json["results"][0]["text"]
                 except KeyError:
-                    logger.error(f"Unexpected response received from {self.bridge_data.kai_url}: {req_json}. Please check the health of the KAI worker. Retrying in 3 seconds...")
+                    logger.error(
+                        (
+                            f"Unexpected response received from {self.bridge_data.kai_url}: {req_json}. "
+                            "Please check the health of the KAI worker. Retrying in 3 seconds..."
+                        ),
+                    )
                     logger.debug(self.current_payload)
                     loop_retry += 1
                     time.sleep(3)
@@ -104,7 +128,7 @@ class ScribeHordeJob(HordeJobFramework):
             )
         except Exception as err:
             stack_payload = gen_payload
-            stack_payload["request_type"] = 'text2text'
+            stack_payload["request_type"] = "text2text"
             stack_payload["model"] = self.current_model
             stack_payload["prompt"] = "PROMPT REDACTED"
             logger.error(
