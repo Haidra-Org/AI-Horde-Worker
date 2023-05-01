@@ -20,6 +20,7 @@ from hordelib.shared_model_manager import SharedModelManager
 from hordelib.utils.gpuinfo import GPUInfo
 
 from worker.logger import config, logger
+from worker.stats import bridge_stats
 
 
 class DequeOutputCollector:
@@ -65,7 +66,7 @@ class TerminalUI:
     }
 
     # Refresh interval in seconds to call API for remote worker stats
-    REMOTE_STATS_REFRESH = 30
+    REMOTE_STATS_REFRESH = 15
 
     COLOUR_RED = 1
     COLOUR_GREEN = 2
@@ -87,8 +88,14 @@ class TerminalUI:
 
     CLIENT_AGENT = "terminalui:1:db0"
 
-    def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
-        self.url = url
+    def __init__(self, bridge_data):
+        self.bridge_data = bridge_data
+        self.worker_name = self.bridge_data.worker_name
+        self.apikey = self.bridge_data.api_key
+        if hasattr(self.bridge_data, "horde_url"):
+            self.url = self.bridge_data.horde_url
+        elif hasattr(self.bridge_data, "kai_url"):
+            self.url = self.bridge_data.kai_url
         self.main = None
         self.width = 0
         self.height = 0
@@ -101,39 +108,18 @@ class TerminalUI:
         self.log_file = None
         self.input = DequeOutputCollector()
         self.output = DequeOutputCollector()
-        self.worker_name = worker_name
-        self.apikey = apikey
         self.worker_id = self.load_worker_id()
-        self.start_time = time.time()
         self.last_stats_refresh = time.time() - (TerminalUI.REMOTE_STATS_REFRESH - 2)
-        self.jobs_done = 0
-        self.kudos_per_hour = 0
-        self.jobs_per_hour = 0
         self.maintenance_mode = False
-        self.total_kudos = "Pending"
-        self.total_worker_kudos = "Pending"
-        self.total_uptime = "Pending"
-        self.performance = "unknown"
-        self.threads = "Pending"
-        self.total_failed_jobs = "Pending"
-        self.total_models = "Pending"
-        self.total_jobs = "Pending"
-        self.queued_requests = "Pending"
-        self.worker_count = "Pending"
-        self.thread_count = "Pending"
-        self.queued_mps = "Pending"
-        self.last_minute_mps = "Pending"
-        self.queue_time = "Pending"
         self.gpu = GPUInfo()
         self.gpu.samples_per_second = 5
-        self.error_count = 0
-        self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
         self.cpu_average = []
         self.audio_alerts = False
         self.last_audio_alert = 0
         self.stdout = DequeOutputCollector()
         self.stderr = DequeOutputCollector()
+        self.reset_stats()
 
     def initialise(self):
         # Suppress stdout / stderr
@@ -304,6 +290,30 @@ class TerminalUI:
         seconds = int((time.time() - self.start_time) % 60)
         return f"{hours}:{minutes:02}:{seconds:02}"
 
+    def reset_stats(self):
+        bridge_stats.reset()
+        self.start_time = time.time()
+        self.jobs_done = 0
+        self.kudos_per_hour = 0
+        self.pop_time = 0
+        self.jobs_per_hour = 0
+        self.total_kudos = "Pending"
+        self.total_worker_kudos = "Pending"
+        self.total_uptime = "Pending"
+        self.performance = "unknown"
+        self.threads = "Pending"
+        self.total_failed_jobs = "Pending"
+        self.total_models = "Pending"
+        self.total_jobs = "Pending"
+        self.queued_requests = "Pending"
+        self.worker_count = "Pending"
+        self.thread_count = "Pending"
+        self.queued_mps = "Pending"
+        self.last_minute_mps = "Pending"
+        self.queue_time = "Pending"
+        self.error_count = 0
+        self.warning_count = 0
+
     def print_switch(self, y, x, label, switch):
         colour = curses.color_pair(TerminalUI.COLOUR_CYAN) if switch else curses.color_pair(TerminalUI.COLOUR_WHITE)
         self.print(self.main, y, x, label, colour)
@@ -334,7 +344,7 @@ class TerminalUI:
         # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
-        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)                            ║
+        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)      Job Fetch: 2.32s      ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
         # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
@@ -346,7 +356,7 @@ class TerminalUI:
         # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
         # ║                        Total Workers: 1000        Total Threads: 1000       ║
         # ║                                                                             ║
-        # ║            (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (q)uit  ║
+        # ║   (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (r)eset  (q)uit  ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
         # Define three colums centres
@@ -383,6 +393,7 @@ class TerminalUI:
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Errors:")
+        label(row_local + 4, col_right, "Job Fetch:")
 
         label(row_gpu + 1, col_left, "Load:")
         label(row_gpu + 2, col_left, "Temp:")
@@ -415,6 +426,7 @@ class TerminalUI:
         self.print(self.main, row_local + 3, col_left, f"{self.threads}")
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
+        self.print(self.main, row_local + 4, col_right, f"{self.pop_time} s")
 
         # Add some warning colours to free ram
         ram = self.get_free_ram()
@@ -474,6 +486,7 @@ class TerminalUI:
             "(d)ebug",
             "(p)ause log",
             "(a)udio alerts",
+            "(r)eset",
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
@@ -484,6 +497,7 @@ class TerminalUI:
         x = self.print_switch(y, x, inputs[3], self.pause_log)
         x = self.print_switch(y, x, inputs[4], self.audio_alerts)
         x = self.print_switch(y, x, inputs[5], False)
+        x = self.print_switch(y, x, inputs[6], False)
 
     def fit_output_to_term(self, output):
         # How many lines of output can we fit, after line wrapping?
@@ -623,7 +637,11 @@ class TerminalUI:
         self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
-        self.total_models = len(SharedModelManager.manager.loaded_models)
+        # Total models
+        self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
+        # Recent job pop times
+        if "pop_time_avg_5_mins" in bridge_stats.stats:
+            self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
@@ -660,6 +678,8 @@ class TerminalUI:
             self.show_module = not self.show_module
         elif x == ord("a"):
             self.audio_alerts = not self.audio_alerts
+        elif x == ord("r"):
+            self.reset_stats()
         elif x == ord("q"):
             return True
         elif x == ord("m"):
