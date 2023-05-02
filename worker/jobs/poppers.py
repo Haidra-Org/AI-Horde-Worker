@@ -190,7 +190,13 @@ class ScribePopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/text/pop"
+        # KAI Only ever offers one single model, so we just add it to the Horde's expected array form.
         self.available_models = [self.bridge_data.model]
+        if bd.branded_model:
+            if not bd.username:
+                logger.warning("branded_model reqquested but AI Horde username could not be determined.")
+            else:
+                self.available_models = [f"{self.bridge_data.model}::{bd.username}"]
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "models": self.available_models,
