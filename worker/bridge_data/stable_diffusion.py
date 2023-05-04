@@ -4,13 +4,13 @@ import re
 import time
 
 import requests
-from nataili import enable_ray_alternative
-from nataili.util.logger import logger
+from hordelib.settings import UserSettings
 from PIL import Image
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_NATAILI_MODELS
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
+from worker.logger import logger
 
 
 class StableDiffusionBridgeData(BridgeDataTemplate):
@@ -45,33 +45,34 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
         self.model_database_refresh_frequency = os.environ.get("HORDE_MODEL_DB_REFRESH", 0)
+        self.ram_to_leave_free = os.environ.get("HORDE_RAM_TO_LEAVE_FREE", "50%")
+        self.vram_to_leave_free = os.environ.get("HORDE_VRAM_TO_LEAVE_FREE", "50%")
+        self.disable_disk_cache = os.environ.get("HORDE_DISABLE_DISK_CACHE", "false") == "true"
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
-        if not hasattr(self, "nataili_cache_home"):
-            self.nataili_cache_home = os.environ.get("NATAILI_CACHE_HOME", "./")
-        # If any workers got a bad default path from an old bridgeData_template.yaml, continue
-        # to use that original bad path to avoid making a mess with duplicating models.
-        if self.nataili_cache_home == "./" and os.path.exists("./nataili/compvis/nataili/compvis"):
-            self.nataili_cache_home = "./nataili/compvis/"
-        os.environ["NATAILI_CACHE_HOME"] = self.nataili_cache_home
-        # Disable low vram mode
-        if hasattr(self, "low_vram_mode") and not self.low_vram_mode:
-            os.environ["LOW_VRAM_MODE"] = "0"
-        # Where the ray temp dir and/or model cache are located
+        if not hasattr(self, "cache_home"):
+            if not hasattr(self, "nataili_cache_home"):
+                self.cache_home = os.environ.get("AIWORKER_CACHE_HOME", "./")
+            else:
+                self.cache_home = self.nataili_cache_home
+        os.environ["AIWORKER_CACHE_HOME"] = self.cache_home
+        # Where the temp dir and/or model cache are located
         if hasattr(self, "ray_temp_dir"):
-            os.environ["RAY_TEMP_DIR"] = self.ray_temp_dir
+            self.temp_dir = self.ray_temp_dir
+        if hasattr(self, "temp_dir"):
+            os.environ["AIWORKER_TEMP_DIR"] = self.temp_dir
+        else:
+            os.environ["AIWORKER_TEMP_DIR"] = "./tmp"
 
     @logger.catch(reraise=True)
     def reload_data(self):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
-
+        if hasattr(self, "dreamer_name") and not self.args.worker_name:
+            self.worker_name = self.dreamer_name
         if not hasattr(self, "models_to_load"):
             self.models_to_load = []
-
-        if hasattr(self, "enable_model_cache"):
-            enable_ray_alternative.active = self.enable_model_cache
 
         # Check for magic constants and expand them
         top_n = 0
@@ -114,24 +115,26 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             self.allow_post_processing = False
         if args.disable_controlnet:
             self.allow_controlnet = False
-        if args.enable_model_cache:
-            enable_ray_alternative.activate()
         self.max_power = max(self.max_power, 2)
         self.max_pixels = 64 * 64 * 8 * self.max_power
         # if self.censor_nsfw or (self.censorlist is not None and len(self.censorlist)):
-        self.model_names.append("safety_checker")
+        self.model_names.insert(0, "safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
-            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
+            self.model_names += list(POST_PROCESSORS_HORDELIB_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
                     f"Horde URL '{self.horde_url}'. Max Pixels {self.max_pixels}. "
-                    "Worker Type: Stable Diffusion"
+                    "Worker Type: Dreamer"
                 ),
                 status="Joining Horde",
             )
+        # Set hordelib settings
+        UserSettings.set_ram_to_leave_free_mb(self.ram_to_leave_free)
+        UserSettings.set_vram_to_leave_free_mb(self.vram_to_leave_free)
+        UserSettings.disable_disk_cache.active = self.disable_disk_cache
 
     def check_extra_conditions_for_download_choice(self):
         return self.dynamic_models or self.always_download
@@ -140,7 +143,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if model_name in ["safety_checker", "LDSR"]:
             return False
 
-        if model_name in POST_PROCESSORS_NATAILI_MODELS or model_name in KNOWN_INTERROGATORS:
+        if model_name in POST_PROCESSORS_HORDELIB_MODELS or model_name in KNOWN_INTERROGATORS:
             return False
 
         return model_name not in self.models_to_skip

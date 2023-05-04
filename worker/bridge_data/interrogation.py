@@ -1,11 +1,10 @@
 """The configuration of the bridge"""
 import os
 
-from nataili.util.logger import logger
-
 from worker.argparser.interrogation import args
 from worker.bridge_data.framework import BridgeDataTemplate
-from worker.consts import POST_PROCESSORS_NATAILI_MODELS
+from worker.consts import POST_PROCESSORS_HORDELIB_MODELS
+from worker.logger import logger
 
 
 class InterrogationBridgeData(BridgeDataTemplate):
@@ -21,6 +20,8 @@ class InterrogationBridgeData(BridgeDataTemplate):
         """Reloads configuration data"""
         previous_url = self.horde_url
         super().reload_data()
+        if hasattr(self, "alchemist_name") and not self.args.worker_name:
+            self.worker_name = self.alchemist_name
         if args.forms:
             self.forms = args.forms
         # Ensure no duplicates
@@ -32,13 +33,13 @@ class InterrogationBridgeData(BridgeDataTemplate):
         if "interrogation" in self.forms and "ViT-L/14" not in self.model_names:
             self.model_names.append("ViT-L/14")
         if "post-process" in self.forms:
-            self.model_names += list(POST_PROCESSORS_NATAILI_MODELS)
+            self.model_names += list(POST_PROCESSORS_HORDELIB_MODELS)
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
                     f"Username '{self.username}'. Server Name '{self.worker_name}'. "
                     f"Horde URL '{self.horde_url}'. Forms {self.forms}. "
-                    "Worker Type: Interrogation"
+                    "Worker Type: Alchemist"
                 ),
                 status="Joining Horde",
             )

@@ -5,12 +5,15 @@ import os
 # We need to import the argparser first, as it sets the necessry Switches
 from worker.argparser.stable_diffusion import args
 
+import hordelib
+
+# We need to remove these, to avoid comfyUI trying to use them
+hordelib.initialise()
+from hordelib.horde import SharedModelManager
+
 # isort: on
-
-from nataili.model_manager.super import ModelManager
-from nataili.util.logger import logger, quiesce_logger, set_logger_verbosity
-
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
+from worker.logger import logger, quiesce_logger, set_logger_verbosity
 from worker.workers.stable_diffusion import StableDiffusionWorker
 
 
@@ -47,7 +50,7 @@ def main():
         logger.warning("DeprecationWarning: `--skip_md5` has been deprecated. Please use `--skip_checksum` instead.")
 
     bridge_data = StableDiffusionBridgeData()
-    model_manager = ModelManager(
+    SharedModelManager.loadModelManagers(
         clip=True,
         compvis=True,
         diffusers=True,
@@ -57,9 +60,19 @@ def main():
         codeformer=True,
         controlnet=True,
     )
+
     try:
-        worker = StableDiffusionWorker(model_manager, bridge_data)
+        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
+
+        annotators_preloaded_successfully = False
+        if bridge_data.allow_controlnet:
+            annotators_preloaded_successfully = SharedModelManager.preloadAnnotators()
+        if not annotators_preloaded_successfully:
+            logger.error("Annotators failed to preload. ControlNet will not be available.", status="Error")
+            bridge_data.allow_controlnet = False
+
         worker.start()
+
     except KeyboardInterrupt:
         logger.info("Keyboard Interrupt Received. Ending Process")
     logger.init(f"{bridge_data.worker_name} Instance", status="Stopped")

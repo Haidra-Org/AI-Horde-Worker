@@ -1,13 +1,23 @@
 """Utility script to show available models."""
 
-# test_download_models
-from nataili.model_manager.compvis import CompVisModelManager as ModelManager
+
+# isort: off
+import hordelib
+
+hordelib.initialise()
+
+from hordelib.horde import SharedModelManager  # noqa: E402
+
+# isort: on
 
 if __name__ == "__main__":
     # TODO: huggingface_hub or some way to use token instead of username/password
-    mm = ModelManager()
+    SharedModelManager.loadModelManagers(
+        compvis=True,
+    )
+    mm = SharedModelManager.manager
 
-    filtered_models = mm.get_filtered_models(type="ckpt")
+    filtered_models = mm.compvis.get_filtered_models(type="ckpt")
     ppmodels = ""
     for model_name in filtered_models:
         if model_name == "LDSR":

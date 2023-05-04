@@ -7,9 +7,9 @@ import threading
 import time
 
 import requests
-from nataili.util.logger import logger
 
 from worker.enums import JobStatus
+from worker.logger import logger
 
 
 class HordeJobFramework:

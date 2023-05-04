@@ -2,10 +2,10 @@
 import traceback
 
 import requests
-from nataili.util.logger import logger
 
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
+from worker.logger import logger
 from worker.workers.framework import WorkerFramework
 
 
@@ -38,9 +38,13 @@ class StableDiffusionWorker(WorkerFramework):
         return super().pop_job()
 
     def get_running_models(self):
-        return [job.current_model for job_thread, start_time, job in self.running_jobs]
+        running_job_models = [job.current_model for job_thread, start_time, job in self.running_jobs]
+        queued_jobs_models = [job.current_model for job in self.waiting_jobs]
+        return list(set(running_job_models + queued_jobs_models))
 
     def calculate_dynamic_models(self):
+        if self.bridge_data.models_reloading:
+            return
         all_models_data = requests.get(f"{self.bridge_data.horde_url}/api/v2/status/models", timeout=10).json()
         # We remove models with no queue from our list of models to load dynamically
         models_data = [md for md in all_models_data if md["queued"] > 0]
@@ -81,7 +85,8 @@ class StableDiffusionWorker(WorkerFramework):
             new_dynamic_models,
         )
         # Ensure we don't unload currently queued models
-        self.bridge_data.model_names = list(set(total_models + running_models))
+        with self.bridge_data.mutex:
+            self.bridge_data.model_names = list(set(total_models + running_models))
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
@@ -90,7 +95,6 @@ class StableDiffusionWorker(WorkerFramework):
         self.bridge_data.reload_models(self.model_manager)
 
     def reload_bridge_data(self):
-        super().reload_bridge_data()
         if self.bridge_data.dynamic_models:
             try:
                 self.calculate_dynamic_models()
@@ -99,3 +103,4 @@ class StableDiffusionWorker(WorkerFramework):
                 logger.warning("Failed to get models_req to do dynamic model loading: {}", err)
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
+        super().reload_bridge_data()

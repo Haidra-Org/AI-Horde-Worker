@@ -7,14 +7,15 @@ import threading
 
 import requests
 import yaml
-from nataili import disable_voodoo
-from nataili.util.logger import logger
 
 from worker.consts import BRIDGE_CONFIG_FILE, BRIDGE_VERSION
+from worker.logger import logger
 
 
 class BridgeDataTemplate:
     """Configuration object"""
+
+    mutex = threading.Lock()
 
     def __init__(self, args):
         random.seed()
@@ -48,8 +49,6 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
         self.max_models_to_download = 10
-
-        self.disable_voodoo = disable_voodoo.active
 
     def load_config(self):
         # YAML config
@@ -195,7 +194,6 @@ class BridgeDataTemplate:
                             "checksum.",
                         )
                         self.model_names.remove(model)
-            model_manager.init()
         if not self.initialized:
             logger.init_ok("Models", status="OK")
         if os.path.exists("bridgeData.py") or os.path.exists(BRIDGE_CONFIG_FILE):
@@ -229,13 +227,19 @@ class BridgeDataTemplate:
 
     @logger.catch(reraise=True)
     def _reload_models(self, model_manager):
+        with self.mutex:
+            model_names = self.model_names[:]
         for model in model_manager.get_loaded_models_names():
-            if model not in self.model_names:
+            if model not in model_names:
                 logger.init(f"{model}", status="Unloading")
                 model_manager.unload_model(model)
-        for model in self.model_names:
+        for model in model_names:
             if model not in model_manager.get_loaded_models_names():
-                success = model_manager.load(model, voodoo=not self.disable_voodoo)
+                success = None
+                if model == "safety_checker":
+                    success = model_manager.load(model, cpu_only=True)
+                else:
+                    success = model_manager.load(model)
                 if not success:
                     logger.init_err(f"{model}", status="Error")
             self.initialized = True
