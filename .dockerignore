@@ -1,0 +1,15 @@
+.vscode
+.github
+bin
+conda
+ray
+*.cmd
+*.md
+*.exe
+Dockerfile
+logs
+webui.css
+webui.py
+requirements.dev.txt
+nataili.dockerfile
+bridgeData.yaml
