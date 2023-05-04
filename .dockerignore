@@ -13,3 +13,4 @@ webui.py
 requirements.dev.txt
 nataili.dockerfile
 bridgeData.yaml
+worker/conda/pkgs/
