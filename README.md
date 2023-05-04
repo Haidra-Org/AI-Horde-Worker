@@ -4,7 +4,7 @@ This repository allows you to set up a AI Horde Worker to generate or alchemize 
 
 This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
-Alternatively you can become an interrogation worker which is much more lightweight and can even run on CPU (i.e. without a GPU)
+Alternatively you can become an Alchemist worker which is much more lightweight and can even run on CPU (i.e. without a GPU)
 
 To run the bridge, simply follow the instructions for your own OS
 
@@ -84,13 +84,14 @@ Start your worker, depending on which type your want.
 
 * If you want to generate Stable Diffusion images for others, run `horde-bridge`.
 
-    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. 
-    
-* If you want to interrogate images for other, run `horde-interrogation_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
 
-    **Warning:** This currently the interrogation worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
+    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 20G or RAM, append `--disable_voodoo` to your startup command above! If you do not have at least 6Gb of swap, also `--disable_voodoo`!
+* If you want to interrogate images for other, run `horde-alchemist_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
 
-Remember that worker names have to be different between Stable Diffusion worker and Interrogation worker. If you want to start a different type of worker in the same install directory, ensure a new name by using the `--name` command line argument.
+
+    **Warning:** Currently the Alchemist worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
+
+Remember that worker names have to be different between Stable Diffusion worker and Alchemist worker. If you want to start a different type of worker in the same install directory, ensure a new name by using the `--name` command line argument.
 
 
 ## Running with multiple GPUs
@@ -138,3 +139,46 @@ Use this approach if you downloaded the git repository as a zip file and extract
 
 # Model Usage
 Many models in this project use the CreativeML OpenRAIL License.  [Please read the full license here.](https://huggingface.co/spaces/CompVis/stable-diffusion-license)
+
+
+# Docker
+
+To run the Docker container, specify the required environment variables:
+
+- HORDE_API_KEY: The API key to use for authentication.
+
+ghcr.io/db0/ai-horde-worker:<insert release tag here>
+
+Optional environment variables:
+
+- HORDE_URL: The URL of the Horde server to connect to. Defaults to 'https://stablehorde.net'.
+- HORDE_WORKER_NAME: The name of the worker. If not set, a random worker name will be generated.
+- HORDE_WORKER_PREFIX: Used in random worker name generation, defaults to DockerWorker ${HORDE_WORKER_PREFIX}#0123097164
+- HORDE_PRIORITY_USERNAMES: A comma-separated list of usernames that should be given priority in the queue.
+- HORDE_MAX_THREADS: The maximum number of threads to use for rendering. Defaults to '1'.
+- HORDE_QUEUE_SIZE: The maximum number of jobs to queue. Defaults to '0', meaning no limit.
+- HORDE_REQUIRE_UPFRONT_KUDOS: Whether to require users to have enough kudos before they can submit jobs. Defaults to 'false'.
+- HORDE_MAX_POWER: The maximum power level to use for rendering. Defaults to '8'.
+- HORDE_NSFW: Whether to allow NSFW content. Defaults to 'true'.
+- HORDE_CENSOR_NSFW: Whether to censor NSFW content. Defaults to 'false'.
+- HORDE_BLACKLIST: A comma-separated list of tags to blacklist.
+- HORDE_CENSORLIST: A comma-separated list of tags to censor.
+- HORDE_ALLOW_IMG2IMG: Whether to allow image-to-image translation models. Defaults to 'true'.
+- HORDE_ALLOW_PAINTING: Whether to allow painting models. Defaults to 'true'.
+- HORDE_ALLOW_UNSAFE_IP: Whether to allow unsafe IP addresses. Defaults to 'true'.
+- HORDE_ALLOW_POST_PROCESSING: Whether to allow post-processing. Defaults to 'true'.
+- HORDE_ALLOW_CONTROLNET: Whether to allow ControlNet. Defaults to 'false'.
+- HORDE_DYNAMIC_MODELS: Whether to use dynamic models. Defaults to 'true'.
+- HORDE_NUMBER_OF_DYNAMIC_MODELS: The number of dynamic models to use. Defaults to '3'.
+- HORDE_MAX_MODELS_TO_DOWNLOAD: The maximum number of models to download. Defaults to '10'.
+- HORDE_STATS_OUTPUT_FREQUENCY: The frequency (in seconds) to output stats. Defaults to '30'.
+- HORDE_NATAILI_CACHE_HOME: The location of the cache directory. Defaults to '/cache'.
+- HORDE_LOW_VRAM_MODE: Whether to use low VRAM mode. Defaults to 'true'.
+- HORDE_ENABLE_MODEL_CACHE: Whether to enable model caching. Defaults to 'false'.
+- HORDE_ALWAYS_DOWNLOAD: Whether to always download models. Defaults to 'false'.
+- HORDE_RAY_TEMP_DIR: The location of the Ray temporary directory. Defaults to '/cache/ray'.
+- HORDE_DISABLE_VOODOO: Whether to disable Voodoo. Defaults to 'false'.
+- HORDE_ENABLE_TERMINAL_UI: Whether to enable the terminal UI. Defaults to 'false'.
+- HORDE_MODELS_TO_LOAD: A comma-separated list of models to load. Defaults to ['stable_diffusion_2.1', 'stable_diffusion'].
+- HORDE_MODELS_TO_SKIP: A comma-separated list of models to skip. Defaults to ['stable_diffusion_inpainting'].
+- HORDE_FORMS: A comma-separated list of forms to use. Defaults to ['caption', 'nsfw'].
