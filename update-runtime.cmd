@@ -12,6 +12,21 @@ IF EXIST CONDA GOTO WORKAROUND_END
 umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
 :WORKAROUND_END
 umamba create --no-shortcuts -r conda -n windows -f environment.yaml -y
-umamba run -r conda -n windows python -s -m pip uninstall nataili
-umamba run -r conda -n windows python -s -m pip install -r requirements.txt
+
+set "hordelib="
+setlocal EnableDelayedExpansion
+for %%a in (%*) do (
+    if /I "%%a"=="--hordelib" set "hordelib=true"
+)
+endlocal
+
+REM Check if hordelib argument is defined
+if defined hordelib (
+  umamba run -r conda -n windows python -s -m pip uninstall -y hordelib
+  umamba run -r conda -n windows python -s -m pip install hordelib
+) else (
+  umamba run -r conda -n windows python -s -m pip uninstall nataili
+  umamba run -r conda -n windows python -s -m pip install -r requirements.txt
+)
+
 echo If there are no errors above everything should be correctly installed (If not, try deleting the folder /conda/envs/ and try again).
