@@ -13,3 +13,10 @@ webui.py
 requirements.dev.txt
 nataili.dockerfile
 bridgeData.yaml
+/worker/conda/pkgs/
+/root/.cache/
+.git
+.gitattributes
+.gitignore
+.ruff_cache/
+nataili/

@@ -18,6 +18,10 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: false
     - name: "Build and Publish Container to Github Container Registry"
       run: |
         docker build -t ghcr.io/db0/ai-horde-worker:${{ github.ref_name }} .

@@ -1,12 +1,4 @@
-FROM nvidia/cuda:11.6.2-devel-ubuntu20.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-        ffmpeg \
-        libsm6 \
-        libxext6 \
-        wget
+FROM ubuntu:22.04
 
 RUN mkdir /worker
 
@@ -14,6 +6,16 @@ WORKDIR /worker
 
 COPY . .
 
-RUN ./update-runtime.sh
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+        ffmpeg \
+        libsm6 \
+        libxext6 \
+        bzip2 \
+        wget \
+      && ./update-runtime.sh \
+      && rm -rf /var/lib/apt/lists/* \
+      && bin/micromamba run -r conda -n linux python -s -m pip cache purge
 
 ENTRYPOINT [ "/worker/docker_entrypoint.sh" ]
