@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.6.2-devel-ubuntu20.04
+FROM Ubuntu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
