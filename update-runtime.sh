@@ -12,6 +12,10 @@ case $key in
     hordelib=true
     shift # past argument
     ;;
+    --scribe)
+    scribe=true
+    shift
+    ;;
     *)    # unknown option
     echo "Unknown option: $key"
     exit 1
@@ -28,6 +32,8 @@ fi
 if [ "$hordelib" = true ]; then
  bin/micromamba run -r conda -n linux python -s -m pip uninstall -y hordelib
  bin/micromamba run -r conda -n linux python -s -m pip install hordelib
+elif [ "$scribe" = true ]; then
+ bin/micromamba run -r conda -n linux python -s -m pip install -r requirements-scribe.txt
 else
  bin/micromamba run -r conda -n linux python -s -m pip uninstall -y nataili
  bin/micromamba run -r conda -n linux python -s -m pip install -r requirements.txt
