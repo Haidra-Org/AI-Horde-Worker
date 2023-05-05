@@ -1,4 +1,4 @@
-FROM ubuntu22.04
+FROM ubuntu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
