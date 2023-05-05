@@ -143,11 +143,13 @@ Many models in this project use the CreativeML OpenRAIL License.  [Please read t
 
 # Docker
 
-To run the Docker container, specify the required environment variables:
+## Stable Diffusion
+
+To run the Stable Diffusion Docker container, specify the required environment variables:
 
 - HORDE_API_KEY: The API key to use for authentication.
 
-ghcr.io/db0/ai-horde-worker:<insert release tag here>
+ghcr.io/db0/ai-horde-worker:<insert release tag here>-stable-diffusion
 
 Optional environment variables:
 
@@ -182,3 +184,27 @@ Optional environment variables:
 - HORDE_MODELS_TO_LOAD: A comma-separated list of models to load. Defaults to ['stable_diffusion_2.1', 'stable_diffusion'].
 - HORDE_MODELS_TO_SKIP: A comma-separated list of models to skip. Defaults to ['stable_diffusion_inpainting'].
 - HORDE_FORMS: A comma-separated list of forms to use. Defaults to ['caption', 'nsfw'].
+
+## Scribe
+
+To run the Scribe Docker container, specify the required environment variables:
+
+- HORDE_API_KEY: The API key to use for authentication.
+- HORDE_KAI_URL: URL of the KoboldAI instance running to connect to.
+
+ghcr.io/db0/ai-horde-worker:<insert release tag here>-scribe
+
+Optional environment variables:
+
+- HORDE_MAX_LENGTH: Max length of text to generate
+- HORDE_MAX_CONTEXT_LENGTH: Max length of the context
+- HORDE_URL: The URL of the Horde server to connect to. Defaults to 'https://stablehorde.net'.
+- HORDE_WORKER_NAME: The name of the worker. If not set, a random worker name will be generated.
+- HORDE_BRANDED_MODEL: defaults to false.
+- HORDE_WORKER_PREFIX: Used in random worker name generation, defaults to DockerWorker ${HORDE_WORKER_PREFIX}#0123097164
+- HORDE_PRIORITY_USERNAMES: A comma-separated list of usernames that should be given priority in the queue.
+- HORDE_QUEUE_SIZE: The maximum number of jobs to queue. Defaults to '0', meaning no limit.
+- HORDE_REQUIRE_UPFRONT_KUDOS: Whether to require users to have enough kudos before they can submit jobs. Defaults to 'false'.
+- HORDE_NSFW: Whether to allow NSFW content. Defaults to 'true'.
+- HORDE_BLACKLIST: A comma-separated list of tags to blacklist.
+- HORDE_STATS_OUTPUT_FREQUENCY: The frequency (in seconds) to output stats. Defaults to '30'.

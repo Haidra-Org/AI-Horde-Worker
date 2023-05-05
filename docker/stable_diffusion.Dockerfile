@@ -13,9 +13,11 @@ RUN apt-get update && apt-get install -y \
         libsm6 \
         libxext6 \
         bzip2 \
+        build-essential \
+        libcairo2-dev \
         wget \
       && ./update-runtime.sh \
       && rm -rf /var/lib/apt/lists/* \
       && bin/micromamba run -r conda -n linux python -s -m pip cache purge
 
-ENTRYPOINT [ "/worker/docker_entrypoint.sh" ]
+ENTRYPOINT [ "/worker/stable_diffusion_docker_entrypoint.sh" ]

@@ -15,7 +15,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         super().__init__(args)
         self.kai_available = False
         self.model = None
-        self.kai_url = "http://localhost:5000"
+        self.kai_url = os.environ.get("HORDE_KAI_URL", "http://localhost:5000")
         self.max_length = int(os.environ.get("HORDE_MAX_LENGTH", "80"))
         self.max_context_length = int(os.environ.get("HORDE_MAX_CONTEXT_LENGTH", "1024"))
         self.branded_model = os.environ.get("HORDE_BRANDED_MODEL", "false") == "true"
