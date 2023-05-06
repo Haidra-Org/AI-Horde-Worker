@@ -143,13 +143,13 @@ Many models in this project use the CreativeML OpenRAIL License.  [Please read t
 
 # Docker
 
-## Stable Diffusion
+## Dreamer (Stable Diffusion)
 
-To run the Stable Diffusion Docker container, specify the required environment variables:
+To run the Dreamer Docker container, specify the required environment variables:
 
 - HORDE_API_KEY: The API key to use for authentication.
 
-ghcr.io/db0/ai-horde-worker:<insert release tag here>-stable-diffusion
+ghcr.io/db0/ai-horde-worker:<insert release tag here>-dreamer
 
 Optional environment variables:
 

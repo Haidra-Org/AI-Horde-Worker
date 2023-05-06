@@ -1,11 +1,11 @@
-name: Build and Deploy Worker Stable Diffusion Docker Container
+name: Build and Deploy Worker Dreamer Docker Container
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-publish-worker-stable-diffusion-docker:
-    name: AI Horde Worker Stable Diffusion Docker Container
+  build-publish-worker-dreamer-docker:
+    name: AI Horde Worker Dreamer Docker Container
     runs-on: ubuntu-latest
     steps:
     - name: "✔️ Checkout"
@@ -27,12 +27,12 @@ jobs:
         tool-cache: false
         large-packages: false
         swap-storage: false
-    - name: Build Stable Diffusion Container
-      run: docker build -t ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-stable-diffusion -f docker/stable_diffusion.Dockerfile .
-    - name: Publish Stable Diffusion Container
-      run: docker push ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-stable-diffusion
+    - name: Build Dreamer Container
+      run: docker build -t ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-dreamer -f docker/dreamer.Dockerfile .
+    - name: Publish Dreamer Container
+      run: docker push ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-dreamer
     - name: Inform with Discord Webhook
       uses: tsickert/discord-webhook@v5.3.0
       with:
         webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        content: "New version of AI Horde Worker Stable Diffusion Docker Container has been released: ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-stable-diffusion"
+        content: "New version of AI Horde Worker Dreamer Docker Container has been released: ghcr.io/db0/ai-horde-worker:${{ github.ref_name }}-dreamer"

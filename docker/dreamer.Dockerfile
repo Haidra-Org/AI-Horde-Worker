@@ -20,4 +20,4 @@ RUN apt-get update && apt-get install -y \
       && rm -rf /var/lib/apt/lists/* \
       && bin/micromamba run -r conda -n linux python -s -m pip cache purge
 
-ENTRYPOINT [ "/worker/stable_diffusion_docker_entrypoint.sh" ]
+ENTRYPOINT [ "/worker/dreamer_docker_entrypoint.sh" ]
