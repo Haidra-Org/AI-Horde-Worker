@@ -295,7 +295,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 payload["time"] = round(time.time() - time_state, 4)
                 payload["source_image"] = bool(payload.get("source_image"))
                 payload["source_mask"] = bool(payload.get("source_mask"))
-                payload["post_processing"] = self.current_payload["post_processing"]
+                payload["post_processing"] = self.current_payload.get("post_processing", [])
                 del payload["prompt"]
                 del payload["seed"]
                 del payload["model"]
