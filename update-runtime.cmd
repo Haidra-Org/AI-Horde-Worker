@@ -26,11 +26,13 @@ REM Check if hordelib argument is defined
 if defined hordelib (
   umamba run -r conda -n windows python -s -m pip uninstall -y hordelib
   umamba run -r conda -n windows python -s -m pip install hordelib
-) elif defined scribe (
-  umamba run -r conda -n windows python -s -m pip install -r requirements-scribe.txt  
 ) else (
-  umamba run -r conda -n windows python -s -m pip uninstall nataili
-  umamba run -r conda -n windows python -s -m pip install -r requirements.txt
+  if defined scribe (
+    umamba run -r conda -n windows python -s -m pip install -r requirements-scribe.txt
+  ) else (
+    umamba run -r conda -n windows python -s -m pip uninstall nataili
+    umamba run -r conda -n windows python -s -m pip install -r requirements.txt
+  )
 )
 
 echo If there are no errors above everything should be correctly installed (If not, try deleting the folder /conda/envs/ and try again).
