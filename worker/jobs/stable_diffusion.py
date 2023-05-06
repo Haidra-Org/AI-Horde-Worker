@@ -1,5 +1,7 @@
 """Get and process a job from the horde"""
 import base64
+import json
+import random
 import time
 import traceback
 from io import BytesIO
@@ -15,6 +17,8 @@ from worker.jobs.framework import HordeJobFramework
 from worker.logger import logger
 from worker.post_process import post_process
 from worker.stats import bridge_stats
+
+SAVE_KUDOS_TRAINING_DATA = False
 
 
 class StableDiffusionHordeJob(HordeJobFramework):
@@ -195,7 +199,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(
                 f"Starting generation for id {self.current_id}: {self.current_model} @ "
                 f"{self.current_payload['width']}x{self.current_payload['height']} "
-                f"for {self.current_payload.get('ddim_steps',50)} steps. "
+                f"for {self.current_payload.get('ddim_steps',50)} steps {self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
             )
@@ -204,6 +208,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             gen_payload["source_processing"] = req_type
             # logger.debug(gen_payload)
             self.image = generator(gen_payload)
+
+            if SAVE_KUDOS_TRAINING_DATA:
+                payload = gen_payload.copy()
+
             self.seed = int(self.current_payload["seed"])
             logger.info(
                 f"Generation for id {self.current_id} finished successfully"
@@ -224,6 +232,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
+
         if self.image is None:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -240,6 +249,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(f"Image censored with reason: {censor_reason}")
             self.image = censor_image
             self.censored = "censored"
+
         # Run the CSAM Checker
         if not self.censored:
             is_csam, similarities, similarity_hits = csam.check_for_csam(
@@ -276,6 +286,24 @@ class StableDiffusionHordeJob(HordeJobFramework):
                     45 if post_processor in ["RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B"] else 75
                 )
         logger.debug("post-processing done...")
+
+        # Doing this here we include post processing time correctly
+        if SAVE_KUDOS_TRAINING_DATA:
+            # 15% validation data
+            filename = "inference-time-data.json" if random.random() < 0.85 else "inference-time-data-validation.json"
+            with open(filename, "at") as logfile:
+                payload["time"] = round(time.time() - time_state, 4)
+                payload["source_image"] = bool(payload.get("source_image"))
+                payload["source_mask"] = bool(payload.get("source_mask"))
+                payload["post_processing"] = self.current_payload.get("post_processing", [])
+                del payload["prompt"]
+                del payload["seed"]
+                del payload["model"]
+                del payload["tiling"]
+                del payload["n_iter"]
+                logfile.write(json.dumps(payload))
+                logfile.write("\n")
+
         self.start_submit_thread()
 
     def submit_job(self, endpoint="/api/v2/generate/submit"):
