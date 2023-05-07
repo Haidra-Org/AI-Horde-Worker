@@ -215,7 +215,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # logger.debug(gen_payload)
             self.image = generator(gen_payload)
 
-            if SAVE_KUDOS_TRAINING_DATA:
+            if SAVE_KUDOS_TRAINING_DATA or SIMULATE_KUDOS_LOCALLY:
                 payload = gen_payload.copy()
 
             self.seed = int(self.current_payload["seed"])
