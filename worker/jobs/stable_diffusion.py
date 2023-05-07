@@ -311,8 +311,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 logfile.write("\n")
 
         if SIMULATE_KUDOS_LOCALLY:
-            #number_of_models = len(self.model_manager.get_loaded_models_names())
-            self.job_kudos = self.kudos_model.calculate_kudos(payload, 2, 1.05)
+            # Award 0.5% additional bonus to kudos basis per model hosted
+            percentage_bonus_per_model = 0.5  # 1/2 a percent
+            number_of_models = len(self.model_manager.get_loaded_models_names())
+            total_bonus = number_of_models * percentage_bonus_per_model
+            percentage_bonus = 1 + (total_bonus / 100)
+            self.job_kudos = self.kudos_model.calculate_kudos(payload, 0, percentage_bonus)
 
         self.start_submit_thread()
 
