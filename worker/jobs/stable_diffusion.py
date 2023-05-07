@@ -9,6 +9,7 @@ from io import BytesIO
 import requests
 from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
+import open_clip
 
 from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
@@ -289,6 +290,15 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
         # Doing this here we include post processing time correctly
         if SAVE_KUDOS_TRAINING_DATA:
+            # Long prompt?
+            if "###" in payload.get("prompt", ""):
+                pos, neg = payload.get("prompt").split("###", 1)
+            else:
+                pos = payload.get("prompt", "")
+            token_tensor = open_clip.tokenize(pos, context_length=1024)
+            token_slice = [x for x in token_tensor[0] if x != 0]
+            token_count = len(token_slice)
+            payload["long_prompt"] = True if token_count >= 78 else False
             # 15% validation data
             filename = "inference-time-data.json" if random.random() < 0.85 else "inference-time-data-validation.json"
             with open(filename, "at") as logfile:
