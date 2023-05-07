@@ -10,6 +10,7 @@ import hordelib
 # We need to remove these, to avoid comfyUI trying to use them
 hordelib.initialise()
 from hordelib.horde import SharedModelManager
+from worker.jobs.kudos import SimpleNeuralNetwork
 
 # isort: on
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
