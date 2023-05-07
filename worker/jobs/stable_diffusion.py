@@ -9,18 +9,18 @@ from io import BytesIO
 import requests
 from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
-import open_clip
 
 from worker import csam
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
+from worker.jobs.kudos import KudosModel
 from worker.logger import logger
 from worker.post_process import post_process
 from worker.stats import bridge_stats
 
 SAVE_KUDOS_TRAINING_DATA = False
-
+SIMULATE_KUDOS_LOCALLY = False
 
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
@@ -40,6 +40,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.r2_upload = self.pop.get("r2_upload", False)
         self.clip_model = None
         self.hordelib = HordeLib()
+        self.kudos_model = KudosModel("worker/jobs/kudos-v12-53.ckpt")
+        self.job_kudos = 0
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -200,7 +202,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.info(
                 f"Starting generation for id {self.current_id}: {self.current_model} @ "
                 f"{self.current_payload['width']}x{self.current_payload['height']} "
-                f"for {self.current_payload.get('ddim_steps',50)} steps {self.current_payload.get('sampler_name','unknown sampler')}. "
+                f"for {self.current_payload.get('ddim_steps',50)} steps "
+                f"{self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
             )
@@ -290,15 +293,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
         # Doing this here we include post processing time correctly
         if SAVE_KUDOS_TRAINING_DATA:
-            # Long prompt?
-            if "###" in payload.get("prompt", ""):
-                pos, neg = payload.get("prompt").split("###", 1)
-            else:
-                pos = payload.get("prompt", "")
-            token_tensor = open_clip.tokenize(pos, context_length=1024)
-            token_slice = [x for x in token_tensor[0] if x != 0]
-            token_count = len(token_slice)
-            payload["long_prompt"] = True if token_count >= 78 else False
             # 15% validation data
             filename = "inference-time-data.json" if random.random() < 0.85 else "inference-time-data-validation.json"
             with open(filename, "at") as logfile:
@@ -313,6 +307,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 del payload["n_iter"]
                 logfile.write(json.dumps(payload))
                 logfile.write("\n")
+
+        if SIMULATE_KUDOS_LOCALLY:
+            #number_of_models = len(self.model_manager.get_loaded_models_names())
+            self.job_kudos = self.kudos_model.calculate_kudos(payload, 2, 1.05)
 
         self.start_submit_thread()
 
@@ -340,7 +338,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.submit_dict["state"] = self.censored
 
     def post_submit_tasks(self, submit_req):
-        bridge_stats.update_inference_stats(self.current_model, submit_req.json()["reward"])
+        kudos = self.job_kudos if SIMULATE_KUDOS_LOCALLY else submit_req.json()["reward"]
+        bridge_stats.update_inference_stats(self.current_model, kudos)
 
     # TODO: Probably fits better in the MM
     def is_inpainting_model(self, model_name):
