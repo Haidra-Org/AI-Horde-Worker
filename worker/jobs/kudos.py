@@ -209,29 +209,6 @@ class KudosModel:
         self.time_basis = self.payload_to_time(self.BASIS_PAYLOAD)
 
 
-class SimpleNeuralNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers):
-        super(SimpleNeuralNetwork, self).__init__()
-        self.stack = self.create_sequential_model(hidden_layers, input_size, output_size)
-
-    def create_sequential_model(self, layer_sizes, input_size=39, output_size=1):
-        # Define the layer sizes
-        layer_sizes = [input_size] + layer_sizes + [output_size]
-
-        # Create the layers and activation functions
-        layers = []
-        for i in range(len(layer_sizes) - 1):
-            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
-            if i < len(layer_sizes) - 2:
-                layers.append(nn.ReLU())  # Use ReLU activation for all layers except the last one
-
-        # Create the nn.Sequential model
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.stack(x)
-
-
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:

@@ -42,7 +42,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.hordelib = HordeLib()
         self.kudos_model = None
         if SIMULATE_KUDOS_LOCALLY:
-            self.kudos_model = KudosModel("worker/jobs/kudos-v12-53.ckpt")
+            self.kudos_model = KudosModel("worker/jobs/kudos-v18-0.ckpt")
         self.job_kudos = 0
 
     @logger.catch(reraise=True)
