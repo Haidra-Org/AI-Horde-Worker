@@ -42,7 +42,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.hordelib = HordeLib()
         self.kudos_model = None
         if SIMULATE_KUDOS_LOCALLY:
-            self.kudos_model = KudosModel("worker/jobs/kudos-v18-0.ckpt")
+            self.kudos_model = KudosModel("worker/jobs/kudos-v20-66.ckpt")
         self.job_kudos = 0
 
     @logger.catch(reraise=True)
@@ -311,12 +311,16 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 logfile.write("\n")
 
         if SIMULATE_KUDOS_LOCALLY:
-            # Award 0.5% additional bonus to kudos basis per model hosted
+            # Award 0.5% additional bonus to kudos basis per model hosted to compensate
+            # for the extra time spent loading the models from cache and storage.
             percentage_bonus_per_model = 0.5  # 1/2 a percent
             number_of_models = len(self.model_manager.get_loaded_models_names())
             total_bonus = number_of_models * percentage_bonus_per_model
             percentage_bonus = 1 + (total_bonus / 100)
-            self.job_kudos = self.kudos_model.calculate_kudos(payload, 0, percentage_bonus)
+            # Apply 25% basis kudos adjustment
+            kudos_adjustment = 2.5
+            # Calculate the kudos award
+            self.job_kudos = self.kudos_model.calculate_kudos(payload, kudos_adjustment, percentage_bonus)
 
         self.start_submit_thread()
 
