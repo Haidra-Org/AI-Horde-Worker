@@ -73,9 +73,11 @@ class BridgeStats:
             total_kudos = sum(score for score, _ in self.kudos_record)
             # If period is less than an hour, extrapolate
             total_kudos = 0 if period < 10 else total_kudos * (3600 / period)
+            jobs_per_hour = 0 if period < 10 else len(self.kudos_record) * (3600 / period)
 
             if self.kudos_record:
                 self.stats["kudos_per_hour"] = round(total_kudos)
+                self.stats["jobs_per_hour"] = round(jobs_per_hour)
 
     def get_pretty_stats(self):
         """Returns a pretty string of the stats"""

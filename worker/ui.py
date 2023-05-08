@@ -198,7 +198,6 @@ class TerminalUI:
                 self.kudos_per_hour = int(regex.group(1))
             if regex := TerminalUI.JOBDONE_REGEX.match(line):
                 self.jobs_done += 1
-                self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
 
         self.output.set_size(self.height)
 
@@ -296,7 +295,7 @@ class TerminalUI:
         self.jobs_done = 0
         self.kudos_per_hour = 0
         self.pop_time = 0
-        self.jobs_per_hour = 0
+        self.jobs_per_hour = "Pending"
         self.total_kudos = "Pending"
         self.total_worker_kudos = "Pending"
         self.total_uptime = "Pending"
@@ -642,6 +641,8 @@ class TerminalUI:
         # Recent job pop times
         if "pop_time_avg_5_mins" in bridge_stats.stats:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
+        if "jobs_per_hour" in bridge_stats.stats:
+            self.jobs_per_hour = bridge_stats.stats["jobs_per_hour"]
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
             threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
