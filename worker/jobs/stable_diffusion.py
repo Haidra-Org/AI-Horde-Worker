@@ -320,7 +320,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             # Apply 25% basis kudos adjustment
             kudos_adjustment = 2.5
             # Calculate the kudos award
-            self.job_kudos = self.kudos_model.calculate_kudos(payload, kudos_adjustment, percentage_bonus)
+            self.job_kudos = self.kudos_model.calculate_kudos(payload, kudos_adjustment)
 
         self.start_submit_thread()
 
