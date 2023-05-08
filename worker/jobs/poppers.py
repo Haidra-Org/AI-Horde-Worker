@@ -128,9 +128,9 @@ class StableDiffusionPopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
-        logger.debug("Cron: Starting get_loaded_model_names()")
+        #logger.debug("Cron: Starting get_loaded_model_names()")
         self.available_models = self.model_manager.get_loaded_models_names()
-        logger.debug("Cron: End get_loaded_model_names()")
+        #logger.debug("Cron: End get_loaded_model_names()")
         for util_model in (
             list(KNOWN_INTERROGATORS)
             + list(POST_PROCESSORS_HORDELIB_MODELS)
@@ -141,7 +141,7 @@ class StableDiffusionPopper(JobPopper):
         ):
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
-        logger.debug("Cron: Starting constructing pop payload")
+        #logger.debug("Cron: Starting constructing pop payload")
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "max_pixels": self.bridge_data.max_pixels,
@@ -159,10 +159,10 @@ class StableDiffusionPopper(JobPopper):
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
-        logger.debug("Cron: End constructing pop payload")
+        #logger.debug("Cron: End constructing pop payload")
 
     def horde_pop(self):
-        logger.debug("Cron: Starting job pop")
+        #logger.debug("Cron: Starting job pop")
         if not super().horde_pop():
             return None
         if not self.pop.get("id"):
@@ -171,7 +171,7 @@ class StableDiffusionPopper(JobPopper):
         # In the stable diffusion popper, the whole return is always a single payload, so we return it as a list
         self.pop["source_image"] = self.download_source(self.pop.get("source_image"))
         self.pop["source_mask"] = self.download_source(self.pop.get("source_mask"))
-        logger.debug("Cron: End job pop")
+        #logger.debug("Cron: End job pop")
         return [self.pop]
 
     def download_source(self, source_img):
