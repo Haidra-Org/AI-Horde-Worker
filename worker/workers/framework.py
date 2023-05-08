@@ -67,33 +67,33 @@ class WorkerFramework:
                     sys.exit(self.exit_rc)
 
     def process_jobs(self):
-        #logger.debug("Cron: Starting process_jobs()")
+        # logger.debug("Cron: Starting process_jobs()")
         if time.time() - self.last_config_reload > 60:
             self.reload_bridge_data()
         if not self.can_process_jobs():
-            #logger.debug("Cron: SLEEPING FOR 5 SECONDS")
+            # logger.debug("Cron: SLEEPING FOR 5 SECONDS")
             time.sleep(5)
             return
         # Add job to queue if we have space
         if len(self.waiting_jobs) < self.bridge_data.queue_size:
-            #logger.debug("Cron: Starting to add job to queue")
+            # logger.debug("Cron: Starting to add job to queue")
             self.add_job_to_queue()
-            #logger.debug("Cron: End to add job to queue")
+            # logger.debug("Cron: End to add job to queue")
         # Start new jobs
-        #logger.debug("Cron: Starting to start new jobs")
+        # logger.debug("Cron: Starting to start new jobs")
         while len(self.running_jobs) < self.bridge_data.max_threads and self.start_job():
             pass
-        #logger.debug("Cron: End of start new jobs")
+        # logger.debug("Cron: End of start new jobs")
         # Check if any jobs are done
-        #logger.debug("Cron: Starting to check if jobs are done")
+        # logger.debug("Cron: Starting to check if jobs are done")
         for job_thread, start_time, job in self.running_jobs:
             self.check_running_job_status(job_thread, start_time, job)
             if self.should_restart or self.should_stop:
                 break
-        #logger.debug("Cron: End of check if jobs are done")
+        # logger.debug("Cron: End of check if jobs are done")
         # Give the CPU a break
         time.sleep(0.02)
-        #logger.debug("Cron: End process_jobs()")
+        # logger.debug("Cron: End process_jobs()")
 
     def can_process_jobs(self):
         """This function returns true when this worker can start polling for jobs from the AI Horde

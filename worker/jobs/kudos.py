@@ -2,7 +2,6 @@ import pickle
 import sys
 
 import torch
-import torch.nn as nn
 
 
 class KudosModel:
@@ -183,7 +182,8 @@ class KudosModel:
         _data_samplers = cls.one_hot_encode(data_samplers, KudosModel.KNOWN_SAMPLERS)
         _data_control_types = cls.one_hot_encode(data_control_types, KudosModel.KNOWN_CONTROL_TYPES)
         _data_source_processing_types = cls.one_hot_encode(
-            data_source_processing_types, KudosModel.KNOWN_SOURCE_PROCESSING,
+            data_source_processing_types,
+            KudosModel.KNOWN_SOURCE_PROCESSING,
         )
         _data_post_processors = cls.one_hot_encode_combined(data_post_processors, KudosModel.KNOWN_POST_PROCESSORS)
         return torch.cat(
@@ -210,7 +210,6 @@ class KudosModel:
 
 
 if __name__ == "__main__":
-
     if len(sys.argv) != 2:
         print("Syntax: kudos.py <model_filename>")
 
