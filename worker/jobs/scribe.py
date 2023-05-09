@@ -89,7 +89,7 @@ class ScribeHordeJob(HordeJobFramework):
                     continue
                 if gen_req.status_code == 422:
                     logger.error(
-                        f'KAI instance {self.bridge_data.kai_url} reported validation error.',
+                        f"KAI instance {self.bridge_data.kai_url} reported validation error.",
                     )
                     self.status = JobStatus.FAULTED
                     self.start_submit_thread()

@@ -35,8 +35,7 @@ class BridgeStats:
             # Calculate some facts
             recent = now - (60 * 5)
             average_1_hour = (
-                sum(poptime for _, poptime, _ in self.pop_record) / len(self.pop_record)
-                if self.pop_record else 0
+                sum(poptime for _, poptime, _ in self.pop_record) / len(self.pop_record) if self.pop_record else 0
             )
             data_5_mins = [poptime for _, poptime, when in self.pop_record if when > recent]
             average_5_mins = sum(data_5_mins) / len(data_5_mins) if data_5_mins else 0

@@ -22,6 +22,7 @@ from worker.stats import bridge_stats
 SAVE_KUDOS_TRAINING_DATA = False
 SIMULATE_KUDOS_LOCALLY = True
 
+
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
 
@@ -313,10 +314,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if SIMULATE_KUDOS_LOCALLY:
             # Award 0.5% additional bonus to kudos basis per model hosted to compensate
             # for the extra time spent loading the models from cache and storage.
-            percentage_bonus_per_model = 0.5  # 1/2 a percent
-            number_of_models = len(self.model_manager.get_loaded_models_names())
-            total_bonus = number_of_models * percentage_bonus_per_model
-            percentage_bonus = 1 + (total_bonus / 100)
+            # percentage_bonus_per_model = 0.5  # 1/2 a percent
+            # number_of_models = len(self.model_manager.get_loaded_models_names())
+            # total_bonus = number_of_models * percentage_bonus_per_model
+            # percentage_bonus = 1 + (total_bonus / 100)
             # Apply 25% basis kudos adjustment
             kudos_adjustment = 2.5
             # Calculate the kudos award
