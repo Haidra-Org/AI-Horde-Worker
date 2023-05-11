@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# make sure necessary libraries are installed
+packages=("libcairo2-dev" "pkg-config" "python3-dev")
+
+# Loop through the packages
+for package in "${packages[@]}"; do
+    # Check if package is installed
+    if ! dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "ok installed"; then
+        # If it's not installed, print an error and exit
+        echo "Error: The package '$package' is not installed." >&2
+        echo "Run the following command to install:"
+        echo
+        echo "sudo apt install libcairo2-dev pkg-config python3-dev"
+        exit 1
+    fi
+done
+
 ignore_hordelib=false
 
 # Parse command line arguments
