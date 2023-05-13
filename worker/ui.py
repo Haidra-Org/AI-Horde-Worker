@@ -66,7 +66,10 @@ class TerminalUI:
     }
 
     # Refresh interval in seconds to call API for remote worker stats
-    REMOTE_STATS_REFRESH = 15
+    REMOTE_STATS_REFRESH = 5
+
+    # Refresh interval in seconds for API calls to get overall ai horde stats
+    REMOTE_HORDE_STATS_REFRESH = 60
 
     COLOUR_RED = 1
     COLOUR_GREEN = 2
@@ -96,6 +99,8 @@ class TerminalUI:
             self.url = self.bridge_data.horde_url
         elif hasattr(self.bridge_data, "kai_url"):
             self.url = self.bridge_data.kai_url
+        self._worker_info_thread = None
+        self._horde_stats_thread = None
         self.main = None
         self.width = 0
         self.height = 0
@@ -108,8 +113,10 @@ class TerminalUI:
         self.log_file = None
         self.input = DequeOutputCollector()
         self.output = DequeOutputCollector()
-        self.worker_id = self.load_worker_id()
-        self.last_stats_refresh = time.time() - (TerminalUI.REMOTE_STATS_REFRESH - 2)
+        self.worker_id = None
+        threading.Thread(target=self.load_worker_id, daemon=True).start()
+        self.last_stats_refresh = time.time() - (TerminalUI.REMOTE_STATS_REFRESH - 3)
+        self.last_horde_stats_refresh = time.time() - (TerminalUI.REMOTE_HORDE_STATS_REFRESH - 3)
         self.maintenance_mode = False
         self.gpu = GPUInfo()
         self.gpu.samples_per_second = 5
@@ -563,20 +570,29 @@ class TerminalUI:
             inputrow += 1
 
     def load_worker_id(self):
-        if not self.worker_name:
-            return None
-        workers_url = f"{self.url}/api/v2/workers"
-        try:
-            r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
-        except requests.exceptions.RequestException:
-            return None
-        if r.ok:
-            worker_json = r.json()
-            return next(
-                (item["id"] for item in worker_json if item["name"] == self.worker_name),
-                None,
-            )
-        return None
+        while not self.worker_id:
+            if not self.worker_name:
+                logger.warning("Still waiting to determine worker name")
+                time.sleep(5)
+                continue
+            workers_url = f"{self.url}/api/v2/workers"
+            try:
+                logger.warning("Requesting worker ID")
+                r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+            except requests.exceptions.Timeout:
+                logger.warning("Timeout while waiting for worker ID from API")
+            except requests.exceptions.RequestException as ex:
+                logger.error(f"Failed to get worker ID {ex}")
+            if r.ok:
+                worker_json = r.json()
+                self.worker_id = next(
+                    (item["id"] for item in worker_json if item["name"] == self.worker_name),
+                    None,
+                )
+                logger.warning(f"Found worker ID {self.worker_id}")
+            else:
+                logger.warning(f"Failed to get worker ID {r.status_code}")
+            time.sleep(5)
 
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
@@ -590,15 +606,19 @@ class TerminalUI:
 
     def get_remote_worker_info(self):
         if not self.worker_id:
-            self.worker_id = self.load_worker_id()
-        if not self.worker_id:
+            logger.warning("Still waiting to determine worker ID")
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         try:
-            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT})
+            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+        except requests.exceptions.Timeout:
+            logger.warning("Worker info API failed to respond in time")
+            return
         except requests.exceptions.RequestException:
+            logger.warning("Worker info API request failed {ex}")
             return
         if not r.ok:
+            logger.warning(f"Calling Worker information API failed ({r.status_code})")
             return
         data = r.json()
 
@@ -622,10 +642,13 @@ class TerminalUI:
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
         try:
-            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
+            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=10)
+        except requests.exceptions.Timeout:
+            pass
         except requests.exceptions.RequestException:
             return
         if not r.ok:
+            logger.warning(f"Calling AI Horde stats API failed ({r.status_code})")
             return
         data = r.json()
         self.queued_requests = int(data.get("queued_requests", 0))
@@ -643,10 +666,16 @@ class TerminalUI:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
         if "jobs_per_hour" in bridge_stats.stats:
             self.jobs_per_hour = bridge_stats.stats["jobs_per_hour"]
+
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
-            threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
-            threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
+            if (self._worker_info_thread and not self._worker_info_thread.is_alive()) or not self._worker_info_thread:
+                self._worker_info_thread = threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
+
+        if time.time() - self.last_horde_stats_refresh > TerminalUI.REMOTE_HORDE_STATS_REFRESH:
+            self.last_horde_stats_refresh = time.time()
+            if (self._horde_stats_thread and not self._horde_stats_thread.is_alive()) or not self._horde_stats_thread:
+                self._horde_stats_thread = threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
 
     def get_commit_hash(self):
         head_file = os.path.join(".git", "HEAD")
