@@ -319,7 +319,7 @@ class TerminalUI:
         return x + len(label) + 2
 
     def get_free_ram(self):
-        mem = psutil.virtual_memory().free
+        mem = psutil.virtual_memory().available
         percent = 100 - trunc(psutil.virtual_memory().percent)
         mem /= 1048576
         unit = "MB"
