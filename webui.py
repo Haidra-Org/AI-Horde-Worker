@@ -1,6 +1,7 @@
 # webui.py
 # Simple web configuration for horde worker
 import argparse
+import contextlib
 import datetime
 import glob
 import math
@@ -49,10 +50,6 @@ class WebUI:
             "label": "API Key",
             "info": "This is your Stable Horde API Key. You can get one free at " "https://stablehorde.net/register ",
         },
-        "low_vram_mode": {
-            "label": "Enable low vram mode",
-            "info": "It may help worker stability to disable this if you run multiple threads.",
-        },
         "horde_url": {
             "label": "The URL of the horde API server.",
             "info": "Don't change this unless you know exactly what you are doing.",
@@ -96,7 +93,8 @@ class WebUI:
         },
         "cache_home": {
             "label": "Model Directory",
-            "info": "Downloaded models files are stored here.",
+            "info": "Downloaded models files are stored here. The default './' is means the AI-Horde-Worker "
+            "directory (check for a folder name 'nataili' after your first run).",
         },
         "temp_dir": {
             "label": "Model Cache Directory",
@@ -124,6 +122,12 @@ class WebUI:
             "Each model can take between 2 GB to 8 GB, ensure you have enough storage space available. "
             "This number includes system models such as the safety checker and the post-processors, so "
             "don't set it too low!",
+        },
+        "alchemist_name": {
+            "label": "Alchemist Name",
+            "info": "This is the name of your Alchemist. It needs to be unique to the whole horde. "
+            "You cannot run different Alchemists with the same name. It will be publicly visible."
+            "Defaults to worker_name if not specified",
         },
         "forms": {
             "label": "Alchemy Worker Features",
@@ -178,13 +182,47 @@ class WebUI:
         },
         "special_models_to_load": {
             "label": "Loading Groups of Models",
-            "info": "You can select groups of models here. 'All Models' loads all possible models. "
+            "info": "You can select groups of models here. 'All Models' loads all possible models "
+            "which will take over 500gb of space in the folder defined by the setting 'cache_home'. "
             "The other options load different subsets of models based on style. You can select "
             "more than one.",
         },
         "special_top_models_to_load": {
             "label": "Automatically Loading Popular Models",
             "info": "Choose to automatically load the top 'n' most popular models of the day.",
+        },
+        "ram_to_leave_free": {
+            "label": "RAM to Leave Free",
+            "info": "This is the amount of RAM to leave free for your system to use. You should raise this value "
+            "if you expect to run other programs on your computer while running your worker.",
+        },
+        "vram_to_leave_free": {
+            "label": "VRAM to Leave Free",
+            "info": "This is the amount of VRAM to leave free for your system to use. ",
+        },
+        "scribe_name": {
+            "label": "Scribe Name",
+            "info": "This is a the name of your scribe worker. It needs to be unique to the whole horde. "
+            "You cannot run different workers with the same name. It will be publicly visible. "
+            "Defaults to worker_name if not specified",
+        },
+        "kai_url": {
+            "label": "Kai URL",
+            "info": "This is the URL of the Kobold AI Client API you want your worker to connect to. "
+            "You will probably be running your own Kobold AI Client, and you should enter the URL here.",
+        },
+        "max_length": {
+            "label": "Maximum Length",
+            "info": "This is the maximum number of tokens your worker will generate per request.",
+        },
+        "max_context_length": {
+            "label": "Maximum Context Length",
+            "info": "The max tokens to use from the prompt.",
+        },
+        "branded_model": {
+            "label": "Branded Model",
+            "info": " This will prevent the model from being used from the shared pool, but will ensure that"
+            " no other worker can pretend to serve it If you are unsure, leave this as 'None'.",
         },
     }
 
@@ -266,6 +304,10 @@ class WebUI:
                     donekeys.append(key)
             elif cfgkey == "models_to_load":
                 models_to_load.extend(value)
+                donekeys.append(key)
+            elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
+                config[cfgkey] = str(value) + "%"
+                donekeys.append(key)
 
         # Merge the settings we have been passed into the old config,
         # don't remove anything we don't understand
@@ -455,6 +497,17 @@ class WebUI:
                         value=config.worker_name,
                         info=self._info("worker_name"),
                     )
+                    alchemist_name = gr.Textbox(
+                        label=self._label("alchemist_name"),
+                        value=config.alchemist_name,
+                        info=self._info("alchemist_name"),
+                    )
+                    scribe_name = gr.Textbox(
+                        label=self._label("scribe_name"),
+                        value=config.scribe_name,
+                        info=self._info("scribe_name"),
+                    )
+
                     api_key = gr.Textbox(
                         label=self._label("api_key"),
                         value=config.api_key,
@@ -667,6 +720,29 @@ class WebUI:
                         value=config.queue_size,
                         info=self._info("queue_size"),
                     )
+                    parsed_ram_from_config = 40
+                    with contextlib.suppress(Exception):
+                        parsed_ram_from_config = int(config.ram_to_leave_free.split("%")[0])
+                    ram_to_leave_free = gr.Slider(
+                        0,
+                        100,
+                        step=1,
+                        label=self._label("ram_to_leave_free"),
+                        value=parsed_ram_from_config,
+                        info=self._info("ram_to_leave_free"),
+                    )
+                    parsed_vram_from_config = 40
+                    with contextlib.suppress(Exception):
+                        parsed_vram_from_config = int(config.vram_to_leave_free.split("%")[0])
+
+                    vram_to_leave_free = gr.Slider(
+                        0,
+                        100,
+                        step=1,
+                        label=self._label("vram_to_leave_free"),
+                        value=parsed_vram_from_config,
+                        info=self._info("vram_to_leave_free"),
+                    )
 
                 with gr.Tab("Advanced"), gr.Column():
                     config.default("enable_terminal_ui", False)
@@ -680,12 +756,6 @@ class WebUI:
                         label=self._label("horde_url"),
                         value=config.horde_url,
                         info=self._info("horde_url"),
-                    )
-                    config.default("low_vram_mode", True)
-                    low_vram_mode = gr.Checkbox(
-                        label=self._label("low_vram_mode"),
-                        value=config.low_vram_mode,
-                        info=self._info("low_vram_mode"),
                     )
                     config.default("stats_output_frequency", 30)
                     stats_output_frequency = gr.Number(
@@ -713,6 +783,41 @@ class WebUI:
                         inputs=[worker_name, worker_id, maintenance_mode, api_key],
                         outputs=[maint_message],
                     )
+                with gr.Tab("Scribe Options"), gr.Column():
+                    gr.Markdown(
+                        "Options for the Scribes (text workers)",
+                    )
+                    config.default("kai_url", "http://localhost:5000")
+                    kai_url = gr.Textbox(
+                        label=self._label("kai_url"),
+                        value=config.kai_url,
+                        info=self._info("kai_url"),
+                    )
+
+                    config.default("max_length", 80)
+                    max_length = gr.Slider(
+                        0,
+                        240,
+                        step=10,
+                        label=self._label("max_length"),
+                        value=config.max_length,
+                        info=self._info("max_length"),
+                    )
+                    config.default("max_context_length", 1024)
+                    max_context_length = gr.Slider(
+                        0,
+                        8192,
+                        step=128,
+                        label=self._label("max_context_length"),
+                        value=config.max_context_length,
+                        info=self._info("max_context_length"),
+                    )
+                    config.default("branded_model", False)
+                    branded_model = gr.Checkbox(
+                        label=self._label("branded_model"),
+                        value=config.branded_model,
+                        info=self._info("branded_model"),
+                    )
 
             with gr.Row():
                 submit = gr.Button(value="Save Configuration", variant="primary")
@@ -722,6 +827,7 @@ class WebUI:
             submit.click(
                 self.save_config,
                 inputs={
+                    alchemist_name,
                     allow_controlnet,
                     allow_img2img,
                     allow_painting,
@@ -736,7 +842,6 @@ class WebUI:
                     enable_terminal_ui,
                     forms,
                     horde_url,
-                    low_vram_mode,
                     max_models_to_download,
                     max_power,
                     max_threads,
@@ -754,6 +859,13 @@ class WebUI:
                     special_top_models_to_load,
                     stats_output_frequency,
                     worker_name,
+                    ram_to_leave_free,
+                    vram_to_leave_free,
+                    scribe_name,
+                    kai_url,
+                    max_length,
+                    max_context_length,
+                    branded_model,
                 },
                 outputs=[message],
             )
