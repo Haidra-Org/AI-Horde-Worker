@@ -2,8 +2,10 @@
 # Simple web configuration for horde worker
 import argparse
 import datetime
+import glob
 import math
 import os
+import pathlib
 import shutil
 import sys
 import time
@@ -160,6 +162,10 @@ class WebUI:
             "Larger images use a significant amount of VRAM, if you go too large your worker will crash. "
             "Common numbers are 2 (256x256), 8 (512x512), 18 (768x768), and 32 (1024x1024)",
         },
+        "models_on_disk": {
+            "label": "Already Downloaded Models To Load",
+            "info": "These are models which are already downloaded to your worker.",
+        },
         "models_to_load": {
             "label": "Individual Models To Load",
             "info": "You can select individual models to load here. These are loaded in addition to "
@@ -182,8 +188,11 @@ class WebUI:
         },
     }
 
+    _models_found_on_disk = None
+
     def __init__(self):
         self.app = None
+        self._models_found_on_disk = []
 
     def _label(self, name):
         return WebUI.INFO[name]["label"] if name in WebUI.INFO else None
@@ -248,7 +257,7 @@ class WebUI:
             elif cfgkey == "censorlist":
                 config.censorlist = self.process_input_list(value)
                 donekeys.append(key)
-            elif cfgkey == "special_models_to_load":
+            elif cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
                 models_to_load.extend(value)
                 donekeys.append(key)
             elif cfgkey == "special_top_models_to_load":
@@ -285,7 +294,7 @@ class WebUI:
         )
         latest_models = self.download_models(remote_models)
 
-        available_models = [
+        models_in_reference = [
             model
             for model in latest_models
             if model
@@ -304,7 +313,36 @@ class WebUI:
                 "safety_checker",
             ]
         ]
-        return sorted(available_models, key=str.casefold)
+        aiworker_cache_home = os.environ.get("AIWORKER_CACHE_HOME", None)
+        model_cache_folder = aiworker_cache_home if aiworker_cache_home else "./"
+
+        sd_models_folder = pathlib.Path(model_cache_folder).joinpath("nataili/compvis/").resolve()
+
+        if sd_models_folder.exists():
+            all_files_in_cache = glob.glob(str(sd_models_folder.joinpath("*.*")))
+            all_files_in_cache = [
+                pathlib.Path(x).name
+                for x in all_files_in_cache
+                if not x.endswith(".sha256") and not x.endswith(".md5")
+            ]
+            for model_name, model_info in latest_models.items():
+                model_config_dict: dict = model_info.get("config", None)
+                if not model_config_dict:
+                    continue
+                model_file_config_list: list = model_config_dict.get("files", None)
+                if not model_file_config_list:
+                    continue
+                if len(model_file_config_list) == 0:
+                    continue
+                model_filename: str | None = None
+                for key in model_file_config_list:
+                    model_filename = key.get("path", None)
+                    if model_filename and "yaml" not in model_filename:
+                        break
+                if model_filename and model_filename in all_files_in_cache:
+                    self._models_found_on_disk.append(model_name)
+
+        return sorted(models_in_reference, key=str.casefold)
 
     def load_workerID(self, worker_name):
         workerID = ""
@@ -359,15 +397,21 @@ class WebUI:
         config = self.reload_config()
 
         model_list = self.load_models()
+        model_list = [model for model in model_list if model not in self._models_found_on_disk]
+        models_on_disk = []
         # Seperate out the magic constants
         models_to_load_all = []
         models_to_load_top = "None"
         models_to_load_individual = []
         for model in config.models_to_load:
-            if model and model.lower().startswith("top "):
+            if not model:
+                continue
+            if model.lower().startswith("top "):
                 models_to_load_top = model.title()
-            elif model and model.lower().startswith("all "):
+            elif model.lower().startswith("all "):
                 models_to_load_all.append(model.title())
+            elif model in self._models_found_on_disk:
+                models_on_disk.append(model)
             else:
                 models_to_load_individual.append(model)
 
@@ -503,6 +547,13 @@ class WebUI:
                             label=self._label("special_top_models_to_load"),
                             value=models_to_load_top,
                             info=self._info("special_top_models_to_load"),
+                        )
+                    with gr.Row(), gr.Column():
+                        models_on_disk = gr.CheckboxGroup(
+                            choices=self._models_found_on_disk,
+                            label=self._label("models_on_disk"),
+                            value=models_on_disk,
+                            info=self._info("models_on_disk"),
                         )
                     with gr.Row(), gr.Column():
                         models_to_load = gr.CheckboxGroup(
@@ -689,6 +740,7 @@ class WebUI:
                     max_models_to_download,
                     max_power,
                     max_threads,
+                    models_on_disk,
                     models_to_load,
                     models_to_skip,
                     cache_home,
