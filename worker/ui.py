@@ -589,7 +589,11 @@ class TerminalUI:
                     (item["id"] for item in worker_json if item["name"] == self.worker_name),
                     None,
                 )
-                logger.warning(f"Found worker ID {self.worker_id}")
+                if self.worker_id:
+                    logger.warning(f"Found worker ID {self.worker_id}")
+                else:
+                    # Our worker is not yet in the worker results from the API (cache delay)
+                    logger.warning(f"Waiting for the AI Horde to acknowledge the worker")
             else:
                 logger.warning(f"Failed to get worker ID {r.status_code}")
             time.sleep(5)
