@@ -192,3 +192,5 @@ src/taming-transformers
 /xformers-*
 /bin/
 /ray
+/tmp
+/hordelib

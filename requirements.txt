@@ -1,6 +1,6 @@
---extra-index-url https://download.pytorch.org/whl/cu117
-nataili>=0.3.3 
-xformers
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch # We have to place it here otherwise it installs the CPU version
+hordelib>=0.19.13
 gradio
 pyyaml
 unidecode
@@ -9,3 +9,9 @@ rembg
 pynvml
 psutil
 windows-curses; sys_platform == 'win32'
+loguru
+GitPython
+clip-anytorch
+diffusers
+omegaconf
+setuptools

@@ -88,30 +88,18 @@ class WebUI:
         "nsfw": {"label": "Enable NSFW", "info": "Allow your worker to accept jobs that contain NSFW " "content."},
         "censor_nsfw": {
             "label": "Censor NSFW images",
-            "info": "If this is true and Enable NSFW is false, the worker will accept NSFW requests, "
-            "but send back a censored image",
+            "info": "If this is true, the worker will scan all resulting images for NSFW and censor any detected. "
+            "If this is false, the worker will only scan for NSFW on client request. "
+            "This does nothing is 'Enable NSFW' is set to True.",
         },
-        "nataili_cache_home": {
-            "label": "Nataili Model Directory",
-            "info": "Downloaded models files " "are stored here.",
+        "cache_home": {
+            "label": "Model Directory",
+            "info": "Downloaded models files are stored here.",
         },
-        "ray_temp_dir": {
+        "temp_dir": {
             "label": "Model Cache Directory",
             "info": "Model cache data is stored here. Downloaded models are processed and copies stored "
-            "here to make loading the models faster whilst the worker is running. You can prevent "
-            "this behaviour with the 'Disable all model caching' setting below.",
-        },
-        "enable_model_cache": {
-            "label": "Enable persistent disk model cache",
-            "info": "By default the model cache uses some RAM and disk to cache models, and deletes the "
-            "cache every time the worker starts up. You can reduce your RAM usage and speed up worker "
-            "startup times by selecting this option. Good if you have fast disks.",
-        },
-        "disable_voodoo": {
-            "label": "Disable all model caching",
-            "info": "Completely disable model caching in RAM or on disk and load all models directly "
-            "into VRAM and keep them there. Requires that all loaded models fit in VRAM. "
-            "Good if you have slow disks, but don't load more models than will fit in your VRAM!",
+            "here if you load too many models to fit in RAM and VRAM.",
         },
         "always_download": {
             "label": "Automatically download required models",
@@ -540,18 +528,6 @@ class WebUI:
                         value=config.always_download,
                         info=self._info("always_download"),
                     )
-                    config.default("enable_model_cache", False)
-                    enable_model_cache = gr.Checkbox(
-                        label=self._label("enable_model_cache"),
-                        value=config.enable_model_cache,
-                        info=self._info("enable_model_cache"),
-                    )
-                    config.default("disable_voodoo", False)
-                    disable_voodoo = gr.Checkbox(
-                        label=self._label("disable_voodoo"),
-                        value=config.disable_voodoo,
-                        info=self._info("disable_voodoo"),
-                    )
                     config.default("max_models_to_download", 10)
                     max_models_to_download = gr.Number(
                         label=self._label("max_models_to_download"),
@@ -572,17 +548,17 @@ class WebUI:
                         precision=0,
                         info=self._info("number_of_dynamic_models"),
                     )
-                    config.default("nataili_cache_home", "./")
-                    nataili_cache_home = gr.Textbox(
-                        label=self._label("nataili_cache_home"),
-                        value=config.nataili_cache_home,
-                        info=self._info("nataili_cache_home"),
+                    config.default("cache_home", "./")
+                    cache_home = gr.Textbox(
+                        label=self._label("cache_home"),
+                        value=config.cache_home,
+                        info=self._info("cache_home"),
                     )
-                    config.default("ray_temp_dir", "./ray")
-                    ray_temp_dir = gr.Textbox(
-                        label=self._label("ray_temp_dir"),
-                        value=config.ray_temp_dir,
-                        info=self._info("ray_temp_dir"),
+                    config.default("temp_dir", "./tmp")
+                    temp_dir = gr.Textbox(
+                        label=self._label("temp_dir"),
+                        value=config.temp_dir,
+                        info=self._info("temp_dir"),
                     )
 
                 with gr.Tab("Security"), gr.Column():
@@ -705,9 +681,7 @@ class WebUI:
                     blacklist,
                     censor_nsfw,
                     censorlist,
-                    disable_voodoo,
                     dynamic_models,
-                    enable_model_cache,
                     enable_terminal_ui,
                     forms,
                     horde_url,
@@ -717,12 +691,12 @@ class WebUI:
                     max_threads,
                     models_to_load,
                     models_to_skip,
-                    nataili_cache_home,
+                    cache_home,
                     nsfw,
                     number_of_dynamic_models,
                     priority_usernames,
                     queue_size,
-                    ray_temp_dir,
+                    temp_dir,
                     require_upfront_kudos,
                     special_models_to_load,
                     special_top_models_to_load,

@@ -5,10 +5,11 @@ import time
 from io import BytesIO
 
 import requests
-from nataili.util.logger import logger
 from PIL import Image, UnidentifiedImageError
 
-from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_NATAILI_MODELS
+from worker.consts import BRIDGE_VERSION, KNOWN_INTERROGATORS, KNOWN_POST_PROCESSORS, POST_PROCESSORS_HORDELIB_MODELS
+from worker.logger import logger
+from worker.stats import bridge_stats
 
 
 class JobPopper:
@@ -37,6 +38,7 @@ class JobPopper:
             # logger.debug(self.pop_payload)
             node = pop_req.headers["horde-node"] if "horde-node" in pop_req.headers else "unknown"
             logger.debug(f"Job pop took {pop_req.elapsed.total_seconds()} (node: {node})")
+            bridge_stats.update_pop_stats(node, pop_req.elapsed.total_seconds())
         except requests.exceptions.ConnectionError:
             logger.warning(f"Server {self.bridge_data.horde_url} unavailable during pop. Waiting 10 seconds...")
             time.sleep(10)
@@ -109,7 +111,11 @@ class JobPopper:
 
     def convert_image_data_to_pil(self, img_data):
         try:
-            return Image.open(BytesIO(img_data)).convert("RGB")
+            img = Image.open(BytesIO(img_data))
+            if len(img.split()) == 4:
+                return img.convert("RGBA")
+
+            return img.convert("RGB")
         except UnidentifiedImageError as e:
             logger.error(f"Error when creating image: {e}.")
             return None
@@ -122,10 +128,12 @@ class StableDiffusionPopper(JobPopper):
     def __init__(self, mm, bd):
         super().__init__(mm, bd)
         self.endpoint = "/api/v2/generate/pop"
+        # logger.debug("Cron: Starting get_loaded_model_names()")
         self.available_models = self.model_manager.get_loaded_models_names()
+        # logger.debug("Cron: End get_loaded_model_names()")
         for util_model in (
             list(KNOWN_INTERROGATORS)
-            + list(POST_PROCESSORS_NATAILI_MODELS)
+            + list(POST_PROCESSORS_HORDELIB_MODELS)
             + [
                 "LDSR",
                 "safety_checker",
@@ -133,6 +141,7 @@ class StableDiffusionPopper(JobPopper):
         ):
             if util_model in self.available_models:
                 self.available_models.remove(util_model)
+        # logger.debug("Cron: Starting constructing pop payload")
         self.pop_payload = {
             "name": self.bridge_data.worker_name,
             "max_pixels": self.bridge_data.max_pixels,
@@ -150,8 +159,10 @@ class StableDiffusionPopper(JobPopper):
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
+        # logger.debug("Cron: End constructing pop payload")
 
     def horde_pop(self):
+        # logger.debug("Cron: Starting job pop")
         if not super().horde_pop():
             return None
         if not self.pop.get("id"):
@@ -160,6 +171,7 @@ class StableDiffusionPopper(JobPopper):
         # In the stable diffusion popper, the whole return is always a single payload, so we return it as a list
         self.pop["source_image"] = self.download_source(self.pop.get("source_image"))
         self.pop["source_mask"] = self.download_source(self.pop.get("source_mask"))
+        # logger.debug("Cron: End job pop")
         return [self.pop]
 
     def download_source(self, source_img):
@@ -178,6 +190,36 @@ class StableDiffusionPopper(JobPopper):
         base64_bytes = source_img.encode("utf-8")
         img_bytes = base64.b64decode(base64_bytes)
         return Image.open(BytesIO(img_bytes))
+
+
+class ScribePopper(JobPopper):
+    def __init__(self, mm, bd):
+        super().__init__(mm, bd)
+        self.endpoint = "/api/v2/generate/text/pop"
+        # KAI Only ever offers one single model, so we just add it to the Horde's expected array form.
+        self.available_models = [self.bridge_data.model]
+        if bd.branded_model:
+            if not bd.username:
+                logger.warning("branded_model reqquested but AI Horde username could not be determined.")
+            else:
+                self.available_models = [f"{self.bridge_data.model}::{bd.username}"]
+        self.pop_payload = {
+            "name": self.bridge_data.worker_name,
+            "models": self.available_models,
+            "max_length": self.bridge_data.max_length,
+            "max_context_length": self.bridge_data.max_context_length,
+            "priority_usernames": self.bridge_data.priority_usernames,
+            "softprompts": self.bridge_data.softprompts[self.bridge_data.model],
+            "bridge_agent": self.BRIDGE_AGENT,
+        }
+
+    def horde_pop(self):
+        if not super().horde_pop():
+            return None
+        if not self.pop.get("id"):
+            self.report_skipped_info()
+            return None
+        return [self.pop]
 
 
 class InterrogationPopper(JobPopper):
@@ -244,7 +286,11 @@ class InterrogationPopper(JobPopper):
                     current_image_url = None
                     continue
             try:
-                form["image"] = Image.open(BytesIO(img_data)).convert("RGB")
+                img = Image.open(BytesIO(img_data))
+                if len(img.split()) == 4:
+                    form["image"] = img.convert("RGBA")
+                else:
+                    form["image"] = img.convert("RGB")
                 non_faulted_forms.append(form)
             except UnidentifiedImageError as e:
                 logger.error(f"Error when creating image: {e}. Url {current_image_url}")

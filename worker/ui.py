@@ -13,11 +13,14 @@ import time
 from collections import deque
 from math import trunc
 
+import pkg_resources
 import psutil
 import requests
-import yaml
-from nataili.util.logger import config, logger
-from pynvml.smi import nvidia_smi
+from hordelib.shared_model_manager import SharedModelManager
+from hordelib.utils.gpuinfo import GPUInfo
+
+from worker.logger import config, logger
+from worker.stats import bridge_stats
 
 
 class DequeOutputCollector:
@@ -43,96 +46,6 @@ class DequeOutputCollector:
         pass
 
 
-class GPUInfo:
-    def __init__(self):
-        self.avg_load = []
-        self.avg_temp = []
-        self.avg_power = []
-        # Average period in samples, default 10 samples per second, period 5 minutes
-        self.samples_per_second = 10
-        # Look out for device env var hack
-        self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
-
-    # Return a value from the given dictionary supporting dot notation
-    def get(self, data, key, default=""):
-        # Handle nested structures
-        path = key.split(".")
-
-        if len(path) == 1:
-            # Simple case
-            return data[key] if key in data else default
-        # Nested case
-        walkdata = data
-        for element in path:
-            if element in walkdata:
-                walkdata = walkdata[element]
-            else:
-                walkdata = ""
-                break
-        return walkdata
-
-    def _get_gpu_data(self):
-        with contextlib.suppress(Exception):
-            nvsmi = nvidia_smi.getInstance()
-            data = nvsmi.DeviceQuery()
-            return data.get("gpu", [None])[self.device]
-
-    def _mem(self, raw):
-        unit = "GB"
-        mem = raw / 1024
-        if mem < 1:
-            unit = "MB"
-            raw *= 1024
-        return f"{round(mem)} {unit}"
-
-    def get_info(self):
-        data = self._get_gpu_data()
-        if not data:
-            return None
-
-        # Calculate averages
-        try:
-            gpu_util = int(self.get(data, "utilization.gpu_util", 0))
-        except ValueError:
-            gpu_util = 0
-
-        try:
-            gpu_temp = int(self.get(data, "temperature.gpu_temp", 0))
-        except ValueError:
-            gpu_temp = 0
-
-        try:
-            gpu_power = int(self.get(data, "power_readings.power_draw", 0))
-        except ValueError:
-            gpu_power = 0
-
-        self.avg_load.append(gpu_util)
-        self.avg_temp.append(gpu_temp)
-        self.avg_power.append(gpu_power)
-        self.avg_load = self.avg_load[-(self.samples_per_second * 60 * 5) :]
-        self.avg_power = self.avg_power[-(self.samples_per_second * 60 * 5) :]
-        self.avg_temp = self.avg_temp[-(self.samples_per_second * 60 * 5) :]
-        avg_load = int(sum(self.avg_load) / len(self.avg_load))
-        avg_power = int(sum(self.avg_power) / len(self.avg_power))
-        avg_temp = int(sum(self.avg_temp) / len(self.avg_temp))
-
-        return {
-            "product": self.get(data, "product_name", "unknown"),
-            "pci_gen": self.get(data, "pci.pci_gpu_link_info.pcie_gen.current_link_gen", "?"),
-            "pci_width": self.get(data, "pci.pci_gpu_link_info.link_widths.current_link_width", "?"),
-            "fan_speed": f"{self.get(data, 'fan_speed')}{self.get(data, 'fan_speed_unit')}",
-            "vram_total": f"{self._mem(self.get(data, 'fb_memory_usage.total', '0'))}",
-            "vram_used": f"{self._mem(self.get(data, 'fb_memory_usage.used', '0'))}",
-            "vram_free": f"{self._mem(self.get(data, 'fb_memory_usage.free', '0'))}",
-            "load": f"{gpu_util}{self.get(data, 'utilization.unit')}",
-            "temp": f"{gpu_temp}{self.get(data, 'temperature.unit')}",
-            "power": f"{gpu_power}{self.get(data, 'power_readings.unit')}",
-            "avg_load": f"{avg_load}{self.get(data, 'utilization.unit')}",
-            "avg_temp": f"{avg_temp}{self.get(data, 'temperature.unit')}",
-            "avg_power": f"{avg_power}{self.get(data, 'power_readings.unit')}",
-        }
-
-
 class TerminalUI:
     REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
@@ -153,7 +66,10 @@ class TerminalUI:
     }
 
     # Refresh interval in seconds to call API for remote worker stats
-    REMOTE_STATS_REFRESH = 30
+    REMOTE_STATS_REFRESH = 5
+
+    # Refresh interval in seconds for API calls to get overall ai horde stats
+    REMOTE_HORDE_STATS_REFRESH = 60
 
     COLOUR_RED = 1
     COLOUR_GREEN = 2
@@ -175,8 +91,16 @@ class TerminalUI:
 
     CLIENT_AGENT = "terminalui:1:db0"
 
-    def __init__(self, worker_name=None, apikey=None, url="https://stablehorde.net"):
-        self.url = url
+    def __init__(self, bridge_data):
+        self.bridge_data = bridge_data
+        self.worker_name = self.bridge_data.worker_name
+        self.apikey = self.bridge_data.api_key
+        if hasattr(self.bridge_data, "horde_url"):
+            self.url = self.bridge_data.horde_url
+        elif hasattr(self.bridge_data, "kai_url"):
+            self.url = self.bridge_data.kai_url
+        self._worker_info_thread = None
+        self._horde_stats_thread = None
         self.main = None
         self.width = 0
         self.height = 0
@@ -189,39 +113,20 @@ class TerminalUI:
         self.log_file = None
         self.input = DequeOutputCollector()
         self.output = DequeOutputCollector()
-        self.worker_name = worker_name
-        self.apikey = apikey
-        self.worker_id = self.load_worker_id()
-        self.start_time = time.time()
-        self.last_stats_refresh = 0
-        self.jobs_done = 0
-        self.kudos_per_hour = 0
-        self.jobs_per_hour = 0
+        self.worker_id = None
+        threading.Thread(target=self.load_worker_id, daemon=True).start()
+        self.last_stats_refresh = time.time() - (TerminalUI.REMOTE_STATS_REFRESH - 3)
+        self.last_horde_stats_refresh = time.time() - (TerminalUI.REMOTE_HORDE_STATS_REFRESH - 3)
         self.maintenance_mode = False
-        self.total_kudos = 0
-        self.total_worker_kudos = 0
-        self.total_uptime = 0
-        self.performance = "unknown"
-        self.threads = 0
-        self.total_failed_jobs = 0
-        self.total_models = 0
-        self.total_jobs = 0
-        self.queued_requests = 0
-        self.worker_count = 0
-        self.thread_count = 0
-        self.queued_mps = 0
-        self.last_minute_mps = 0
-        self.queue_time = 0
         self.gpu = GPUInfo()
         self.gpu.samples_per_second = 5
-        self.error_count = 0
-        self.warning_count = 0
         self.commit_hash = self.get_commit_hash()
         self.cpu_average = []
         self.audio_alerts = False
         self.last_audio_alert = 0
         self.stdout = DequeOutputCollector()
         self.stderr = DequeOutputCollector()
+        self.reset_stats()
 
     def initialise(self):
         # Suppress stdout / stderr
@@ -241,7 +146,7 @@ class TerminalUI:
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
         self.resize()
-        self.get_remote_worker_info()
+        # self.get_remote_worker_info()
 
     def open_log(self):
         # We try a couple of times, log rotiation, etc
@@ -300,7 +205,6 @@ class TerminalUI:
                 self.kudos_per_hour = int(regex.group(1))
             if regex := TerminalUI.JOBDONE_REGEX.match(line):
                 self.jobs_done += 1
-                self.jobs_per_hour = int(3600 / ((time.time() - self.start_time) / self.jobs_done))
 
         self.output.set_size(self.height)
 
@@ -372,6 +276,8 @@ class TerminalUI:
         self.print(self.main, height - 1, width - 1, TerminalUI.ART["bottom_right"])
 
     def seconds_to_timestring(self, seconds):
+        if isinstance(seconds, str):
+            return seconds
         hours = int(seconds // 3600)
         days = hours // 24
         hours %= 24
@@ -390,13 +296,37 @@ class TerminalUI:
         seconds = int((time.time() - self.start_time) % 60)
         return f"{hours}:{minutes:02}:{seconds:02}"
 
+    def reset_stats(self):
+        bridge_stats.reset()
+        self.start_time = time.time()
+        self.jobs_done = 0
+        self.kudos_per_hour = 0
+        self.pop_time = 0
+        self.jobs_per_hour = "Pending"
+        self.total_kudos = "Pending"
+        self.total_worker_kudos = "Pending"
+        self.total_uptime = "Pending"
+        self.performance = "unknown"
+        self.threads = "Pending"
+        self.total_failed_jobs = "Pending"
+        self.total_models = "Pending"
+        self.total_jobs = "Pending"
+        self.queued_requests = "Pending"
+        self.worker_count = "Pending"
+        self.thread_count = "Pending"
+        self.queued_mps = "Pending"
+        self.last_minute_mps = "Pending"
+        self.queue_time = "Pending"
+        self.error_count = 0
+        self.warning_count = 0
+
     def print_switch(self, y, x, label, switch):
         colour = curses.color_pair(TerminalUI.COLOUR_CYAN) if switch else curses.color_pair(TerminalUI.COLOUR_WHITE)
         self.print(self.main, y, x, label, colour)
         return x + len(label) + 2
 
     def get_free_ram(self):
-        mem = psutil.virtual_memory().free
+        mem = psutil.virtual_memory().available
         percent = 100 - trunc(psutil.virtual_memory().percent)
         mem /= 1048576
         unit = "MB"
@@ -416,11 +346,11 @@ class TerminalUI:
 
     def print_status(self):
         # This is the design template: (80 columns)
-        # ╔═AIDream-01══════════════════════════════════════════════════════════════════╗
+        # ╔═AIDream-01════════════════════════════════════════════════(0.10.10)══000000═╗
         # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
-        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)                            ║
+        # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)      Job Fetch: 2.32s      ║
         # ╟─NVIDIA GeForce RTX 3090─────────────────────────────────────────────────────╢
         # ║   Load: 100% (90%)        VRAM Total: 24576MiB        Fan Speed: 100%       ║
         # ║   Temp: 100C (58C)         VRAM Used: 16334MiB          PCI Gen: 5          ║
@@ -432,7 +362,7 @@ class TerminalUI:
         # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
         # ║                        Total Workers: 1000        Total Threads: 1000       ║
         # ║                                                                             ║
-        # ║            (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (q)uit  ║
+        # ║   (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (r)eset  (q)uit  ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
         # Define three colums centres
@@ -456,6 +386,7 @@ class TerminalUI:
         self.draw_line(self.main, row_horde, "Entire Horde")
         self.print(self.main, row_local, 2, f"{self.worker_name}")
         self.print(self.main, row_local, self.width - 8, f"{self.commit_hash[:6]}")
+        self.print(self.main, row_local, self.width - 19, f"({self.get_hordelib_version()})")
 
         label(row_local + 1, col_left, "Uptime:")
         label(row_local + 2, col_left, "Models:")
@@ -468,6 +399,7 @@ class TerminalUI:
         label(row_local + 1, col_right, "Performance:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Errors:")
+        label(row_local + 4, col_right, "Job Fetch:")
 
         label(row_gpu + 1, col_left, "Load:")
         label(row_gpu + 2, col_left, "Temp:")
@@ -500,6 +432,7 @@ class TerminalUI:
         self.print(self.main, row_local + 3, col_left, f"{self.threads}")
         self.print(self.main, row_local + 3, col_mid, f"{self.warning_count}")
         self.print(self.main, row_local + 3, col_right, f"{self.error_count}")
+        self.print(self.main, row_local + 4, col_right, f"{self.pop_time} s")
 
         # Add some warning colours to free ram
         ram = self.get_free_ram()
@@ -559,6 +492,7 @@ class TerminalUI:
             "(d)ebug",
             "(p)ause log",
             "(a)udio alerts",
+            "(r)eset",
             "(q)uit",
         ]
         x = self.width - len("  ".join(inputs)) - 2
@@ -569,6 +503,7 @@ class TerminalUI:
         x = self.print_switch(y, x, inputs[3], self.pause_log)
         x = self.print_switch(y, x, inputs[4], self.audio_alerts)
         x = self.print_switch(y, x, inputs[5], False)
+        x = self.print_switch(y, x, inputs[6], False)
 
     def fit_output_to_term(self, output):
         # How many lines of output can we fit, after line wrapping?
@@ -635,40 +570,55 @@ class TerminalUI:
             inputrow += 1
 
     def load_worker_id(self):
-        if not self.worker_name:
-            return None
-        workers_url = f"{self.url}/api/v2/workers"
-        try:
-            r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
-        except requests.exceptions.RequestException:
-            return None
-        if r.ok:
-            worker_json = r.json()
-            return next(
-                (item["id"] for item in worker_json if item["name"] == self.worker_name),
-                None,
-            )
-        return None
+        while not self.worker_id:
+            if not self.worker_name:
+                logger.warning("Still waiting to determine worker name")
+                time.sleep(5)
+                continue
+            workers_url = f"{self.url}/api/v2/workers"
+            try:
+                logger.warning("Requesting worker ID")
+                r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+            except requests.exceptions.Timeout:
+                logger.warning("Timeout while waiting for worker ID from API")
+            except requests.exceptions.RequestException as ex:
+                logger.error(f"Failed to get worker ID {ex}")
+            if r.ok:
+                worker_json = r.json()
+                self.worker_id = next(
+                    (item["id"] for item in worker_json if item["name"] == self.worker_name),
+                    None,
+                )
+                logger.warning(f"Found worker ID {self.worker_id}")
+            else:
+                logger.warning(f"Failed to get worker ID {r.status_code}")
+            time.sleep(5)
 
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
             return
         header = {"apikey": self.apikey, "client-agent": TerminalUI.CLIENT_AGENT}
-        payload = {"maintenance": enabled, "name": self.worker_name}
+        payload = {"maintenance": enabled}
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
-        requests.put(worker_URL, json=payload, headers=header)
+        res = requests.put(worker_URL, json=payload, headers=header)
+        if not res.ok:
+            logger.error(f"Maintenance mode failed: {res.text}")
 
     def get_remote_worker_info(self):
         if not self.worker_id:
-            self.worker_id = self.load_worker_id()
-        if not self.worker_id:
+            logger.warning("Still waiting to determine worker ID")
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         try:
-            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT})
+            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+        except requests.exceptions.Timeout:
+            logger.warning("Worker info API failed to respond in time")
+            return
         except requests.exceptions.RequestException:
+            logger.warning("Worker info API request failed {ex}")
             return
         if not r.ok:
+            logger.warning(f"Calling Worker information API failed ({r.status_code})")
             return
         data = r.json()
 
@@ -686,18 +636,19 @@ class TerminalUI:
 
         if worker_type == "image":
             self.performance = perf.replace("megapixelsteps per second", "MPS/s")
-            self.total_models = len(data.get("models", []))
         elif worker_type == "interrogation":
             self.performance = perf.replace("seconds per form", "SPF")
-            self.total_models = 0
 
     def get_remote_horde_stats(self):
         url = f"{self.url}/api/v2/status/performance"
         try:
-            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT})
+            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=10)
+        except requests.exceptions.Timeout:
+            pass
         except requests.exceptions.RequestException:
             return
         if not r.ok:
+            logger.warning(f"Calling AI Horde stats API failed ({r.status_code})")
             return
         data = r.json()
         self.queued_requests = int(data.get("queued_requests", 0))
@@ -708,10 +659,23 @@ class TerminalUI:
         self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
 
     def update_stats(self):
+        # Total models
+        self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
+        # Recent job pop times
+        if "pop_time_avg_5_mins" in bridge_stats.stats:
+            self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
+        if "jobs_per_hour" in bridge_stats.stats:
+            self.jobs_per_hour = bridge_stats.stats["jobs_per_hour"]
+
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
-            threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
-            threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
+            if (self._worker_info_thread and not self._worker_info_thread.is_alive()) or not self._worker_info_thread:
+                self._worker_info_thread = threading.Thread(target=self.get_remote_worker_info, daemon=True).start()
+
+        if time.time() - self.last_horde_stats_refresh > TerminalUI.REMOTE_HORDE_STATS_REFRESH:
+            self.last_horde_stats_refresh = time.time()
+            if (self._horde_stats_thread and not self._horde_stats_thread.is_alive()) or not self._horde_stats_thread:
+                self._horde_stats_thread = threading.Thread(target=self.get_remote_horde_stats, daemon=True).start()
 
     def get_commit_hash(self):
         head_file = os.path.join(".git", "HEAD")
@@ -738,18 +702,20 @@ class TerminalUI:
         self.last_key = x
         if x == curses.KEY_RESIZE:
             self.resize()
-        elif x == ord("d"):
+        elif x == ord("d") or x == ord("D"):
             self.show_debug = not self.show_debug
-        elif x == ord("s"):
+        elif x == ord("s") or x == ord("S"):
             self.show_module = not self.show_module
-        elif x == ord("a"):
+        elif x == ord("a") or x == ord("A"):
             self.audio_alerts = not self.audio_alerts
-        elif x == ord("q"):
+        elif x == ord("r") or x == ord("R"):
+            self.reset_stats()
+        elif x == ord("q") or x == ord("Q"):
             return True
-        elif x == ord("m"):
+        elif x == ord("m") or x == ord("M"):
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
-        elif x == ord("p"):
+        elif x == ord("p") or x == ord("P"):
             self.pause_log = not self.pause_log
 
         return None
@@ -766,36 +732,28 @@ class TerminalUI:
 
     def main_loop(self, stdscr):
         self.main = stdscr
-        try:
-            self.initialise()
-            while True:
-                if self.poll():
-                    return
-                time.sleep(1 / self.gpu.samples_per_second)
-        except KeyboardInterrupt:
-            return
+        while True:
+            try:
+                self.initialise()
+                while True:
+                    if self.poll():
+                        return
+                    time.sleep(1 / self.gpu.samples_per_second)
+            except KeyboardInterrupt:
+                return
+            except Exception as exc:
+                logger.error(str(exc))
 
     def run(self):
         curses.wrapper(self.main_loop)
 
+    def get_hordelib_version(self):
+        try:
+            package_version = pkg_resources.get_distribution("hordelib").version
+            return package_version
+        except pkg_resources.DistributionNotFound:
+            return "Unknown"
+
 
 if __name__ == "__main__":
-    # From the project root: runtime.cmd python -m worker.ui
-    # This will connect to the currently running worker via it's log file,
-    # very useful for development or connecting to a worker running as a background
-    # service.
-
-    workername = ""
-    apikey = ""
-
-    # Grab worker name and apikey if available
-    if os.path.isfile("bridgeData.yaml"):
-        with open("bridgeData.yaml", "rt", encoding="utf-8", errors="ignore") as configfile:
-            configdata = yaml.safe_load(configfile)
-            workername = configdata.get("worker_name", "")
-            apikey = configdata.get("api_key", "")
-
-    term = TerminalUI(workername, apikey)
-    # Standalone UI we need to inspect the log file
-    term.use_log_file = True
-    term.run()
+    print("Enable the terminal UI in bridgeData.yaml")

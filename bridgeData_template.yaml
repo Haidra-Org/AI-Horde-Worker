@@ -1,9 +1,9 @@
 ## Common for all worker Types
 
 # The horde url
-horde_url: "https://stablehorde.net"
+horde_url: "https://aihorde.net"
 # Give a cool name to your instance
-worker_name: "My Awesome Instance"
+worker_name: "An Awesome AI Horde Worker"
 # The api_key identifies a unique user in the horde
 # Visit https://stablehorde.net/register to create one before you can join
 api_key: "0000000000"
@@ -25,8 +25,10 @@ require_upfront_kudos: false
 # If you set this to True, the worker will detect the most popular models and load them automatically ( Defaults to True if missing )
 # Note this ultimately overrides the models_to_load list
 
-## Stable Diffusion Worker
+## Dreamer (Stable Diffusion Worker)
 
+# The name to use when running a dreamer instance. Will default to `worker_name` if not set
+dreamer_name: "An Awesome Dreamer"
 # The amount of power your system can handle
 # 8 means 512*512. Each increase increases the possible resoluion by 64 pixes
 # So if you put this to 2 (the minimum, your SD can only generate 64x64 pixels
@@ -54,9 +56,9 @@ allow_post_processing: true
 # If your controlnet jobs crash by running out of CUDA VRAM, set this to false
 allow_controlnet: false # needs at least 12G VRAM
 # Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
-dynamic_models: true
+dynamic_models: false
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
-number_of_dynamic_models: 3
+number_of_dynamic_models: 0
 # The maximum amount of models to download dynamically for this worker. Increase this amount of you have plenty of space. Keep it low if you do not
 # When the amount of models downloaded reaches this amount, the dynamic list will only use dynamic models already downloaded
 # Therefore make sure you put some generalist and popular models in your models_to_load list if this number is small!
@@ -65,19 +67,28 @@ max_models_to_download: 10
 # Set to zero to disable stats output completely.
 stats_output_frequency: 30
 # The location in which stable diffusion ckpt models are stored
-nataili_cache_home: "./"
-# Enable or disable low vram mode. Leave enabled if unsure
-low_vram_mode: true
-# Enable or disable model caching. If you have a lot of models, enable this to reduce the worker startup time and reduce RAM usage.
-enable_model_cache: false
+cache_home: "./"
 # Always download models when required without prompting
-always_download: false
-# The location of the ray temp directly, also used for the model cache
-ray_temp_dir: "./ray"
-# If voodoo is disabled, caching models in RAM and on disk is disabled and models are loaded directly into VRAM. Total size of models loaded must fit in VRAM.
-disable_voodoo: false
+always_download: true
+# The location of the temp directory, also used for the model cache
+temp_dir: "./tmp"
 # Enable the terminal GUI, which displays information about the worker and the horde.
 enable_terminal_ui: false
+# VRAM to leave unused, as a percentage or in MB. VRAM the worker can use will be used to load and cache models.
+# Note this NOT the amount of VRAM to use, it's the amount to KEEP FREE. So if something else starts using
+# VRAM the worker will attempt to release it to allow the other software to use it. 
+# Don't set this too high, or you will run out of vram when it can't be released fast enough.
+vram_to_leave_free: "40%"
+# RAM to leave unused, as a percentage or in MB. RAM the worker can use will be used to cache models. Same 
+# notes as for VRAM.
+# Don't set this too high or your OS will likely start using lots of swap space and everything will slow down.
+ram_to_leave_free: "40%"
+# Disable the disk cache. By default if RAM and VRAM are filled (up to the limits above) then models will
+# spill over in to a disk cache. If you don't want this to happen you can disable it here. Note that if you
+# disable disk cache and specify more models to load than will fit in memory your worker will endlessly cycle
+# loading and unloading models.
+disable_disk_cache: false
+
 
 # The models to use. You can select a different main model, or select more than one.
 # With you can easily load 20 of these models with 32Gb RAM and 6G VRAM.
@@ -95,10 +106,11 @@ enable_terminal_ui: false
 #   "ALL SFW MODELS"  -  All models marked as being SFW
 #   "ALL NSFW MODELS"  -  All models marked as being NSFW
 models_to_load:
+  - "top 2"
   #- "ALL MODELS"
   #- "TOP 3"
-  - "stable_diffusion_2.1"
-  - "stable_diffusion"
+  #- "stable_diffusion_2.1"
+  #- "stable_diffusion"
   #- "Anything Diffusion"
   #- "Yiffy"
   #- "waifu_diffusion"
@@ -110,23 +122,42 @@ models_to_load:
   #- "Knollingcase"
   #- "stable_diffusion_inpainting"
 
-# This is used when dynamic_models == True
+# This is used when dynamic_models == True or TOP n models are selected in models_to_load
 # The models in this list will not be loaded when they exist in the top models
 # This is to avoid loading models which you do not want either due to VRAM constraints, or due to NSFW content
 models_to_skip:
-  - "stable_diffusion_inpainting"  # Inpainting is generally quite heavy along with other models for smaller GPUs.
+  - "pix2pix"
+  #- "stable_diffusion_inpainting"  # Inpainting is generally quite heavy along with other models for smaller GPUs.
   #- "stable_diffusion_2.1",  # Stable diffusion 2.1 has bigger memory requirements than 1.5, so if your card cannot lift, it, disable it
   #- "stable_diffusion_2.0",  # Same as Stable diffusion 2.1
   ## Popular NSFW models:
   #- "Zeipher Female Model"
   #- "Hentai Diffusion"
 
-## Interrogation Worker
 
-# The interrogation forms this worker can serve.
+## Scribe (LLM Worker)
+
+# The name to use when running a scribe worker. Will default to `worker_name` if not set
+scribe_name: "An Awesome Scribe"
+# The KoboldAI Client API URL
+kai_url: "http://localhost:5000"
+# The max amount of tokens to generate with this worker 
+max_length: 80
+# The max tokens to use from the prompt
+max_context_length: 1024
+# When set to true, the horde alias behing the API key will be appended to the model that is advertised to the horde
+# This will prevent the model from being used from the shared pool, but will ensure that no other worker
+# can pretend to serve it
+branded_model: true
+
+## Alchemist (Image interrogation and post-processing)
+
+# The name to use when running an alchemist worker. Will default to `worker_name` if not set
+alchemist_name: "An Awesome Alchemist"
+# The alchemy forms this worker can serve.
 forms:
   - "caption"
   - "nsfw" # uses CPU
   # Heavier than the others, but rewards more kudos
-  #- "interrogation"
-  #- "post-process"
+  - "interrogation"
+  - "post-process"

@@ -4,10 +4,8 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from nataili.util.logger import logger
-
+from worker.logger import logger
 from worker.stats import bridge_stats
-from worker.ui import TerminalUI
 
 
 class WorkerFramework:
@@ -41,7 +39,9 @@ class WorkerFramework:
             if not self.bridge_data.always_download:
                 logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
             else:
-                ui = TerminalUI(self.bridge_data.worker_name, self.bridge_data.api_key, self.bridge_data.horde_url)
+                from worker.ui import TerminalUI
+
+                ui = TerminalUI(self.bridge_data)
                 self.ui = threading.Thread(target=ui.run, daemon=True)
                 self.ui.start()
 
@@ -67,24 +67,33 @@ class WorkerFramework:
                     sys.exit(self.exit_rc)
 
     def process_jobs(self):
+        # logger.debug("Cron: Starting process_jobs()")
         if time.time() - self.last_config_reload > 60:
             self.reload_bridge_data()
         if not self.can_process_jobs():
+            # logger.debug("Cron: SLEEPING FOR 5 SECONDS")
             time.sleep(5)
             return
         # Add job to queue if we have space
         if len(self.waiting_jobs) < self.bridge_data.queue_size:
+            # logger.debug("Cron: Starting to add job to queue")
             self.add_job_to_queue()
+            # logger.debug("Cron: End to add job to queue")
         # Start new jobs
+        # logger.debug("Cron: Starting to start new jobs")
         while len(self.running_jobs) < self.bridge_data.max_threads and self.start_job():
             pass
+        # logger.debug("Cron: End of start new jobs")
         # Check if any jobs are done
+        # logger.debug("Cron: Starting to check if jobs are done")
         for job_thread, start_time, job in self.running_jobs:
             self.check_running_job_status(job_thread, start_time, job)
             if self.should_restart or self.should_stop:
                 break
+        # logger.debug("Cron: End of check if jobs are done")
         # Give the CPU a break
         time.sleep(0.02)
+        # logger.debug("Cron: End process_jobs()")
 
     def can_process_jobs(self):
         """This function returns true when this worker can start polling for jobs from the AI Horde
@@ -176,9 +185,9 @@ class WorkerFramework:
             return
 
         # Check periodically if any interesting stats should be announced
-        if self.bridge_data.stats_output_frequency and time.time() - self.last_stats_time > min(
-            self.bridge_data.stats_output_frequency,
-            30,
+        if (
+            self.bridge_data.stats_output_frequency
+            and (time.time() - self.last_stats_time) > self.bridge_data.stats_output_frequency
         ):
             self.last_stats_time = time.time()
             logger.info(f"Estimated average kudos per hour: {bridge_stats.stats.get('kudos_per_hour', 0)}")

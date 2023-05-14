@@ -2,9 +2,10 @@
 import time
 
 import regex as re
-from nataili.clip.interrogate import Interrogator
-from nataili.util.logger import logger
+from hordelib.clip.interrogate import Interrogator
 from unidecode import unidecode
+
+from worker.logger import logger
 
 UNDERAGE_CONTEXT = {
     "lolicon": 0.2,
