@@ -14,6 +14,12 @@ class InterrogationBridgeData(BridgeDataTemplate):
         super().__init__(args)
         self.forms = os.environ.get("HORDE_INTERROGATION_FORMS", "caption").split(",")
         self.model_names = []
+        # Where we load models from
+        if not hasattr(self, "cache_home"):
+            if not hasattr(self, "nataili_cache_home"):
+                self.cache_home = os.environ.get("AIWORKER_CACHE_HOME", "./")
+            else:
+                self.cache_home = self.nataili_cache_home
 
     @logger.catch(reraise=True)
     def reload_data(self):

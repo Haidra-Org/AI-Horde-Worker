@@ -57,7 +57,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.stale_time = time.time() + (self.current_payload.get("ddim_steps", 50) * 3) + 10
         if self.current_payload.get("control_type"):
             self.stale_time = self.stale_time * 3
-        self.stale_time += 3 * count_parentheses(self.current_payload["prompt"])
         # PoC Stuff
         if "ViT-L/14" in self.available_models:
             logger.debug("ViT-L/14 model loaded")
