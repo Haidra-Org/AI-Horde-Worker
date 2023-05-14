@@ -702,20 +702,20 @@ class TerminalUI:
         self.last_key = x
         if x == curses.KEY_RESIZE:
             self.resize()
-        elif x == ord("d"):
+        elif x == ord("d") or x == ord("D"):
             self.show_debug = not self.show_debug
-        elif x == ord("s"):
+        elif x == ord("s") or x == ord("S"):
             self.show_module = not self.show_module
-        elif x == ord("a"):
+        elif x == ord("a") or x == ord("A"):
             self.audio_alerts = not self.audio_alerts
-        elif x == ord("r"):
+        elif x == ord("r") or x == ord("R"):
             self.reset_stats()
-        elif x == ord("q"):
+        elif x == ord("q") or x == ord("Q"):
             return True
-        elif x == ord("m"):
+        elif x == ord("m") or x == ord("M"):
             self.maintenance_mode = not self.maintenance_mode
             self.set_maintenance_mode(self.maintenance_mode)
-        elif x == ord("p"):
+        elif x == ord("p") or x == ord("P"):
             self.pause_log = not self.pause_log
 
         return None
