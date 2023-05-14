@@ -577,7 +577,6 @@ class TerminalUI:
                 continue
             workers_url = f"{self.url}/api/v2/workers"
             try:
-                logger.warning("Requesting worker ID")
                 r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
             except requests.exceptions.Timeout:
                 logger.warning("Timeout while waiting for worker ID from API")
@@ -593,7 +592,7 @@ class TerminalUI:
                     logger.warning(f"Found worker ID {self.worker_id}")
                 else:
                     # Our worker is not yet in the worker results from the API (cache delay)
-                    logger.warning(f"Waiting for the AI Horde to acknowledge the worker")
+                    logger.warning(f"Waiting for the AI Horde to acknowledge this worker to fetch worker ID")
             else:
                 logger.warning(f"Failed to get worker ID {r.status_code}")
             time.sleep(5)
@@ -610,7 +609,6 @@ class TerminalUI:
 
     def get_remote_worker_info(self):
         if not self.worker_id:
-            logger.warning("Still waiting to determine worker ID")
             return
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         try:
