@@ -189,8 +189,11 @@ class WorkerFramework:
             self.bridge_data.stats_output_frequency
             and (time.time() - self.last_stats_time) > self.bridge_data.stats_output_frequency
         ):
+            # Calculate uptime bonus (*6 as this calc is per 10 minutes of uptime)
+            bonus_per_hour = (50 + (len(self.model_manager.get_loaded_models_names()) * 2)) * 6 
             self.last_stats_time = time.time()
-            logger.info(f"Estimated average kudos per hour: {bridge_stats.stats.get('kudos_per_hour', 0)}")
+            kph = bridge_stats.stats.get('kudos_per_hour', 0) + bonus_per_hour
+            logger.info(f"Estimated average kudos per hour: {kph}")
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
