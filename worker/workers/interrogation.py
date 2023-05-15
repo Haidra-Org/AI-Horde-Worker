@@ -26,3 +26,6 @@ class InterrogationWorker(WorkerFramework):
         super().reload_data()
         self.bridge_data.check_models(self.model_manager)
         self.bridge_data.reload_models(self.model_manager)
+
+    def get_uptime_kudos(self):
+        return 40 * 6
