@@ -7,6 +7,7 @@ from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
 from worker.logger import logger
 from worker.workers.framework import WorkerFramework
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 
 
 class StableDiffusionWorker(WorkerFramework):
@@ -104,3 +105,20 @@ class StableDiffusionWorker(WorkerFramework):
                 trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
                 logger.trace(trace)
         super().reload_bridge_data()
+
+    def get_uptime_kudos(self):
+        # *6 as this calc is per 10 minutes of uptime
+        available_models = self.model_manager.get_loaded_models_names()
+        # FIXME: pass MMs to exclude when get_loaded_models_names() updated in hordelib
+        for util_model in (
+            list(KNOWN_INTERROGATORS)
+            + list(POST_PROCESSORS_HORDELIB_MODELS)
+            + [
+                "LDSR",
+                "safety_checker",
+            ]
+        ):
+            if util_model in available_models:
+                available_models.remove(util_model)
+
+        return (50 + (len(self.model_manager.get_loaded_models_names()) * 2)) * 6
