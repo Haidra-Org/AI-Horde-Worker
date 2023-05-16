@@ -3,11 +3,11 @@ import traceback
 
 import requests
 
+from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.jobs.poppers import StableDiffusionPopper
 from worker.jobs.stable_diffusion import StableDiffusionHordeJob
 from worker.logger import logger
 from worker.workers.framework import WorkerFramework
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 
 
 class StableDiffusionWorker(WorkerFramework):

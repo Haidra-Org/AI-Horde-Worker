@@ -191,16 +191,15 @@ class WorkerFramework:
         ):
             bonus_per_hour = self.get_uptime_kudos()
             self.last_stats_time = time.time()
-            kph = bridge_stats.stats.get('kudos_per_hour', 0) + bonus_per_hour
+            kph = bridge_stats.stats.get("kudos_per_hour", 0) + bonus_per_hour
             logger.info(f"Estimated average kudos per hour: {kph}")
 
     def get_uptime_kudos(self):
-        '''Returns the expected uptime kudos for this worker
+        """Returns the expected uptime kudos for this worker
         This should be extended for each type of worker
-        '''
+        """
         # *6 as this calc is per 10 minutes of uptime
         return 50 * 6
-
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""

@@ -592,7 +592,7 @@ class TerminalUI:
                     logger.warning(f"Found worker ID {self.worker_id}")
                 else:
                     # Our worker is not yet in the worker results from the API (cache delay)
-                    logger.warning(f"Waiting for the AI Horde to acknowledge this worker to fetch worker ID")
+                    logger.warning("Waiting for the AI Horde to acknowledge this worker to fetch worker ID")
             else:
                 logger.warning(f"Failed to get worker ID {r.status_code}")
             time.sleep(5)
