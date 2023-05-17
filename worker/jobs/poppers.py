@@ -186,9 +186,12 @@ class StableDiffusionPopper(JobPopper):
 
             logger.warning(f"Could not download source image from R2 {source_img}. Skipping source image.")
             return None
-
-        base64_bytes = source_img.encode("utf-8")
-        img_bytes = base64.b64decode(base64_bytes)
+        try:
+            base64_bytes = source_img.encode("utf-8")
+            img_bytes = base64.b64decode(base64_bytes)
+        except Exception as err:
+            logger.warning(f"Could not decode source image from base 64  with error: '{err}'. Skipping source image.")
+            return None
         return Image.open(BytesIO(img_bytes))
 
 
