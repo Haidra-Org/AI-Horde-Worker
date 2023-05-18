@@ -18,14 +18,14 @@ set "scribe="
 setlocal EnableDelayedExpansion
 for %%a in (%*) do (
     if /I "%%a"=="--hordelib" set "hordelib=true"
-    if /I "%%a"=="--scribe" set    
+    if /I "%%a"=="--scribe" set "scribe=true"
 )
 endlocal
 
 REM Check if hordelib argument is defined
 if defined hordelib (
-  umamba run -r conda -n windows python -s -m pip uninstall -y hordelib
-  umamba run -r conda -n windows python -s -m pip install hordelib
+  umamba run -r conda -n windows python -s -m pip uninstall -y hordelib horde_model_reference
+  umamba run -r conda -n windows python -s -m pip install hordelib horde_model_reference
 ) else (
   if defined scribe (
     umamba run -r conda -n windows python -s -m pip install -r requirements-scribe.txt

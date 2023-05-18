@@ -30,8 +30,8 @@ if [ ! -f "conda/envs/linux/bin/python" ]; then
 fi
 
 if [ "$hordelib" = true ]; then
- bin/micromamba run -r conda -n linux python -s -m pip uninstall -y hordelib
- bin/micromamba run -r conda -n linux python -s -m pip install hordelib
+ bin/micromamba run -r conda -n linux python -s -m pip uninstall -y hordelib horde_model_reference
+ bin/micromamba run -r conda -n linux python -s -m pip install hordelib horde_model_reference
 elif [ "$scribe" = true ]; then
  bin/micromamba run -r conda -n linux python -s -m pip install -r requirements-scribe.txt
 else
