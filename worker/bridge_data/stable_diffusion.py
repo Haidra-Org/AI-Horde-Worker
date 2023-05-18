@@ -38,9 +38,9 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.censor_image_csam = Image.open("assets/nsfw_censor_csam.png")
         self.models_reloading = False
         self.model = None
-        self.always_download = False
-        self.dynamic_models = True
-        self.number_of_dynamic_models = 3
+        self.always_download = True
+        self.dynamic_models = False
+        self.number_of_dynamic_models = 0
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
@@ -72,7 +72,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if hasattr(self, "dreamer_name") and not self.args.worker_name:
             self.worker_name = self.dreamer_name
         if not hasattr(self, "models_to_load"):
-            self.models_to_load = []
+            self.models_to_load = ["top 2"]
 
         # Check for magic constants and expand them
         top_n = 0
