@@ -101,7 +101,7 @@ class InterrogationHordeJob(HordeJobFramework):
                 self.status = JobStatus.FAULTED
                 self.start_submit_thread()
                 return
-        logger.info(f"Finished interrogation {self.current_id}")
+        logger.info(f"Finished alchemy {self.current_id}")
         interrogator = None
         self.start_submit_thread()
 
