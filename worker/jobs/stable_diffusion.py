@@ -353,7 +353,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
 
     # TODO: Probably fits better in the MM
     def is_inpainting_model(self, model_name):
-        return self.model_manager.models[model_name].get("style") == "inpainting"
+        return self.model_manager.models[model_name].get("inpainting")
 
 
 def count_parentheses(s):
