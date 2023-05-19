@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
-
+      
+permissions:
+  contents: write
+  pull-requests: read
+  
 jobs:
   build-n-publish:
     name: AI Horde Worker new release
