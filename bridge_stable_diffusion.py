@@ -67,7 +67,7 @@ def main():
         if bridge_data.allow_controlnet:
             annotators_preloaded_successfully = SharedModelManager.preloadAnnotators()
         if not annotators_preloaded_successfully:
-            logger.warning("Annotators were not preloaded. ControlNet will not be available.", status="Warning")
+            logger.warning("Annotators were not preloaded. ControlNet will not be available.")
             bridge_data.allow_controlnet = False
 
         worker.start()
