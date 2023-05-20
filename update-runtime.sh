@@ -24,9 +24,14 @@ esac
 shift # past argument or value
 done
 
+CONDA_ENVIRONMENT_FILE=environment.yaml
+if [ "$scribe" = true ];
+    CONDA_ENVIRONMENT_FILE=environment_scribe.yaml
+fi
+
 wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 if [ ! -f "conda/envs/linux/bin/python" ]; then
- bin/micromamba create --no-shortcuts -r conda -n linux -f environment.yaml -y
+    bin/micromamba create --no-shortcuts -r conda -n linux -f ${CONDA_ENVIRONMENT_FILE} -y
 fi
 
 if [ "$hordelib" = true ]; then
