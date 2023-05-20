@@ -46,6 +46,12 @@ class WebUI:
             "info": "This is a the name of your worker. It needs to be unique to the whole horde. "
             "You cannot run different workers with the same name. It will be publicly visible.",
         },
+        "dreamer_name": {
+            "label": "Dreamer Name",
+            "info": "(Optional) This is the name of your image generation worker. "
+            "It needs to be unique to the whole horde. "
+            "Overrides worker_name if specified, and defaults to worker_name if left blank/default",
+        },
         "api_key": {
             "label": "API Key",
             "info": "This is your Stable Horde API Key. You can get one free at " "https://stablehorde.net/register ",
@@ -125,9 +131,8 @@ class WebUI:
         },
         "alchemist_name": {
             "label": "Alchemist Name",
-            "info": "This is the name of your Alchemist. It needs to be unique to the whole horde. "
-            "You cannot run different Alchemists with the same name. It will be publicly visible."
-            "Defaults to worker_name if not specified",
+            "info": "(Optional) This is the name of your Alchemist. It needs to be unique to the whole horde. "
+            "Overrides worker_name if specified, and defaults to worker_name if left blank/default",
         },
         "forms": {
             "label": "Alchemy Worker Features",
@@ -202,9 +207,9 @@ class WebUI:
         },
         "scribe_name": {
             "label": "Scribe Name",
-            "info": "This is a the name of your scribe worker. It needs to be unique to the whole horde. "
+            "info": "(Optional) This is a the name of your scribe worker. It needs to be unique to the whole horde. "
             "You cannot run different workers with the same name. It will be publicly visible. "
-            "Defaults to worker_name if not specified",
+            "Overrides worker_name if specified, and defaults to worker_name if left blank/default",
         },
         "kai_url": {
             "label": "Kai URL",
@@ -307,6 +312,15 @@ class WebUI:
                 donekeys.append(key)
             elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
                 config[cfgkey] = str(value) + "%"
+                donekeys.append(key)
+            elif cfgkey == "dreamer_name" and config[cfgkey] == "An Awesome Dreamer":
+                del config["dreamer_name"]
+                donekeys.append(key)
+            elif cfgkey == "scribe_name" and config[cfgkey] == "An Awesome Scribe":
+                del config["scribe_name"]
+                donekeys.append(key)
+            elif cfgkey == "alchemist_name" and config[cfgkey] == "An Awesome Alchemist":
+                del config["alchemist_name"]
                 donekeys.append(key)
 
         # Merge the settings we have been passed into the old config,
@@ -497,17 +511,18 @@ class WebUI:
                         value=config.worker_name,
                         info=self._info("worker_name"),
                     )
+                    config.default("dreamer_name", "An Awesome Dreamer")
+                    dreamer_name = gr.Textbox(
+                        label=self._label("dreamer_name"),
+                        value=config.dreamer_name,
+                        info=self._info("dreamer_name"),
+                    )
+                    config.default("alchemist_name", "An Awesome Alchemist")
                     alchemist_name = gr.Textbox(
                         label=self._label("alchemist_name"),
                         value=config.alchemist_name,
                         info=self._info("alchemist_name"),
                     )
-                    scribe_name = gr.Textbox(
-                        label=self._label("scribe_name"),
-                        value=config.scribe_name,
-                        info=self._info("scribe_name"),
-                    )
-
                     api_key = gr.Textbox(
                         label=self._label("api_key"),
                         value=config.api_key,
@@ -751,7 +766,7 @@ class WebUI:
                         value=config.enable_terminal_ui,
                         info=self._info("enable_terminal_ui"),
                     )
-                    config.default("horde_url", "https://stablehorde.net/")
+                    config.default("horde_url", "https://aihorde.net/")
                     horde_url = gr.Textbox(
                         label=self._label("horde_url"),
                         value=config.horde_url,
@@ -786,6 +801,12 @@ class WebUI:
                 with gr.Tab("Scribe Options"), gr.Column():
                     gr.Markdown(
                         "Options for the Scribes (text workers)",
+                    )
+                    config.default("scribe_name", "An Awesome Scribe")
+                    scribe_name = gr.Textbox(
+                        label=self._label("scribe_name"),
+                        value=config.scribe_name,
+                        info=self._info("scribe_name"),
                     )
                     config.default("kai_url", "http://localhost:5000")
                     kai_url = gr.Textbox(
@@ -838,6 +859,7 @@ class WebUI:
                     blacklist,
                     censor_nsfw,
                     censorlist,
+                    dreamer_name,
                     dynamic_models,
                     enable_terminal_ui,
                     forms,
