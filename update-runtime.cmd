@@ -5,7 +5,6 @@ cd /d "%~dp0"
 SET CONDA_SHLVL=
 SET PYTHONNOUSERSITE=1
 SET PYTHONPATH=
-SET CONDA_ENVIRONMENT_FILE=environment.yaml
 
 set "hordelib="
 set "scribe="
@@ -18,6 +17,8 @@ endlocal
 
 if defined scribe (
   SET CONDA_ENVIRONMENT_FILE=environment_scribe.yaml
+) else (
+  SET CONDA_ENVIRONMENT_FILE=environment.yaml
 )
 
 Reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d "1" /f 2>nul
