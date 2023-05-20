@@ -48,7 +48,8 @@ class WebUI:
         },
         "dreamer_name": {
             "label": "Dreamer Name",
-            "info": "(Optional) This is the name of your image generation worker. It needs to be unique to the whole horde. "
+            "info": "(Optional) This is the name of your image generation worker. "
+            "It needs to be unique to the whole horde. "
             "Overrides worker_name if specified, and defaults to worker_name if left blank/default",
         },
         "api_key": {
