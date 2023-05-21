@@ -6,17 +6,24 @@ SET CONDA_SHLVL=
 SET PYTHONNOUSERSITE=1
 SET PYTHONPATH=
 
-set "hordelib="
-set "scribe="
 setlocal EnableDelayedExpansion
 for %%a in (%*) do (
-    if /I "%%a"=="--hordelib" set "hordelib=true"
-    if /I "%%a"=="--scribe" set "scribe=true"
+    if /I "%%a"=="--hordelib" (
+        set hordelib=true
+    ) else (
+        set hordelib=
+    )
+    if /I "%%a"=="--scribe" (
+        set scribe=true
+    ) else (
+        set scribe=
+    )
 )
 endlocal
 
 if defined scribe (
   SET CONDA_ENVIRONMENT_FILE=environment_scribe.yaml
+
 ) else (
   SET CONDA_ENVIRONMENT_FILE=environment.yaml
 )
