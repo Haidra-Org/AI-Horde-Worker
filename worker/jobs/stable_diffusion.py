@@ -11,7 +11,6 @@ from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
 
 from worker import csam
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.jobs.kudos import KudosModel
