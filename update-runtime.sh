@@ -25,7 +25,7 @@ shift # past argument or value
 done
 
 CONDA_ENVIRONMENT_FILE=environment.yaml
-if [ "$scribe" = true ];
+if [ "$scribe" = true ]; then
     CONDA_ENVIRONMENT_FILE=environment_scribe.yaml
 fi
 
