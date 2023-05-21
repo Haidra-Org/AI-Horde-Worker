@@ -11,7 +11,6 @@ from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
 
 from worker import csam
-from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.jobs.kudos import KudosModel
@@ -135,38 +134,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 req_type = "img2img"
             elif source_processing == "inpainting":
                 req_type = "inpainting"
-        # Prevent inpainting from picking text2img requests
-        if req_type == "txt2img" and self.is_inpainting_model(self.current_model):
-            # Try to find any other compvis model to do text2img or img2img
-            for available_model in self.available_models:
-                if (
-                    self.is_inpainting_model(available_model)
-                    and available_model not in POST_PROCESSORS_HORDELIB_MODELS | KNOWN_INTERROGATORS
-                    and available_model in self.model_manager.compvis.get_loaded_models_names()
-                ):
-                    logger.debug(
-                        [
-                            self.current_model,
-                            self.model_manager.models[self.current_model].get("baseline"),
-                            source_processing,
-                            req_type,
-                        ],
-                    )
-                    self.current_model = available_model
-                    logger.info(
-                        "Model stable_diffusion_inpainting chosen for txt2img or img2img gen, "
-                        + f"switching to {self.current_model} instead.",
-                    )
-                    break
-            # if the model persists as inpainting for text2img or img2img, we abort.
-            if self.is_inpainting_model(self.current_model):
-                logger.error(
-                    "Received an non-inpainting request for inpainting model. This shouldn't happen. "
-                    f"Inform the developer. Current payload {self.pop}",
-                )
-                self.status = JobStatus.FAULTED
-                self.start_submit_thread()
-                return
         # Reject jobs for pix2pix if not img2img
         if self.current_model in ["pix2pix"] and req_type != "img2img":
             logger.error(
@@ -176,13 +143,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
-        # If a request came for inpainting but they specified an non-inpainting model,
-        # try to use default inpainting model if available.
-        if not self.is_inpainting_model(self.current_model) and req_type == "inpainting":
-            if "stable_diffusion_inpainting" in self.available_models:
-                self.current_model = "stable_diffusion_inpainting"
-            else:
-                req_type = "img2img"
         logger.debug(
             f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work...",
         )
@@ -350,10 +310,6 @@ class StableDiffusionHordeJob(HordeJobFramework):
     def post_submit_tasks(self, submit_req):
         kudos = self.job_kudos if SIMULATE_KUDOS_LOCALLY else submit_req.json()["reward"]
         bridge_stats.update_inference_stats(self.current_model, kudos)
-
-    # TODO: Probably fits better in the MM
-    def is_inpainting_model(self, model_name):
-        return self.model_manager.models[model_name].get("inpainting")
 
 
 def count_parentheses(s):
