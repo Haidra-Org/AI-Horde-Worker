@@ -30,6 +30,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_post_processing = os.environ.get("ALLOW_POST_PROCESSING", "true") == "true"
         self.allow_controlnet = os.environ.get("ALLOW_CONTROLNET", "false") == "false"
+        self.allow_lora = os.environ.get("ALLOW_LORA", "false") == "false"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
@@ -41,6 +42,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.always_download = True
         self.dynamic_models = False
         self.number_of_dynamic_models = 0
+        self.max_lora_cache_size = os.environ.get("HORDE_MAX_LORA_CACHE", "1")
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
