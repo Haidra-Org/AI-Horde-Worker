@@ -54,7 +54,7 @@ allow_post_processing: true
 # If set to True, this worker start picking up ControlNet jobs
 # ControlNet is really heavy and requires a good GPU with at least 12G VRAM to run. 
 # If your controlnet jobs crash by running out of CUDA VRAM, set this to false
-allow_controlnet: false # needs at least 12G VRAM
+allow_controlnet: false
 # Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
 dynamic_models: false
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
@@ -78,11 +78,11 @@ enable_terminal_ui: false
 # Note this NOT the amount of VRAM to use, it's the amount to KEEP FREE. So if something else starts using
 # VRAM the worker will attempt to release it to allow the other software to use it. 
 # Don't set this too high, or you will run out of vram when it can't be released fast enough.
-vram_to_leave_free: "40%"
+vram_to_leave_free: "80%"
 # RAM to leave unused, as a percentage or in MB. RAM the worker can use will be used to cache models. Same 
 # notes as for VRAM.
 # Don't set this too high or your OS will likely start using lots of swap space and everything will slow down.
-ram_to_leave_free: "40%"
+ram_to_leave_free: "80%"
 # Disable the disk cache. By default if RAM and VRAM are filled (up to the limits above) then models will
 # spill over in to a disk cache. If you don't want this to happen you can disable it here. Note that if you
 # disable disk cache and specify more models to load than will fit in memory your worker will endlessly cycle
