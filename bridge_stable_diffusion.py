@@ -58,6 +58,7 @@ def main():
         safety_checker=True,
         codeformer=True,
         controlnet=True,
+        lora=True,
     )
 
     try:

@@ -254,3 +254,14 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if not top:
             top.append("stable_diffusion")
         return top
+
+
+    @logger.catch(reraise=True)
+    def check_models(self, model_manager):
+        """Override framework version to handle loras as well"""
+        if self.models_reloading:
+            return
+        super().check_models(model_manager)
+        if self.allow_lora:
+            # This initiates the threads that download the default loras, so it will immediately continue
+            model_manager.lora.download_default_loras()
