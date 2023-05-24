@@ -313,13 +313,13 @@ class WebUI:
             elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
                 config[cfgkey] = str(value) + "%"
                 donekeys.append(key)
-            elif cfgkey == "dreamer_name" and config[cfgkey] == "An Awesome Dreamer":
+            elif cfgkey == "dreamer_name" and config.get(cfgkey, "") == "An Awesome Dreamer":
                 del config["dreamer_name"]
                 donekeys.append(key)
-            elif cfgkey == "scribe_name" and config[cfgkey] == "An Awesome Scribe":
+            elif cfgkey == "scribe_name" and config.get(cfgkey, "") == "An Awesome Scribe":
                 del config["scribe_name"]
                 donekeys.append(key)
-            elif cfgkey == "alchemist_name" and config[cfgkey] == "An Awesome Alchemist":
+            elif cfgkey == "alchemist_name" and config.get(cfgkey, "") == "An Awesome Alchemist":
                 del config["alchemist_name"]
                 donekeys.append(key)
 
