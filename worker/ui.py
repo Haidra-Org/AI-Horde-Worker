@@ -16,6 +16,7 @@ from math import trunc
 import pkg_resources
 import psutil
 import requests
+from hordelib.settings import UserSettings
 from hordelib.shared_model_manager import SharedModelManager
 from hordelib.utils.gpuinfo import GPUInfo
 
@@ -47,9 +48,9 @@ class DequeOutputCollector:
 
 
 class TerminalUI:
-    REGEX = re.compile(r"(INIT|DEBUG|INFO|WARNING|ERROR).*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (.*) - (.*)$")
     LOGURU_REGEX = re.compile(
-        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| (INIT|INIT_OK|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$",
+        r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d).*\| "
+        r"(INIT_OK|INIT_ERR|INIT_WARN|INIT|DEBUG|INFO|WARNING|ERROR).*\| (.*) - (.*)$",
     )
     KUDOS_REGEX = re.compile(r".*average kudos per hour: (\d+)")
     JOBDONE_REGEX = re.compile(r".*(Generation for id.*finished successfully|Finished interrogation.*)")
@@ -63,6 +64,7 @@ class TerminalUI:
         "vertical": "║",
         "left-join": "╟",
         "right-join": "╢",
+        "progress": "▓",
     }
 
     # Refresh interval in seconds to call API for remote worker stats
@@ -109,8 +111,6 @@ class TerminalUI:
         self.show_debug = False
         self.last_key = None
         self.pause_log = False
-        self.use_log_file = False
-        self.log_file = None
         self.input = DequeOutputCollector()
         self.output = DequeOutputCollector()
         self.worker_id = None
@@ -130,27 +130,23 @@ class TerminalUI:
         self.download_label = ""
         self.download_current = None
         self.download_total = None
-        SharedModelManager.manager.compvis.set_download_callback(self.download_progress)
+        UserSettings.download_progress_callback = self.download_progress
 
     def initialise(self):
         # Suppress stdout / stderr
         sys.stderr = self.stderr
         sys.stdout = self.stdout
-        if self.use_log_file:
-            self.open_log()
-        else:
-            # Remove all loguru sinks
-            logger.remove()
-            handlers = [sink for sink in config["handlers"] if type(sink["sink"]) is str]
-            # Re-initialise loguru
-            newconfig = {"handlers": handlers}
-            logger.configure(**newconfig)
-            # Add our own handler
-            logger.add(self.input, level="DEBUG")
+        # Remove all loguru sinks
+        logger.remove()
+        handlers = [sink for sink in config["handlers"] if type(sink["sink"]) is str]
+        # Re-initialise loguru
+        newconfig = {"handlers": handlers}
+        logger.configure(**newconfig)
+        # Add our own handler
+        logger.add(self.input, level="DEBUG")
         locale.setlocale(locale.LC_ALL, "")
         self.initialise_main_window()
         self.resize()
-        # self.get_remote_worker_info()
 
     def download_progress(self, desc, current, total):
         """Called by the model manager when downloading files to update us on progress"""
@@ -159,35 +155,10 @@ class TerminalUI:
         self.download_current = current
         self.download_total = total
 
-    def open_log(self):
-        # We try a couple of times, log rotiation, etc
-        for _ in range(2):
-            try:
-                self.log_file = open("logs/bridge.log", "rt", encoding="utf-8", errors="ignore")  # noqa: SIM115
-                # FIXME @jug this probably could be reworked
-                self.log_file.seek(0, os.SEEK_END)
-                break
-            except OSError:
-                time.sleep(1)
-
     def load_log(self):
-        if self.use_log_file:
-            while line := self.log_file.readline():
-                self.input.write(line)
         self.load_log_queue()
 
     def parse_log_line(self, line):
-        if self.use_log_file:
-            if regex := TerminalUI.REGEX.match(line):
-                if not self.show_debug and regex.group(1) == "DEBUG":
-                    return None
-                if regex.group(1) == "ERROR":
-                    self.error_count += 1
-                elif regex.group(1) == "WARNING":
-                    self.warning_count += 1
-                return f"{regex.group(1)}::::{regex.group(2)}::::{regex.group(3)}::::{regex.group(4)}"
-            return None
-
         if regex := TerminalUI.LOGURU_REGEX.match(line):
             if not self.show_debug and regex.group(2) == "DEBUG":
                 return None
@@ -524,7 +495,7 @@ class TerminalUI:
             x += len(self.download_label) + 1
             percentage_done = self.download_current / self.download_total
             done_in_chars = round((self.width - (x + 2)) * percentage_done)
-            progress = "#" * done_in_chars
+            progress = TerminalUI.ART["progress"] * done_in_chars
             colour = curses.color_pair(TerminalUI.COLOUR_GREEN)
             self.print(self.main, y, x, progress, colour)
         else:
@@ -570,8 +541,17 @@ class TerminalUI:
                 colour = TerminalUI.COLOUR_WHITE
             elif cat == "ERROR":
                 colour = TerminalUI.COLOUR_RED
-            elif cat in ["INIT", "INIT_OK"]:
-                colour = TerminalUI.COLOUR_MAGENTA
+            elif cat in ["INIT"]:
+                colour = TerminalUI.COLOUR_WHITE
+            elif cat in ["INIT_OK"]:
+                colour = TerminalUI.COLOUR_GREEN
+                msg = f"OK: {msg}"
+            elif cat in ["INIT_WARN"]:
+                colour = TerminalUI.COLOUR_YELLOW
+                msg = f"Warning: {msg}"
+            elif cat in ["INIT_ERR"]:
+                colour = TerminalUI.COLOUR_RED
+                msg = f"Error: {msg}"
             elif cat == "WARNING":
                 colour = TerminalUI.COLOUR_YELLOW
 
@@ -598,32 +578,36 @@ class TerminalUI:
             inputrow += 1
 
     def load_worker_id(self):
-        while not self.worker_id:
-            if not self.worker_name:
-                logger.warning("Still waiting to determine worker name")
-                time.sleep(5)
-                continue
-            workers_url = f"{self.url}/api/v2/workers"
-            try:
-                r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
-            except requests.exceptions.Timeout:
-                logger.warning("Timeout while waiting for worker ID from API")
-            except requests.exceptions.RequestException as ex:
-                logger.error(f"Failed to get worker ID {ex}")
-            if r.ok:
-                worker_json = r.json()
-                self.worker_id = next(
-                    (item["id"] for item in worker_json if item["name"] == self.worker_name),
-                    None,
-                )
-                if self.worker_id:
-                    logger.warning(f"Found worker ID {self.worker_id}")
+        try:
+            while not self.worker_id:
+                if not self.worker_name:
+                    logger.warning("Still waiting to determine worker name")
+                    time.sleep(5)
+                    continue
+                workers_url = f"{self.url}/api/v2/workers"
+                try:
+                    r = requests.get(workers_url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+                except requests.exceptions.Timeout:
+                    logger.warning("Timeout while waiting for worker ID from API")
+                except requests.exceptions.RequestException as ex:
+                    logger.error(f"Failed to get worker ID {ex}")
+                if r.ok:
+                    worker_json = r.json()
+                    self.worker_id = next(
+                        (item["id"] for item in worker_json if item["name"] == self.worker_name),
+                        None,
+                    )
+                    if self.worker_id:
+                        logger.warning(f"Found worker ID {self.worker_id}")
+                    else:
+                        pass
+                        # # Our worker is not yet in the worker results from the API (cache delay)
+                        # logger.warning("Waiting for the AI Horde to acknowledge this worker to fetch worker ID")
                 else:
-                    # Our worker is not yet in the worker results from the API (cache delay)
-                    logger.warning("Waiting for the AI Horde to acknowledge this worker to fetch worker ID")
-            else:
-                logger.warning(f"Failed to get worker ID {r.status_code}")
-            time.sleep(5)
+                    logger.warning(f"Failed to get worker ID {r.status_code}")
+                time.sleep(5)
+        except Exception as ex:
+            logger.warning(str(ex))
 
     def set_maintenance_mode(self, enabled):
         if not self.apikey or not self.worker_id:
@@ -636,61 +620,68 @@ class TerminalUI:
             logger.error(f"Maintenance mode failed: {res.text}")
 
     def get_remote_worker_info(self):
-        if not self.worker_id:
-            return
-        worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         try:
-            r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
-        except requests.exceptions.Timeout:
-            logger.warning("Worker info API failed to respond in time")
-            return
-        except requests.exceptions.RequestException:
-            logger.warning("Worker info API request failed {ex}")
-            return
-        if not r.ok:
-            logger.warning(f"Calling Worker information API failed ({r.status_code})")
-            return
-        data = r.json()
+            if not self.worker_id:
+                return
+            worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
+            try:
+                r = requests.get(worker_URL, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=5)
+            except requests.exceptions.Timeout:
+                logger.warning("Worker info API failed to respond in time")
+                return
+            except requests.exceptions.RequestException:
+                logger.warning("Worker info API request failed {ex}")
+                return
+            if not r.ok:
+                logger.warning(f"Calling Worker information API failed ({r.status_code})")
+                return
+            data = r.json()
 
-        worker_type = data.get("type", "unknown")
-        self.maintenance_mode = data.get("maintenance_mode", False)
-        self.total_worker_kudos = data.get("kudos_details", {}).get("generated", 0)
-        if self.total_worker_kudos is not None:
-            self.total_worker_kudos = int(self.total_worker_kudos)
-        self.total_jobs = data.get("requests_fulfilled", 0)
-        self.total_kudos = int(data.get("kudos_rewards", 0))
-        perf = data.get("performance", "0").replace("No requests fulfilled yet", "0")
-        self.threads = data.get("threads", 0)
-        self.total_uptime = data.get("uptime", 0)
-        self.total_failed_jobs = data.get("uncompleted_jobs", 0)
+            worker_type = data.get("type", "unknown")
+            self.maintenance_mode = data.get("maintenance_mode", False)
+            self.total_worker_kudos = data.get("kudos_details", {}).get("generated", 0)
+            if self.total_worker_kudos is not None:
+                self.total_worker_kudos = int(self.total_worker_kudos)
+            self.total_jobs = data.get("requests_fulfilled", 0)
+            self.total_kudos = int(data.get("kudos_rewards", 0))
+            perf = data.get("performance", "0").replace("No requests fulfilled yet", "0")
+            self.threads = data.get("threads", 0)
+            self.total_uptime = data.get("uptime", 0)
+            self.total_failed_jobs = data.get("uncompleted_jobs", 0)
 
-        if worker_type == "image":
-            self.performance = perf.replace("megapixelsteps per second", "MPS/s")
-        elif worker_type == "interrogation":
-            self.performance = perf.replace("seconds per form", "SPF")
+            if worker_type == "image":
+                self.performance = perf.replace("megapixelsteps per second", "MPS/s")
+            elif worker_type == "interrogation":
+                self.performance = perf.replace("seconds per form", "SPF")
+        except Exception as ex:
+            logger.warning(str(ex))
 
     def get_remote_horde_stats(self):
-        url = f"{self.url}/api/v2/status/performance"
         try:
-            r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=10)
-        except requests.exceptions.Timeout:
-            pass
-        except requests.exceptions.RequestException:
-            return
-        if not r.ok:
-            logger.warning(f"Calling AI Horde stats API failed ({r.status_code})")
-            return
-        data = r.json()
-        self.queued_requests = int(data.get("queued_requests", 0))
-        self.worker_count = int(data.get("worker_count", 1))
-        self.thread_count = int(data.get("thread_count", 0))
-        self.queued_mps = int(data.get("queued_megapixelsteps", 0))
-        self.last_minute_mps = int(data.get("past_minute_megapixelsteps", 0))
-        self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
+            url = f"{self.url}/api/v2/status/performance"
+            try:
+                r = requests.get(url, headers={"client-agent": TerminalUI.CLIENT_AGENT}, timeout=10)
+            except requests.exceptions.Timeout:
+                pass
+            except requests.exceptions.RequestException:
+                return
+            if not r.ok:
+                logger.warning(f"Calling AI Horde stats API failed ({r.status_code})")
+                return
+            data = r.json()
+            self.queued_requests = int(data.get("queued_requests", 0))
+            self.worker_count = int(data.get("worker_count", 1))
+            self.thread_count = int(data.get("thread_count", 0))
+            self.queued_mps = int(data.get("queued_megapixelsteps", 0))
+            self.last_minute_mps = int(data.get("past_minute_megapixelsteps", 0))
+            self.queue_time = (self.queued_mps / self.last_minute_mps) * 60
+        except Exception as ex:
+            logger.warning(str(ex))
 
     def update_stats(self):
-        # Total models
-        self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
+        if SharedModelManager.manager and SharedModelManager.manager.compvis:
+            # Total models
+            self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
         # Recent job pop times
         if "pop_time_avg_5_mins" in bridge_stats.stats:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]

@@ -23,16 +23,13 @@ class WorkerFramework:
         self.executor = None
         self.ui = None
         self.last_stats_time = time.time()
-        self.reload_data()
         logger.stats("Starting new stats session")
         # These two should be filled in by the extending classes
         self.PopperClass = None
         self.JobClass = None
+        self.startup_terminal_ui()
 
-    @logger.catch(reraise=True)
-    def start(self):
-        self.exit_rc = 1
-
+    def startup_terminal_ui(self):
         # Setup UI if requested
         in_notebook = hasattr(__builtins__,'__IPYTHON__')
         if not in_notebook and not self.bridge_data.disable_terminal_ui:
@@ -45,6 +42,11 @@ class WorkerFramework:
                 ui = TerminalUI(self.bridge_data)
                 self.ui = threading.Thread(target=ui.run, daemon=True)
                 self.ui.start()
+
+    @logger.catch(reraise=True)
+    def start(self):
+        self.reload_data()
+        self.exit_rc = 1
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             self.should_restart = False

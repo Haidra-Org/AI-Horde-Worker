@@ -50,18 +50,22 @@ def main():
         logger.warning("DeprecationWarning: `--skip_md5` has been deprecated. Please use `--skip_checksum` instead.")
 
     bridge_data = StableDiffusionBridgeData()
-    SharedModelManager.loadModelManagers(
-        clip=True,
-        compvis=True,
-        esrgan=True,
-        gfpgan=True,
-        safety_checker=True,
-        codeformer=True,
-        controlnet=True,
-    )
-
     try:
+        bridge_data.reload_data()
+
         worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
+
+        SharedModelManager.loadModelManagers(
+            clip=True,
+            compvis=True,
+            esrgan=True,
+            gfpgan=True,
+            safety_checker=True,
+            codeformer=True,
+            controlnet=True,
+        )
+
+        worker.model_manager = SharedModelManager.manager
 
         annotators_preloaded_successfully = False
         if bridge_data.allow_controlnet:
