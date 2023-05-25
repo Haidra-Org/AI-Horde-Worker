@@ -216,6 +216,9 @@ class TerminalUI:
         height, width = win.getmaxyx()
         if y < 0 or x < 0 or x + len(text) > width or y > height:
             return
+        # Always highlight certain text
+        if text == "Pending":
+            colour = curses.color_pair(TerminalUI.COLOUR_YELLOW)
         with contextlib.suppress(curses.error):
             if not colour:
                 win.addstr(y, x, text)
