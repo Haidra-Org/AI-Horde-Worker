@@ -6,6 +6,7 @@ import time
 import requests
 from hordelib.settings import UserSettings
 from PIL import Image
+from datetime import datetime, timedelta
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
@@ -50,6 +51,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.ram_to_leave_free = os.environ.get("HORDE_RAM_TO_LEAVE_FREE", "50%")
         self.vram_to_leave_free = os.environ.get("HORDE_VRAM_TO_LEAVE_FREE", "50%")
         self.disable_disk_cache = os.environ.get("HORDE_DISABLE_DISK_CACHE", "false") == "true"
+        self.last_lora_check = None
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
         if not hasattr(self, "cache_home"):
@@ -262,6 +264,14 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if self.models_reloading:
             return
         super().check_models(model_manager)
-        if self.allow_lora:
-            # This initiates the threads that download the default loras, so it will immediately continue
-            model_manager.lora.download_default_loras()
+        if not self.allow_lora:
+            return
+        if not model_manager.lora.are_downloads_complete():
+            return
+        # We only want to check and download new default loras once per day
+
+        if self.last_lora_check and self.last_lora_check > datetime.utcnow() - timedelta(days=1):
+            return
+        self.last_lora_check = datetime.utcnow()
+        # This initiates the threads that download the default loras, so it will immediately continue
+        model_manager.lora.download_default_loras()

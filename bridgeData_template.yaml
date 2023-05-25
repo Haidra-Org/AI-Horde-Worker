@@ -56,12 +56,13 @@ allow_post_processing: true
 # If your controlnet jobs crash by running out of CUDA VRAM, set this to false
 allow_controlnet: false # needs at least 12G VRAM
 # If set to True, this worker start picking up jobs requesting LoRas
-# Your worker will download the top non-character LoRas 
+# Your worker will download the top 10Gb of non-character LoRas 
 # and then will ad-hoc download any LoRa requested which you do not have, and cache that for a number a days
 allow_lora: false
 # Use this setting to control how much extra space LoRas can take after you downloaded the Top
 # If a new Lora would exceed this space, an old lora you've downloaded previously will be deleted
-max_lora_cache_size: 1 # In gigabytes. Min is 1.
+# Note _THIS IS ON TOP OF THE 10Gb MINIMUM FOR THE TOP LORAS_
+max_lora_cache_size: 1 # In gigabytes. Min is 1. 
 # Set to False to prevent this worker from reading the Horde model queue and loading models which are under load
 dynamic_models: false
 # Adjust how many models to load into memory. In future this will likely be an argument for memory size or may disappear, but for right now, I'm lazy
