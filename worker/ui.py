@@ -104,7 +104,6 @@ class TerminalUI:
             self.worker_name = self.bridge_data.scribe_name
         else:
             self.worker_name = self.bridge_data.worker_name
-        self.apikey = self.bridge_data.api_key
         if hasattr(self.bridge_data, "horde_url"):
             self.url = self.bridge_data.horde_url
         elif hasattr(self.bridge_data, "kai_url"):
@@ -640,10 +639,14 @@ class TerminalUI:
             logger.warning(str(ex))
 
     def set_maintenance_mode(self, enabled):
-        if not self.apikey or not self.worker_id:
+        if not self.bridge_data.api_key or not self.worker_id:
             return
-        header = {"apikey": self.apikey, "client-agent": TerminalUI.CLIENT_AGENT}
+        header = {"apikey": self.bridge_data.api_key, "client-agent": TerminalUI.CLIENT_AGENT}
         payload = {"maintenance": enabled}
+        if enabled:
+            logger.warning("Attempting to enable maintenance mode.")
+        else:
+            logger.warning("Attempting to disable maintenance mode.")
         worker_URL = f"{self.url}/api/v2/workers/{self.worker_id}"
         res = requests.put(worker_URL, json=payload, headers=header)
         if not res.ok:
