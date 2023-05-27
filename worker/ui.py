@@ -16,9 +16,7 @@ from math import trunc
 import pkg_resources
 import psutil
 import requests
-from hordelib.settings import UserSettings
-from hordelib.shared_model_manager import SharedModelManager
-from hordelib.utils.gpuinfo import GPUInfo
+from worker.utils.gpuinfo import GPUInfo
 
 from worker.logger import config, logger
 from worker.stats import bridge_stats
@@ -95,6 +93,12 @@ class TerminalUI:
 
     def __init__(self, bridge_data):
         self.bridge_data = bridge_data
+        self.scribe_worker = False
+        self.model_manager = None
+        # We check the name rather the type directly to avoid bad things
+        # happening if we import the Kobold class
+        if bridge_data.__class__.__name__ == "KoboldAIBridgeData":
+            self.scribe_worker = True
         self.worker_name = self.bridge_data.worker_name
         self.apikey = self.bridge_data.api_key
         if hasattr(self.bridge_data, "horde_url"):
@@ -130,7 +134,11 @@ class TerminalUI:
         self.download_label = ""
         self.download_current = None
         self.download_total = None
-        UserSettings.download_progress_callback = self.download_progress
+        if not self.scribe_worker:            
+            from hordelib.shared_model_manager import SharedModelManager
+            from hordelib.settings import UserSettings
+            self.model_manager = SharedModelManager
+            UserSettings.download_progress_callback = self.download_progress
 
     def initialise(self):
         # Suppress stdout / stderr
@@ -682,9 +690,9 @@ class TerminalUI:
             logger.warning(str(ex))
 
     def update_stats(self):
-        if SharedModelManager.manager and SharedModelManager.manager.compvis:
-            # Total models
-            self.total_models = len(SharedModelManager.manager.compvis.get_loaded_models_names())
+        # Total models
+        if self.model_manager and self.model_manager.manager:
+            self.total_models = len(self.model_manager.manager.get_loaded_models_names())
         # Recent job pop times
         if "pop_time_avg_5_mins" in bridge_stats.stats:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]

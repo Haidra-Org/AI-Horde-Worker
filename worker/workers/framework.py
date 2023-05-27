@@ -34,7 +34,7 @@ class WorkerFramework:
         in_notebook = hasattr(__builtins__, "__IPYTHON__")
         if not in_notebook and not self.bridge_data.disable_terminal_ui:
             # Don't allow this if auto-downloading is not enabled as how will the user see download prompts?
-            if not self.bridge_data.always_download:
+            if hasattr(self.bridge_data, "always_download") and not self.bridge_data.always_download:
                 logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
             else:
                 from worker.ui import TerminalUI
