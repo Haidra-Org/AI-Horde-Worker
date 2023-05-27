@@ -16,10 +16,10 @@ from math import trunc
 import pkg_resources
 import psutil
 import requests
-from worker.utils.gpuinfo import GPUInfo
 
 from worker.logger import config, logger
 from worker.stats import bridge_stats
+from worker.utils.gpuinfo import GPUInfo
 
 
 class DequeOutputCollector:
@@ -138,9 +138,10 @@ class TerminalUI:
         self.download_label = ""
         self.download_current = None
         self.download_total = None
-        if not self.scribe_worker:            
-            from hordelib.shared_model_manager import SharedModelManager
+        if not self.scribe_worker:
             from hordelib.settings import UserSettings
+            from hordelib.shared_model_manager import SharedModelManager
+
             self.model_manager = SharedModelManager
             UserSettings.download_progress_callback = self.download_progress
 
