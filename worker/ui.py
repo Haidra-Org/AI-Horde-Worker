@@ -99,7 +99,11 @@ class TerminalUI:
         # happening if we import the Kobold class
         if bridge_data.__class__.__name__ == "KoboldAIBridgeData":
             self.scribe_worker = True
-        self.worker_name = self.bridge_data.worker_name
+
+        if hasattr(self.bridge_data, "scribe_name"):
+            self.worker_name = self.bridge_data.scribe_name
+        else:
+            self.worker_name = self.bridge_data.worker_name
         self.apikey = self.bridge_data.api_key
         if hasattr(self.bridge_data, "horde_url"):
             self.url = self.bridge_data.horde_url
