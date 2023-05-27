@@ -1,5 +1,4 @@
 """The configuration of the bridge"""
-import importlib
 import os
 import random
 import sys

@@ -670,7 +670,6 @@ class TerminalUI:
                 return
             data = r.json()
 
-            worker_type = data.get("type", "unknown")
             self.maintenance_mode = data.get("maintenance_mode", False)
             self.total_worker_kudos = data.get("kudos_details", {}).get("generated", 0)
             if self.total_worker_kudos is not None:
