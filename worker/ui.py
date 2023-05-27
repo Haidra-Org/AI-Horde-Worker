@@ -307,7 +307,7 @@ class TerminalUI:
         self.avg_kudos_per_job = "unknown"
         self.threads = "Pending"
         self.total_failed_jobs = "Pending"
-        self.total_models = "Pending" if not self.scribe_worker else "N/A"
+        self.total_models = "Pending"
         self.total_jobs = "Pending"
         self.queued_requests = "Pending"
         self.worker_count = "Pending"
@@ -677,6 +677,8 @@ class TerminalUI:
             self.threads = data.get("threads", 0)
             self.total_uptime = data.get("uptime", 0)
             self.total_failed_jobs = data.get("uncompleted_jobs", 0)
+            if self.scribe_worker and data.get("models"):
+                self.total_models = data.get("models")[0]
         except Exception as ex:
             logger.warning(str(ex))
 
