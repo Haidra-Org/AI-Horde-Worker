@@ -306,7 +306,7 @@ class TerminalUI:
         self.performance = "unknown"
         self.threads = "Pending"
         self.total_failed_jobs = "Pending"
-        self.total_models = "Pending"
+        self.total_models = "Pending" if not self.scribe_worker else "N/A"
         self.total_jobs = "Pending"
         self.queued_requests = "Pending"
         self.worker_count = "Pending"
@@ -367,10 +367,13 @@ class TerminalUI:
         col_mid = self.width // 2
         col_right = self.width - 12
 
+        # How many GPUs are we using?
+        num_gpus = self.gpu.get_num_gpus()
+
         # Define rows on which sections start
         row_local = 0
         row_gpu = row_local + 5
-        row_total = row_gpu + 4
+        row_total = row_gpu + (4 * num_gpus)
         row_horde = row_total + 3
         self.status_height = row_horde + 6
 
@@ -398,15 +401,18 @@ class TerminalUI:
         label(row_local + 3, col_right, "Errors:")
         label(row_local + 4, col_right, "Job Fetch:")
 
-        label(row_gpu + 1, col_left, "Load:")
-        label(row_gpu + 2, col_left, "Temp:")
-        label(row_gpu + 3, col_left, "Power:")
-        label(row_gpu + 1, col_mid, "VRAM Total:")
-        label(row_gpu + 2, col_mid, "VRAM Used:")
-        label(row_gpu + 3, col_mid, "VRAM Free:")
-        label(row_gpu + 1, col_right, "Fan Speed:")
-        label(row_gpu + 2, col_right, "PCI Gen:")
-        label(row_gpu + 3, col_right, "PCI Width:")
+        tmp_row_gpu = row_gpu
+        for gpu_i in range(num_gpus):
+            label(tmp_row_gpu + 1, col_left, "Load:")
+            label(tmp_row_gpu + 2, col_left, "Temp:")
+            label(tmp_row_gpu + 3, col_left, "Power:")
+            label(tmp_row_gpu + 1, col_mid, "VRAM Total:")
+            label(tmp_row_gpu + 2, col_mid, "VRAM Used:")
+            label(tmp_row_gpu + 3, col_mid, "VRAM Free:")
+            label(tmp_row_gpu + 1, col_right, "Fan Speed:")
+            label(tmp_row_gpu + 2, col_right, "PCI Gen:")
+            label(tmp_row_gpu + 3, col_right, "PCI Width:")
+            tmp_row_gpu += 4
 
         label(row_total + 1, col_mid, "Worker Kudos:")
         label(row_total + 2, col_mid, "Total Uptime:")
@@ -445,31 +451,39 @@ class TerminalUI:
         self.print(self.main, row_local + 4, col_left, f"{self.get_cpu_usage()}")
         self.print(self.main, row_local + 4, col_mid, f"{self.get_free_ram()}", ram_colour)
 
-        gpu = self.gpu.get_info()
-        if gpu:
-            # Add some warning colours to free vram
-            vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
-            if re.match(r"\d\d\d MB", gpu["vram_free"]):
-                vram_colour = curses.color_pair(TerminalUI.COLOUR_MAGENTA)
-            elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
-                if self.audio_alerts and time.time() - self.last_audio_alert > TerminalUI.ALERT_INTERVAL:
-                    self.last_audio_alert = time.time()
-                    curses.beep()
-                vram_colour = curses.color_pair(TerminalUI.COLOUR_RED)
+        gpus = []
+        for gpu_i in range(num_gpus):
+            gpus.append(self.gpu.get_info(gpu_i))
+        for gpu_i, gpu in enumerate(gpus):
+            if gpu:
+                # Add some warning colours to free vram
+                vram_colour = curses.color_pair(TerminalUI.COLOUR_WHITE)
+                if re.match(r"\d\d\d MB", gpu["vram_free"]):
+                    vram_colour = curses.color_pair(TerminalUI.COLOUR_MAGENTA)
+                elif re.match(r"(\d{1,2}) MB", gpu["vram_free"]):
+                    if self.audio_alerts and time.time() - self.last_audio_alert > TerminalUI.ALERT_INTERVAL:
+                        self.last_audio_alert = time.time()
+                        curses.beep()
+                    vram_colour = curses.color_pair(TerminalUI.COLOUR_RED)
 
-            self.draw_line(self.main, row_gpu, gpu["product"])
+                gpu_name = gpu["product"]
+                if num_gpus > 1:
+                    gpu_name = f"{gpu_name} #{gpu_i}"
+                self.draw_line(self.main, row_gpu, gpu_name)
 
-            self.print(self.main, row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
-            self.print(self.main, row_gpu + 1, col_mid, f"{gpu['vram_total']}")
-            self.print(self.main, row_gpu + 1, col_right, f"{gpu['fan_speed']}")
+                self.print(self.main, row_gpu + 1, col_left, f"{gpu['load']:4} ({gpu['avg_load']})")
+                self.print(self.main, row_gpu + 1, col_mid, f"{gpu['vram_total']}")
+                self.print(self.main, row_gpu + 1, col_right, f"{gpu['fan_speed']}")
 
-            self.print(self.main, row_gpu + 2, col_left, f"{gpu['temp']:4} ({gpu['avg_temp']})")
-            self.print(self.main, row_gpu + 2, col_mid, f"{gpu['vram_used']}")
-            self.print(self.main, row_gpu + 2, col_right, f"{gpu['pci_gen']}")
+                self.print(self.main, row_gpu + 2, col_left, f"{gpu['temp']:4} ({gpu['avg_temp']})")
+                self.print(self.main, row_gpu + 2, col_mid, f"{gpu['vram_used']}")
+                self.print(self.main, row_gpu + 2, col_right, f"{gpu['pci_gen']}")
 
-            self.print(self.main, row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
-            self.print(self.main, row_gpu + 3, col_mid, f"{gpu['vram_free']}", vram_colour)
-            self.print(self.main, row_gpu + 3, col_right, f"{gpu['pci_width']}")
+                self.print(self.main, row_gpu + 3, col_left, f"{gpu['power']:4} ({gpu['avg_power']})")
+                self.print(self.main, row_gpu + 3, col_mid, f"{gpu['vram_free']}", vram_colour)
+                self.print(self.main, row_gpu + 3, col_right, f"{gpu['pci_width']}")
+
+                row_gpu += 4
 
         self.print(self.main, row_total + 1, col_mid, f"{self.total_kudos}")
         self.print(self.main, row_total + 1, col_right, f"{self.total_jobs}")

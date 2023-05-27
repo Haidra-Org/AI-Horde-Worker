@@ -12,6 +12,7 @@ class GPUInfo:
         # Average period in samples, default 10 samples per second, period 5 minutes
         self.samples_per_second = 10
         # Look out for device env var hack
+        self.forced_gpu = os.getenv("CUDA_VISIBLE_DEVICES", None) is not None
         self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
 
     # Return a value from the given dictionary supporting dot notation
@@ -32,11 +33,21 @@ class GPUInfo:
                 break
         return walkdata
 
-    def _get_gpu_data(self):
+    def get_num_gpus(self):
+        """How many GPUs in this system?"""
+        if self.forced_gpu:
+            return 1
         with contextlib.suppress(Exception):
             nvsmi = nvidia_smi.getInstance()
             data = nvsmi.DeviceQuery()
-            return data.get("gpu", [None])[self.device]
+            return len(data.get("gpu", [None]))
+        return 0
+
+    def _get_gpu_data(self, device=0):
+        with contextlib.suppress(Exception):
+            nvsmi = nvidia_smi.getInstance()
+            data = nvsmi.DeviceQuery()
+            return data.get("gpu", [None])[device]
 
     def _mem(self, raw):
         unit = "GB"
@@ -70,8 +81,8 @@ class GPUInfo:
                 value = 0
         return value
 
-    def get_info(self):
-        data = self._get_gpu_data()
+    def get_info(self, device_id=0):
+        data = self._get_gpu_data(device_id)
         if not data:
             return None
 
