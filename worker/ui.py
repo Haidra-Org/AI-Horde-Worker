@@ -304,7 +304,7 @@ class TerminalUI:
         self.total_kudos = "Pending"
         self.total_worker_kudos = "Pending"
         self.total_uptime = "Pending"
-        self.performance = "unknown"
+        self.avg_kudos_per_job = "unknown"
         self.threads = "Pending"
         self.total_failed_jobs = "Pending"
         self.total_models = "Pending" if not self.scribe_worker else "N/A"
@@ -345,7 +345,7 @@ class TerminalUI:
     def print_status(self):
         # This is the design template: (80 columns)
         # ╔═AIDream-01════════════════════════════════════════════════(0.10.10)══000000═╗
-        # ║   Uptime: 0:14:35     Jobs Completed: 6             Performance: 0.3 MPS/s  ║
+        # ║   Uptime: 0:14:35     Jobs Completed: 6       Avg Kudos Per Job: 103        ║
         # ║   Models: 174         Kudos Per Hour: 5283        Jobs Per Hour: 524966     ║
         # ║  Threads: 3                 Warnings: 9999               Errors: 100        ║
         # ║ CPU Load: 99% (99%)         Free RAM: 2 GB (99%)      Job Fetch: 2.32s      ║
@@ -397,7 +397,7 @@ class TerminalUI:
         label(row_local + 2, col_mid, "Kudos Per Hour:")
         label(row_local + 3, col_mid, "Warnings:")
         label(row_local + 4, col_mid, "Free RAM:")
-        label(row_local + 1, col_right, "Performance:")
+        label(row_local + 1, col_right, "Avg Kudos Per Job:")
         label(row_local + 2, col_right, "Jobs Per Hour:")
         label(row_local + 3, col_right, "Errors:")
         label(row_local + 4, col_right, "Job Fetch:")
@@ -427,7 +427,7 @@ class TerminalUI:
 
         self.print(self.main, row_local + 1, col_left, f"{self.get_uptime()}")
         self.print(self.main, row_local + 1, col_mid, f"{self.jobs_done}")
-        self.print(self.main, row_local + 1, col_right, f"{self.performance}")
+        self.print(self.main, row_local + 1, col_right, f"{self.avg_kudos_per_job}")
 
         self.print(self.main, row_local + 2, col_left, f"{self.total_models}")
         self.print(self.main, row_local + 2, col_mid, f"{self.kudos_per_hour}")
@@ -674,15 +674,9 @@ class TerminalUI:
                 self.total_worker_kudos = int(self.total_worker_kudos)
             self.total_jobs = data.get("requests_fulfilled", 0)
             self.total_kudos = int(data.get("kudos_rewards", 0))
-            perf = data.get("performance", "0").replace("No requests fulfilled yet", "0")
             self.threads = data.get("threads", 0)
             self.total_uptime = data.get("uptime", 0)
             self.total_failed_jobs = data.get("uncompleted_jobs", 0)
-
-            if worker_type == "image":
-                self.performance = perf.replace("megapixelsteps per second", "MPS/s")
-            elif worker_type == "interrogation":
-                self.performance = perf.replace("seconds per form", "SPF")
         except Exception as ex:
             logger.warning(str(ex))
 
@@ -717,6 +711,8 @@ class TerminalUI:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
         if "jobs_per_hour" in bridge_stats.stats:
             self.jobs_per_hour = bridge_stats.stats["jobs_per_hour"]
+        if "avg_kudos_per_job" in bridge_stats.stats:
+            self.avg_kudos_per_job = bridge_stats.stats["avg_kudos_per_job"]
 
         if time.time() - self.last_stats_refresh > TerminalUI.REMOTE_STATS_REFRESH:
             self.last_stats_refresh = time.time()
