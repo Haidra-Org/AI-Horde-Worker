@@ -2,11 +2,11 @@
 import os
 import re
 import time
+from datetime import datetime, timedelta
 
 import requests
 from hordelib.settings import UserSettings
 from PIL import Image
-from datetime import datetime, timedelta
 
 from worker.argparser.stable_diffusion import args
 from worker.bridge_data.framework import BridgeDataTemplate
@@ -256,7 +256,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if not top:
             top.append("stable_diffusion")
         return top
-
 
     @logger.catch(reraise=True)
     def check_models(self, model_manager):

@@ -74,7 +74,7 @@ if args.debug:
 for process_args in lint_processes:
     process_args.extend(src)
 
-    COMMAND = "python -s -m " + " ".join(process_args)
+    COMMAND = "python -m " + " ".join(process_args)
     print(f"\nRunning {COMMAND}")
     try:
         subprocess.run(COMMAND, shell=True, check=True)
