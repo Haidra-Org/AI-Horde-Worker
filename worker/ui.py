@@ -127,6 +127,10 @@ class TerminalUI:
         self.stdout = DequeOutputCollector()
         self.stderr = DequeOutputCollector()
         self.reset_stats()
+        self.download_label = ""
+        self.download_current = None
+        self.download_total = None
+        SharedModelManager.manager.compvis.set_download_callback(self.download_progress)
 
     def initialise(self):
         # Suppress stdout / stderr
@@ -147,6 +151,13 @@ class TerminalUI:
         self.initialise_main_window()
         self.resize()
         # self.get_remote_worker_info()
+
+    def download_progress(self, desc, current, total):
+        """Called by the model manager when downloading files to update us on progress"""
+        # Just save what we're passed for later rendering
+        self.download_label = desc
+        self.download_current = current
+        self.download_total = total
 
     def open_log(self):
         # We try a couple of times, log rotiation, etc
@@ -361,7 +372,7 @@ class TerminalUI:
         # ╟─Entire Horde────────────────────────────────────────────────────────────────╢
         # ║                          Jobs Queued: 99999          Queue Time: 99m        ║
         # ║                        Total Workers: 1000        Total Threads: 1000       ║
-        # ║                                                                             ║
+        # ║ Downloading some-file-with-long-name.safetensors: ######################### ║
         # ║   (m)aintenance  (s)ource  (d)ebug  (p)ause log  (a)lerts  (r)eset  (q)uit  ║
         # ╙─────────────────────────────────────────────────────────────────────────────╜
 
@@ -504,6 +515,23 @@ class TerminalUI:
         x = self.print_switch(y, x, inputs[4], self.audio_alerts)
         x = self.print_switch(y, x, inputs[5], False)
         x = self.print_switch(y, x, inputs[6], False)
+
+        # Display download progress bar if any
+        if self.download_total:
+            y = row_horde + 3
+            x = 2
+            self.print(self.main, y, x, self.download_label)
+            x += len(self.download_label) + 1
+            percentage_done = self.download_current / self.download_total
+            done_in_chars = round((self.width - (x + 2)) * percentage_done)
+            progress = "#" * done_in_chars
+            colour = curses.color_pair(TerminalUI.COLOUR_GREEN)
+            self.print(self.main, y, x, progress, colour)
+        else:
+            y = row_horde + 3
+            x = 2
+            clearline = " " * (self.width - (x + 2))
+            self.print(self.main, y, x, clearline)
 
     def fit_output_to_term(self, output):
         # How many lines of output can we fit, after line wrapping?
