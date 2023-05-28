@@ -274,4 +274,4 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             return
         self.last_lora_check = datetime.utcnow()
         # This initiates the threads that download the default loras, so it will immediately continue
-        model_manager.lora.download_default_loras()
+        model_manager.lora.download_default_loras(nsfw=self.nsfw)
