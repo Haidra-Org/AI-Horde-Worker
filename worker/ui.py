@@ -100,7 +100,7 @@ class TerminalUI:
         if bridge_data.__class__.__name__ == "KoboldAIBridgeData":
             self.scribe_worker = True
 
-        if hasattr(self.bridge_data, "scribe_name"):
+        if hasattr(self.bridge_data, "scribe_name") and self.scribe_worker:
             self.worker_name = self.bridge_data.scribe_name
         else:
             self.worker_name = self.bridge_data.worker_name
