@@ -178,7 +178,7 @@ Optional environment variables:
 - HORDE_ALWAYS_DOWNLOAD: Whether to always download models. Defaults to 'false'.
 - HORDE_RAY_TEMP_DIR: The location of the Ray temporary directory. Defaults to '/cache/ray'.
 - HORDE_DISABLE_VOODOO: Whether to disable Voodoo. Defaults to 'false'.
-- HORDE_ENABLE_TERMINAL_UI: Whether to enable the terminal UI. Defaults to 'false'.
+- HORDE_DISABLE_TERMINAL_UI: Whether to disable the terminal UI. Defaults to 'false'.
 - HORDE_MODELS_TO_LOAD: A comma-separated list of models to load. Defaults to ['stable_diffusion_2.1', 'stable_diffusion'].
 - HORDE_MODELS_TO_SKIP: A comma-separated list of models to skip. Defaults to ['stable_diffusion_inpainting'].
 - HORDE_FORMS: A comma-separated list of forms to use. Defaults to ['caption', 'nsfw'].

@@ -34,8 +34,6 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             self.worker_name = self.scribe_name
         # KAI doesn't support multiple threads
         self.max_threads = 1
-        # Tried to import hordelib stuff which the Scribe doesn't need
-        self.enable_terminal_ui = False
         if args.kai_url:
             self.kai_url = args.kai_url
         if args.sfw:

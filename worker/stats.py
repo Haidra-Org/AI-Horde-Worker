@@ -77,6 +77,7 @@ class BridgeStats:
             if self.kudos_record:
                 self.stats["kudos_per_hour"] = round(total_kudos)
                 self.stats["jobs_per_hour"] = round(jobs_per_hour)
+                self.stats["avg_kudos_per_job"] = round(total_kudos / jobs_per_hour, 1)
 
     def get_pretty_stats(self):
         """Returns a pretty string of the stats"""
