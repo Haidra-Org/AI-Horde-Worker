@@ -155,9 +155,9 @@ class WebUI:
             "label": "Allow requests requiring ControlNet",
             "info": "Enable or disable the processing of jobs that also require ControlNet.",
         },
-        "enable_terminal_ui": {
-            "label": "Enable Terminal UI",
-            "info": "Display helpful information about the worker in the terminal when the worker is " "running.",
+        "disable_terminal_ui": {
+            "label": "Disable Terminal UI",
+            "info": "Disable the display of the terminal UI, just output lines to the terminal",
         },
         "priority_usernames": {
             "label": "Priority Usernames (Separate with commas)",
@@ -760,11 +760,11 @@ class WebUI:
                     )
 
                 with gr.Tab("Advanced"), gr.Column():
-                    config.default("enable_terminal_ui", False)
-                    enable_terminal_ui = gr.Checkbox(
-                        label=self._label("enable_terminal_ui"),
-                        value=config.enable_terminal_ui,
-                        info=self._info("enable_terminal_ui"),
+                    config.default("disable_terminal_ui", False)
+                    disable_terminal_ui = gr.Checkbox(
+                        label=self._label("disable_terminal_ui"),
+                        value=config.disable_terminal_ui,
+                        info=self._info("disable_terminal_ui"),
                     )
                     config.default("horde_url", "https://aihorde.net/")
                     horde_url = gr.Textbox(
@@ -861,7 +861,7 @@ class WebUI:
                     censorlist,
                     dreamer_name,
                     dynamic_models,
-                    enable_terminal_ui,
+                    disable_terminal_ui,
                     forms,
                     horde_url,
                     max_models_to_download,

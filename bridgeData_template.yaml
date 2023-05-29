@@ -72,8 +72,8 @@ cache_home: "./"
 always_download: true
 # The location of the temp directory, also used for the model cache
 temp_dir: "./tmp"
-# Enable the terminal GUI, which displays information about the worker and the horde.
-enable_terminal_ui: false
+# Disable the terminal GUI, which displays information about the worker and the horde.
+disable_terminal_ui: false
 # VRAM to leave unused, as a percentage or in MB. VRAM the worker can use will be used to load and cache models.
 # Note this NOT the amount of VRAM to use, it's the amount to KEEP FREE. So if something else starts using
 # VRAM the worker will attempt to release it to allow the other software to use it. 

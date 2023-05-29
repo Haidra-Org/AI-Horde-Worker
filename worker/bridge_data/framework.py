@@ -1,5 +1,4 @@
 """The configuration of the bridge"""
-import importlib
 import os
 import random
 import sys
@@ -44,7 +43,7 @@ class BridgeDataTemplate:
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.require_upfront_kudos = os.environ.get("REQUIRE_UPFRONT_KUDOS", "false") == "true"
         self.stats_output_frequency = int(os.environ.get("STATS_OUTPUT_FREQUENCY", 30))
-        self.enable_terminal_ui = os.environ.get("ENABLE_TERMINAL_UI", "false") == "true"
+        self.disable_terminal_ui = os.environ.get("DISABLE_TERMINAL_UI", "false") == "true"
         self.initialized = False
         self.username = None
         self.models_reloading = False
@@ -59,35 +58,6 @@ class BridgeDataTemplate:
                 for key, value in config.items():
                     setattr(self, key, value)
             return True  # loaded
-        # fall back to try old python bridge data
-        if os.path.exists("bridgeData.py"):
-            try:
-                import bridgeData as bd
-
-                importlib.reload(bd)
-                for key, value in vars(bd).items():
-                    # Only allow these data types
-                    if key.startswith("__") or type(value) not in [str, int, bool, list]:
-                        continue
-                    setattr(self, key, value)
-
-                # As we got here, we didn't have a yaml config file, try to create one
-                config = {}
-                for key, value in vars(self).items():
-                    # Only allow these data types
-                    if key.startswith("__") or type(value) not in [str, int, bool, list]:
-                        continue
-                    config[key] = value
-                with open(BRIDGE_CONFIG_FILE, "wt", encoding="utf-8") as configfile:
-                    yaml.safe_dump(config, configfile)
-                try:
-                    os.rename("bridgeData.py", "bridgeData.py-old")
-                except OSError:
-                    logger.warning("Could not move old bridgeData.py config to archive.")
-
-                return True  # loaded
-            except (ImportError, AttributeError) as err:
-                logger.warning("bridgeData.py could not be loaded. Using defaults with anonymous account - {}", err)
         return None
 
     @logger.catch(reraise=True)

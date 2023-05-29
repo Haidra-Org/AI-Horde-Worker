@@ -79,7 +79,7 @@ config = {
     "always_download": get_bool_env("HORDE_ALWAYS_DOWNLOAD", "false"),
     "ray_temp_dir": os.getenv("HORDE_RAY_TEMP_DIR", "/cache/ray"),
     "disable_voodoo": get_bool_env("HORDE_DISABLE_VOODOO", "false"),
-    "enable_terminal_ui": get_bool_env("HORDE_ENABLE_TERMINAL_UI", "false"),
+    "disable_terminal_ui": get_bool_env("HORDE_DISABLE_TERMINAL_UI", "false"),
     "models_to_load": get_list_environment_variable(
         "HORDE_MODELS_TO_LOAD",
         [
