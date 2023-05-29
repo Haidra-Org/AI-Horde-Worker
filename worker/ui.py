@@ -87,7 +87,7 @@ class TerminalUI:
     JUNK = [
         "Result = False",
         "Result = True",
-        "Try again with a different prompt and/or seed."
+        "Try again with a different prompt and/or seed.",
     ]
 
     CLIENT_AGENT = "terminalui:1:db0"
