@@ -174,7 +174,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             time_state = time.time()
             gen_payload["model"] = self.current_model
             gen_payload["source_processing"] = req_type
-            # logger.debug(gen_payload)
+            logger.info(gen_payload)
             self.image = generator(gen_payload)
 
             if SAVE_KUDOS_TRAINING_DATA or SIMULATE_KUDOS_LOCALLY:
