@@ -54,7 +54,7 @@ class HordeJobFramework:
 
     def is_faulted(self):
         """Check if the job is faulted"""
-        return self.status == JobStatus.FAULTED
+        return self.status in [JobStatus.FAULTED, JobStatus.FINALIZING_FAULTED]
 
     @logger.catch(reraise=True)
     def start_job(self):
