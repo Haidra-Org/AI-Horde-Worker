@@ -39,7 +39,7 @@ class HordeJobFramework:
 
     def is_finalizing(self):
         """True if generation has finished even if upload is still remaining"""
-        return self.status in [JobStatus.FINALIZING]
+        return self.status in [JobStatus.FINALIZING, JobStatus.FINALIZING_FAULTED]
 
     def is_stale(self):
         """Check if the job is stale"""
@@ -96,10 +96,10 @@ class HordeJobFramework:
                 "generation": "faulted",
                 "seed": -1,
             }
+            self.status = JobStatus.FINALIZING_FAULTED
         else:
             self.status = JobStatus.FINALIZING
             self.prepare_submit_payload()
-        self.status = JobStatus.FINALIZING
         # Submit back to horde
         while self.is_finalizing():
             if self.loop_retry > 10:
@@ -160,7 +160,10 @@ class HordeJobFramework:
                     f"and {round(time.time() - self.process_time,1)} since start.",
                 )
                 self.post_submit_tasks(submit_req)
-                self.status = JobStatus.DONE
+                if self.status == JobStatus.FINALIZING_FAULTED:
+                    self.status = JobStatus.FAULTED
+                else:
+                    self.status = JobStatus.DONE
                 break
             except requests.exceptions.ConnectionError:
                 logger.warning(
