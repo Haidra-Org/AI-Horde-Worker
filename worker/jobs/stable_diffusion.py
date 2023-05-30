@@ -211,6 +211,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             self.status = JobStatus.FAULTED
             self.start_submit_thread()
+            logger.warning(f"Rescue: Attempting to unload {self.current_model}")
+            self.model_manager.unload_model(self.current_model)
             return
         if use_nsfw_censor and is_image_nsfw(self.image):
             logger.info(f"Image censored with reason: {censor_reason}")
