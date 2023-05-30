@@ -169,7 +169,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"for {self.current_payload.get('ddim_steps',50)} steps "
                 f"{self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
-                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
+                f"And it appears to contain {len(gen_payload.get('loras', []))} loras: {[l['name'] for l in gen_payload.get('loras', [])]}",
             )
             time_state = time.time()
             gen_payload["model"] = self.current_model
