@@ -43,7 +43,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.always_download = True
         self.dynamic_models = False
         self.number_of_dynamic_models = 0
-        self.max_lora_cache_size = int(os.environ.get("HORDE_MAX_LORA_CACHE", "1"))
+        self.max_lora_cache_size = int(os.environ.get("HORDE_MAX_LORA_CACHE", "10"))
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
