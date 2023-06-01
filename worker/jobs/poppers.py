@@ -160,6 +160,7 @@ class StableDiffusionPopper(JobPopper):
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,
         }
+        logger.info(self.model_manager.lora.are_downloads_complete())
         # logger.debug("Cron: End constructing pop payload")
 
     def horde_pop(self):
