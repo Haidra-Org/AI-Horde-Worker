@@ -295,7 +295,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
-        self.image.save(buffer, format="WebP", quality=self.upload_quality)
+        self.image.save(buffer, format="WebP", quality=self.upload_quality, method=6)
         if self.r2_upload:
             put_response = requests.put(self.r2_upload, data=buffer.getvalue())
             generation = "R2"
