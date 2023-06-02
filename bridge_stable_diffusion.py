@@ -63,6 +63,7 @@ def main():
             safety_checker=True,
             codeformer=True,
             controlnet=True,
+            lora=True,
         )
 
         worker.model_manager = SharedModelManager.manager

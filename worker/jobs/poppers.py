@@ -155,6 +155,7 @@ class StableDiffusionPopper(JobPopper):
             "threads": self.bridge_data.max_threads,
             "allow_post_processing": self.bridge_data.allow_post_processing,
             "allow_controlnet": self.bridge_data.allow_controlnet,
+            "allow_lora": self.bridge_data.allow_lora if self.model_manager.lora.are_downloads_complete() else False,
             "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": BRIDGE_VERSION,
             "bridge_agent": self.BRIDGE_AGENT,

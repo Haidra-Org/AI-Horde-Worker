@@ -2,6 +2,7 @@
 import os
 import re
 import time
+from datetime import datetime, timedelta
 
 import requests
 from hordelib.settings import UserSettings
@@ -30,6 +31,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_post_processing = os.environ.get("ALLOW_POST_PROCESSING", "true") == "true"
         self.allow_controlnet = os.environ.get("ALLOW_CONTROLNET", "false") == "false"
+        self.allow_lora = os.environ.get("ALLOW_LORA", "false") == "false"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
@@ -41,6 +43,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.always_download = True
         self.dynamic_models = False
         self.number_of_dynamic_models = 0
+        self.max_lora_cache_size = int(os.environ.get("HORDE_MAX_LORA_CACHE", "10"))
         self.models_to_skip = os.environ.get("HORDE_SKIPPED_MODELNAMES", "stable_diffusion_inpainting").split(",")
         self.predefined_models = self.model_names.copy()
         self.top_n_refresh_frequency = os.environ.get("HORDE_TOP_N_REFRESH", 60 * 60 * 24)
@@ -48,6 +51,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.ram_to_leave_free = os.environ.get("HORDE_RAM_TO_LEAVE_FREE", "50%")
         self.vram_to_leave_free = os.environ.get("HORDE_VRAM_TO_LEAVE_FREE", "50%")
         self.disable_disk_cache = os.environ.get("HORDE_DISABLE_DISK_CACHE", "false") == "true"
+        self.last_lora_check = None
         # Some config file options require us to actually set env vars to pass settings to third party systems
         # Where we load models from
         if not hasattr(self, "cache_home"):
@@ -252,3 +256,25 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if not top:
             top.append("stable_diffusion")
         return top
+
+    @logger.catch(reraise=True)
+    def check_models(self, model_manager):
+        """Override framework version to handle loras as well"""
+        if self.models_reloading:
+            return
+        super().check_models(model_manager)
+        if not self.allow_lora:
+            return
+        if not model_manager.lora.are_downloads_complete():
+            return
+        # We only want to check and download new default loras once per day
+
+        if self.last_lora_check and self.last_lora_check > datetime.utcnow() - timedelta(days=1):
+            return
+        self.last_lora_check = datetime.utcnow()
+        # This initiates the threads that download the default loras, so it will immediately continue
+        model_manager.lora.max_adhoc_disk = self.max_lora_cache_size * 1024
+        model_manager.lora.download_default_loras(nsfw=self.nsfw)
+        model_manager.lora.wait_for_downloads(600)
+        model_manager.lora.wait_for_adhoc_reset(15)
+        model_manager.lora.delete_unused_loras(30)

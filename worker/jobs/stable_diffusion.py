@@ -102,6 +102,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "seed": self.current_payload["seed"],
                 "tiling": self.current_payload["tiling"],
                 "karras": self.current_payload["karras"],
+                "clip_skip": self.current_payload.get("clip_skip", 1),
                 "n_iter": 1,
             }
             # These params might not always exist in the horde payload
@@ -122,7 +123,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["control_type"] = self.current_payload["control_type"]
                 gen_payload["init_as_control"] = self.current_payload["image_is_control"]
                 gen_payload["return_control_map"] = self.current_payload.get("return_control_map", False)
-                gen_payload["clip_skip"] = self.current_payload.get("clip_skip", 1)
+            if "loras" in self.current_payload:
+                gen_payload["loras"] = self.current_payload["loras"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -168,7 +170,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"for {self.current_payload.get('ddim_steps',50)} steps "
                 f"{self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
-                f"And it appears to contain {count_parentheses(self.current_payload['prompt'])} weights",
+                f"And it appears to contain {len(gen_payload.get('loras', []))} "
+                f"loras: {[lora['name'] for lora in gen_payload.get('loras', [])]}",
             )
             time_state = time.time()
             gen_payload["model"] = self.current_model
