@@ -520,7 +520,7 @@ class WebUI:
                         value=config.allow_img2img,
                         info=self._info("allow_img2img"),
                     )
-                    config.default("allow_painting", True)
+                    config.default("allow_painting", False)
                     allow_painting = gr.Checkbox(
                         label=self._label("allow_painting"),
                         value=config.allow_painting,
@@ -532,7 +532,7 @@ class WebUI:
                         value=config.allow_post_processing,
                         info=self._info("allow_post_processing"),
                     )
-                    config.default("allow_controlnet", True)
+                    config.default("allow_controlnet", False)
                     allow_controlnet = gr.Checkbox(
                         label=self._label("allow_controlnet"),
                         value=config.allow_controlnet,
