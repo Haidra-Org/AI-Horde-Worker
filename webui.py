@@ -197,12 +197,12 @@ class WebUI:
             "info": "Choose to automatically load the top 'n' most popular models of the day.",
         },
         "ram_to_leave_free": {
-            "label": "RAM to Leave Free",
+            "label": "RAM to Leave Free (%)",
             "info": "This is the amount of RAM to leave free for your system to use. You should raise this value "
             "if you expect to run other programs on your computer while running your worker.",
         },
         "vram_to_leave_free": {
-            "label": "VRAM to Leave Free",
+            "label": "VRAM to Leave Free (%)",
             "info": "This is the amount of VRAM to leave free for your system to use. ",
         },
         "scribe_name": {
