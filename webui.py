@@ -331,7 +331,7 @@ class WebUI:
 
     def load_models(self):
         remote_models = (
-            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+            "https://raw.githubusercontent.com/Haidra-org/AI-Horde-image-model-reference/main/stable_diffusion.json"
         )
         latest_models = self.download_models(remote_models)
 
