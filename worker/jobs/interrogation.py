@@ -122,7 +122,7 @@ class InterrogationHordeJob(HordeJobFramework):
             logger.debug(self.r2_upload)
             buffer = BytesIO()
             # We send as WebP to avoid using all the horde bandwidth
-            self.image.save(buffer, format="WebP", quality=95)
+            self.image.save(buffer, format="WebP", quality=95, method=6)
             if self.r2_upload:
                 put_response = requests.put(self.r2_upload, data=buffer.getvalue())
                 logger.debug("R2 Upload response: {}", put_response)

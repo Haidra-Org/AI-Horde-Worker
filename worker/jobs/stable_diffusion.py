@@ -102,6 +102,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "seed": self.current_payload["seed"],
                 "tiling": self.current_payload["tiling"],
                 "karras": self.current_payload["karras"],
+                "clip_skip": self.current_payload.get("clip_skip", 1),
                 "n_iter": 1,
             }
             # These params might not always exist in the horde payload
@@ -296,7 +297,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
-        self.image.save(buffer, format="WebP", quality=self.upload_quality)
+        self.image.save(buffer, format="WebP", quality=self.upload_quality, method=6)
         if self.r2_upload:
             put_response = requests.put(self.r2_upload, data=buffer.getvalue())
             generation = "R2"

@@ -288,6 +288,7 @@ class WebUI:
 
         # Merge values which require some pre-processing
         donekeys = []
+        skipped_keys = []
         models_to_load = []
         for key, value in args.items():
             cfgkey = self._cfg(key.label)
@@ -313,15 +314,12 @@ class WebUI:
             elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
                 config[cfgkey] = str(value) + "%"
                 donekeys.append(key)
-            elif cfgkey == "dreamer_name" and config.get(cfgkey, "") == "An Awesome Dreamer":
-                del config["dreamer_name"]
-                donekeys.append(key)
-            elif cfgkey == "scribe_name" and config.get(cfgkey, "") == "An Awesome Scribe":
-                del config["scribe_name"]
-                donekeys.append(key)
-            elif cfgkey == "alchemist_name" and config.get(cfgkey, "") == "An Awesome Alchemist":
-                del config["alchemist_name"]
-                donekeys.append(key)
+            elif cfgkey == "dreamer_name" and value == "An Awesome Dreamer":
+                skipped_keys.append("dreamer_name")
+            elif cfgkey == "scribe_name" and value == "An Awesome Scribe":
+                skipped_keys.append("scribe_name")
+            elif cfgkey == "alchemist_name" and value == "An Awesome Alchemist":
+                skipped_keys.append("alchemist_name")
 
         # Merge the settings we have been passed into the old config,
         # don't remove anything we don't understand
@@ -330,7 +328,7 @@ class WebUI:
                 cfgkey = self._cfg(key.label)
                 config[cfgkey] = models_to_load if cfgkey == "models_to_load" else value
         with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
-            yaml.safe_dump(dict(config), configfile)
+            yaml.safe_dump({k: v for k, v in config.items() if k not in skipped_keys}, configfile)
 
         return f"Configuration Saved at {datetime.datetime.now()}"
 
