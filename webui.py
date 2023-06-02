@@ -155,6 +155,16 @@ class WebUI:
             "label": "Allow requests requiring ControlNet",
             "info": "Enable or disable the processing of jobs that also require ControlNet.",
         },
+        "allow_lora": {
+            "label": "Allow LoRas to be used by this worker",
+            "info": "Your worker will download the top 10Gb of non-character LoRas and then will ad-hoc download any "
+            "LoRa requested which you do not have, and cache that for a number a days",
+        },
+        "max_lora_cache_size": {
+            "label": "Use this setting to control how much extra space LoRas can take after you downloaded the Top",
+            "info": "If a new Lora would exceed this space, an old lora you've downloaded previously will be deleted. "
+            "!Note! THIS IS ON TOP OF THE CURATED LORAs, so plan around +5G more than this",
+        },
         "disable_terminal_ui": {
             "label": "Disable Terminal UI",
             "info": "Disable the display of the terminal UI, just output lines to the terminal",
@@ -520,7 +530,7 @@ class WebUI:
                         value=config.allow_img2img,
                         info=self._info("allow_img2img"),
                     )
-                    config.default("allow_painting", True)
+                    config.default("allow_painting", False)
                     allow_painting = gr.Checkbox(
                         label=self._label("allow_painting"),
                         value=config.allow_painting,
@@ -532,11 +542,26 @@ class WebUI:
                         value=config.allow_post_processing,
                         info=self._info("allow_post_processing"),
                     )
-                    config.default("allow_controlnet", True)
+                    config.default("allow_controlnet", False)
                     allow_controlnet = gr.Checkbox(
                         label=self._label("allow_controlnet"),
                         value=config.allow_controlnet,
                         info=self._info("allow_controlnet"),
+                    )
+                    config.default("allow_lora", False)
+                    allow_lora = gr.Checkbox(
+                        label=self._label("allow_lora"),
+                        value=config.allow_lora,
+                        info=self._info("allow_lora"),
+                    )
+                    config.default("max_lora_cache_size", False)
+                    max_lora_cache_size = gr.Slider(
+                        label=self._label("max_lora_cache_size"),
+                        value=config.max_lora_cache_size,
+                        info=self._info("max_lora_cache_size"),
+                        minimum=10,
+                        maximum=8192,
+                        step=1,
                     )
                     config.default("forms", [])
                     forms = gr.CheckboxGroup(
@@ -853,6 +878,8 @@ class WebUI:
                     max_length,
                     max_context_length,
                     branded_model,
+                    allow_lora,
+                    max_lora_cache_size,
                 },
                 outputs=[message],
             )
