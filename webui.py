@@ -197,12 +197,12 @@ class WebUI:
             "info": "Choose to automatically load the top 'n' most popular models of the day.",
         },
         "ram_to_leave_free": {
-            "label": "RAM to Leave Free",
+            "label": "RAM to Leave Free (%)",
             "info": "This is the amount of RAM to leave free for your system to use. You should raise this value "
             "if you expect to run other programs on your computer while running your worker.",
         },
         "vram_to_leave_free": {
-            "label": "VRAM to Leave Free",
+            "label": "VRAM to Leave Free (%)",
             "info": "This is the amount of VRAM to leave free for your system to use. ",
         },
         "scribe_name": {
@@ -231,11 +231,11 @@ class WebUI:
         },
     }
 
-    _models_found_on_disk = None
+    models_found_on_disk = None
 
     def __init__(self):
         self.app = None
-        self._models_found_on_disk = []
+        self.models_found_on_disk = []
 
     def _label(self, name):
         return WebUI.INFO[name]["label"] if name in WebUI.INFO else None
@@ -287,46 +287,34 @@ class WebUI:
         config = self.reload_config()
 
         # Merge values which require some pre-processing
-        donekeys = []
-        skipped_keys = []
+        skipped_keys = ["models_on_disk"]
         models_to_load = []
         for key, value in args.items():
             cfgkey = self._cfg(key.label)
             if cfgkey == "priority_usernames":
                 config.priority_usernames = self.process_input_list(value)
-                donekeys.append(key)
             elif cfgkey == "blacklist":
                 config.blacklist = self.process_input_list(value)
-                donekeys.append(key)
             elif cfgkey == "censorlist":
                 config.censorlist = self.process_input_list(value)
-                donekeys.append(key)
             elif cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
                 models_to_load.extend(value)
-                donekeys.append(key)
             elif cfgkey == "special_top_models_to_load":
                 if value and value != "None":
                     models_to_load.append(value)
-                    donekeys.append(key)
             elif cfgkey == "models_to_load":
                 models_to_load.extend(value)
-                donekeys.append(key)
             elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
                 config[cfgkey] = str(value) + "%"
-                donekeys.append(key)
-            elif cfgkey == "dreamer_name" and value == "An Awesome Dreamer":
+            elif cfgkey == "dreamer_name" and (value == "An Awesome Dreamer" or not value):
                 skipped_keys.append("dreamer_name")
-            elif cfgkey == "scribe_name" and value == "An Awesome Scribe":
+            elif cfgkey == "scribe_name" and (value == "An Awesome Scribe" or not value):
                 skipped_keys.append("scribe_name")
-            elif cfgkey == "alchemist_name" and value == "An Awesome Alchemist":
+            elif cfgkey == "alchemist_name" and (value == "An Awesome Alchemist" or not value):
                 skipped_keys.append("alchemist_name")
+            config[cfgkey] = value if cfgkey != "models_to_load" else None
 
-        # Merge the settings we have been passed into the old config,
-        # don't remove anything we don't understand
-        for key, value in args.items():
-            if key not in donekeys:
-                cfgkey = self._cfg(key.label)
-                config[cfgkey] = models_to_load if cfgkey == "models_to_load" else value
+        config["models_to_load"] = models_to_load
         with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
             yaml.safe_dump({k: v for k, v in config.items() if k not in skipped_keys}, configfile)
 
@@ -344,29 +332,10 @@ class WebUI:
 
     def load_models(self):
         remote_models = (
-            "https://raw.githubusercontent.com/db0/AI-Horde-image-model-reference/main/stable_diffusion.json"
+            "https://raw.githubusercontent.com/Haidra-org/AI-Horde-image-model-reference/main/stable_diffusion.json"
         )
         latest_models = self.download_models(remote_models)
 
-        models_in_reference = [
-            model
-            for model in latest_models
-            if model
-            not in [
-                "RealESRGAN_x4plus",
-                "RealESRGAN_x4plus_anime_6B",
-                "GFPGAN",
-                "CodeFormers",
-                "LDSR",
-                "BLIP",
-                "BLIP_Large",
-                "ViT-L/14",
-                "ViT-g-14",
-                "ViT-H-14",
-                "diffusers_stable_diffusion",
-                "safety_checker",
-            ]
-        ]
         aiworker_cache_home = os.environ.get("AIWORKER_CACHE_HOME", None)
         model_cache_folder = aiworker_cache_home if aiworker_cache_home else "./"
 
@@ -375,9 +344,7 @@ class WebUI:
         if sd_models_folder.exists():
             all_files_in_cache = glob.glob(str(sd_models_folder.joinpath("*.*")))
             all_files_in_cache = [
-                pathlib.Path(x).name
-                for x in all_files_in_cache
-                if not x.endswith(".sha256") and not x.endswith(".md5")
+                pathlib.Path(x).name for x in all_files_in_cache if x.endswith((".ckpt", ".safetensors"))
             ]
             for model_name, model_info in latest_models.items():
                 model_config_dict: dict = model_info.get("config", None)
@@ -394,9 +361,9 @@ class WebUI:
                     if model_filename and "yaml" not in model_filename:
                         break
                 if model_filename and model_filename in all_files_in_cache:
-                    self._models_found_on_disk.append(model_name)
+                    self.models_found_on_disk.append(model_name)
 
-        return sorted(models_in_reference, key=str.casefold)
+        return sorted(latest_models, key=str.casefold)
 
     def load_workerID(self, worker_name):
         workerID = ""
@@ -451,7 +418,7 @@ class WebUI:
         config = self.reload_config()
 
         model_list = self.load_models()
-        model_list = [model for model in model_list if model not in self._models_found_on_disk]
+        model_list = [model for model in model_list if model not in self.models_found_on_disk]
         models_on_disk = []
         # Seperate out the magic constants
         models_to_load_all = []
@@ -464,7 +431,7 @@ class WebUI:
                 models_to_load_top = model.title()
             elif model.lower().startswith("all "):
                 models_to_load_all.append(model.title())
-            elif model in self._models_found_on_disk:
+            elif model in self.models_found_on_disk:
                 models_on_disk.append(model)
             else:
                 models_to_load_individual.append(model)
@@ -616,7 +583,7 @@ class WebUI:
                         )
                     with gr.Row(), gr.Column():
                         models_on_disk = gr.CheckboxGroup(
-                            choices=self._models_found_on_disk,
+                            choices=self.models_found_on_disk,
                             label=self._label("models_on_disk"),
                             value=models_on_disk,
                             info=self._info("models_on_disk"),
