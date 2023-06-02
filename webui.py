@@ -321,12 +321,7 @@ class WebUI:
             elif cfgkey == "alchemist_name" and value == "An Awesome Alchemist":
                 skipped_keys.append("alchemist_name")
 
-        # Merge the settings we have been passed into the old config,
-        # don't remove anything we don't understand
-        for key, value in args.items():
-            if key not in donekeys:
-                cfgkey = self._cfg(key.label)
-                config[cfgkey] = models_to_load if cfgkey == "models_to_load" else value
+        config["models_to_load"] = models_to_load
         with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
             yaml.safe_dump({k: v for k, v in config.items() if k not in skipped_keys}, configfile)
 
