@@ -58,7 +58,7 @@ description = "Stable Horde Bridge"
 readme = "README.md"
 license = { file="LICENSE" }
 dynamic = ["dependencies"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU Affero General Public License v3",
@@ -66,8 +66,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/db0/AI-Horde-Worker"
-"Bug Tracker" = "https://github.com/db0/AI-Horde-Worker"
+"Homepage" = "https://github.com/Haidra-Org/AI-Horde-Worker"
+"Bug Tracker" = "https://github.com/Haidra-Org/AI-Horde-Worker"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

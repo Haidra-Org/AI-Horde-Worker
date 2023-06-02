@@ -24,7 +24,7 @@ This option is recommended as it will make keeping your repository up to date mu
 
 1. Use your start menu to open `git GUI`
 1. Select "Clone Existing Repository".
-1. In the Source location put `https://github.com/db0/AI-Horde-Worker.git`
+1. In the Source location put `https://github.com/Haidra-Org/AI-Horde-Worker.git`
 1. In the target directory, browse to any folder you want to put the horde worker folder.
 1. Press `Clone`
 1. In the new window that opens up, on the top menu, go to `Repository > Git Bash`. A new terminal window will open.
@@ -34,7 +34,7 @@ This option is recommended as it will make keeping your repository up to date mu
 
 Use these instructions if you do not have git for windows and do not want to install it. These instructions make updating the worker a bit more difficult down the line.
 
-1. Download [the zipped version](https://github.com/db0/AI-Horde-Worker/archive/refs/heads/main.zip)
+1. Download [the zipped version](https://github.com/Haidra-Org/AI-Horde-Worker/archive/refs/heads/main.zip)
 1. Extract it to any folder of your choice
 1. continue with the [Running](#running) instructions
 
@@ -45,7 +45,7 @@ This assumes you have git installed
 Open a bash terminal and run these commands (just copy-paste them all together)
 
 ```bash
-git clone https://github.com/db0/AI-Horde-Worker.git
+git clone https://github.com/Haidra-Org/AI-Horde-Worker.git
 cd AI-Horde-Worker
 ```
 
@@ -147,7 +147,7 @@ To run the Docker container, specify the required environment variables:
 
 - HORDE_API_KEY: The API key to use for authentication.
 
-ghcr.io/db0/ai-horde-worker:<insert release tag here>
+ghcr.io/Haidra-Org/ai-horde-worker:<insert release tag here>
 
 Optional environment variables:
 
