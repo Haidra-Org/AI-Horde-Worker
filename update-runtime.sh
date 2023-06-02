@@ -33,6 +33,7 @@ wget -qO- https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -
 if [ ! -f "conda/envs/linux/bin/python" ]; then
     bin/micromamba create --no-shortcuts -r conda -n linux -f ${CONDA_ENVIRONMENT_FILE} -y
 fi
+bin/micromamba create --no-shortcuts -r conda -n linux -f ${CONDA_ENVIRONMENT_FILE} -y
 
 if [ "$hordelib" = true ]; then
  bin/micromamba run -r conda -n linux python -s -m pip uninstall -y hordelib horde_model_reference
