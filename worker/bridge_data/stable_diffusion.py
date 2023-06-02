@@ -30,8 +30,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
         self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_post_processing = os.environ.get("ALLOW_POST_PROCESSING", "true") == "true"
-        self.allow_controlnet = os.environ.get("ALLOW_CONTROLNET", "false") == "false"
-        self.allow_lora = os.environ.get("ALLOW_LORA", "false") == "false"
+        self.allow_controlnet = os.environ.get("ALLOW_CONTROLNET", "false") == "true"
+        self.allow_lora = os.environ.get("ALLOW_LORA", "false") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64 * 64 * 8 * self.max_power
         self.censor_image_sfw_worker = Image.open("assets/nsfw_censor_sfw_worker.png")
