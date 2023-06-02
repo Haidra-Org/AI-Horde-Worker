@@ -306,12 +306,13 @@ class WebUI:
                 models_to_load.extend(value)
             elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
                 config[cfgkey] = str(value) + "%"
-            elif cfgkey == "dreamer_name" and value == "An Awesome Dreamer":
+            elif cfgkey == "dreamer_name" and (value == "An Awesome Dreamer" or not value):
                 skipped_keys.append("dreamer_name")
-            elif cfgkey == "scribe_name" and value == "An Awesome Scribe":
+            elif cfgkey == "scribe_name" and (value == "An Awesome Scribe" or not value):
                 skipped_keys.append("scribe_name")
-            elif cfgkey == "alchemist_name" and value == "An Awesome Alchemist":
+            elif cfgkey == "alchemist_name" and (value == "An Awesome Alchemist" or not value):
                 skipped_keys.append("alchemist_name")
+            config[cfgkey] = value if cfgkey != "models_to_load" else None
 
         config["models_to_load"] = models_to_load
         with open(WebUI.CONFIG_FILE, "wt", encoding="utf-8") as configfile:
