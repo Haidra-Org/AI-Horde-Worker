@@ -1,0 +1,23 @@
+# Copy this file as stable-horde-worker.service to /etc/systemd/system/ on systemd enabled linux installs
+# Replace $USERNAME with the user that stable-horde-worker runs as
+# Replace $PATH with the directory stable-horde-worker is installed
+#
+# Usage examples: systemctl start stable-horde-worker --> to start the service
+#                 systemctl enable stable-horde-worker --> to start automatically on system boot
+#                 journalctl -f -u stable-horde-worker --> to follow the logs of the horde worker
+
+[Unit]
+Description="Stable Horde Worker"
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=15
+User=$USERNAME
+WorkingDirectory=/$PATH/AI-Horde-Worker
+ExecStart=/$PATH/AI-Horde-Worker/horde-bridge.sh
+
+[Install]
+WantedBy=multi-user.target
