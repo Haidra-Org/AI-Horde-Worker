@@ -14,6 +14,7 @@ def main():
     set_logger_verbosity(args.verbosity)
     quiesce_logger(args.quiet)
     bridge_data = KoboldAIBridgeData()
+    bridge_data.reload_data()
     try:
         worker = ScribeWorker(bridge_data)
         worker.start()
