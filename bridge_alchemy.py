@@ -19,6 +19,7 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
 
     bridge_data = InterrogationBridgeData()
+    bridge_data.reload_data()
     SharedModelManager.loadModelManagers(
         blip=True,
         clip=True,

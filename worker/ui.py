@@ -710,7 +710,7 @@ class TerminalUI:
     def update_stats(self):
         # Total models
         if self.model_manager and self.model_manager.manager:
-            self.total_models = len(self.model_manager.manager.get_loaded_models_names())
+            self.total_models = len(self.model_manager.manager.get_loaded_models_names(mm_include="compvis"))
         # Recent job pop times
         if "pop_time_avg_5_mins" in bridge_stats.stats:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
