@@ -301,27 +301,27 @@ class WebUI:
         models_to_load = []
         for key, value in args.items():
             cfgkey = self._cfg(key.label)
-            if cfgkey == "priority_usernames":
-                config.priority_usernames = self.process_input_list(value)
-            elif cfgkey == "blacklist":
-                config.blacklist = self.process_input_list(value)
-            elif cfgkey == "censorlist":
-                config.censorlist = self.process_input_list(value)
-            elif cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
+            if cfgkey == "priority_usernames" or cfgkey == "blacklist" or cfgkey == "censorlist":
+                config[cfgkey] = self.process_input_list(value)
+                continue
+            if cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
+                config[cfgkey] = str(value) + "%"
+                continue
+
+            if cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
                 models_to_load.extend(value)
             elif cfgkey == "special_top_models_to_load":
                 if value and value != "None":
                     models_to_load.append(value)
             elif cfgkey == "models_to_load":
                 models_to_load.extend(value)
-            elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
-                config[cfgkey] = str(value) + "%"
             elif cfgkey == "dreamer_name" and (value == "An Awesome Dreamer" or not value):
                 skipped_keys.append("dreamer_name")
             elif cfgkey == "scribe_name" and (value == "An Awesome Scribe" or not value):
                 skipped_keys.append("scribe_name")
             elif cfgkey == "alchemist_name" and (value == "An Awesome Alchemist" or not value):
                 skipped_keys.append("alchemist_name")
+
             config[cfgkey] = value if cfgkey != "models_to_load" else None
 
         config["models_to_load"] = models_to_load
