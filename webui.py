@@ -304,16 +304,17 @@ class WebUI:
             if cfgkey == "priority_usernames" or cfgkey == "blacklist" or cfgkey == "censorlist":
                 config[cfgkey] = self.process_input_list(value)
                 continue
-            elif cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
+            if cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
+                config[cfgkey] = str(value) + "%"
+                continue
+
+            if cfgkey == "special_models_to_load" or cfgkey == "models_on_disk":
                 models_to_load.extend(value)
             elif cfgkey == "special_top_models_to_load":
                 if value and value != "None":
                     models_to_load.append(value)
             elif cfgkey == "models_to_load":
                 models_to_load.extend(value)
-            elif cfgkey == "ram_to_leave_free" or cfgkey == "vram_to_leave_free":
-                config[cfgkey] = str(value) + "%"
-                continue
             elif cfgkey == "dreamer_name" and (value == "An Awesome Dreamer" or not value):
                 skipped_keys.append("dreamer_name")
             elif cfgkey == "scribe_name" and (value == "An Awesome Scribe" or not value):
