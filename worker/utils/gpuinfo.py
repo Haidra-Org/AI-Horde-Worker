@@ -85,7 +85,7 @@ class GPUInfo:
         # If we're overriding the device using Nvidia driver env var hack
         if self.forced_gpu:
             device_id = self.device
-        
+
         data = self._get_gpu_data(device_id)
         if not data:
             return None
