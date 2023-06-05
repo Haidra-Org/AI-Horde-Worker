@@ -275,6 +275,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         # This initiates the threads that download the default loras, so it will immediately continue
         model_manager.lora.max_adhoc_disk = self.max_lora_cache_size * 1024
         model_manager.lora.download_default_loras(nsfw=self.nsfw)
-        model_manager.lora.wait_for_downloads(600)
+        model_manager.lora.wait_for_downloads(900)
         model_manager.lora.wait_for_adhoc_reset(15)
         model_manager.lora.delete_unused_loras(30)
