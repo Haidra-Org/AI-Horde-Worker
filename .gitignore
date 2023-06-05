@@ -195,3 +195,6 @@ src/taming-transformers
 /tmp
 /hordelib
 .vscode
+
+/nataili/compvis/*.*
+/nataili/lora/*.*
