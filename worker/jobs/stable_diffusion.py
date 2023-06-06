@@ -1,12 +1,14 @@
 """Get and process a job from the horde"""
 import base64
 import json
+import os
 import random
 import time
 import traceback
 from io import BytesIO
 
 import requests
+from PIL import Image
 from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
 
@@ -21,6 +23,8 @@ from worker.stats import bridge_stats
 SAVE_KUDOS_TRAINING_DATA = False
 SIMULATE_KUDOS_LOCALLY = False
 
+output_folder = "/generated/" + time.strftime("%Y-%m-%d")
+os.makedirs(output_folder, exist_ok=True)
 
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
@@ -187,6 +191,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"Generation for id {self.current_id} finished successfully"
                 f" in {round(time.time() - time_state,1)} seconds.",
             )
+            # Save entry data and generated result
         except Exception as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -312,11 +317,53 @@ class StableDiffusionHordeJob(HordeJobFramework):
         }
         if self.censored:
             self.submit_dict["state"] = self.censored
+        # Save image and prompts by ID
+        logger.info("Saving image and prompts to disk... (id: {})", self.current_id")
+        folder_path = f"generated/{time.strftime('%Y-%m-%d')}"
+        os.makedirs(folder_path, exist_ok=True)
+        image_path = f"{folder_path}/{self.current_id}.webp"
+        prompts_path = f"{folder_path}/{self.current_id}.prompt.txt"
+        json_path = f"{folder_path}/{self.current_id}.metadata.json"
+
+        self.image.save(image_path, format="WebP", quality=self.upload_quality)
+        with open(prompts_path, "w") as prompts_file:
+            prompts_file.write(self.current_payload["prompt"])
+        with open(json_path, "w") as json_file:
+            json.dump(self.submit_dict, json_file)
 
     def post_submit_tasks(self, submit_req):
         kudos = self.job_kudos if SIMULATE_KUDOS_LOCALLY else submit_req.json()["reward"]
         bridge_stats.update_inference_stats(self.current_model, kudos)
 
+    def save_image(self, img_id):
+        image_path = os.path.join(output_folder, f"{img_id}.webp")
+        self.image.save(image_path, format="WebP", quality=self.upload_quality)
+
+    def save_prompts(self, img_id):
+        prompts_path = os.path.join(output_folder, f"{img_id}.prompt.txt")
+        with open(prompts_path, "w") as prompts_file:
+            prompts_file.write(json.dumps(self.current_payload["prompt"]))
+
+    def save_metadata(self, img_id):
+        metadata = {
+            "id": self.current_id,
+            "generation": f"{img_id}.webp",
+            "seed": self.seed,
+            "model": self.current_model,
+            "model_base": self.model_baseline,
+            "prompt": self.current_payload["prompt"],
+            "post_processing": self.current_payload.get("post_processing", []),
+            "tiling": self.current_payload.get("tiling", False),
+            "n_iter": self.current_payload.get("n_iter", 1),
+            "source_image": bool(self.current_payload.get("source_image")),
+            "source_mask": bool(self.current_payload.get("source_mask")),
+
+        }
+        if self.censored:
+            metadata["state"] = self.censored
+        metadata_path = os.path.join(output_folder, f"{img_id}.metadata.json")
+        with open(metadata_path, "w") as metadata_file:
+            metadata_file.write(json.dumps(metadata))
 
 def count_parentheses(s):
     open_p = False
