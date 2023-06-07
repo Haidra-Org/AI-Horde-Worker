@@ -180,9 +180,18 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             return self._all_model_names[:]
 
         logger.info("Refreshing the list of all available models")
-        data = requests.get(
-            "https://raw.githubusercontent.com/Haidra-Org/AI-Horde-image-model-reference/main/stable_diffusion.json",
-        ).json()
+        response = None
+        try:
+            response = requests.get(
+                url="https://raw.githubusercontent.com/Haidra-Org/AI-Horde-image-model-reference/main/stable_diffusion.json",
+                timeout=10,
+            )
+            response.raise_for_status()
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+            logger.error(f"Failed to retrieve the list of all available models: {e}")
+            return self.models_to_load if self.models_to_load else []
+
+        data = response.json()
 
         # Get all interesting models
         models = []
