@@ -87,6 +87,7 @@ class JobPopper:
 
     def download_image_data(self, image_url):
         """Returns the image data, not a PIL"""
+        img_data = None
         try:
             with requests.get(image_url, stream=True, timeout=2) as r:
                 size = r.headers.get("Content-Length", 0)
@@ -107,6 +108,8 @@ class JobPopper:
         except Exception as err:
             logger.error(err)
             return None
+        if not img_data:
+            logger.error(f"Could not download source image from R2 {image_url}. Skipping source image.")
         return img_data
 
     def convert_image_data_to_pil(self, img_data):
