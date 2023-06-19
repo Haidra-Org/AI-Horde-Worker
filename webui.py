@@ -886,12 +886,18 @@ class WebUI:
 
         self.app.queue()
 
-    def run(self, share, nobrowser, lan):
+    def get_auth_value(self, user, password):
+        if not user or not password:
+            return None
+        return (user[0], password[0])
+
+    def run(self, share, nobrowser, lan, user, password):
         server_name = "0.0.0.0" if lan else None
         self.initialise()
         self.app.launch(
             quiet=True,
             share=share,
+            auth=self.get_auth_value(user, password),
             inbrowser=not nobrowser,
             server_name=server_name,
             prevent_thread_lock=True,
@@ -906,7 +912,10 @@ if __name__ == "__main__":
     parser.add_argument("--share", action="store_true", help="Create a public URL")
     parser.add_argument("--no-browser", action="store_true", help="Don't open automatically in a web browser")
     parser.add_argument("--lan", action="store_true", help="Allow access on the local network")
+    parser.add_argument("--user", action="store", nargs=1, help="Username for authentication")
+    parser.add_argument("--password", action="store", nargs=1, help="Password for authentication")
     args = parser.parse_args()
-
+    if args.user and not args.password or args.password and not args.user:
+        parser.error("--user and --password must both be specified")
     ui = WebUI()
-    ui.run(args.share, args.no_browser, args.lan)
+    ui.run(args.share, args.no_browser, args.lan, args.user, args.password)
