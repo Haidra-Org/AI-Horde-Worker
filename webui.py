@@ -886,12 +886,13 @@ class WebUI:
 
         self.app.queue()
 
-    def run(self, share, nobrowser, lan):
+    def run(self, share, nobrowser, lan, user, password):
         server_name = "0.0.0.0" if lan else None
         self.initialise()
         self.app.launch(
             quiet=True,
             share=share,
+            auth=(user, password) if user and password else None,
             inbrowser=not nobrowser,
             server_name=server_name,
             prevent_thread_lock=True,
@@ -906,7 +907,36 @@ if __name__ == "__main__":
     parser.add_argument("--share", action="store_true", help="Create a public URL")
     parser.add_argument("--no-browser", action="store_true", help="Don't open automatically in a web browser")
     parser.add_argument("--lan", action="store_true", help="Allow access on the local network")
+    parser.add_argument("--user", action="store", nargs=1, help="Username for authentication")
+    parser.add_argument("--password", action="store", nargs=1, help="Password for authentication")
+    parser.add_argument("--no-auth", action="store_true", help="Disable authentication")
     args = parser.parse_args()
 
+    if args.share or args.lan:
+        if not args.no_auth and not args.user:
+            print(
+                (
+                    "WARNING: You are running in public mode without authentication. This is not recommended.\n"
+                    "To enable authentication, use the --user and --password arguments.\n"
+                    "If you are running in a trusted environment, you can disable this warning with the "
+                    "--no-auth argument.\n"
+                    "Continue without authentication? (y/n)"
+                ),
+            )
+            if input().lower() != "y":
+                exit(0)
+
+        if (args.user or args.password) and not (args.user and args.password):
+            parser.error("--user and --password must both be specified")
+
+    elif args.user or args.password:
+        parser.error("--user and --password can only be used with --share or --lan")
+
     ui = WebUI()
-    ui.run(args.share, args.no_browser, args.lan)
+    ui.run(
+        args.share,
+        args.no_browser,
+        args.lan,
+        args.user[0] if args.user else None,
+        args.password[0] if args.password else None,
+    )
