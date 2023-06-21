@@ -743,9 +743,8 @@ class TerminalUI:
             ref_path = os.path.join(".git", *head_contents[5:].split("/"))
 
             with open(ref_path, "r") as f:
-                commit_hash = f.read().strip()
+                return f.read().strip()
 
-            return commit_hash
         except Exception:
             return ""
 
@@ -801,8 +800,7 @@ class TerminalUI:
 
     def get_hordelib_version(self):
         try:
-            package_version = pkg_resources.get_distribution("hordelib").version
-            return package_version
+            return pkg_resources.get_distribution("hordelib").version
         except pkg_resources.DistributionNotFound:
             return "Unknown"
 

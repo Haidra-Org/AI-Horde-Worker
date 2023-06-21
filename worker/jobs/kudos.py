@@ -131,9 +131,7 @@ class KudosModel:
         kudos = kudos * basis_scale
 
         # Scale our kudos by the time the job will take to complete
-        kudos = job_ratio * kudos
-
-        return kudos
+        return job_ratio * kudos
 
     @classmethod
     def one_hot_encode(cls, strings, unique_strings):
