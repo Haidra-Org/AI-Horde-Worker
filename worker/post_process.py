@@ -43,7 +43,7 @@ def strip_background(payload):
         alpha_matting_erode_size=10,
     )
     del session
-    return image  # noqa: RET504
+    return image
 
 
 # At the bottom, as we need to define the method first
