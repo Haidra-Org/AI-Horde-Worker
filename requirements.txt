@@ -1,6 +1,7 @@
 --extra-index-url https://download.pytorch.org/whl/cu118
 torch # We have to place it here otherwise it installs the CPU version
 horde_model_reference~=0.1.1
+horde_clipfree == 0.0.1
 hordelib>=1.5.1
 gradio
 pyyaml
