@@ -85,7 +85,8 @@ Start your worker, depending on which type your want.
 * If you want to generate Stable Diffusion images for others, run `horde-bridge`.
 
 
-    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM. If you do not have at least 20G or RAM, append `--disable_voodoo` to your startup command above! If you do not have at least 6Gb of swap, also `--disable_voodoo`!
+    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM
+    
 * If you want to interrogate images for other, run `horde-alchemist_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
 
 
