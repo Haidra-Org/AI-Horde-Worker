@@ -152,7 +152,13 @@ class BridgeDataTemplate:
                 )
             if choice not in ["y", "Y", "", "yes", "all", "a"]:
                 sys.exit(1)
-            model_manager.taint_models(not_found_models)
+            for model in not_found_models:
+                # logger.init(f"Model: {model}", status="Downloading")
+                if not model_manager.download_model(model):
+                    logger.error(
+                        "Something went wrong when downloading the model! You may need to restart the bridge.",
+                    )
+
             if choice in ["all", "a"]:
                 model_manager.download_all()
             elif choice in ["y", "Y", "", "yes"]:
