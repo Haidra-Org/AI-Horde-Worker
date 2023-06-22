@@ -41,7 +41,7 @@ ignore = [
 
 
 [tool.ruff.isort]
-known-third-party = ["creds", "gfpgan", "ray", "bridgeData", "nataili"]
+known-third-party = ["creds", "gfpgan", "ray", "bridgeData", "nataili", "horde_model_reference"]
 
 
 [build-system]
