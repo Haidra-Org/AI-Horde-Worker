@@ -274,6 +274,8 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         super().check_models(model_manager)
         if not self.allow_lora:
             return
+        if model_manager.lora is None:  # The lora manager is not loaded yet
+            return
         if not model_manager.lora.are_downloads_complete():
             return
         # We only want to check and download new default loras once per day
