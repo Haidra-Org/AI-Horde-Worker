@@ -20,6 +20,7 @@ class WorkerFramework:
         self.should_restart = False
         self.consecutive_executor_restarts = 0
         self.consecutive_failed_jobs = 0
+        self.out_of_memory_jobs = 0
         self.executor = None
         self.ui = None
         self.last_stats_time = time.time()
@@ -152,6 +153,13 @@ class WorkerFramework:
                 if job_thread.exception(timeout=1):
                     logger.error("Job failed with exception, {}", job_thread.exception())
                     logger.exception(job_thread.exception())
+                if job.is_out_of_memory():
+                    logger.error("Job failed with out of memory error")
+                    self.out_of_memory_jobs += 1
+                if self.out_of_memory_jobs >= 10:
+                    logger.critical("Too many jobs have failed with out of memory error. Aborting!")
+                    self.should_stop = True
+                    return
                 if self.consecutive_executor_restarts > 0:
                     logger.critical(
                         "Worker keeps crashing after thread executor restart. " "Cannot be salvaged. Aborting!",
