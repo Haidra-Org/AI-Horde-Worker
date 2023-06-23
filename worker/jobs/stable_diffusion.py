@@ -192,14 +192,26 @@ class StableDiffusionHordeJob(HordeJobFramework):
             stack_payload["request_type"] = req_type
             stack_payload["model"] = self.current_model
             stack_payload["prompt"] = "PROMPT REDACTED"
+
             logger.error(
-                "Something went wrong when processing request. "
+                "Something went wrong when processing the request. "
                 "Please check your trace.log file for the full stack trace. "
                 f"Payload: {stack_payload}",
             )
             trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
             logger.trace(trace)
-            self.status = JobStatus.FAULTED
+            if "OutOfMemoryError" in str(err):
+                logger.error(
+                    "This machine ran out of memory when processing the request. "
+                    "You very likely need to reduce the max_power parameter in your config."
+                    "\nKeep in mind that you may run fine for long periods of time until a worst case job is run.",
+                    "\nHowever, If you are only seeing this error after very long periods of time, and you know "
+                    "you have enough memory ordinarily for a worst case job, it is possible that there may be a "
+                    "memory leak. In that case, report this issue, along with your bridge.log, to the developers.",
+                )
+                self.status = JobStatus.OUT_OF_MEMORY
+            else:
+                self.status = JobStatus.FAULTED
             self.start_submit_thread()
             return
 
