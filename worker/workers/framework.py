@@ -156,7 +156,7 @@ class WorkerFramework:
                 if job.is_out_of_memory():
                     logger.error("Job failed with out of memory error")
                     self.out_of_memory_jobs += 1
-                if self.out_of_memory_jobs >= 5:
+                if self.out_of_memory_jobs >= 10:
                     logger.critical("Too many jobs have failed with out of memory error. Aborting!")
                     self.should_stop = True
                     return
