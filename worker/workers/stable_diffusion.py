@@ -18,6 +18,8 @@ class StableDiffusionWorker(WorkerFramework):
 
     # Setting it as it's own function so that it can be overriden
     def can_process_jobs(self):
+        if self.model_manager.compvis is None:
+            return False  # The compvis model manager is not loaded
         loaded_models = len(self.model_manager.compvis.get_loaded_models_names())
         can_do = loaded_models > 0
         if not can_do:

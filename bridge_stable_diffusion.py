@@ -4,12 +4,16 @@ import os
 # isort: off
 # We need to import the argparser first, as it sets the necessry Switches
 from worker.argparser.stable_diffusion import args
+from worker.utils.set_envs import set_aiworker_cache_home_from_config
+
+set_aiworker_cache_home_from_config()  # Get `cache_home` from `bridge_config.yaml` into the environment variable
 
 import hordelib
 
 # We need to remove these, to avoid comfyUI trying to use them
 hordelib.initialise()
 from hordelib.horde import SharedModelManager
+from hordelib.consts import MODEL_CATEGORY_NAMES
 
 # isort: on
 from worker.bridge_data.stable_diffusion import StableDiffusionBridgeData
@@ -53,18 +57,21 @@ def main():
     try:
         bridge_data.reload_data()
 
-        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
-
-        SharedModelManager.loadModelManagers(
-            clip=True,
-            compvis=True,
-            esrgan=True,
-            gfpgan=True,
-            safety_checker=True,
-            codeformer=True,
-            controlnet=True,
-            lora=True,
+        SharedModelManager.load_model_managers(
+            [
+                MODEL_CATEGORY_NAMES.blip,
+                MODEL_CATEGORY_NAMES.clip,
+                MODEL_CATEGORY_NAMES.compvis,
+                MODEL_CATEGORY_NAMES.controlnet,
+                MODEL_CATEGORY_NAMES.codeformer,
+                MODEL_CATEGORY_NAMES.gfpgan,
+                MODEL_CATEGORY_NAMES.esrgan,
+                MODEL_CATEGORY_NAMES.safety_checker,
+                MODEL_CATEGORY_NAMES.lora,
+            ],
         )
+
+        worker = StableDiffusionWorker(SharedModelManager.manager, bridge_data)
 
         worker.model_manager = SharedModelManager.manager
 
