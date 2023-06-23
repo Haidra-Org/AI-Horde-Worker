@@ -54,7 +54,11 @@ class HordeJobFramework:
 
     def is_faulted(self):
         """Check if the job is faulted"""
-        return self.status in [JobStatus.FAULTED, JobStatus.FINALIZING_FAULTED]
+        return self.status in [JobStatus.FAULTED, JobStatus.FINALIZING_FAULTED, JobStatus.OUT_OF_MEMORY]
+
+    def is_out_of_memory(self):
+        """Check if the job ran out of memory"""
+        return self.status in [JobStatus.OUT_OF_MEMORY]
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -89,7 +93,7 @@ class HordeJobFramework:
         """Submits the job to the server to earn our kudos.
         This method MUST be extended with the specific logic for this worker
         At the end it MUST set the job state to DONE"""
-        if self.status == JobStatus.FAULTED:
+        if self.status == JobStatus.FAULTED or self.status == JobStatus.OUT_OF_MEMORY:
             self.submit_dict = {
                 "id": self.current_id,
                 "state": "faulted",
