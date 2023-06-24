@@ -298,7 +298,7 @@ class WebUI:
         config = self.reload_config()
 
         # Merge values which require some pre-processing
-        skipped_keys = ["models_on_disk"]
+        skipped_keys = ["models_on_disk", "special_models_to_load", "special_top_models_to_load"]
         models_to_load = []
         for key, value in args.items():
             cfgkey = self._cfg(key.label)
