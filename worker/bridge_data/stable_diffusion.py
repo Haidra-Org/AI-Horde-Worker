@@ -105,7 +105,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             logger.warning(
                 f"Dynamic models is configured to load {self.number_of_dynamic_models} models, but "
                 f"{top_n if top_n else 'All Models'} models "
-                f"are manually configured to be loaded. Disabling dynamic models."
+                f"are manually configured to be loaded. Disabling dynamic models.",
             )
 
             logger.warning(
@@ -115,7 +115,6 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
             )
             self.dynamic_models = False
             self.number_of_dynamic_models = 0
-
 
         if not self.dynamic_models:
             self.model_names = self.models_to_load
