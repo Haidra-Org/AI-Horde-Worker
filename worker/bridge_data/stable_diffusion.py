@@ -92,6 +92,13 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if top_n:
             self.models_to_load.extend(self.get_top_n_models(top_n))
 
+        if self.dynamic_models and not self.number_of_dynamic_models:
+            logger.warning(
+                "Dynamic models are enabled but config option `number_of_dynamic_models` isn't set or is 0. "
+                "Disabling dynamic models.",
+            )
+            self.dynamic_models = False
+
         if not self.dynamic_models:
             self.model_names = self.models_to_load
         else:
@@ -141,7 +148,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         UserSettings.disable_disk_cache.active = self.disable_disk_cache
 
     def check_extra_conditions_for_download_choice(self):
-        return self.dynamic_models or self.always_download
+        return (self.dynamic_models and self.number_of_dynamic_models) or self.always_download
 
     def _is_valid_stable_diffusion_model(self, model_name):
         if model_name in ["safety_checker", "LDSR"]:
