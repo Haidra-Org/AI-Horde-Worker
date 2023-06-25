@@ -9,6 +9,7 @@ set_aiworker_cache_home_from_config()  # Get `cache_home` from `bridgeconfig.yam
 from worker.bridge_data.scribe import KoboldAIBridgeData  # noqa: E402
 from worker.logger import logger, quiesce_logger, set_logger_verbosity  # noqa: E402
 from worker.workers.scribe import ScribeWorker  # noqa: E402
+
 # isort: on
 
 
