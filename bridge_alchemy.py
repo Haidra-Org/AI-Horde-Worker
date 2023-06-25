@@ -10,6 +10,7 @@ import hordelib
 # We need to remove these, to avoid comfyUI trying to use them
 hordelib.initialise()
 from hordelib.horde import SharedModelManager
+from hordelib.shared_model_manager import MODEL_CATEGORY_NAMES
 
 # isort: on
 
@@ -23,14 +24,15 @@ if __name__ == "__main__":
 
     bridge_data = InterrogationBridgeData()
     bridge_data.reload_data()
-    SharedModelManager.loadModelManagers(
-        blip=True,
-        clip=True,
-        safety_checker=True,
-        esrgan=True,
-        gfpgan=True,
-        codeformer=True,
-        controlnet=True,
+    SharedModelManager.load_model_managers(
+        [
+            MODEL_CATEGORY_NAMES.safety_checker,
+            MODEL_CATEGORY_NAMES.clip,
+            MODEL_CATEGORY_NAMES.blip,
+            MODEL_CATEGORY_NAMES.codeformer,
+            MODEL_CATEGORY_NAMES.esrgan,
+            MODEL_CATEGORY_NAMES.gfpgan,
+        ],
     )
     try:
         worker = InterrogationWorker(SharedModelManager.manager, bridge_data)
