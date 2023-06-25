@@ -6,7 +6,7 @@ import os
 from worker.argparser.stable_diffusion import args
 from worker.utils.set_envs import set_aiworker_cache_home_from_config
 
-set_aiworker_cache_home_from_config()  # Get `cache_home` from `bridge_config.yaml` into the environment variable
+set_aiworker_cache_home_from_config()  # Get `cache_home` from `bridgeconfig.yaml` into the environment variable
 
 import hordelib
 

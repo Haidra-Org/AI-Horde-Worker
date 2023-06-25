@@ -2,6 +2,9 @@
 # isort: off
 # We need to import the argparser first, as it sets the necessary Switches
 from worker.argparser.stable_diffusion import args
+from worker.utils.set_envs import set_aiworker_cache_home_from_config
+
+set_aiworker_cache_home_from_config()  # Get `cache_home` from `bridgeconfig.yaml` into the environment variable
 import hordelib
 
 # We need to remove these, to avoid comfyUI trying to use them
