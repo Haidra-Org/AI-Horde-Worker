@@ -94,12 +94,21 @@ class TerminalUI:
 
     def __init__(self, bridge_data):
         self.bridge_data = bridge_data
+
+        self.dreamer_worker = False
         self.scribe_worker = False
-        self.model_manager = None
+        self.alchemy_worker = False
+
         # We check the name rather the type directly to avoid bad things
         # happening if we import the Kobold class
-        if bridge_data.__class__.__name__ == "KoboldAIBridgeData":
+        if bridge_data.__class__.__name__ == "InterrogationBridgeData":
+            self.alchemy_worker = True
+        elif bridge_data.__class__.__name__ == "StableDiffusionBridgeData":
+            self.dreamer_worker = True
+        elif bridge_data.__class__.__name__ == "KoboldAIBridgeData":
             self.scribe_worker = True
+
+        self.model_manager = None
 
         if hasattr(self.bridge_data, "scribe_name") and self.scribe_worker:
             self.worker_name = self.bridge_data.scribe_name
@@ -710,7 +719,16 @@ class TerminalUI:
     def update_stats(self):
         # Total models
         if self.model_manager and self.model_manager.manager:
-            self.total_models = len(self.model_manager.manager.get_loaded_models_names(mm_include="compvis"))
+            if self.dreamer_worker:
+                self.total_models = len(self.model_manager.manager.get_loaded_models_names(mm_include="compvis"))
+            elif self.alchemy_worker:
+                self.total_models = len(
+                    self.model_manager.manager.get_loaded_models_names(
+                        mm_include=["clip", "blip", "codeformer", "gfpgan", "esrgan"],
+                    ),
+                )
+            elif self.scribe_worker:
+                self.total_models = "See KAI"
         # Recent job pop times
         if "pop_time_avg_5_mins" in bridge_stats.stats:
             self.pop_time = bridge_stats.stats["pop_time_avg_5_mins"]
