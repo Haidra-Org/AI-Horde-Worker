@@ -23,8 +23,7 @@ from worker.stats import bridge_stats
 SAVE_KUDOS_TRAINING_DATA = False
 SIMULATE_KUDOS_LOCALLY = False
 
-output_folder = "/generated/" + time.strftime("%Y-%m-%d")
-os.makedirs(output_folder, exist_ok=True)
+
 
 class StableDiffusionHordeJob(HordeJobFramework):
     """Get and process a stable diffusion job from the horde"""
@@ -35,6 +34,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.upload_quality = 95
         self.seed = None
         self.image = None
+        self.image_uncensored = None
         self.r2_upload = None
         self.censored = False
         self.available_models = self.model_manager.get_loaded_models_names()
@@ -45,6 +45,13 @@ class StableDiffusionHordeJob(HordeJobFramework):
         self.clip_model = None
         self.hordelib = HordeLib()
         self.kudos_model = None
+        ## Self.folder_path should point to the folder where the generated images will be saved, and it should be ON disk F:\AI-Horde-Worker\generated
+        ## self.folder_path = f"generated/{time.strftime('%Y-%m-%d')}"
+        self.folder_path = f"F:/AI-Horde-Worker/generated/{time.strftime('%Y-%m-%d')}"
+        self.source_image = None
+        self.source_mask = None
+        self.model_baseline = None
+        os.makedirs(self.folder_path, exist_ok=True)
         if SIMULATE_KUDOS_LOCALLY:
             self.kudos_model = KudosModel("worker/jobs/kudos-v20-66.ckpt")
         self.job_kudos = 0
@@ -90,10 +97,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             censor_reason = "Requested"
         # use_gfpgan = self.current_payload.get("use_gfpgan", True)
         # use_real_esrgan = self.current_payload.get("use_real_esrgan", False)
-        source_processing = self.pop.get("source_processing")
-        source_image = self.pop.get("source_image")
-        source_mask = self.pop.get("source_mask")
-        model_baseline = self.model_manager.models[self.current_model].get("baseline")
+        self.source_processing = self.pop.get("source_processing")
+        self.source_image = self.pop.get("source_image")
+        self.source_mask = self.pop.get("source_mask")
+        self.model_baseline = self.model_manager.models[self.current_model].get("baseline")
         # These params will always exist in the payload from the horde
         try:
             gen_payload = {
@@ -110,19 +117,19 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 "n_iter": 1,
             }
             # These params might not always exist in the horde payload
-            if source_image:
-                gen_payload["source_image"] = source_image
-            if source_image and source_mask:
-                gen_payload["source_mask"] = source_mask
-            if "denoising_strength" in self.current_payload and source_image:
+            if self.source_image:
+                gen_payload["source_image"] = self.source_image
+            if self.source_image and self.source_mask:
+                gen_payload["source_mask"] = self.source_mask
+            if "denoising_strength" in self.current_payload and self.source_image:
                 gen_payload["denoising_strength"] = self.current_payload["denoising_strength"]
-            if "hires_fix" in self.current_payload and not source_image:
+            if "hires_fix" in self.current_payload and not self.source_image:
                 gen_payload["hires_fix"] = self.current_payload["hires_fix"]
             if (
                 "control_type" in self.current_payload
-                and source_image
-                and source_processing == "img2img"
-                and "stable diffusion 2" not in model_baseline
+                and self.source_image
+                and self.source_processing == "img2img"
+                and "stable diffusion 2" not in self.model_baseline
             ):
                 gen_payload["control_type"] = self.current_payload["control_type"]
                 gen_payload["init_as_control"] = self.current_payload["image_is_control"]
@@ -136,10 +143,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             return
         # logger.debug(gen_payload)
         req_type = "txt2img"
-        if source_image:
-            if source_processing == "img2img":
+        if self.source_image:
+            if self.source_processing == "img2img":
                 req_type = "img2img"
-            elif source_processing == "inpainting":
+            elif self.source_processing == "inpainting":
                 req_type = "inpainting"
         # Reject jobs for pix2pix if not img2img
         if self.current_model in ["pix2pix"] and req_type != "img2img":
@@ -153,11 +160,11 @@ class StableDiffusionHordeJob(HordeJobFramework):
         logger.debug(
             f"{req_type} ({self.current_model}) request with id {self.current_id} picked up. Initiating work...",
         )
-        if req_type == "inpainting" and source_mask is None:
+        if req_type == "inpainting" and self.source_mask is None:
             try:
-                if source_image.mode == "P":
-                    source_image.convert("RGBA")
-                _red, _green, _blue, _alpha = source_image.split()
+                if self.source_image.mode == "P":
+                    self.source_image.convert("RGBA")
+                _red, _green, _blue, _alpha = self.source_image.split()
             except ValueError:
                 logger.warning(
                     (
@@ -175,7 +182,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"{self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
                 f"And it appears to contain {len(gen_payload.get('loras', []))} "
-                f"loras: {[lora['name'] for lora in gen_payload.get('loras', [])]}",
+                f"loras: {[lora['name'] for lora in gen_payload.get('loras', [])]}"
+                f"\nThe Prompt is: {self.current_payload['prompt']}\n",
             )
             time_state = time.time()
             gen_payload["model"] = self.current_model
@@ -196,7 +204,7 @@ class StableDiffusionHordeJob(HordeJobFramework):
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
             stack_payload["model"] = self.current_model
-            stack_payload["prompt"] = "PROMPT REDACTED"
+            stack_payload["prompt"] = self.current_payload["prompt"]
             logger.error(
                 "Something went wrong when processing request. "
                 "Please check your trace.log file for the full stack trace. "
@@ -222,8 +230,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
             logger.warning(f"Rescue: Attempting to unload {self.current_model}")
             self.model_manager.unload_model(self.current_model)
             return
+        
         if use_nsfw_censor and is_image_nsfw(self.image):
             logger.info(f"Image censored with reason: {censor_reason}")
+            self.image_uncensored = self.image
             self.image = censor_image
             self.censored = "censored"
 
@@ -237,13 +247,32 @@ class StableDiffusionHordeJob(HordeJobFramework):
             )
             if self.clip_model and is_csam:
                 logger.warning(f"Current values for id {self.current_id} would create CSAM. Censoring!")
+                self.image_uncensored = self.image
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
         # Run Post-Processors
         for post_processor in self.current_payload.get("post_processing", []):
             # Do not PP when censored
-            if self.censored:
+            if self.censored and self.censored != "csam":
+                logger.debug(f"Post-processing with {post_processor}...")
+                try:
+                    strength = self.current_payload.get("facefixer_strength", 0.5)
+                    self.image_uncensored = post_process(post_processor, self.image_uncensored, strength=strength)
+                except (AssertionError, RuntimeError) as err:
+                    logger.warning(
+                        "Post-Processor '{}' encountered an error when working on image . Skipping! {}",
+                        post_processor,
+                        err,
+                    )
+                # Edit the webp upload quality if post-processor used
+                if self.r2_upload:
+                    self.upload_quality = 95
+                else:
+                    self.upload_quality = (
+                        45 if post_processor in ["RealESRGAN_x4plus", "RealESRGAN_x4plus_anime_6B"] else 75
+                    )
+                #logger.debug("post-processing done...")
                 continue
             logger.debug(f"Post-processing with {post_processor}...")
             try:
@@ -318,52 +347,94 @@ class StableDiffusionHordeJob(HordeJobFramework):
         if self.censored:
             self.submit_dict["state"] = self.censored
         # Save image and prompts by ID
-        logger.info("Saving image and prompts to disk... (id: {})", self.current_id")
-        folder_path = f"generated/{time.strftime('%Y-%m-%d')}"
-        os.makedirs(folder_path, exist_ok=True)
-        image_path = f"{folder_path}/{self.current_id}.webp"
-        prompts_path = f"{folder_path}/{self.current_id}.prompt.txt"
-        json_path = f"{folder_path}/{self.current_id}.metadata.json"
+        try:
+            logger.info("Saving image and prompts to disk... (id: {})", self.current_id)
+            try:
+                self.save_metadata(self.current_id)
+            except (Exception) as err:
+                logger.error("Error saving metadata to disk... (id: {}). Error:{}", self.current_id, err)
+            try:
+                self.save_image(self.current_id)
+                ##self.save_prompts(self.current_id)
+                logger.info("Image and prompts saved to disk... (id: {})", self.current_id)
+            except:
+                logger.error("Error saving image to disk... (id: {})", self.current_id)
+        except (Exception) as err:
+            logger.error("Error saving image and prompts to disk... (id: {}). Error:{}", self.current_id, err)
 
-        self.image.save(image_path, format="WebP", quality=self.upload_quality)
-        with open(prompts_path, "w") as prompts_file:
-            prompts_file.write(self.current_payload["prompt"])
-        with open(json_path, "w") as json_file:
-            json.dump(self.submit_dict, json_file)
 
     def post_submit_tasks(self, submit_req):
         kudos = self.job_kudos if SIMULATE_KUDOS_LOCALLY else submit_req.json()["reward"]
         bridge_stats.update_inference_stats(self.current_model, kudos)
 
     def save_image(self, img_id):
-        image_path = os.path.join(output_folder, f"{img_id}.webp")
+        if self.image_uncensored is not None and self.censored != "csam" :
+        # Save image_uncensored if it exists
+            #logger.info("Saving uncensored image to disk... (id: {})", img_id)
+            uncensored_path = os.path.join(self.folder_path, f"{time.strftime('%H-%M')}-{img_id}_nsfw_uncensored.webp")
+            self.image_uncensored.save(uncensored_path, format="WebP", quality=self.upload_quality)
+            #logger.info("Uncensored image saved to disk... (id: {})", img_id)
+    
+        image_path = os.path.join(self.folder_path, f"{time.strftime('%H-%M')}-{img_id}.webp")
+        if os.path.exists(image_path):
+            logger.info("Image already exists on disk... (id: {})", img_id)
+            return
+        #logger.info("Saving image to disk... (id: {})", img_id)
         self.image.save(image_path, format="WebP", quality=self.upload_quality)
+        #logger.info("Image saved to disk... (id: {})", img_id)
 
     def save_prompts(self, img_id):
-        prompts_path = os.path.join(output_folder, f"{img_id}.prompt.txt")
+        #logger.info("Saving prompts to disk... (id: {})", self.current_id)
+        prompts_path = os.path.join(self.folder_path, f"{time.strftime('%H-%M')}-{img_id}.prompt.txt")
         with open(prompts_path, "w") as prompts_file:
-            prompts_file.write(json.dumps(self.current_payload["prompt"]))
+            prompts_file.write(self.current_payload["prompt"])
+        #logger.info("Prompts saved to disk... (id: {})", self.current_id)
 
     def save_metadata(self, img_id):
+        #logger.info("Saving metadata to disk... (id: {})", self.current_id)
         metadata = {
             "id": self.current_id,
             "generation": f"{img_id}.webp",
             "seed": self.seed,
             "model": self.current_model,
-            "model_base": self.model_baseline,
             "prompt": self.current_payload["prompt"],
+            "height": self.current_payload["height"],
+            "width": self.current_payload["width"],
+            "ddim_steps": self.current_payload["ddim_steps"],
+            "sampler_name": self.current_payload["sampler_name"],
+            "cfg_scale": self.current_payload["cfg_scale"],
+            "tiling": self.current_payload["tiling"],
+            "n_iter": self.current_payload["n_iter"],
+            "karras": self.current_payload["karras"],            
             "post_processing": self.current_payload.get("post_processing", []),
-            "tiling": self.current_payload.get("tiling", False),
-            "n_iter": self.current_payload.get("n_iter", 1),
-            "source_image": bool(self.current_payload.get("source_image")),
-            "source_mask": bool(self.current_payload.get("source_mask")),
-
         }
         if self.censored:
             metadata["state"] = self.censored
-        metadata_path = os.path.join(output_folder, f"{img_id}.metadata.json")
-        with open(metadata_path, "w") as metadata_file:
-            metadata_file.write(json.dumps(metadata))
+        if self.source_image:
+                ##metadata["source_image"] = self.source_image
+                image_path = os.path.join(self.folder_path, f"{time.strftime('%H-%M')}-{img_id}-original.webp")
+                self.source_image.save(image_path, format="WebP", quality=self.upload_quality)
+        #if self.source_image and self.source_mask:
+        #   metadata["source_mask"] = self.source_mask
+        if "denoising_strength" in self.current_payload and self.source_image:
+            metadata["denoising_strength"] = self.current_payload["denoising_strength"]
+        if "hires_fix" in self.current_payload and not self.source_image:
+            metadata["hires_fix"] = self.current_payload["hires_fix"]
+        if (
+            "control_type" in self.current_payload
+            and self.source_image
+            and self.source_processing == "img2img"
+            and "stable diffusion 2" not in self.model_baseline
+        ):
+            metadata["control_type"] = self.current_payload["control_type"]
+            metadata["init_as_control"] = self.current_payload["image_is_control"]
+            metadata["return_control_map"] = self.current_payload.get("return_control_map", False)
+        if "loras" in self.current_payload:
+            metadata["loras"] = self.current_payload["loras"]
+        metadata_path = os.path.join(self.folder_path, f"{time.strftime('%H-%M')}-{img_id}.metadata.json")
+        with open(metadata_path, "w", encoding="utf-8") as metadata_file:
+            json.dump(metadata, metadata_file, ensure_ascii=False)
+
 
 def count_parentheses(s):
     open_p = False

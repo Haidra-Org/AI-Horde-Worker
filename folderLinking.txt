@@ -1,0 +1,4 @@
+mklink /D "C:\Stable Diffusion\stable-diffusion-webui\models\Stable-diffusion" "C:\Stable Diffusion\AI-Horde-Worker\nataili\compvis"
+mklink /D "C:\Stable Diffusion\stable-diffusion-webui\models\Lora" "C:\Stable Diffusion\AI-Horde-Worker\nataili\lora"
+
+## command to get path on windows terminal is: 
