@@ -16,3 +16,4 @@ clip-anytorch
 diffusers
 omegaconf
 setuptools
+typing_extensions
