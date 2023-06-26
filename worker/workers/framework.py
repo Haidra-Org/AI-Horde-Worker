@@ -54,16 +54,19 @@ class WorkerFramework:
         self.reload_data()
         self.exit_rc = 1
 
+        self.consecutive_failed_jobs = 0  # Moved out of the loop to capture failure across soft-restarts
+
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
             if self.should_restart:
+                self.should_restart = False
                 self.on_restart()
-            self.should_restart = False
-            self.consecutive_failed_jobs = 0
+                self.run_count = 0
 
             with ThreadPoolExecutor(max_workers=self.bridge_data.max_threads) as self.executor:
                 while not self.should_stop:
                     if self.should_restart:
-                        self.executor.shutdown(wait=True)
+                        self.executor.shutdown(wait=False)
+                        self.should_restart = True
                         break
                     try:
                         if self.ui and not self.ui.is_alive():
@@ -74,8 +77,8 @@ class WorkerFramework:
                         self.should_stop = True
                         self.exit_rc = 0
                         break
-                if self.should_stop or self.soft_restarts > 10:
-                    if self.soft_restarts > 10:
+                if self.should_stop or self.soft_restarts > 15:
+                    if self.soft_restarts > 15:
                         logger.error("Too many soft restarts, exiting the worker. Please review your config.")
                         logger.error("You can try asking for help in the official discord if this persists.")
                     logger.init("Worker", status="Shutting Down")

@@ -3,6 +3,7 @@ import traceback
 
 import requests
 from hordelib.comfy_horde import cleanup, garbage_collect, get_models_on_gpu, get_torch_free_vram_mb
+from hordelib.utils.gpuinfo import GPUInfo
 from typing_extensions import override
 
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
@@ -92,7 +93,24 @@ class StableDiffusionWorker(WorkerFramework):
             self.bridge_data.model_names = list(set(total_models + running_models))
 
     def reload_data(self):
-        """This is just a utility function to reload the configuration"""
+        models_on_gpu = len(get_models_on_gpu())
+
+        if models_on_gpu > 1:
+            logger.debug(f"Models on GPU: {models_on_gpu}")
+            gpu_info = GPUInfo()
+            total_vram = gpu_info.get_total_vram_mb()
+            loaded_model_ratio = total_vram / models_on_gpu
+            if loaded_model_ratio < 1500:
+                # If 1500 MB per model is 'loaded', something is wrong as models have a bigger footprint than that
+                # and there would need to be room for inference, in any event.
+                logger.error("Detected more models in VRAM than should be possible.")
+                logger.error(
+                    "You likely don't have enough VRAM to run the models you have loaded, or a problem occurred.",
+                )
+                logger.error("Increase `vram_to_keep_free` in your bridgeData if this persists.")
+                logger.error("You can also ask the developers in the official discord for help.")
+                self.should_restart = True
+                return
         super().reload_data()
         self.bridge_data.check_models(self.model_manager)
         self.bridge_data.reload_models(self.model_manager)
