@@ -21,6 +21,7 @@ class WorkerFramework:
         self.consecutive_executor_restarts = 0
         self.consecutive_failed_jobs = 0
         self.out_of_memory_jobs = 0
+        self.soft_restarts = 0
         self.executor = None
         self.ui = None
         self.last_stats_time = time.time()
@@ -44,18 +45,25 @@ class WorkerFramework:
                 self.ui = threading.Thread(target=ui.run, daemon=True)
                 self.ui.start()
 
+    def on_restart(self):
+        """Called when the worker loop is restarted. Make sure to invoke super().on_restart() when overriding."""
+        self.soft_restarts += 1
+
     @logger.catch(reraise=True)
     def start(self):
         self.reload_data()
         self.exit_rc = 1
 
         while True:  # This is just to allow it to loop through this and handle shutdowns correctly
+            if self.should_restart:
+                self.on_restart()
             self.should_restart = False
             self.consecutive_failed_jobs = 0
+
             with ThreadPoolExecutor(max_workers=self.bridge_data.max_threads) as self.executor:
                 while not self.should_stop:
                     if self.should_restart:
-                        self.executor.shutdown(wait=False)
+                        self.executor.shutdown(wait=True)
                         break
                     try:
                         if self.ui and not self.ui.is_alive():
@@ -66,7 +74,10 @@ class WorkerFramework:
                         self.should_stop = True
                         self.exit_rc = 0
                         break
-                if self.should_stop:
+                if self.should_stop or self.soft_restarts > 10:
+                    if self.soft_restarts > 10:
+                        logger.error("Too many soft restarts, exiting the worker. Please review your config.")
+                        logger.error("You can try asking for help in the official discord if this persists.")
                     logger.init("Worker", status="Shutting Down")
                     sys.exit(self.exit_rc)
 

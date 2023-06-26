@@ -2,6 +2,8 @@
 import traceback
 
 import requests
+from hordelib.comfy_horde import cleanup, garbage_collect, get_models_on_gpu, get_torch_free_vram_mb
+from typing_extensions import override
 
 from worker.consts import KNOWN_INTERROGATORS, POST_PROCESSORS_HORDELIB_MODELS
 from worker.jobs.poppers import StableDiffusionPopper
@@ -122,3 +124,33 @@ class StableDiffusionWorker(WorkerFramework):
                 available_models.remove(util_model)
 
         return (50 + (len(self.model_manager.get_loaded_models_names()) * 2)) * 6
+
+    @override
+    @logger.catch(reraise=True)
+    def on_restart(self):
+        super().on_restart()
+
+        if not (
+            self.model_manager
+            and self.model_manager.compvis
+            and len(self.model_manager.compvis.get_loaded_models_names()) > 1
+        ):
+            pass
+
+        logger.warning("Attempting to soft restart the worker...")
+        if self.model_manager.compvis:
+            if (
+                not self.model_manager.compvis.unload_all_models()
+                or len(self.model_manager.compvis.get_loaded_models()) > 0
+            ):
+                logger.warning("Failed to unload all stable diffusion models. This may cause memory issues.")
+
+            cleanup()
+            garbage_collect()
+
+            models_on_gpu = get_models_on_gpu()
+            if len(models_on_gpu) > 0:
+                logger.warning("There are still models loaded on the GPU. You will probably have memory issues.")
+                logger.warning(f"Models on GPU: {models_on_gpu}")
+                logger.warning(f"Free VRAM: {get_torch_free_vram_mb()}MB")
+        self.reload_data()
