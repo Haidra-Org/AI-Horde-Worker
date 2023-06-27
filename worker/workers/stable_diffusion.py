@@ -30,7 +30,7 @@ class StableDiffusionWorker(WorkerFramework):
         can_do = loaded_models > 0
         if not can_do:
             logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
-        if self.run_count == 0:
+        elif self.run_count == 0:
             self.run_pilot_job()
         return can_do
 
