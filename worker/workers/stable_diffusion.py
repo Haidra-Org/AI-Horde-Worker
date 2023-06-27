@@ -1,8 +1,11 @@
 """This is the worker, it's the main workhorse that deals with getting requests, and spawning data processing"""
+import math
+import time
 import traceback
 
 import requests
 from hordelib.comfy_horde import cleanup, garbage_collect, get_models_on_gpu, get_torch_free_vram_mb
+from hordelib.horde import HordeLib
 from hordelib.utils.gpuinfo import GPUInfo
 from typing_extensions import override
 
@@ -27,6 +30,8 @@ class StableDiffusionWorker(WorkerFramework):
         can_do = loaded_models > 0
         if not can_do:
             logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
+        if self.run_count == 0:
+            self.run_pilot_job()
         return can_do
 
     # We want this to be extendable as well
@@ -172,3 +177,74 @@ class StableDiffusionWorker(WorkerFramework):
                 logger.warning(f"Models on GPU: {models_on_gpu}")
                 logger.warning(f"Free VRAM: {get_torch_free_vram_mb()}MB")
         self.reload_data()
+
+    def run_pilot_job(self):
+        test_resolution = math.sqrt(self.bridge_data.max_power * 8 * 64 * 64)
+        # round to next lowest multiple of 64, as in practice that is the highest resolution we actually receive
+        test_resolution = math.floor(test_resolution / 64) * 64
+        job_base = {
+            "sampler_name": "k_lms",
+            "cfg_scale": 7.5,
+            "denoising_strength": 1,
+            "seed": "1234567890",
+            "height": test_resolution,
+            "width": test_resolution,
+            "seed_variation": 1,
+            "karras": False,
+            "tiling": False,
+            "hires_fix": True,
+            "clip_skip": 1,
+            "facefixer_strength": 0.75,
+            "prompt": "a testing prompt",
+            "ddim_steps": 3,
+            "n_iter": 1,
+            "use_nsfw_censor": False,
+        }
+        if self.bridge_data.allow_lora:
+            job_base["loras"] = [{"name": "GlowingRunesAIV6", "model": 1, "clip": 1, "inject_trigger": "string"}]
+
+        model_to_try = self.model_manager.compvis.get_loaded_models_names()[0]
+
+        job_base["model"] = model_to_try
+        job_base["request_type"] = "txt2img"
+
+        hordelib = HordeLib()
+        logger.info(f"Running a basic inference job of {test_resolution}x{test_resolution} to test the worker...")
+
+        # stale_time = time.time() + (job_base.get("ddim_steps", 50) * 5) + 10
+        stale_time = time.time() + 1
+        resulting_image = hordelib.basic_inference(job_base)
+        if not resulting_image or time.time() > stale_time:
+            if not resulting_image:
+                logger.error("Failed to run a basic inference job. This is a critical error.")
+            else:
+                logger.error(
+                    (
+                        "Failed to complete the test job fast enough. "
+                        "This job would have been rejected by the horde."
+                    ),
+                )
+            logger.error("Tt is very likely the worker is not configured correctly for this system.")
+            logger.error("Consider lowering your `max_power` in your bridgeData.")
+            logger.error(
+                (
+                    f"With `max_power` set to {self.bridge_data.max_power}, "
+                    f"the max resolution this worker would process is {test_resolution}x{test_resolution}."
+                ),
+            )
+            logger.error("You can also ask the developers in the official discord for help.")
+            exit(1)
+
+        logger.info("Basic inference job completed successfully.")
+
+        if self.bridge_data.allow_post_processing:
+            pp_payload = {
+                "model": "RealESRGAN_x4plus",
+                "source_image": resulting_image,
+            }
+            upscale_check = hordelib.image_upscale(pp_payload)
+            if not upscale_check:
+                logger.error("Failed to run a basic upscale job. This is a critical error.")
+                logger.error("And is it is very likely the worker is not configured correctly for this system.")
+                exit(1)
+            logger.info("Basic upscale job completed successfully.")
