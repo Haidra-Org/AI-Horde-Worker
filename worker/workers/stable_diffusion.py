@@ -214,6 +214,15 @@ class StableDiffusionWorker(WorkerFramework):
         stale_time = time.time() + (job_base.get("ddim_steps", 50) * 5) + 10
 
         resulting_image = hordelib.basic_inference(job_base)
+        shared_error_messages = [
+            ("It is very likely the worker is not configured correctly for this system."),
+            ("Consider lowering your `max_power` in your bridgeData."),
+            (
+                f"With `max_power` set to {self.bridge_data.max_power}, "
+                f"the max resolution this worker would process is {test_resolution}x{test_resolution}."
+            ),
+            ("You can also ask the developers in the official discord for help."),
+        ]
         if not resulting_image or time.time() > stale_time:
             if not resulting_image:
                 logger.error("Failed to run a basic inference job. This is a critical error.")
@@ -224,15 +233,8 @@ class StableDiffusionWorker(WorkerFramework):
                         "This job would have been rejected by the horde."
                     ),
                 )
-            logger.error("Tt is very likely the worker is not configured correctly for this system.")
-            logger.error("Consider lowering your `max_power` in your bridgeData.")
-            logger.error(
-                (
-                    f"With `max_power` set to {self.bridge_data.max_power}, "
-                    f"the max resolution this worker would process is {test_resolution}x{test_resolution}."
-                ),
-            )
-            logger.error("You can also ask the developers in the official discord for help.")
+            for error_message in shared_error_messages:
+                logger.error(error_message)
             exit(1)
 
         logger.info("Basic inference job completed successfully.")
@@ -245,6 +247,7 @@ class StableDiffusionWorker(WorkerFramework):
             upscale_check = hordelib.image_upscale(pp_payload)
             if not upscale_check:
                 logger.error("Failed to run a basic upscale job. This is a critical error.")
-                logger.error("And is it is very likely the worker is not configured correctly for this system.")
+                for error_message in shared_error_messages:
+                    logger.error(error_message)
                 exit(1)
             logger.info("Basic upscale job completed successfully.")

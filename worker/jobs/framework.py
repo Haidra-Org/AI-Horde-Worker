@@ -163,7 +163,7 @@ class HordeJobFramework:
                     if time_spent_processing > (reward * 3) and not self.bridge_data.suppress_speed_warnings:
                         logger.warning(
                             "This job took longer than average to process."
-                            " Please consider adjusting lowering your max_power.",
+                            " Please consider lowering your max_power.",
                         )
 
                 logger.info(
