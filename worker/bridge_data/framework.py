@@ -48,6 +48,7 @@ class BridgeDataTemplate:
         self.username = None
         self.models_reloading = False
         self.max_models_to_download = 10
+        self.suppress_speed_warnings = False
 
     def load_config(self):
         # YAML config

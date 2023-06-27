@@ -156,13 +156,22 @@ class HordeJobFramework:
                     time.sleep(2)
                     continue
                 reward = submit_req.json()["reward"]
+                time_spent_processing = round(time.time() - self.process_time, 1)
+
                 with contextlib.suppress(ValueError):
-                    reward = f"{float(reward):.1f}"
+                    reward = float(reward)
+                    if time_spent_processing > (reward * 3) and not self.bridge_data.suppress_speed_warnings:
+                        logger.warning(
+                            "This job took longer than average to process."
+                            " Please consider adjusting lowering your max_power.",
+                        )
+
                 logger.info(
-                    f"Submitted job with id {self.current_id} and contributed for {reward}. "
+                    f"Submitted job with id {self.current_id} and contributed for {reward:.1f}. "
                     f"Job took {round(time.time() - self.start_time,1)} seconds since queued "
-                    f"and {round(time.time() - self.process_time,1)} since start.",
+                    f"and {time_spent_processing} since start.",
                 )
+
                 self.post_submit_tasks(submit_req)
                 if self.status == JobStatus.FINALIZING_FAULTED:
                     self.status = JobStatus.FAULTED

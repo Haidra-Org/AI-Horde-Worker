@@ -142,6 +142,10 @@ models_to_skip:
   #- "Zeipher Female Model"
   #- "Hentai Diffusion"
 
+# If you are getting messages about jobs taking too long, you can change this to true if you no longer want to see them
+# Please note, that if you *are* getting these messages, you are serving jobs substantially slower than is ideal,
+# and you very likely would get more kudos/hr if you just lower your max_power.
+suppress_speed_warnings: false
 
 ## Scribe (LLM Worker)
 
