@@ -346,33 +346,42 @@ class WebUI:
             "https://raw.githubusercontent.com/Haidra-org/AI-Horde-image-model-reference/main/stable_diffusion.json"
         )
         latest_models = self.download_models(remote_models)
-
+        if not latest_models or not isinstance(latest_models, dict):
+            print("Failed to load models")
+            latest_models = {}
         aiworker_cache_home = os.environ.get("AIWORKER_CACHE_HOME", None)
         model_cache_folder = aiworker_cache_home if aiworker_cache_home else "./"
 
-        sd_models_folder = pathlib.Path(model_cache_folder).joinpath("nataili/compvis/").resolve()
+        sub_folders = ["", "nataili", "models"]
 
-        if sd_models_folder.exists():
-            all_files_in_cache = glob.glob(str(sd_models_folder.joinpath("*.*")))
-            all_files_in_cache = [
-                pathlib.Path(x).name for x in all_files_in_cache if x.endswith((".ckpt", ".safetensors"))
-            ]
-            for model_name, model_info in latest_models.items():
-                model_config_dict: dict = model_info.get("config", None)
-                if not model_config_dict:
-                    continue
-                model_file_config_list: list = model_config_dict.get("files", None)
-                if not model_file_config_list:
-                    continue
-                if len(model_file_config_list) == 0:
-                    continue
-                model_filename: str | None = None
-                for key in model_file_config_list:
-                    model_filename = key.get("path", None)
-                    if model_filename and "yaml" not in model_filename:
-                        break
-                if model_filename and model_filename in all_files_in_cache:
-                    self.models_found_on_disk.append(model_name)
+        sd_models_folders: list[pathlib.Path] = [
+            pathlib.Path(model_cache_folder).joinpath(x).joinpath("compvis") for x in sub_folders
+        ]
+        for sd_models_folder in sd_models_folders:
+            if sd_models_folder.exists():
+                all_files_in_cache = glob.glob(str(sd_models_folder.joinpath("*.*")))
+                all_files_in_cache = [
+                    pathlib.Path(x).name for x in all_files_in_cache if x.endswith((".ckpt", ".safetensors"))
+                ]
+                for model_name, model_info in latest_models.items():
+                    model_config_dict: dict = model_info.get("config", None)
+                    if not model_config_dict:
+                        continue
+                    model_file_config_list: list = model_config_dict.get("files", None)
+                    if not model_file_config_list:
+                        continue
+                    if len(model_file_config_list) == 0:
+                        continue
+                    model_filename: str | None = None
+                    for key in model_file_config_list:
+                        model_filename = key.get("path", None)
+                        if model_filename and "yaml" not in model_filename:
+                            break
+                    if model_filename and model_filename in all_files_in_cache:
+                        if self.models_found_on_disk is None:
+                            self.models_found_on_disk = []
+                        self.models_found_on_disk.append(model_name)
+                break
 
         return sorted(latest_models, key=str.casefold)
 
