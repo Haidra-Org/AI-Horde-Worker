@@ -30,7 +30,14 @@ class StableDiffusionWorker(WorkerFramework):
         can_do = loaded_models > 0
         if not can_do:
             logger.info("No models loaded. Waiting for the first model to be up before polling the horde")
-        elif self.run_count == 0:
+        elif self.run_count == 0 and not self.pilot_job_was_run:
+            if (
+                self.bridge_data.allow_post_processing
+                and "RealESRGAN_x4plus" not in self.model_manager.esrgan.get_loaded_models_names()
+            ):
+                return False
+
+            self.pilot_job_was_run = True
             self.run_pilot_job()
         return can_do
 
