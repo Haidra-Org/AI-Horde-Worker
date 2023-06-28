@@ -183,6 +183,7 @@ class StableDiffusionWorker(WorkerFramework):
                 logger.warning("There are still models loaded on the GPU. You will probably have memory issues.")
                 logger.warning(f"Models on GPU: {models_on_gpu}")
                 logger.warning(f"Free VRAM: {get_torch_free_vram_mb()}MB")
+            self.model_manager.compvis.load_disk_cached_models()
         self.reload_data()
 
     def run_pilot_job(self):
