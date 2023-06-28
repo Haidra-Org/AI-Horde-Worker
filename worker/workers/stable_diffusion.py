@@ -39,7 +39,7 @@ class StableDiffusionWorker(WorkerFramework):
 
             self.pilot_job_was_run = True
             self.run_pilot_job()
-        return can_do
+        return can_do and self.pilot_job_was_run
 
     # We want this to be extendable as well
     def add_job_to_queue(self):

@@ -15,6 +15,7 @@ class WorkerFramework:
         self.running_jobs = []
         self.waiting_jobs = []
         self.run_count = 0
+        self.pilot_job_was_run = False
         self.last_config_reload = 0
         self.should_stop = False
         self.should_restart = False
