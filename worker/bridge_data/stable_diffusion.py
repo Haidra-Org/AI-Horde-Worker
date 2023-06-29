@@ -149,7 +149,7 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         self.model_names.insert(0, "safety_checker")
         self.model_names.insert(0, "ViT-L/14")
         if self.allow_post_processing:
-            self.model_names += list(POST_PROCESSORS_HORDELIB_MODELS)
+            self.model_names = list(POST_PROCESSORS_HORDELIB_MODELS) + self.model_names
         if (not self.initialized and not self.models_reloading) or previous_url != self.horde_url:
             logger.init(
                 (
