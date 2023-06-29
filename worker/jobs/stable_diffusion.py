@@ -247,8 +247,12 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
+        if "strip_background" in post_processors:
+            post_processors.remove("strip_background")
+            post_processors.insert(0, "strip_background")
+
         # Run Post-Processors
-        for post_processor in self.current_payload.get("post_processing", []):
+        for post_processor in post_processors:
             # Do not PP when censored
             if self.censored:
                 continue
