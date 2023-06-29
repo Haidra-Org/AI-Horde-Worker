@@ -8,6 +8,8 @@ KNOWN_UPSCALERS = {
     "NMKD_Siax",
     "4x_AnimeSharp",
 }
+
+# The the order of this list is the order the face fixers will be applied if more than one is specified in a job
 KNOWN_FACE_FIXERS = {
     "GFPGAN",
     "CodeFormers",

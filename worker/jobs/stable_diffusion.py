@@ -11,6 +11,7 @@ from hordelib.horde import HordeLib
 from hordelib.safety_checker import is_image_nsfw
 
 from worker import csam
+from worker.consts import KNOWN_FACE_FIXERS
 from worker.enums import JobStatus
 from worker.jobs.framework import HordeJobFramework
 from worker.jobs.kudos import KudosModel
@@ -247,6 +248,16 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 self.image = self.bridge_data.censor_image_csam
                 self.censored = "csam"
 
+        post_processors: list[str] = self.current_payload.get("post_processing", [])
+
+        # If facefixer is used, it should be used last
+        for face_fixer in KNOWN_FACE_FIXERS:
+            if face_fixer in post_processors:
+                post_processors.remove(face_fixer)
+                post_processors.append(face_fixer)
+
+        # If strip_background is used *after* a upscale, it will tend to take a long time.
+        # So, we move it to the front of the list, as the upscaling should be compatible with it.
         if "strip_background" in post_processors:
             post_processors.remove("strip_background")
             post_processors.insert(0, "strip_background")
