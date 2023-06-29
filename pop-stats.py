@@ -44,7 +44,7 @@ class LogStats:
         return adate
 
     def get_num_lines(self, file_path):
-        with open(file_path, "r+") as fp:
+        with open(file_path, "r+", encoding="utf8") as fp:
             buf = mmap.mmap(fp.fileno(), 0)
             lines = 0
             while buf.readline():
@@ -56,7 +56,7 @@ class LogStats:
         total_log_lines = sum(self.get_num_lines(logfile) for logfile in glob.glob(self.logfile))
         progress = tqdm(total=total_log_lines, leave=True, unit=" lines", unit_scale=True)
         for logfile in glob.glob(self.logfile):
-            with open(logfile, "rt") as infile:
+            with open(logfile, "rt", encoding="utf8") as infile:
                 for line in infile:
                     # Grab the lines we're interested in
                     if regex := REGEX.match(line):
