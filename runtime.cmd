@@ -5,6 +5,13 @@ cd /d "%~dp0"
 SET CONDA_SHLVL=
 SET PYTHONNOUSERSITE=1
 SET PYTHONPATH=
+SET MAMBA_ROOT_PREFIX=%~dp0conda
+
+echo %MAMBA_ROOT_PREFIX%
+
+umamba.exe shell hook -s cmd.exe -p %MAMBA_ROOT_PREFIX% -v
+call %MAMBA_ROOT_PREFIX%\condabin\mamba_hook.bat
+
 
 Reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d "1" /f 2>nul
 IF EXIST CONDA GOTO APP
@@ -13,6 +20,7 @@ IF EXIST CONDA GOTO APP
 call update-runtime
 
 :APP
-call conda\condabin\activate.bat windows
+call %MAMBA_ROOT_PREFIX%\condabin\micromamba.bat activate windows
+
 %*
 IF [%1] == [] TITLE Runtime Command Prompt && cmd /k
