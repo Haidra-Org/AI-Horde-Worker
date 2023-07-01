@@ -23,4 +23,5 @@ call update-runtime
 call %MAMBA_ROOT_PREFIX%\condabin\micromamba.bat activate windows
 
 %*
-IF [%1] == [] TITLE Runtime Command Prompt && cmd /k
+call micromamba deactivate
+
