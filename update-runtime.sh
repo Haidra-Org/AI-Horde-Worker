@@ -2,6 +2,9 @@
 
 ignore_hordelib=false
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/conda"
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]
 do
