@@ -243,6 +243,7 @@ class StableDiffusionWorker(WorkerFramework):
                 )
             for error_message in shared_error_messages:
                 logger.error(error_message)
+            input()
             exit(1)
 
         logger.info("Basic inference job completed successfully.")
@@ -257,5 +258,6 @@ class StableDiffusionWorker(WorkerFramework):
                 logger.error("Failed to run a basic upscale job. This is a critical error.")
                 for error_message in shared_error_messages:
                     logger.error(error_message)
+                input()
                 exit(1)
             logger.info("Basic upscale job completed successfully.")
