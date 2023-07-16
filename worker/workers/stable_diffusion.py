@@ -219,7 +219,7 @@ class StableDiffusionWorker(WorkerFramework):
         hordelib = HordeLib()
         logger.info(f"Running a basic inference job of {test_resolution}x{test_resolution} to test the worker...")
 
-        stale_time = time.time() + (job_base.get("ddim_steps", 50) * 5) + 10
+        stale_time = time.time() + (job_base.get("ddim_steps", 50) * 5) + 10 + 10
 
         resulting_image = hordelib.basic_inference(job_base)
         shared_error_messages = [
