@@ -227,6 +227,10 @@ class WebUI:
             "info": "This is the URL of the Kobold AI Client API you want your worker to connect to. "
             "You will probably be running your own Kobold AI Client, and you should enter the URL here.",
         },
+        "is_oobabooga": {
+            "label": "Is Oobabooga",
+            "info": "If you are using the Oobabooga API, set this to true.",
+        },
         "max_length": {
             "label": "Maximum Length",
             "info": "This is the maximum number of tokens your worker will generate per request.",
@@ -815,6 +819,13 @@ class WebUI:
                         info=self._info("kai_url"),
                     )
 
+                    config.default("is_oobabooga", False)
+                    is_oobabooga = gr.Checkbox(
+                        label=self._label("is_oobabooga"),
+                        value=config.is_oobabooga,
+                        info=self._info("is_oobabooga"),
+                    )
+
                     config.default("max_length", 80)
                     max_length = gr.Slider(
                         0,
@@ -885,6 +896,7 @@ class WebUI:
                     vram_to_leave_free,
                     scribe_name,
                     kai_url,
+                    is_oobabooga,
                     max_length,
                     max_context_length,
                     branded_model,

@@ -27,4 +27,11 @@ arg_parser.add_argument(
     help="The URL in which the KoboldAI Client API can be found.",
 )
 
+arg_parser.add_argument(
+    "--oobabooga",
+    action="store",
+    required=False,
+    help="Set to true if you want to use the Oobabooga API.",
+)
+
 args = arg_parser.parse_args()

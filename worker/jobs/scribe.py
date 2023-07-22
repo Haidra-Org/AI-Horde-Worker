@@ -52,12 +52,13 @@ class ScribeHordeJob(HordeJobFramework):
             )
             time_state = time.time()
             if self.requested_softprompt != self.bridge_data.current_softprompt:
-                logger.debug(f"Requested softprompt: {self.requested_softprompt}")
-                # requests.put(
-                #     self.bridge_data.kai_url + "/api/latest/config/soft_prompt/",
-                #     json={"value": self.requested_softprompt},
-                # )
-                time.sleep(1)  # Wait a second to unload the softprompt
+                if not self.bridge_data.is_ooababooga:
+                    requests.put(
+                        self.bridge_data.kai_url + "/api/latest/config/soft_prompt/",
+                        json={"value": self.requested_softprompt},
+                    )
+                    time.sleep(1)  # Wait a second to unload the softprompt
+
             loop_retry = 0
             gen_success = False
             while not gen_success and loop_retry < 5:
@@ -69,29 +70,39 @@ class ScribeHordeJob(HordeJobFramework):
                         "status_code": 200,
                     }
 
-                    for _ in range(self.current_payload['n']):
-                        req =  requests.post(
-                            self.bridge_data.kai_url + "/api/v1/generate",
-                            json={
-                                "prompt": self.current_payload["prompt"],
-                                "max_new_tokens": self.current_payload["max_length"],
-                                "temperature": self.current_payload["temperature"] if "temperature" in self.current_payload else 0.7,
-                                "top_p": self.current_payload["top_p"] if "top_p" in self.current_payload else 0.9,
-                                "top_k": self.current_payload["top_k"] if "top_k" in self.current_payload else 20,
-                                "top_a": self.current_payload["top_a"] if "top_a" in self.current_payload else 0,
-                                "repetition_penalty": self.current_payload["rep_pen"] if "rep_pen" in self.current_payload else 0,
-                                "repetition_penalty_range": self.current_payload["rep_pen_range"] if "rep_pen_range" in self.current_payload else 0,
-                                "penalty_alpha": self.current_payload["rep_pen_slope"] if "rep_pen_slope" in self.current_payload else 0,
-                                "typical_p": self.current_payload["typical"] if "typical" in self.current_payload else 1,
-                                "tfs": self.current_payload["tfs"] if "tfs" in self.current_payload else 1,
-                            },
+                    if self.bridge_data.is_oobabooga:
+                        for _ in range(self.current_payload['n']):
+                            req =  requests.post(
+                                self.bridge_data.kai_url + "/v1/generate",
+                                json={
+                                    "prompt": self.current_payload["prompt"],
+                                    "max_new_tokens": self.current_payload["max_length"],
+                                    "temperature": self.current_payload["temperature"] if "temperature" in self.current_payload else 0.7,
+                                    "top_p": self.current_payload["top_p"] if "top_p" in self.current_payload else 0.9,
+                                    "top_k": self.current_payload["top_k"] if "top_k" in self.current_payload else 20,
+                                    "top_a": self.current_payload["top_a"] if "top_a" in self.current_payload else 0,
+                                    "repetition_penalty": self.current_payload["rep_pen"] if "rep_pen" in self.current_payload else 0,
+                                    "repetition_penalty_range": self.current_payload["rep_pen_range"] if "rep_pen_range" in self.current_payload else 0,
+                                    "penalty_alpha": self.current_payload["rep_pen_slope"] if "rep_pen_slope" in self.current_payload else 0,
+                                    "typical_p": self.current_payload["typical"] if "typical" in self.current_payload else 1,
+                                    "tfs": self.current_payload["tfs"] if "tfs" in self.current_payload else 1,
+                                },
+                                timeout=300,
+                            )
+                            if req.status_code != 200:
+                                gen_req["status_code"] = req.status_code
+                                break
+
+                            gen_req["json"]["results"].append(req.json()["results"][0])
+                    else:
+                        req = requests.post(
+                            self.bridge_data.kai_url + "/api/latest/generate/",
+                            json=self.current_payload,
                             timeout=300,
                         )
-                        if req.status_code != 200:
-                            gen_req["status_code"] = req.status_code
-                            break
 
-                        gen_req["json"]["results"].append(req.json()["results"][0])
+                        gen_req["json"] = req.json()
+                        gen_req["status_code"] = req.status_code
                 except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
                     logger.error(f"Worker {self.bridge_data.kai_url} unavailable. Retrying in 3 seconds...")
                     loop_retry += 1
