@@ -1,5 +1,3 @@
-# This is a fork of AI-Horde-Worker that use oobabooga's text-generation-webui instead of KoboldAI for text generation
-
 This repository allows you to set up a AI Horde Worker to generate or alchemize images for others
 
 # AI Horde Worker
