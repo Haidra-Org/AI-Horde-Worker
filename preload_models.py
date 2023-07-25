@@ -98,7 +98,7 @@ def build_cache(models):
         if SharedModelManager.manager.compvis.have_model_cache(downloaded_model):
             continue
 
-        if not SharedModelManager.manager.compvis.load(downloaded_model):  # noqa: SIM
+        if not SharedModelManager.manager.compvis.load(downloaded_model):  # noqa: SIM102
             if not SharedModelManager.manager.download_model(downloaded_model):
                 print(f"Failed to download {downloaded_model}.")
                 continue
