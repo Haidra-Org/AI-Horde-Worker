@@ -41,8 +41,8 @@ umamba create --no-shortcuts -r conda -n windows -f %CONDA_ENVIRONMENT_FILE% -y
 REM Check if hordelib argument is defined
 
 umamba.exe shell hook -s cmd.exe -p %MAMBA_ROOT_PREFIX% -v
-call %MAMBA_ROOT_PREFIX%\condabin\mamba_hook.bat
-call %MAMBA_ROOT_PREFIX%\condabin\micromamba.bat activate windows
+call "%MAMBA_ROOT_PREFIX%\condabin\mamba_hook.bat"
+call "%MAMBA_ROOT_PREFIX%\condabin\micromamba.bat" activate windows
 
 if defined hordelib (
   python -s -m pip uninstall -y hordelib horde_model_reference
