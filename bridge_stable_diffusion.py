@@ -64,6 +64,7 @@ def check_for_old_dir():
                     os.environ["AIWORKER_CACHE_HOME"] + "/horde_model_reference/legacy/lora.json",
                 )
                 print("lora.json file has been moved to the correct location.")
+                exit()
 
 
 def main():
