@@ -45,6 +45,26 @@ def check_for_old_dir():
         else:
             print("Existing custom models left in their previous location.")
 
+    possible_lora_paths = [
+        "conda/envs/windows/Lib/site-packages/hordelib/model_database/lora.json",
+        "conda/envs/linux/Lib/site-packages/hordelib/model_database/lora.json",
+    ]
+    for path in possible_lora_paths:
+        if os.path.exists(path):
+            print("Old lora.json file exists.")
+            print(
+                f"Correct location is: {os.environ['AIWORKER_CACHE_HOME']}/horde_model_reference/legacy/lora.json",
+            )
+            answer = input("Do you want to move it to the correct location [Y/N]? ")
+            if answer.lower() == "y":
+                import shutil
+
+                shutil.move(
+                    path,
+                    os.environ["AIWORKER_CACHE_HOME"] + "/horde_model_reference/legacy/lora.json",
+                )
+                print("lora.json file has been moved to the correct location.")
+
 
 def main():
     set_logger_verbosity(args.verbosity)
