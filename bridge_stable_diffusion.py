@@ -46,7 +46,6 @@ def check_for_old_dir():
             print("Existing custom models left in their previous location.")
 
 
-
 def main():
     set_logger_verbosity(args.verbosity)
     quiesce_logger(args.quiet)
