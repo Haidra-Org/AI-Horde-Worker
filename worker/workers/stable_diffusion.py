@@ -112,7 +112,7 @@ class StableDiffusionWorker(WorkerFramework):
             gpu_info = GPUInfo()
             total_vram = gpu_info.get_total_vram_mb()
             loaded_model_ratio = total_vram / models_on_gpu
-            if loaded_model_ratio < 1500:
+            if total_vram and loaded_model_ratio < 1500:
                 # If 1500 MB per model is 'loaded', something is wrong as models have a bigger footprint than that
                 # and there would need to be room for inference, in any event.
                 logger.error("Detected more models in VRAM than should be possible.")
