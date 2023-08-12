@@ -16,6 +16,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         self.kai_available = False
         self.model = None
         self.kai_url = "http://localhost:5000"
+        self.is_oobabooga = os.environ.get("IS_OOBABOOGA", "false") == "true"
         self.max_length = int(os.environ.get("HORDE_MAX_LENGTH", "80"))
         self.max_context_length = int(os.environ.get("HORDE_MAX_CONTEXT_LENGTH", "1024"))
         self.branded_model = os.environ.get("HORDE_BRANDED_MODEL", "false") == "true"
@@ -36,6 +37,8 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         self.max_threads = 1
         if args.kai_url:
             self.kai_url = args.kai_url
+        if args.oobabooga:
+            self.is_oobabooga = True
         if args.sfw:
             self.nsfw = False
         if args.blacklist:
@@ -55,7 +58,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
     def validate_kai(self):
         logger.debug("Retrieving settings from KoboldAI Client...")
         try:
-            req = requests.get(self.kai_url + "/api/latest/model")
+            req = requests.get(self.kai_url + ("/v1/model" if self.is_oobabooga else "/api/latest/model"))
             self.model = req.json()["result"]
             # Normalize huggingface and local downloaded model names
             if "/" not in self.model:
@@ -65,13 +68,22 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             # self.max_context_length = req.json()["value"]
             # req = requests.get(self.kai_url + "/api/latest/config/max_length")
             # self.max_length = req.json()["value"]
+
             if self.model not in self.softprompts:
-                req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
-                self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
-            req = requests.get(self.kai_url + "/api/latest/config/soft_prompt")
-            self.current_softprompt = req.json()["value"]
+                if self.is_oobabooga:
+                    self.softprompts[self.model] = []
+                else:
+                    req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
+                    self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
+
+            if not self.is_oobabooga:
+                req = requests.get(self.kai_url + "/api/latest/config/soft_prompt")
+                self.current_softprompt = req.json()["value"]
         except requests.exceptions.JSONDecodeError:
-            logger.error(f"Server {self.kai_url} is up but does not appear to be a KoboldAI server.")
+            if self.is_oobabooga:
+                logger.error(f"Server {self.kai_url} is up but does not appear to be a Oobabooga server.")
+            else:
+                logger.error(f"Server {self.kai_url} is up but does not appear to be a KoboldAI server.")
             self.kai_available = False
             return
         except requests.exceptions.ConnectionError:
