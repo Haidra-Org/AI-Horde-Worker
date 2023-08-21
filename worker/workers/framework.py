@@ -17,6 +17,7 @@ class WorkerFramework:
         self.run_count = 0
         self.pilot_job_was_run = False
         self.last_config_reload = 0
+        self.is_daemon = False
         self.should_stop = False
         self.should_restart = False
         self.consecutive_executor_restarts = 0
@@ -51,6 +52,11 @@ class WorkerFramework:
         self.soft_restarts += 1
 
     @logger.catch(reraise=True)
+    def stop(self):
+        self.should_stop = True
+        logger.info("Stop methods called")
+
+    @logger.catch(reraise=True)
     def start(self):
         self.reload_data()
         self.exit_rc = 1
@@ -83,7 +89,10 @@ class WorkerFramework:
                         logger.error("Too many soft restarts, exiting the worker. Please review your config.")
                         logger.error("You can try asking for help in the official discord if this persists.")
                     logger.init("Worker", status="Shutting Down")
-                    sys.exit(self.exit_rc)
+                    if self.is_daemon:
+                        return
+                    else:
+                        sys.exit(self.exit_rc)
 
     def process_jobs(self):
         # logger.debug("Cron: Starting process_jobs()")
@@ -229,7 +238,9 @@ class WorkerFramework:
 
     def reload_data(self):
         """This is just a utility function to reload the configuration"""
-        self.bridge_data.reload_data()
+        # Daemons are fed the configuration externally
+        if not self.is_daemon:
+            self.bridge_data.reload_data()
 
     def reload_bridge_data(self):
         self.reload_data()
