@@ -26,6 +26,7 @@ class WorkerFramework:
         self.soft_restarts = 0
         self.executor = None
         self.ui = None
+        self.ui_class = None
         self.last_stats_time = time.time()
         logger.stats("Starting new stats session")
         # These two should be filled in by the extending classes
@@ -43,8 +44,8 @@ class WorkerFramework:
             else:
                 from worker.ui import TerminalUI
 
-                ui = TerminalUI(self.bridge_data)
-                self.ui = threading.Thread(target=ui.run, daemon=True)
+                self.ui_class = TerminalUI(self.bridge_data)
+                self.ui = threading.Thread(target=self.ui_class.run, daemon=True)
                 self.ui.start()
 
     def on_restart(self):
@@ -54,6 +55,7 @@ class WorkerFramework:
     @logger.catch(reraise=True)
     def stop(self):
         self.should_stop = True
+        self.ui_class.stop()
         logger.info("Stop methods called")
 
     @logger.catch(reraise=True)
