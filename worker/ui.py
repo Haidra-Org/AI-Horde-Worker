@@ -93,6 +93,7 @@ class TerminalUI:
     CLIENT_AGENT = "terminalui:1:db0"
 
     def __init__(self, bridge_data):
+        self.should_stop = False
         self.bridge_data = bridge_data
 
         self.dreamer_worker = False
@@ -802,6 +803,8 @@ class TerminalUI:
     def main_loop(self, stdscr):
         self.main = stdscr
         while True:
+            if self.should_stop:
+                return
             try:
                 self.initialise()
                 while True:
@@ -814,7 +817,11 @@ class TerminalUI:
                 logger.error(str(exc))
 
     def run(self):
+        self.should_stop = False
         curses.wrapper(self.main_loop)
+
+    def stop(self):
+        self.should_stop = True
 
     def get_hordelib_version(self):
         try:
