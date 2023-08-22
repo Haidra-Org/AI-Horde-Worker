@@ -156,6 +156,8 @@ class WorkerFramework:
         if self.bridge_data.queue_size == 0:
             if jobs := self.pop_job():
                 job = jobs[0]
+            if self.should_stop:
+                return False
         elif len(self.waiting_jobs) > 0:
             job = self.waiting_jobs.pop(0)
         else:
