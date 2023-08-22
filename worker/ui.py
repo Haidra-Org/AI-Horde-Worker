@@ -808,6 +808,8 @@ class TerminalUI:
             try:
                 self.initialise()
                 while True:
+                    if self.should_stop:
+                        return
                     if self.poll():
                         return
                     time.sleep(1 / self.gpu.samples_per_second)
