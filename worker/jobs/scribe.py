@@ -70,7 +70,7 @@ class ScribeHordeJob(HordeJobFramework):
                     loop_retry += 1
                     time.sleep(3)
                     continue
-                if type(gen_req.json()) is not dict:
+                if not isinstance(gen_req.json(), dict):
                     logger.error(
                         (
                             f"KAI instance {self.bridge_data.kai_url} API unexpected response on generate: {gen_req}. "
