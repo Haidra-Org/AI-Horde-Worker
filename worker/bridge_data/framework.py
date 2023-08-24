@@ -199,9 +199,7 @@ class BridgeDataTemplate:
             return
         self.models_reloading = True
         thread = threading.Thread(target=self._reload_models, args=(model_manager,))
-        thread.daemon = True
-        thread.start()
-
+ 
     @logger.catch(reraise=True)
     def _reload_models(self, model_manager):
         with self.mutex:

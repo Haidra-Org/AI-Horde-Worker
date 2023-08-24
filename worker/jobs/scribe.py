@@ -26,6 +26,7 @@ class ScribeHordeJob(HordeJobFramework):
         self.current_payload["quiet"] = True
         self.requested_softprompt = self.current_payload.get("softprompt")
         self.censored = None
+        self.max_seconds = None
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -35,7 +36,9 @@ class ScribeHordeJob(HordeJobFramework):
         if self.status == JobStatus.FAULTED:
             self.start_submit_thread()
             return
-        self.stale_time = time.time() + (self.current_payload.get("max_length", 80) / 2) + 10
+        # we also re-use this for the https timeout to llm inference
+        self.max_seconds = (self.current_payload.get("max_length", 80) / 2) + 10
+        self.stale_time = time.time() + self.max_seconds
         # These params will always exist in the payload from the horde
         gen_payload = self.current_payload
         if "width" in gen_payload or "length" in gen_payload or "steps" in gen_payload:
@@ -63,13 +66,18 @@ class ScribeHordeJob(HordeJobFramework):
                     gen_req = requests.post(
                         self.bridge_data.kai_url + "/api/latest/generate/",
                         json=self.current_payload,
-                        timeout=300,
+                        timeout=self.max_seconds,
                     )
-                except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+                except requests.exceptions.ConnectionError:
                     logger.error(f"Worker {self.bridge_data.kai_url} unavailable. Retrying in 3 seconds...")
                     loop_retry += 1
                     time.sleep(3)
                     continue
+                except requests.exceptions.ReadTimeout:
+                    logger.error(f"Worker {self.bridge_data.kai_url} request timeout. Aborting.")
+                    self.status = JobStatus.FAULTED
+                    self.start_submit_thread()
+                    return
                 if type(gen_req.json()) is not dict:
                     logger.error(
                         (
