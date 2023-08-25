@@ -161,7 +161,7 @@ class TerminalUI:
         sys.stdout = self.stdout
         # Remove all loguru sinks
         logger.remove()
-        handlers = [sink for sink in config["handlers"] if type(sink["sink"]) is str]
+        handlers = [sink for sink in config["handlers"] if isinstance(sink["sink"], str)]
         # Re-initialise loguru
         newconfig = {"handlers": handlers}
         logger.configure(**newconfig)
