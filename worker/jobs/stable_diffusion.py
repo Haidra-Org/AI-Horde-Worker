@@ -125,6 +125,8 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 gen_payload["return_control_map"] = self.current_payload.get("return_control_map", False)
             if "loras" in self.current_payload:
                 gen_payload["loras"] = self.current_payload["loras"]
+            if "tis" in self.current_payload:
+                gen_payload["tis"] = self.current_payload["tis"]
         except KeyError as err:
             logger.error("Received incomplete payload from job. Aborting. ({})", err)
             self.status = JobStatus.FAULTED
@@ -170,8 +172,10 @@ class StableDiffusionHordeJob(HordeJobFramework):
                 f"for {self.current_payload.get('ddim_steps',50)} steps "
                 f"{self.current_payload.get('sampler_name','unknown sampler')}. "
                 f"Prompt length is {len(self.current_payload['prompt'])} characters "
-                f"And it appears to contain {len(gen_payload.get('loras', []))} "
-                f"loras: {[lora['name'] for lora in gen_payload.get('loras', [])]}",
+                f"and it appears to contain {len(gen_payload.get('loras', []))} "
+                f"LoRas: {[lora['name'] for lora in gen_payload.get('loras', [])]} "
+                f"and {len(gen_payload.get('tis', []))} "
+                f"Textual Inversions: {[ti['name'] for ti in gen_payload.get('tis', [])]}",
             )
             time_state = time.time()
             gen_payload["model"] = self.current_model
