@@ -68,6 +68,7 @@ def main():
                 MODEL_CATEGORY_NAMES.esrgan,
                 MODEL_CATEGORY_NAMES.safety_checker,
                 MODEL_CATEGORY_NAMES.lora,
+                MODEL_CATEGORY_NAMES.ti,
             ],
         )
 
