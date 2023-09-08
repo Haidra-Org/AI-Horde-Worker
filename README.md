@@ -6,7 +6,7 @@ This repo contains the latest implementation for the [AI Horde](https://aihorde.
 
 Alternatively you can become an Alchemist worker which is much more lightweight and can even run on CPU (i.e. without a GPU).
 
-Please note that **AMD card are** not currently supported*, but may be in the future.
+Please note that **AMD card are not currently supported**, but may be in the future.
  
 To run the bridge, simply follow the instructions for your own OS
 
@@ -70,7 +70,7 @@ This script can take 10-15 minutes to complete.
 
 In order to connect to the horde with your username and a good worker name, you need to configure your horde bridge. To this end, we've developed an easy WebUI you can use
 
-To load it, simply run `bridge-webui`. It will then show you a URL you can open with your browser. Open it and it will allow you to tweak all horde options. Once you press `Update Bridge` it will create a `bridgeData.yaml` file with all the options you set.
+To load it, simply run `bridge-webui`. It will then show you a URL you can open with your browser. Open it and it will allow you to tweak all horde options. Once you press `Save Configuration` it will create a `bridgeData.yaml` file with all the options you set.
 
 Fill in at least:
    * Your worker name (has to be unique horde-wide)
