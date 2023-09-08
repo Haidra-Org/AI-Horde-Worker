@@ -17,9 +17,9 @@ if __name__ == "__main__":
     mm = SharedModelManager.manager
 
     filtered_models = mm.compvis.get_filtered_models(type="ckpt")
-    
+
     sorted_model_names = sorted(filtered_models.keys())
-    
+
     ppmodels = ""
     for model_name in sorted_model_names:
         if model_name == "LDSR":
