@@ -93,7 +93,7 @@ class WorkerFramework:
                     logger.init("Worker", status="Shutting Down")
                     if self.is_daemon:
                         return
-                    else:
+                    else:  # noqa: RET505
                         sys.exit(self.exit_rc)
 
     def process_jobs(self):
