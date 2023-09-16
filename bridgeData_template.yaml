@@ -160,7 +160,7 @@ max_context_length: 1024
 # When set to true, the horde alias behind the API key will be appended to the model that is advertised to the horde
 # This will prevent the model from being used from the shared pool, but will ensure that no other worker
 # can pretend to serve it
-branded_model: true
+branded_model: false
 
 ## Alchemist (Image interrogation and post-processing)
 
