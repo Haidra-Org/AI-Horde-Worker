@@ -1,5 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cu118
 torch # We have to place it here otherwise it installs the CPU version
+Pillow>=10.0.1
 pydantic==1.10.12
 horde_model_reference~=0.2.2
 transformers==4.30.2
