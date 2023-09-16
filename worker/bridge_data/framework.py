@@ -198,8 +198,7 @@ class BridgeDataTemplate:
         if self.models_reloading:
             return
         self.models_reloading = True
-        thread = threading.Thread(target=self._reload_models, args=(model_manager,))
-        thread.daemon = True
+        thread = threading.Thread(target=self._reload_models, args=(model_manager,), daemon=True)
         thread.start()
 
     @logger.catch(reraise=True)
