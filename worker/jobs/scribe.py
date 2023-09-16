@@ -78,7 +78,7 @@ class ScribeHordeJob(HordeJobFramework):
                     self.status = JobStatus.FAULTED
                     self.start_submit_thread()
                     return
-                if isinstance(gen_req.json(), dict):
+                if not isinstance(gen_req.json(), dict):
                     logger.error(
                         (
                             f"KAI instance {self.bridge_data.kai_url} API unexpected response on generate: {gen_req}. "
