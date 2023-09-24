@@ -143,7 +143,9 @@ class TerminalUI:
         self.audio_alerts = False
         self.last_audio_alert = 0
         self.stdout = DequeOutputCollector()
+        self._bck_stdout = sys.stdout
         self.stderr = DequeOutputCollector()
+        self._bck_stderr = sys.stderr
         self.reset_stats()
         self.download_label = ""
         self.download_current = None
@@ -801,6 +803,11 @@ class TerminalUI:
         return None
 
     def main_loop(self, stdscr):
+        if not stdscr:
+            self.stop()
+            logger.error("Failed to initialise curses")
+            return
+
         self.main = stdscr
         while True:
             if self.should_stop:
@@ -824,6 +831,14 @@ class TerminalUI:
 
     def stop(self):
         self.should_stop = True
+        # Restore the terminal
+        sys.stdout = self._bck_stdout
+        sys.stderr = self._bck_stderr
+
+        curses.nocbreak()
+        self.main.keypad(False)
+        curses.echo()
+        curses.endwin()
 
     def get_hordelib_version(self):
         try:
