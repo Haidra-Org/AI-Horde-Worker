@@ -94,6 +94,13 @@ class StableDiffusionBridgeData(BridgeDataTemplate):
         if top_n:
             self.models_to_load.extend(self.get_top_n_models(top_n))
 
+        for i, model_name in enumerate(self.models_to_load):
+            if "SDXL" in model_name:
+                del self.models_to_load[i]
+                logger.error(
+                    f"SDXL models are not supported in this worker version. Removing {model_name}",
+                )
+
         if self.dynamic_models and not self.number_of_dynamic_models:
             logger.warning(
                 "Dynamic models are enabled but config option `number_of_dynamic_models` isn't set or is 0. "
