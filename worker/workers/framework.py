@@ -37,16 +37,21 @@ class WorkerFramework:
     def startup_terminal_ui(self):
         # Setup UI if requested
         in_notebook = hasattr(__builtins__, "__IPYTHON__")
-        if not in_notebook and not self.bridge_data.disable_terminal_ui:
-            # Don't allow this if auto-downloading is not enabled as how will the user see download prompts?
-            if hasattr(self.bridge_data, "always_download") and not self.bridge_data.always_download:
-                logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
-            else:
-                from worker.ui import TerminalUI
+        if in_notebook:
+            return
 
-                self.ui_class = TerminalUI(self.bridge_data)
-                self.ui = threading.Thread(target=self.ui_class.run, daemon=True)
-                self.ui.start()
+        if self.bridge_data.disable_terminal_ui:
+            return
+
+        # Don't allow this if auto-downloading is not enabled as how will the user see download prompts?
+        if hasattr(self.bridge_data, "always_download") and not self.bridge_data.always_download:
+            logger.warning("Terminal UI can not be enabled without also enabling 'always_download'")
+        else:
+            from worker.ui import TerminalUI
+
+            self.ui_class = TerminalUI(self.bridge_data)
+            self.ui = threading.Thread(target=self.ui_class.run, daemon=True)
+            self.ui.start()
 
     def on_restart(self):
         """Called when the worker loop is restarted. Make sure to invoke super().on_restart() when overriding."""
