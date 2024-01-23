@@ -157,7 +157,7 @@ kai_url: "http://localhost:5000"
 # The max amount of tokens to generate with this worker 
 max_length: 80
 # The max tokens to use from the prompt
-max_context_length: 1024
+max_context_length: 2048
 # When set to true, the horde alias behind the API key will be appended to the model that is advertised to the horde
 # This will prevent the model from being used from the shared pool, but will ensure that no other worker
 # can pretend to serve it

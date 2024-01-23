@@ -26,5 +26,18 @@ arg_parser.add_argument(
     required=False,
     help="The URL in which the KoboldAI Client API can be found.",
 )
+arg_parser.add_argument(
+    "--max_context_length",
+    type=int,
+    required=False,
+    help="Set the max context for this scribe.",
+)
+arg_parser.add_argument(
+    "--max_length",
+    type=int,
+    required=False,
+    help="Set the max tokens for this scribe.",
+)
+
 
 args = arg_parser.parse_args()

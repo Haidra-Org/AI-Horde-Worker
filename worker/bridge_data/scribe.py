@@ -17,7 +17,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         self.model = None
         self.kai_url = "http://localhost:5000"
         self.max_length = int(os.environ.get("HORDE_MAX_LENGTH", "80"))
-        self.max_context_length = int(os.environ.get("HORDE_MAX_CONTEXT_LENGTH", "1024"))
+        self.max_context_length = int(os.environ.get("HORDE_MAX_CONTEXT_LENGTH", "2048"))
         self.branded_model = os.environ.get("HORDE_BRANDED_MODEL", "false") == "true"
         self.softprompts = {}
         self.current_softprompt = None
@@ -38,6 +38,10 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             self.nsfw = False
         if args.blacklist:
             self.blacklist = args.blacklist
+        if args.max_length:
+            self.max_length = args.max_length
+        if args.max_context_length:
+            self.max_context_length = args.max_context_length
         self.validate_kai()
         if self.kai_available and not self.initialized and previous_url != self.horde_url:
             logger.init(
