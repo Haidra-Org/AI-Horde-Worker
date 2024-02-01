@@ -2,11 +2,19 @@ This repository allows you to set up a AI Horde Worker to generate or alchemize 
 
 # AI Horde Worker
 
-This repo contains the latest implementation for the [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
+## Important Note:
+
+- As of January 2024, the official worker is now [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen).
+- You should use `reGen` if you are a new worker and are looking to do *image generation*.
+- If you are looking to do *alchemy* (post-processing, interrogation, captioning, etc), you should continue to use `AI-Horde-Worker`.
+
+
+# Legacy information: 
+This repo contains the original (now outdated - see above) reference implementation for a [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
 Alternatively you can become an Alchemist worker which is much more lightweight and can even run on CPU (i.e. without a GPU).
 
-Please note that **AMD card are not currently supported**, but may be in the future.
+Please note that **AMD card are not currently supported**, but may be in the future. (Note: [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen) has prelimanry support for AMD and if you are an AMD card and would like to help us improve support by testing it, let us know [in our discord](https://discord.gg/kwst4K7wbv))
  
 To run the bridge, simply follow the instructions for your own OS
 
