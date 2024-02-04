@@ -14,6 +14,7 @@ class GPUInfo:
         # Look out for device env var hack
         self.forced_gpu = os.getenv("CUDA_VISIBLE_DEVICES", None) is not None
         self.device = int(os.getenv("CUDA_VISIBLE_DEVICES", 0))
+        self.ui_show_n_gpus = int(os.getenv("AIWORKER_UI_SHOW_N_GPUS", 1))
 
     # Return a value from the given dictionary supporting dot notation
     def get(self, data, key, default=""):
@@ -22,7 +23,7 @@ class GPUInfo:
 
         if len(path) == 1:
             # Simple case
-            return data[key] if key in data else default
+            return data.get(key, default)
         # Nested case
         walkdata = data
         for element in path:
@@ -37,6 +38,10 @@ class GPUInfo:
         """How many GPUs in this system?"""
         if self.forced_gpu:
             return 1
+
+        if self.ui_show_n_gpus:
+            return self.ui_show_n_gpus
+
         with contextlib.suppress(Exception):
             nvsmi = nvidia_smi.getInstance()
             data = nvsmi.DeviceQuery()

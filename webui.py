@@ -19,7 +19,7 @@ import yaml
 # Helper class to access dictionaries
 class DotDict(dict):
     def __getattr__(self, attr):
-        return self[attr] if attr in self else None
+        return self.get(attr, None)
 
     def __setattr__(self, attr, value):
         self[attr] = value
@@ -367,7 +367,7 @@ class WebUI:
                     model_config_dict: dict = model_info.get("config", None)
                     if not model_config_dict:
                         continue
-                    model_file_config_list: list = model_config_dict.get("files", None)
+                    model_file_config_list: list = model_config_dict.get("files")
                     if not model_file_config_list:
                         continue
                     if len(model_file_config_list) == 0:
