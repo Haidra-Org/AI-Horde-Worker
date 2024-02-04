@@ -23,7 +23,7 @@ class GPUInfo:
 
         if len(path) == 1:
             # Simple case
-            return data[key] if key in data else default
+            return data.get(key, default)
         # Nested case
         walkdata = data
         for element in path:
@@ -38,7 +38,7 @@ class GPUInfo:
         """How many GPUs in this system?"""
         if self.forced_gpu or self.ui_show_one_gpu:
             return 1
-    
+
         with contextlib.suppress(Exception):
             nvsmi = nvidia_smi.getInstance()
             data = nvsmi.DeviceQuery()
