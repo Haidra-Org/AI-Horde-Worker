@@ -55,7 +55,7 @@ class ScribeHordeJob(HordeJobFramework):
             time_state = time.time()
             if self.requested_softprompt != self.bridge_data.current_softprompt:
                 requests.put(
-                    self.bridge_data.kai_url + "/api/latest/config/soft_prompt/",
+                    self.bridge_data.kai_url + "/api/latest/config/soft_prompt",
                     json={"value": self.requested_softprompt},
                 )
                 time.sleep(1)  # Wait a second to unload the softprompt
@@ -64,7 +64,7 @@ class ScribeHordeJob(HordeJobFramework):
             while not gen_success and loop_retry < 5:
                 try:
                     gen_req = requests.post(
-                        self.bridge_data.kai_url + "/api/latest/generate/",
+                        self.bridge_data.kai_url + "/api/latest/generate",
                         json=self.current_payload,
                         timeout=self.max_seconds,
                     )
