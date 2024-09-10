@@ -14,11 +14,13 @@ from worker.stats import bridge_stats
 
 class JobPopper:
     retry_interval = 1
-    BRIDGE_AGENT = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
 
     def __init__(self, mm, bd):
         self.model_manager = mm
         self.bridge_data = copy.deepcopy(bd)
+        self.bridge_agent = f"AI Horde Worker:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
+        if self.bridge_data.backend_engine:
+            self.bridge_agent = f"AI Horde Worker~{self.bridge_data.backend_engine}:{BRIDGE_VERSION}:https://github.com/db0/AI-Horde-Worker"
         self.pop = None
         self.headers = {"apikey": self.bridge_data.api_key}
         # This should be set by the extending class
@@ -161,7 +163,7 @@ class StableDiffusionPopper(JobPopper):
             "allow_lora": self.bridge_data.allow_lora if self.model_manager.lora.are_downloads_complete() else False,
             "require_upfront_kudos": self.bridge_data.require_upfront_kudos,
             "bridge_version": BRIDGE_VERSION,
-            "bridge_agent": self.BRIDGE_AGENT,
+            "bridge_agent": self.bridge_agent,
         }
         # logger.debug("Cron: End constructing pop payload")
 
@@ -216,8 +218,8 @@ class ScribePopper(JobPopper):
             "max_length": self.bridge_data.max_length,
             "max_context_length": self.bridge_data.max_context_length,
             "priority_usernames": self.bridge_data.priority_usernames,
-            "softprompts": self.bridge_data.softprompts[self.bridge_data.model],
-            "bridge_agent": self.BRIDGE_AGENT,
+            "softprompts": self.bridge_data.softprompts[self.bridge_data.model] if bd.openai_api is False else [],
+            "bridge_agent": self.bridge_agent,
             "threads": self.bridge_data.max_threads,
         }
 
@@ -252,7 +254,7 @@ class InterrogationPopper(JobPopper):
             "priority_usernames": self.bridge_data.priority_usernames,
             "threads": self.bridge_data.max_threads,
             "bridge_version": BRIDGE_VERSION,
-            "bridge_agent": self.BRIDGE_AGENT,
+            "bridge_agent": self.bridge_agent,
             "max_tiles": self.bridge_data.max_power,
         }
         logger.debug(self.pop_payload)

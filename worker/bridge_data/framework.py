@@ -49,6 +49,7 @@ class BridgeDataTemplate:
         self.models_reloading = False
         self.max_models_to_download = 10
         self.suppress_speed_warnings = False
+        self.backend_engine = os.environ.get("HORDE_BACKEND_ENGINE", "unknown")
 
     def load_config(self):
         # YAML config

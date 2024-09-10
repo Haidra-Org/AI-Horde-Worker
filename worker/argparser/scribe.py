@@ -8,6 +8,12 @@ arg_parser.add_argument(
     help="Set to true if you do not want this worker generating NSFW images.",
 )
 arg_parser.add_argument(
+    "--openai_api",
+    action="store_true",
+    required=False,
+    help="Set to true to expect OpenAI API from the backend.",
+)
+arg_parser.add_argument(
     "--blacklist",
     nargs="+",
     required=False,

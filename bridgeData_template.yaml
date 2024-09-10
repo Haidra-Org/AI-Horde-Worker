@@ -162,6 +162,12 @@ max_context_length: 1024
 # This will prevent the model from being used from the shared pool, but will ensure that no other worker
 # can pretend to serve it
 branded_model: false
+# Set to true to use an OpenAI API compatible backend. If you the backend is unknown, please set the backend_engine manually
+openai_api: false
+# Set this to the name of your backend, unless it's one of the following. The ones below will be autodetermined.
+# * aphrodite
+backend_engine: unknown
+
 
 ## Alchemist (Image interrogation and post-processing)
 

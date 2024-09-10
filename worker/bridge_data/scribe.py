@@ -21,6 +21,7 @@ class KoboldAIBridgeData(BridgeDataTemplate):
         self.branded_model = os.environ.get("HORDE_BRANDED_MODEL", "false") == "true"
         self.softprompts = {}
         self.current_softprompt = None
+        self.openai_api = os.environ.get("HORDE_BACKEND_OPENAI_API", "false") == "true"
 
         self.nsfw = os.environ.get("HORDE_NSFW", "true") == "true"
         self.blacklist = list(filter(lambda a: a, os.environ.get("HORDE_BLACKLIST", "").split(",")))
@@ -38,6 +39,8 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             self.nsfw = False
         if args.blacklist:
             self.blacklist = args.blacklist
+        if args.openai_api:
+            self.openai_api = args.openai_api
         self.validate_kai()
         if self.kai_available and not self.initialized and previous_url != self.horde_url:
             logger.init(
@@ -53,8 +56,20 @@ class KoboldAIBridgeData(BridgeDataTemplate):
     def validate_kai(self):
         logger.debug("Retrieving settings from KoboldAI Client...")
         try:
-            req = requests.get(self.kai_url + "/api/latest/model")
-            self.model = req.json()["result"]
+            version_req = requests.get(self.kai_url + "/version")
+            if version_req.ok:
+                self.backend_engine = f"aphrodite"
+            else:
+                logger.warning("Unable to determine OpenAI API compatible backend engine. Will report it as unknown to the Horde which will lead to less kudos rewards.")
+            if self.openai_api:
+                req = requests.get(self.kai_url + "/v1/models")   
+                self.model = req.json()["data"][0]['id']
+                logger.debug([self.model,self.backend_engine])
+                self.backend_engine += '~oai'
+            else:
+                req = requests.get(self.kai_url + "/api/latest/model")
+                self.model = req.json()["result"]                
+                self.backend_engine += '~kai'
             # Normalize huggingface and local downloaded model names
             if "/" not in self.model:
                 self.model = self.model.replace("_", "/", 1)
@@ -63,11 +78,12 @@ class KoboldAIBridgeData(BridgeDataTemplate):
             # self.max_context_length = req.json()["value"]
             # req = requests.get(self.kai_url + "/api/latest/config/max_length")
             # self.max_length = req.json()["value"]
-            if self.model not in self.softprompts:
-                req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
-                self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
-            req = requests.get(self.kai_url + "/api/latest/config/soft_prompt")
-            self.current_softprompt = req.json()["value"]
+            if not self.openai_api:
+                if self.model not in self.softprompts:
+                    req = requests.get(self.kai_url + "/api/latest/config/soft_prompts_list")
+                    self.softprompts[self.model] = [sp["value"] for sp in req.json()["values"]]
+                req = requests.get(self.kai_url + "/api/latest/config/soft_prompt")
+                self.current_softprompt = req.json()["value"]
         except requests.exceptions.JSONDecodeError:
             logger.error(f"Server {self.kai_url} is up but does not appear to be a KoboldAI server.")
             self.kai_available = False

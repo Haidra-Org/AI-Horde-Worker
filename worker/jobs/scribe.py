@@ -27,6 +27,7 @@ class ScribeHordeJob(HordeJobFramework):
         self.requested_softprompt = self.current_payload.get("softprompt")
         self.censored = None
         self.max_seconds = None
+        self.openai_api = self.bridge_data.openai_api
 
     @logger.catch(reraise=True)
     def start_job(self):
@@ -63,11 +64,58 @@ class ScribeHordeJob(HordeJobFramework):
             gen_success = False
             while not gen_success and loop_retry < 5:
                 try:
-                    gen_req = requests.post(
-                        self.bridge_data.kai_url + "/api/latest/generate",
-                        json=self.current_payload,
-                        timeout=self.max_seconds,
-                    )
+                    if not self.openai_api:
+                        gen_req = requests.post(
+                            self.bridge_data.kai_url + "/api/latest/generate",
+                            json=self.current_payload,
+                            timeout=self.max_seconds,
+                        )
+                    else:
+                        oai_payload = {
+                            "model": self.current_model,
+                            "prompt": self.current_payload["prompt"],
+                        }
+                        oai_kai_translations = {
+                            "rep_pen": "repetition_penalty",
+                            "temperature": "temperature",
+                            "dynatemp_exponent": "dynatemp_exponent",
+                            "dynatemp_max": "dynatemp_max",
+                            "dynatemp_min": "dynatemp_min",
+                            "tfs": "tfs",
+                            "top_k": "top_k",
+                            "top_p": "top_p",
+                            "top_a": "top_a",
+                            "min_p": "min_p",
+                            "typical": "typical_p",
+                            "eta_cutoff": "eta_cutoff",
+                            "eps_cutoff": "epsilon_cutoff",
+                            "mirostat": "mirostat_mode",
+                            "mirostat": "mirostat_mode",
+                            "mirostat_tau": "mirostat_tau",
+                            "mirostat_eta": "mirostat_eta",
+                            "stop_sequence": "stop",
+                            "include_stop_str_in_output": "include_stop_str_in_output",
+                            "badwordsids": "custom_token_bans",
+                            "use_default_badwordsids": "use_default_badwordsids",
+                            "max_length": "max_tokens",
+                            "max_context_length": "truncate_prompt_tokens",
+                            "sampler_seed": "seed",
+                        }
+                        for kai,oai in oai_kai_translations.items():
+                            if kai in self.current_payload:
+                                oai_payload[oai] = self.current_payload[kai]
+                        if "top_k" in oai_payload:
+                            oai_payload["top_k"] = oai_payload["top_k"] if oai_payload["top_k"] != 0.0 else -1
+                        # oai_payload["max_input_tokens"] = max(
+                        #     1, oai_payload["max_input_tokens"] - oai_payload["max_tokens"])                        
+                        logger.debug("Attempting OpenAI API...")
+                        gen_req = requests.post(
+                            self.bridge_data.kai_url + "/v1/completions",
+                            json=oai_payload,
+                            timeout=self.max_seconds,
+                        )
+                        logger.debug(gen_req)
+
                 except requests.exceptions.ConnectionError:
                     logger.error(f"Worker {self.bridge_data.kai_url} unavailable. Retrying in 3 seconds...")
                     loop_retry += 1
@@ -115,7 +163,10 @@ class ScribeHordeJob(HordeJobFramework):
                     time.sleep(3)
                     continue
                 try:
-                    self.text = req_json["results"][0]["text"]
+                    if self.bridge_data.openai_api:
+                        self.text = req_json["choices"][0]["text"]
+                    else:
+                        self.text = req_json["results"][0]["text"]
                 except KeyError:
                     logger.error(
                         (
