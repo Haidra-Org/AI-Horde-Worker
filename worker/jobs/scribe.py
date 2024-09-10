@@ -114,7 +114,6 @@ class ScribeHordeJob(HordeJobFramework):
                             json=oai_payload,
                             timeout=self.max_seconds,
                         )
-                        logger.debug(gen_req)
 
                 except requests.exceptions.ConnectionError:
                     logger.error(f"Worker {self.bridge_data.kai_url} unavailable. Retrying in 3 seconds...")
