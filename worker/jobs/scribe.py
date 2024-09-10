@@ -106,8 +106,8 @@ class ScribeHordeJob(HordeJobFramework):
                                 oai_payload[oai] = self.current_payload[kai]
                         if "top_k" in oai_payload:
                             oai_payload["top_k"] = oai_payload["top_k"] if oai_payload["top_k"] != 0.0 else -1
-                        # oai_payload["max_input_tokens"] = max(
-                        #     1, oai_payload["max_input_tokens"] - oai_payload["max_tokens"])                        
+                        oai_payload["truncate_prompt_tokens"] = max(
+                            1, self.current_payload.get("max_context_length", 2048) - self.current_payload.get("max_length", 256))
                         logger.debug("Attempting OpenAI API...")
                         gen_req = requests.post(
                             self.bridge_data.kai_url + "/v1/completions",
