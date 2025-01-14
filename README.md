@@ -1,12 +1,12 @@
-This repository allows you to set up a AI Horde Worker to generate or alchemize images for others
+This repository allows you to set up a AI Horde Worker to run a scribe or alchemy worker for the AI Horde.
 
 # AI Horde Worker
 
-## Important Note:
+## Warning for Image Generation:
 
-- As of January 2024, the official worker for image generation is now [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen).
-- You should use `reGen` if you are a new worker and are looking to do *image generation*.
-- If you are looking to do *text generation*, or *alchemy* (post-processing, interrogation, captioning, etc), you should continue to use `AI-Horde-Worker`.
+> As of January 2024, the official worker for image generation is now [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen).
+> You should use `reGen` if you are a new worker and are looking to do *image generation*.
+> If you are looking to do *text generation*, or *alchemy* (post-processing, interrogation, captioning, etc), you should continue to use `AI-Horde-Worker`.
 
 
 # Legacy information: 
