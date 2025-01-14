@@ -1,3 +1,1 @@
-@echo off
-cd /d %~dp0
-call runtime python -s bridge_stable_diffusion.py %*
+echo "Image generation is no longer supported with this worker. Please use the new official worker, reGen, found at https://github.com/Haidra-Org/horde-worker-reGen 
