@@ -12,7 +12,7 @@ pyyaml
 unidecode
 regex
 rembg
-pynvml
+pynvml == 11.5.0
 psutil
 windows-curses; sys_platform == 'win32'
 loguru
