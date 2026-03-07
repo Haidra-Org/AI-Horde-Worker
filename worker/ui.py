@@ -13,7 +13,6 @@ import time
 from collections import deque
 from math import trunc
 
-import pkg_resources
 import psutil
 import requests
 
@@ -841,10 +840,7 @@ class TerminalUI:
         curses.endwin()
 
     def get_hordelib_version(self):
-        try:
-            return pkg_resources.get_distribution("hordelib").version
-        except pkg_resources.DistributionNotFound:
-            return "Unknown"
+        return "Unknown"
 
 
 if __name__ == "__main__":
