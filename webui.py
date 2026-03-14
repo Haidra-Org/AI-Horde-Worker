@@ -896,7 +896,7 @@ class WebUI:
 
         self.app.queue()
 
-    def run(self, share, nobrowser, lan, user, password):
+    def run(self, share, nobrowser, lan, port, user, password):
         server_name = "0.0.0.0" if lan else None
         self.initialise()
         self.app.launch(
@@ -905,6 +905,7 @@ class WebUI:
             auth=(user, password) if user and password else None,
             inbrowser=not nobrowser,
             server_name=server_name,
+            server_port=port,
             prevent_thread_lock=True,
         )
         while True:
@@ -917,6 +918,7 @@ if __name__ == "__main__":
     parser.add_argument("--share", action="store_true", help="Create a public URL")
     parser.add_argument("--no-browser", action="store_true", help="Don't open automatically in a web browser")
     parser.add_argument("--lan", action="store_true", help="Allow access on the local network")
+    parser.add_argument("--port", action="store", help="Port to listen on", type=int, default=7860)
     parser.add_argument("--user", action="store", nargs=1, help="Username for authentication")
     parser.add_argument("--password", action="store", nargs=1, help="Password for authentication")
     parser.add_argument("--no-auth", action="store_true", help="Disable authentication")
@@ -947,6 +949,7 @@ if __name__ == "__main__":
         args.share,
         args.no_browser,
         args.lan,
+        args.port,
         args.user[0] if args.user else None,
         args.password[0] if args.password else None,
     )
