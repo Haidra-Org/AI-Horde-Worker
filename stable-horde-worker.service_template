@@ -18,6 +18,8 @@ RestartSec=15
 User=$USERNAME
 WorkingDirectory=/$PATH/AI-Horde-Worker
 ExecStart=/$PATH/AI-Horde-Worker/horde-bridge.sh
+TimeoutStopSec=300
+KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
