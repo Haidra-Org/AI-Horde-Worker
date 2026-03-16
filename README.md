@@ -2,19 +2,26 @@ This repository allows you to set up a AI Horde Worker to run a scribe or alchem
 
 # AI Horde Worker
 
-## Warning for Image Generation:
+> ⚠️ **Need help setting things up?** Some modes (like Alchemist) may be broken or require specific configurations. We recommend joining the [AI Horde Discord](https://discord.gg/kwst4K7wbv) for assistance and updates.
+
+## ⚠️ Notice for Image Generation
 
 > As of January 2024, the official worker for image generation is now [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen).
 > You should use `reGen` if you are a new worker and are looking to do *image generation*.
 > If you are looking to do *text generation*, or *alchemy* (post-processing, interrogation, captioning, etc), you should continue to use `AI-Horde-Worker`.
 
+## 🔁 Prefer an Easier Alternative?
+
+If you're primarily looking to host a **text generation (scribe)** worker, you may want to try [**KoboldCpp**](https://github.com/LostRuins/koboldcpp). It includes built-in AI Horde support, runs local models efficiently, and is significantly easier to set up — especially for new users.
+
+[KoboldCpp GitHub](https://github.com/LostRuins/koboldcpp)
 
 # Legacy information: 
 This repo contains the original (now outdated - see above) reference implementation for a [AI Horde](https://aihorde.net) Worker. This will turn your graphics card(s) into a worker for the AI Horde and you will receive in turn kudos which will give you priority for your own generations.
 
 Alternatively you can become an Alchemist worker which is much more lightweight and can even run on CPU (i.e. without a GPU).
 
-Please note that **AMD card are not currently supported**, but may be in the future. (Note: [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen) has prelimanry support for AMD and if you are an AMD card and would like to help us improve support by testing it, let us know [in our discord](https://discord.gg/kwst4K7wbv))
+Please note that **AMD cards are not currently supported**, but may be in the future. (Note: [horde-worker-reGen](https://github.com/Haidra-Org/horde-worker-reGen) has preliminary support for AMD. If you have an AMD card and would like to help improve support, please join [our Discord](https://discord.gg/kwst4K7wbv)).
  
 To run the bridge, simply follow the instructions for your own OS
 
@@ -92,19 +99,26 @@ You can also edit this file using a text editor. We also provide a `bridgeData_t
 
 ## Startup
 
-Start your worker, depending on which type your want.
+> ⚠️ **Note:** Some worker modes, such as Alchemist, may currently be unstable or broken due to unresolved dependency issues. If you're having trouble getting anything working, please don't hesitate to ask for help in the [AI Horde Discord](https://discord.gg/kwst4K7wbv). Community support is active and friendly!
 
-* If you want to generate Stable Diffusion images for others, run `horde-bridge`.
+Start your worker, depending on which type you want to run.
 
+* If you want to generate text using a local model for others (scribe), run:
 
-    **Warning:** This requires a powerful GPU. You will need a GPU with at least 6G VRAM
-    
-* If you want to interrogate images for other, run `horde-alchemist_bridge`. This worker is very lightweight and you can even run it with just CPU (but you'll have to adjust which forms you serve)
+```bash
+./horde-scribe-bridge.sh   # Or horde-scribe-bridge.cmd on Windows
+```
 
+* If you want to interrogate or caption images for others, run:
 
-    **Warning:** Currently the Alchemist worker will download images directly from the internet, as if you're visiting a webpage. If this is a concern to you, do not run this worker type. We are working on setting up a proxy to avoid that.
+```bash
+./horde-alchemist_bridge.sh # Or horde-alchemist_bridge.cmd on Windows
+```
 
-Remember that worker names have to be different between Stable Diffusion worker and Alchemist worker. If you want to start a different type of worker in the same install directory, ensure a new name by using the `--name` command line argument.
+**Note:** The Alchemist worker will download images directly from the internet, similar to how a browser does. If this is a concern to you, avoid this worker type. Work is ongoing to add a proxy option.
+
+Remember that worker names must be different between scribe and alchemist workers. If running multiple worker types in the same folder, specify a unique name using the `--name` argument.
+
 
 
 ## Running with multiple GPUs
